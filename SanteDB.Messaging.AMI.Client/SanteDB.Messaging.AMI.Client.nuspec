@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>1.1.0</version>
+    <title>$title$</title>
+    <authors>Mohawk College of Applied Arts and Technology</authors>
+    <owners>Mohawk College of Applied Arts and Technology</owners>
+    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://santedb.org</projectUrl>
+    <iconUrl>http://santedb.org/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The SanteDB Administration Management Interface (AMI) client</description>
+    <releaseNotes>Initial Version</releaseNotes>
+    <copyright>Copyright 2015-2018, Mohawk College of Applied Arts and Technology</copyright>
+    <tags>CDR SanteDB</tags>
+    <dependencies>
+      <dependency id="SanteDB.Core.Api" version="1.1.0.0"/>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Solution Items\SanteDB.Core.Model.AMI.*" target="lib\portable45-net45+win8"/>
+  </files>
+</package>

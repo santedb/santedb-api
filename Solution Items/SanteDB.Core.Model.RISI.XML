@@ -1,0 +1,469 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SanteDB.Core.Model.RISI</name>
+    </assembly>
+    <members>
+        <member name="T:SanteDB.Core.Model.RISI.AutoCompleteSourceDefinition">
+            <summary>
+            Represents an auto complete source definition.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys">
+            <summary>
+            Represents a collection of data type keys.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Boolean">
+            <summary>
+            Represents a boolean value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.DateTime">
+            <summary>
+            Represents a date time value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Enum">
+            <summary>
+            Represents an enum value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Float">
+            <summary>
+            Represents a float value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Guid">
+            <summary>
+            Represents a GUID/UUID value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Integer">
+            <summary>
+            Represents an integer value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.Object">
+            <summary>
+            Represents an object value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.String">
+            <summary>
+            Represents a string value.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ParameterTypeKeys.UnsignedInt">
+            <summary>
+            Represents an unsigned integer value.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys">
+            <summary>
+            Represents a collection of report format keys.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Csv">
+            <summary>
+            Represents a CSV report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Docx">
+            <summary>
+            Represents a DOCX report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Html">
+            <summary>
+            Represents an HTML report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.JPrint">
+            <summary>
+            Represents a JPrint report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Ods">
+            <summary>
+            Represents an ODS report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Odt">
+            <summary>
+            Represents an ODT report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Pdf">
+            <summary>
+            Represents a PDF report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Rtf">
+            <summary>
+            Represents an RTF report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Xls">
+            <summary>
+            Represents an XLS report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Xlsx">
+            <summary>
+            Represents an XLSX report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.Constants.ReportFormatKeys.Xml">
+            <summary>
+            Represents an XML report format.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.Interfaces.IParameterValuesProvider">
+            <summary>
+            Represents a parameter provider.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.Interfaces.IParameterValuesProvider.QueryId">
+            <summary>
+            Gets or sets the query identifier.
+            </summary>
+            <value>The query identifier.</value>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.Interfaces.IParameterValuesProvider.GetValues``1">
+            <summary>
+            Gets a list of values.
+            </summary>
+            <typeparam name="T">The type of parameter for which to retrieve values.</typeparam>
+            <returns>Returns a list of values.</returns>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition">
+            <summary>
+            Represents an auto complete source which is fed from a static list of members.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition.#ctor(System.Collections.Generic.IEnumerable{SanteDB.Core.Model.IdentifiedData})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition"/> class
+            with a specific list of items.
+            </summary>
+            <param name="items">The list of items.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ListAutoCompleteSourceDefinition.Items">
+            <summary>
+            Gets or sets the static list of auto-complete items.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ReportBundle">
+            <summary>
+            Represents a report bundle.
+            </summary>
+            <seealso cref="T:SanteDB.Core.Model.BaseEntityData" />
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportBundle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportBundle"/> class.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportBundle.Parameters">
+            <summary>
+            Gets or sets the parameters.
+            </summary>
+            <value>The parameters.</value>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ReportFormat">
+            <summary>
+            Represents a report format.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.ReportFormat.reportDefinitionKey">
+            <summary>
+            The report definition key.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportFormat.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportFormat"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportFormat.#ctor(System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportFormat"/> class.
+            </summary>
+            <param name="key">The key.</param>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportFormat.#ctor(System.Guid,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportFormat" /> class
+            with a specific id and format.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="format">The format of the report format.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportFormat.Format">
+            <summary>
+            Gets or sets the format of the report format.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportFormat.ReportDefinition">
+            <summary>
+            Gets or sets the report definition.
+            </summary>
+            <value>The report definition.</value>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportFormat.ReportDefinitionKey">
+            <summary>
+            Gets or sets the report definition key.
+            </summary>
+            <value>The report definition key.</value>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ReportParameter">
+            <summary>
+            Represents a parameter.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.ReportParameter.parameterType">
+            <summary>
+            The parameter type.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.ReportParameter.parameterTypeKey">
+            <summary>
+            The parameter type key.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.ReportParameter.reportDefinition">
+            <summary>
+            The report definition.
+            </summary>
+        </member>
+        <member name="F:SanteDB.Core.Model.RISI.ReportParameter.reportDefinitionKey">
+            <summary>
+            The report definition key.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportParameter.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportParameter"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportParameter.#ctor(System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportParameter"/> class.
+            </summary>
+            <param name="key">The key.</param>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportParameter.#ctor(System.Guid,System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportParameter" /> class.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportParameter.#ctor(System.String,System.Int32,System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportParameter" /> class
+            with a specific name, order, and value.
+            </summary>
+            <param name="name">The name of the parameter.</param>
+            <param name="position">The position.</param>
+            <param name="value">The value of the parameter.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.CorrelationId">
+            <summary>
+            Gets or sets the correlation identifier.
+            </summary>
+            <value>The correlation identifier.</value>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.Description">
+            <summary>
+            Gets or sets the description of the report parameter.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.IsHidden">
+            <summary>
+            Gets or sets a value indicating whether this parameter is hidden.
+            </summary>
+            <value><c>true</c> if this parameter is hidden; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.IsNullable">
+            <summary>
+            Gets or sets whether the report parameter is nullable.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.Name">
+            <summary>
+            Gets or sets the name of the parameter.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.ParameterType">
+            <summary>
+            Gets or sets the parameter type associated with the report parameter.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.Position">
+            <summary>
+            Gets or sets the order of the parameter.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.ReportDefinition">
+            <summary>
+            Gets or sets the report definition associated with the report parameter.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.ReportDefinitionKey">
+            <summary>
+            Gets or sets the report definition key.
+            </summary>
+            <value>The report definition key.</value>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportParameter.Value">
+            <summary>
+            Gets or sets the value of the parameter.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ParameterType">
+            <summary>
+            Represents a parameter type.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ParameterType.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ParameterType"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ParameterType.#ctor(System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ParameterType"/> class.
+            </summary>
+            <param name="key">The key.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ParameterType.AutoCompleteSourceDefinition">
+            <summary>
+            Gets or sets the auto-complete source.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ParameterType.SystemType">
+            <summary>
+            Gets or sets the system type.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ParameterType.SystemTypeXml">
+            <summary>
+            Gets or sets the system type in XML.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ParameterType.ValuesProvider">
+            <summary>
+            Gets or sets the values provider of the report data type.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.QueryAutoCompleteSourceDefinition">
+            <summary>
+            Represents an auto-complete source definition which is that of a query.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.QueryAutoCompleteSourceDefinition.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.QueryAutoCompleteSourceDefinition"/> class.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.QueryAutoCompleteSourceDefinition.Query">
+            <summary>
+            Gets or sets the query itself.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.QueryAutoCompleteSourceDefinition.Source">
+            <summary>
+            Gets or sets the source of the auto-complete source.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.ReportDefinition">
+            <summary>
+            Represents a stored query to be performed against the RISI.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportDefinition.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportDefinition"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportDefinition.#ctor(System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportDefinition"/> class.
+            </summary>
+            <param name="key">The key.</param>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.ReportDefinition.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.ReportDefinition"/> class
+            with a specific name.
+            </summary>
+            <param name="name">The name of the report.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.CorrelationId">
+            <summary>
+            Gets or sets the correlation id of the report to the report engine.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.Description">
+            <summary>
+            Gets or sets the description of the report.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.Formats">
+            <summary>
+            Gets or sets the report formats.
+            </summary>
+            <value>The report formats.</value>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.Name">
+            <summary>
+            Gets or sets the name of the stored query.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.Parameters">
+            <summary>
+            Gets or sets a list of parameters which are supported for the specified query.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.ReportDefinition.Policies">
+            <summary>
+            Gets or sets security policy instances related to the query definition.
+            </summary>
+        </member>
+        <member name="T:SanteDB.Core.Model.RISI.RisiCollection`1">
+            <summary>
+            Represents a RISI collection.
+            </summary>
+            <typeparam name="T">The type of the collection.</typeparam>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.RisiCollection`1.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.RisiCollection`1"/> class.
+            </summary>
+        </member>
+        <member name="M:SanteDB.Core.Model.RISI.RisiCollection`1.#ctor(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SanteDB.Core.Model.RISI.RisiCollection`1"/> class
+            with a specific <see cref="T:System.Collections.Generic.List`1"/> of items.
+            </summary>
+            <param name="items">The list of items.</param>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.RisiCollection`1.Items">
+            <summary>
+            Gets or sets the list of items in the <see cref="T:SanteDB.Core.Model.RISI.RisiCollection`1"/>.
+            </summary>
+        </member>
+        <member name="P:SanteDB.Core.Model.RISI.RisiCollection`1.Size">
+            <summary>
+            Gets or sets the count of the items.
+            </summary>
+        </member>
+    </members>
+</doc>

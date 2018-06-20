@@ -68,9 +68,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Schema\AppletAssets.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\SanteDB.Core.Api\SanteDB.Core.Api.csproj">
       <Project>{3a45f695-47a2-464c-ace6-bdabbfa39fbc}</Project>
       <Name>SanteDB.Core.Api</Name>
