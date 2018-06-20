@@ -32,6 +32,17 @@ namespace SanteDB.Core
     {
 
         /// <summary>
+        /// Helper extension method for getting strongly typed service
+        /// </summary>
+        /// <typeparam name="T">The type of service to be retrieved</typeparam>
+        /// <param name="me">The reference to the service provider</param>
+        /// <returns>The fetched / registered service implementation</returns>
+        public static T GetSerivce<T>(this IServiceProvider me)
+        {
+            return (T)me.GetService(typeof(T));
+        }
+
+        /// <summary>
         /// Gets or sets the current application service context
         /// </summary>
         public static IServiceProvider Current { get; set; }
