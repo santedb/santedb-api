@@ -6,7 +6,6 @@ using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Roles;
 using System.IO;
 using System.Xml.Serialization;
-using SanteDB.Core.Applets.ViewModel.Json;
 using SanteDB.Core.Model.Constants;
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Serialization;
@@ -52,14 +51,6 @@ namespace SanteDB.Core.Api.Test
                 var xsz = new XmlSerializer(typeof(Patch));
                 retVal = xsz.Deserialize(sr) as Patch;
             }
-            var jser = new JsonViewModelSerializer();
-            string patchJson = JsonConvert.SerializeObject(patch, Formatting.Indented, new JsonSerializerSettings()
-            {
-                DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                NullValueHandling = NullValueHandling.Ignore,
-                TypeNameHandling = TypeNameHandling.Auto,
-                SerializationBinder = new ModelSerializationBinder()
-            });
             
             return retVal;
         }

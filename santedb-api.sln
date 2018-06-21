@@ -1,17 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2002
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Core.Api.Test", "SanteDB.Core.Api.Test\SanteDB.Core.Api.Test.csproj", "{59B5E3BE-790E-451F-BACA-631369CF535C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Core.Api", "SanteDB.Core.Api\SanteDB.Core.Api.csproj", "{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Messaging.HDSI.Client", "SanteDB.Messaging.HDSI.Client\SanteDB.Messaging.HDSI.Client.csproj", "{C222B929-6E9E-4B2E-A98E-CC23EE681047}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Messaging.AMI.Client", "SanteDB.Messaging.AMI.Client\SanteDB.Messaging.AMI.Client.csproj", "{0FDBD4DB-30AE-4E1D-AAE1-5FE1370DCE3F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Messaging.RISI.Client", "SanteDB.Messaging.RISI.Client\SanteDB.Messaging.RISI.Client.csproj", "{4F5D3E16-3FAB-4244-B3F0-98983E6C6F69}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,18 +21,6 @@ Global
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C222B929-6E9E-4B2E-A98E-CC23EE681047}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C222B929-6E9E-4B2E-A98E-CC23EE681047}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C222B929-6E9E-4B2E-A98E-CC23EE681047}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C222B929-6E9E-4B2E-A98E-CC23EE681047}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0FDBD4DB-30AE-4E1D-AAE1-5FE1370DCE3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0FDBD4DB-30AE-4E1D-AAE1-5FE1370DCE3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0FDBD4DB-30AE-4E1D-AAE1-5FE1370DCE3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0FDBD4DB-30AE-4E1D-AAE1-5FE1370DCE3F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4F5D3E16-3FAB-4244-B3F0-98983E6C6F69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4F5D3E16-3FAB-4244-B3F0-98983E6C6F69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4F5D3E16-3FAB-4244-B3F0-98983E6C6F69}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4F5D3E16-3FAB-4244-B3F0-98983E6C6F69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
