@@ -65,7 +65,7 @@ namespace SanteDB.Core.Api.Test
             {
                 Key = Guid.Empty,
                 UserName = "pepe",
-                PasswordHash = "pepelepew",
+                Password = "pepelepew",
                 SecurityHash = Guid.NewGuid().ToString(),
                 Email = "pepe@acme.com"
             };
@@ -86,7 +86,7 @@ namespace SanteDB.Core.Api.Test
             {
                 Key = Guid.Empty,
                 UserName = "pepe",
-                PasswordHash = "pepelepew",
+                Password = "pepelepew",
                 SecurityHash = Guid.NewGuid().ToString(),
                 Email = "pepe@acme.com"
             },
@@ -94,7 +94,7 @@ namespace SanteDB.Core.Api.Test
             {
                 Key = Guid.Empty,
                 UserName = "pepe",
-                PasswordHash = "pepelepew",
+                Password = "pepelepew",
                 SecurityHash = Guid.NewGuid().ToString(),
                 Email = "lepew@acme.com"
             };

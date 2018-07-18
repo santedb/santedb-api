@@ -42,7 +42,7 @@ namespace SanteDB.Core.Services
         /// <param name="action">The action to be executed</param>
         /// <param name="parm">The parameter to use</param>
         /// <param name="callback">The callback </param>
-        void QueueUserWorkItem(Action<Object> action, Object parm, Action callback);
+        void QueueUserWorkItem(Action<Object> action, Object parm, Action<Object> callback);
 
         /// <summary>
         /// Queue a user work item
