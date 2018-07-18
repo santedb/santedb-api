@@ -37,6 +37,14 @@ namespace SanteDB.Core.Services
 		void QueueUserWorkItem(Action<Object> action, Object parm);
 
         /// <summary>
+        /// Queues the specified action to the worker pool and calls <paramref name="callback"/> on the main thread when the action is completed
+        /// </summary>
+        /// <param name="action">The action to be executed</param>
+        /// <param name="parm">The parameter to use</param>
+        /// <param name="callback">The callback </param>
+        void QueueUserWorkItem(Action<Object> action, Object parm, Action callback);
+
+        /// <summary>
         /// Queue a user work item
         /// </summary>
         void QueueUserWorkItem(TimeSpan timeout, Action<Object> action, Object parm);
