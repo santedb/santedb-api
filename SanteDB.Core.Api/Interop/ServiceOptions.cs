@@ -62,6 +62,12 @@ namespace SanteDB.Core.Interop
         public List<ServiceEndpointOptions> Endpoints { get; set; }
 
         /// <summary>
+        /// Gets or sets the flags on the service
+        /// </summary>
+        [XmlElement("flag"), JsonProperty("flags")]
+        public List<String> Flags { get; set; }
+
+        /// <summary>
 		/// Gets or sets the modified on date time of the service options.
 		/// </summary>
         public override DateTimeOffset ModifiedOn => DateTimeOffset.Now;
