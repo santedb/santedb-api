@@ -17,7 +17,7 @@
  * User: fyfej
  * Date: 2017-9-1
  */
-using SanteDB.Core.Data.Warehouse;
+using SanteDB.Core.Model.Warehouse;
 using System;
 using System.Collections.Generic;
 
@@ -93,7 +93,7 @@ namespace SanteDB.Core.Services
 		/// <summary>
 		/// Executes a predefined query against a datamart
 		/// </summary>
-		IEnumerable<dynamic> StoredQuery(Guid datamartId, String queryId, dynamic queryParameters, out int totalResults);
+		IEnumerable<dynamic> StoredQuery(Guid datamartId, String queryId, dynamic queryParameters, int offset, int count, out int totalResults);
 
 		/// <summary>
 		/// Adds the specified object to the specified datamart returning the tupleId

@@ -40,13 +40,6 @@
     <Compile Include="Alerting\AlertMessage.cs" />
     <Compile Include="Alerting\AlertMessageFlags.cs" />
     <Compile Include="ApplicationServiceContext.cs" />
-    <Compile Include="Data\Warehouse\DatamartDefinition.cs" />
-    <Compile Include="Data\Warehouse\DatamartSchema.cs" />
-    <Compile Include="Data\Warehouse\DatamartSchemaProperty.cs" />
-    <Compile Include="Data\Warehouse\DatamartStoredQuery.cs" />
-    <Compile Include="Data\Warehouse\DatamartStoredQueryDefinition.cs" />
-    <Compile Include="Data\Warehouse\DataWarehouseObject.cs" />
-    <Compile Include="Data\Warehouse\IDatamartSchemaPropertyContainer.cs" />
     <Compile Include="Diagnostics\Tracer.cs" />
     <Compile Include="Diagnostics\TraceWriter.cs" />
     <Compile Include="Event\NotificationEventArgs.cs" />
