@@ -18,12 +18,12 @@
  * Date: 2017-9-1
  */
 
-namespace SanteDB.Core.Alerting
+namespace SanteDB.Core.Mail
 {
 	/// <summary>
 	/// Represents a flag for an alert message.
 	/// </summary>
-	public enum AlertMessageFlags
+	public enum MailMessageFlags
 	{
 		/// <summary>
 		/// Just a normal alert

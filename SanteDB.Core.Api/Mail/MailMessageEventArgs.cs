@@ -20,19 +20,19 @@
 
 using System;
 
-namespace SanteDB.Core.Alerting
+namespace SanteDB.Core.Mail
 {
 	/// <summary>
 	/// Represents alert event arguments.
 	/// </summary>
-	public class AlertEventArgs : EventArgs
+	public class MailMessageEventArgs : EventArgs
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="AlertEventArgs"/> class
+		/// Initializes a new instance of the <see cref="MailMessageEventArgs"/> class
 		/// with a specified alert message.
 		/// </summary>
 		/// <param name="message">The alert message.</param>
-		public AlertEventArgs(AlertMessage message)
+		public MailMessageEventArgs(MailMessage message)
 		{
 			this.Message = message;
 		}
@@ -46,6 +46,6 @@ namespace SanteDB.Core.Alerting
 		/// <summary>
 		/// Gets the alert message.
 		/// </summary>
-		public AlertMessage Message { get; internal set; }
+		public MailMessage Message { get; internal set; }
 	}
 }

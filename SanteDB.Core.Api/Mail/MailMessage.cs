@@ -25,23 +25,23 @@ using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Security;
 
-namespace SanteDB.Core.Alerting
+namespace SanteDB.Core.Mail
 {
 	/// <summary>
 	/// Represents an alert message.
 	/// </summary>
-	[JsonObject(nameof(AlertMessage)), XmlType(nameof(AlertMessage), Namespace = "http://santedb.org/alerting")]
-	public class AlertMessage : NonVersionedEntityData
+	[JsonObject(nameof(MailMessage)), XmlType(nameof(MailMessage), Namespace = "http://santedb.org/messaging"),  XmlRoot(nameof(MailMessage), Namespace = "http://santedb.org/messaging")]
+	public class MailMessage : NonVersionedEntityData
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="AlertMessage"/> class.
+		/// Initializes a new instance of the <see cref="MailMessage"/> class.
 		/// </summary>
-		public AlertMessage()
+		public MailMessage()
 		{
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="AlertMessage"/> class
+		/// Initializes a new instance of the <see cref="MailMessage"/> class
 		/// with a specified from, to, subject, body, and alert message flags.
 		/// </summary>
 		/// <param name="from">The sender of the alert.</param>
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Alerting
 		/// <param name="subject">The subject of the alert.</param>
 		/// <param name="body">The body of the alert.</param>
 		/// <param name="flags">The flags of the alert.</param>
-		public AlertMessage(String from, String to, String subject, String body, AlertMessageFlags flags = AlertMessageFlags.None)
+		public MailMessage(String from, String to, String subject, String body, MailMessageFlags flags = MailMessageFlags.None)
 		{
 			this.TimeStamp = DateTime.Now;
 			this.From = from;
@@ -79,7 +79,7 @@ namespace SanteDB.Core.Alerting
 		/// Gets or sets the status of the alert.
 		/// </summary>
 		[JsonProperty("flags"), XmlElement("flags")]
-		public AlertMessageFlags Flags { get; set; }
+		public MailMessageFlags Flags { get; set; }
 
 		/// <summary>
 		/// Gets or sets the "from" subject if it is a human based message of the alert.

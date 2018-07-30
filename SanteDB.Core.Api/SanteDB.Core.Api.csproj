@@ -36,9 +36,9 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Alerting\AlertEventArgs.cs" />
-    <Compile Include="Alerting\AlertMessage.cs" />
-    <Compile Include="Alerting\AlertMessageFlags.cs" />
+    <Compile Include="Mail\MailMessageEventArgs.cs" />
+    <Compile Include="Mail\MailMessage.cs" />
+    <Compile Include="Mail\MailMessageFlags.cs" />
     <Compile Include="ApplicationServiceContext.cs" />
     <Compile Include="Diagnostics\Tracer.cs" />
     <Compile Include="Diagnostics\TraceWriter.cs" />
@@ -78,7 +78,7 @@
     <Compile Include="Protocol\ProtocolComparer.cs" />
     <Compile Include="Services\IActExtensionRepositoryService.cs" />
     <Compile Include="Services\IActRepositoryService.cs" />
-    <Compile Include="Services\IAlertRepositoryService.cs" />
+    <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
     <Compile Include="Interfaces\IAuditEventSource.cs" />
     <Compile Include="Services\IAuditRepositoryService.cs" />
