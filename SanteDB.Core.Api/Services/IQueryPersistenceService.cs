@@ -34,7 +34,7 @@ namespace SanteDB.Core.Services
 		/// <param name="results">The results to be stored in the query</param>
 		/// <param name="tag">A user tag for the query result set. Can be used to determine
 		/// the type of data being returned</param>
-		bool RegisterQuerySet(Guid queryId, IEnumerable<Guid> results, object tag);
+		bool RegisterQuerySet(Guid queryId, IEnumerable<Guid> results, object tag, int totalResults);
 
 		/// <summary>
 		/// Returns true if the query identifier is already registered
@@ -61,5 +61,13 @@ namespace SanteDB.Core.Services
 		/// </summary>
 		/// <param name="queryId">Unique identifier for the query to count remaining results</param>
 		long QueryResultTotalQuantity(Guid queryId);
-	}
+
+        /// <summary>
+        /// Add results to the query
+        /// </summary>
+        /// <param name="queryId">The query id to add results to</param>
+        /// <param name="results">The result keys</param>
+        void AddResults(Guid queryId, IEnumerable<Guid> results);
+
+    }
 }
