@@ -37,7 +37,7 @@ namespace SanteDB.Core.Services
         /// are applied to the underlying datastore to come up with a reduced set of records which can be
         /// classified
         /// </remarks>
-        /// <typeparam name="T">The type of data being blocked</typeparam>
+        /// <typeparam name="T">The type of records being matched</typeparam>
         /// <param name="input">The input record from which blocks should be returned</param>
         /// <param name="configurationName">The configuration that should be used for blocking</param>
         /// <returns>The record which match the blocking configuration for type <typeparamref name="T"/></returns>
@@ -56,5 +56,20 @@ namespace SanteDB.Core.Services
         /// <returns>True if the classification was successful</returns>
         bool Classify<T>(T input, IEnumerable<T> blocks, string configurationName, out IEnumerable<T> matched, out IEnumerable<T> probable, out IEnumerable<T> discard);
 
+        /// <summary>
+        /// Instructs the record matcher to run a block and match operation against <paramref name="input"/>
+        /// </summary>
+        /// <typeparam name="T">The type of records being matched</typeparam>
+        /// <param name="input">The record being compared to</param>
+        /// <param name="configurationName">The name of the configuration to be used</param>
+        /// <param name="matched">The records whose match score exceeds the match threshold</param>
+        /// <param name="probable">The record which are probable matches but require review</param>
+        /// <param name="discard">The records whose match score is less than unmatch threshold</param>
+        /// <returns>True if classification was successful</returns>
+        /// <remarks>
+        /// The match method for some implementations of record matching may be equivalent to Block()/Classify() function calls, however
+        /// some matching implementations may optimize database round-trips using a single pass.
+        /// </remarks>
+        bool Match<T>(T input, string configurationName, out IEnumerable<T> matched, out IEnumerable<T> probable, out IEnumerable<T> discard);
     }
 }
