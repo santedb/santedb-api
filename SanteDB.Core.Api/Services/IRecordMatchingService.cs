@@ -24,11 +24,6 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// Gets the matching configuration information
-        /// </summary>
-        IEnumerable<IRecordMatchingConfiguration> Configurations { get; }
-
-        /// <summary>
         /// Instructs the record matching service to perform a quick block function of records
         /// for type <typeparamref name="T"/> with <paramref name="input"/>
         /// </summary>

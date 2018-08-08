@@ -97,6 +97,7 @@
     <Compile Include="Services\IPasswordValidatorService.cs" />
     <Compile Include="Services\IPatchService.cs" />
     <Compile Include="Services\IPersonRepositoryService.cs" />
+    <Compile Include="Services\IRecordMatchingConfigurationService.cs" />
     <Compile Include="Services\IRecordMatchingService.cs" />
     <Compile Include="Services\IRecordMergingService.cs" />
     <Compile Include="Services\IReportProgressChanged.cs" />
@@ -150,9 +151,6 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="SanteDB.Core.Api.nuspec">
       <SubType>Designer</SubType>
     </None>
