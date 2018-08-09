@@ -28,12 +28,17 @@ namespace SanteDB.Core.Services.Impl
 	/// </summary>
 	public abstract class BaseBusinessRulesService<TModel> : IBusinessRulesService<TModel> where TModel : IdentifiedData
 	{
-		/// <summary>
-		/// After insert
-		/// </summary>
-		public virtual TModel AfterInsert(TModel data)
+        /// <summary>
+        /// Gets the next behavior
+        /// </summary>
+        public IBusinessRulesService<TModel> Next { get; set; }
+
+        /// <summary>
+        /// After insert
+        /// </summary>
+        public virtual TModel AfterInsert(TModel data)
 		{
-			return data;
+			return this.Next?.AfterInsert(data) ?? data;
 		}
 
 		/// <summary>
@@ -41,7 +46,7 @@ namespace SanteDB.Core.Services.Impl
 		/// </summary>
 		public virtual TModel AfterObsolete(TModel data)
 		{
-			return data;
+            return this.Next?.AfterObsolete(data) ?? data;
 		}
 
 		/// <summary>
@@ -51,55 +56,55 @@ namespace SanteDB.Core.Services.Impl
 		/// <returns></returns>
 		public virtual IEnumerable<TModel> AfterQuery(IEnumerable<TModel> results)
 		{
-			return results;
-		}
+            return this.Next?.AfterQuery(results) ?? results;
+        }
 
-		/// <summary>
-		/// Fired after retrieve
-		/// </summary>
-		public virtual TModel AfterRetrieve(TModel result)
+        /// <summary>
+        /// Fired after retrieve
+        /// </summary>
+        public virtual TModel AfterRetrieve(TModel result)
 		{
-			return result;
-		}
+            return this.Next?.AfterRetrieve(result) ?? result;
+        }
 
-		/// <summary>
-		/// After update
-		/// </summary>
-		public virtual TModel AfterUpdate(TModel data)
+        /// <summary>
+        /// After update
+        /// </summary>
+        public virtual TModel AfterUpdate(TModel data)
 		{
-			return data;
-		}
+            return this.Next?.AfterUpdate(data) ?? data;
+        }
 
-		/// <summary>
-		/// Before insert complete
-		/// </summary>
-		public virtual TModel BeforeInsert(TModel data)
+        /// <summary>
+        /// Before insert complete
+        /// </summary>
+        public virtual TModel BeforeInsert(TModel data)
 		{
-			return data;
-		}
+            return this.Next?.BeforeInsert(data) ?? data;
+        }
 
-		/// <summary>
-		/// Before obselete
-		/// </summary>
-		public virtual TModel BeforeObsolete(TModel data)
+        /// <summary>
+        /// Before obselete
+        /// </summary>
+        public virtual TModel BeforeObsolete(TModel data)
 		{
-			return data;
-		}
+            return this.Next?.BeforeObsolete(data) ?? data;
+        }
 
-		/// <summary>
-		/// Before update
-		/// </summary>
-		public virtual TModel BeforeUpdate(TModel data)
+        /// <summary>
+        /// Before update
+        /// </summary>
+        public virtual TModel BeforeUpdate(TModel data)
 		{
-			return data;
-		}
+            return this.Next?.BeforeUpdate(data) ?? data;
+        }
 
-		/// <summary>
-		/// Validate the specified object
-		/// </summary>
-		public virtual List<DetectedIssue> Validate(TModel data)
+        /// <summary>
+        /// Validate the specified object
+        /// </summary>
+        public virtual List<DetectedIssue> Validate(TModel data)
 		{
-			return new List<DetectedIssue>();
+			return this.Next?.Validate(data) ?? new List<DetectedIssue>();
 		}
 	}
 }

@@ -44,6 +44,11 @@ namespace SanteDB.Core.Services
 	/// </remarks>
 	public interface IBusinessRulesService<TModel> where TModel : IdentifiedData
 	{
+        /// <summary>
+        /// Gets or sets the rule to be run after this rule (for chained rules)
+        /// </summary>
+        IBusinessRulesService<TModel> Next { get; set; }
+
 		/// <summary>
 		/// Called after an insert occurs
 		/// </summary>
@@ -90,6 +95,7 @@ namespace SanteDB.Core.Services
 		/// Called to validate a specific object
 		/// </summary>
 		List<DetectedIssue> Validate(TModel data);
+
 	}
 
 	/// <summary>
