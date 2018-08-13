@@ -60,8 +60,17 @@ namespace SanteDB.Core.Http.Description
 	/// </summary>
 	public enum SecurityScheme
 	{
+        /// <summary>
+        /// The HTTP endpoint uses no security
+        /// </summary>
 		None = 0,
+        /// <summary>
+        /// The HTTP endpoint requires BASIC security
+        /// </summary>
 		Basic = 1,
+        /// <summary>
+        /// The HTTP endpoint requires BEARER token security
+        /// </summary>
 		Bearer = 2
 	}
 }

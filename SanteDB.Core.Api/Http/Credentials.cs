@@ -32,7 +32,7 @@ namespace SanteDB.Core.Http
 		private IPrincipal m_principal;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.Mobile.Core.Authentication.Credentials"/> class.
+		/// Initializes a new instance of the <see cref="Credentials"/> class.
 		/// </summary>
 		/// <param name="principal">Principal.</param>
 		protected Credentials(IPrincipal principal)

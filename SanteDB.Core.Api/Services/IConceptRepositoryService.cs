@@ -115,7 +115,7 @@ namespace SanteDB.Core.Services
 		/// Finds a concept by reference term.
 		/// </summary>
 		/// <param name="code">The code of the reference term.</param>
-		/// <param name="codeSystemOid">The code system OID of the reference term.</param>
+		/// <param name="codeSystem">The code system OID of the reference term.</param>
 		/// <returns>Returns a list of concepts.</returns>
 		IEnumerable<Concept> FindConceptsByReferenceTerm(string code, Uri codeSystem);
 

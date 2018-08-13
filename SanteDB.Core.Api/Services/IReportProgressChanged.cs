@@ -26,6 +26,9 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Services
 {
 
+    /// <summary>
+    /// Represents a progress changing event
+    /// </summary>
     public class ProgressChangedEventArgs : EventArgs
     {
         /// <summary>

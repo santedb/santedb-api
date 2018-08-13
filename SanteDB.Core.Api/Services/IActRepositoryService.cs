@@ -70,7 +70,7 @@ namespace SanteDB.Core.Services
         /// Cancels a specific act.
         /// </summary>
         /// <typeparam name="TAct">The type of the act.</typeparam>
-        /// <param name="key">The key.</param>
+        /// <param name="act">The act.</param>
         /// <returns>Returns the act.</returns>
         TAct Cancel<TAct>(TAct act) where TAct : Act;
 
@@ -78,7 +78,7 @@ namespace SanteDB.Core.Services
         /// Nullifies a specific act.
         /// </summary>
         /// <typeparam name="TAct">The type of the act.</typeparam>
-        /// <param name="key">The key.</param>
+        /// <param name="act">The act.</param>
         /// <returns>Returns the act.</returns>
         TAct Nullify<TAct>(TAct act) where TAct : Act;
 

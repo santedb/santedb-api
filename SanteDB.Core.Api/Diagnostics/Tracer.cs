@@ -43,7 +43,7 @@ namespace SanteDB.Core.Diagnostics
         }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Logger"/> class.
+		/// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Tracer"/> class.
 		/// </summary>
 		/// <param name="source">Source.</param>
 		private Tracer(String source)

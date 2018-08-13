@@ -156,7 +156,8 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Create a care plan
         /// </summary>
-        /// <param name="p"></param>
+        /// <param name="p">The patient to calculate the care plan for</param>
+        /// <param name="asEncounters">True if the data should be grouped as an encounter</param>
         /// <returns></returns>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {

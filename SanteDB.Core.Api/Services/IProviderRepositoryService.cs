@@ -25,6 +25,9 @@ using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
+    /// <summary>
+    /// Represents a service which handles interaction with the provider repository
+    /// </summary>
 	public interface IProviderRepositoryService
 	{
 		/// <summary>

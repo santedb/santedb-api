@@ -17,11 +17,60 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace SanteDB.Core.Services.Impl
 {
+
+    /// <summary>
+    /// Business rule extensions
+    /// </summary>
+    public static class BusinessRulesExtensions
+    {
+
+        /// <summary>
+        /// Add a business rule service to this instance of me or the next instance
+        /// </summary>
+        public static void AddBusinessRuleService(this IServiceProvider me, Type instance)
+        {
+            var ibre = instance.GetType().GetTypeInfo().ImplementedInterfaces.FirstOrDefault(i => i.IsConstructedGenericType && i.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>));
+            if (ibre == null)
+                throw new InvalidOperationException($"{nameof(instance)} must implement IBusinessRulesService<T>");
+            var meth = typeof(BusinessRulesExtensions).GetGenericMethod(nameof(AddBusinessRuleService), ibre.GenericTypeArguments, new Type[] { typeof(IServiceProvider), ibre });
+            meth.Invoke(null, new object[] { me, instance });
+        }
+
+        /// <summary>
+        /// Adds a new business rule service for the specified model to the application service otherwise adds it to the chain
+        /// </summary>
+        /// <typeparam name="TModel">The type of model to bind to</typeparam>
+        /// <param name="me">The application service to be added to</param>
+        /// <param name="breType">The instance of the BRE</param>
+        public static void AddBusinessRuleService<TModel>(this IServiceProvider me, Type breType) where TModel : IdentifiedData
+        {
+            var cbre = me.GetSerivce<IBusinessRulesService<TModel>>();
+            if (cbre == null)
+                (me as IServiceManager)?.AddServiceProvider(breType);
+            else
+            {
+                while (cbre.Next != null)
+                {
+                    if (cbre.GetType() == breType) return; // duplicate
+                    cbre = cbre.Next;
+                }
+                cbre.Next = Activator.CreateInstance(breType) as IBusinessRulesService<TModel>;
+            }
+
+
+        }
+
+    }
+
 	/// <summary>
 	/// Represents a business rules service with no behavior, but intended to help in the implementation of another
 	/// business rules service

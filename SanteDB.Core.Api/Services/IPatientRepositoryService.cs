@@ -61,7 +61,7 @@ namespace SanteDB.Core.Services
 		/// </summary>
 		/// <param name="survivor">The surviving patient record</param>
 		/// <param name="victim">The victim patient record</param>
-		/// <returns>A new version of patient <paramref name="a"/> representing the merge</returns>
+		/// <returns>A new version of patient representing the merge</returns>
 		Patient Merge(Patient survivor, Patient victim);
 
 		/// <summary>

@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
+#pragma warning disable CS1591
 namespace SanteDB.Core.Interop
 {
 
@@ -93,3 +94,4 @@ namespace SanteDB.Core.Interop
         public ResourceCapability Capabilities { get; set; }
     }
 }
+#pragma warning restore CS1591

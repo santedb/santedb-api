@@ -48,24 +48,20 @@ namespace SanteDB.Core.Http
 		/// <summary>
 		/// Gets the specified item
 		/// </summary>
-		/// <param name="resourceName">Resource name.</param>
-		/// <param name="queryString">Query string.</param>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		/// <typeparam name="TResult">The 1st type parameter.</typeparam>
 		TResult Get<TResult>(String url);
 
 		/// <summary>
 		/// Gets a inumerable result set of type T
 		/// </summary>
-		/// <param name="resourceName">Resource name.</param>
-		/// <param name="query">Query.</param>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		/// <typeparam name="TResult">The 1st type parameter.</typeparam>
 		TResult Get<TResult>(String url, params KeyValuePair<String, Object>[] query);
 
 		/// <summary>
 		/// Invokes the specified method against the URL provided
 		/// </summary>
 		/// <param name="method">Method.</param>
-		/// <param name="resourceName">Resource name.</param>
+		/// <param name="url">Resource name.</param>
 		/// <param name="contentType">Content type.</param>
 		/// <param name="body">Body.</param>
 		/// <typeparam name="TBody">The 1st type parameter.</typeparam>
@@ -91,6 +87,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL</param>
         /// <param name="contentType">The content type</param>
         /// <param name="ifMatch">Target version/etag to patch</param>
+        /// <param name="patch">The patch to apply</param>
         String Patch<TPatch>(string url, string contentType, String ifMatch, TPatch patch);
 
 

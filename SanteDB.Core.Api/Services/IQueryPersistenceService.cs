@@ -34,6 +34,7 @@ namespace SanteDB.Core.Services
 		/// <param name="results">The results to be stored in the query</param>
 		/// <param name="tag">A user tag for the query result set. Can be used to determine
 		/// the type of data being returned</param>
+        /// <param name="totalResults">The total number of results in the query set</param>
 		bool RegisterQuerySet(Guid queryId, IEnumerable<Guid> results, object tag, int totalResults);
 
 		/// <summary>

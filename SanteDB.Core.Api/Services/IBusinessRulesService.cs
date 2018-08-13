@@ -30,8 +30,17 @@ namespace SanteDB.Core.Services
 	/// </summary>
 	public enum DetectedIssuePriorityType : int
 	{
+        /// <summary>
+        /// The issue is an error, processing cannot continue
+        /// </summary>
 		Error = 1,
+        /// <summary>
+        /// The issue is for information only
+        /// </summary>
 		Informational = 2,
+        /// <summary>
+        /// The issue is just a warning, processing will continue
+        /// </summary>
 		Warning = 4
 	}
 

@@ -29,18 +29,39 @@ namespace SanteDB.Core.Interop
     [XmlType(nameof(ServiceEndpointType), Namespace = "http://santedb.org/model")]
     public enum ServiceEndpointType
     {
+        /// <summary>
+        /// The service endpoint is the HDSI
+        /// </summary>
         [XmlEnum("hdsi")]
-        ImmunizationIntegrationService,
+        HealthDataService,
+        /// <summary>
+        /// The service endpoint is the RISI
+        /// </summary>
         [XmlEnum("risi")]
         ReportIntegrationService,
+        /// <summary>
+        /// The service endpoint is the AMI
+        /// </summary>
         [XmlEnum("ami")]
         AdministrationIntegrationService,
+        /// <summary>
+        /// The service endpoint is a PIX/PDQ interface
+        /// </summary>
         [XmlEnum("pixpdq")]
         IhePixPdqInterface,
+        /// <summary>
+        /// The service endpoint is a FHIR interface
+        /// </summary>
         [XmlEnum("fhir")]
         Hl7FhirInterface,
+        /// <summary>
+        /// The service endpoint is a GS1 interface
+        /// </summary>
         [XmlEnum("gs1")]
         Gs1StockInterface,
+        /// <summary>
+        /// The service endpoint is the ACS
+        /// </summary>
         [XmlEnum("acs")]
         AuthenticationService
     }

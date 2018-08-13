@@ -652,11 +652,29 @@ namespace SanteDB.Core.Http
     /// </summary>
     public enum ServiceClientErrorType
     {
+        /// <summary>
+        /// The service client response is valid
+        /// </summary>
         Valid,
+        /// <summary>
+        /// The service client encountered a general error
+        /// </summary>
         GenericError,
+        /// <summary>
+        /// The service client's authentication scheme does not match the server
+        /// </summary>
         AuthenticationSchemeMismatch,
+        /// <summary>
+        /// The service client encountered a security error
+        /// </summary>
         SecurityError,
+        /// <summary>
+        /// The service client is contacting the wrong realm
+        /// </summary>
         RealmMismatch,
+        /// <summary>
+        /// The service client was not ready
+        /// </summary>
         NotReady
     }
 }
