@@ -168,7 +168,7 @@ namespace SanteDB.Core.Services
 		/// <param name="id">The id of the concept.</param>
 		/// <param name="versionId">The version id of the concept.</param>
 		/// <returns>Returns the specified concept.</returns>
-		IdentifiedData GetConcept(Guid id, Guid versionId);
+		Concept GetConcept(Guid id, Guid versionId);
 
 		/// <summary>
 		/// Gets a concept by mnemonic.
