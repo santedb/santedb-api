@@ -202,6 +202,11 @@ namespace SanteDB.Core.Services
 		/// <returns>Returns the policy.</returns>
 		SecurityPolicy GetPolicy(Guid policyId);
 
+        /// <summary>
+        /// Get the specified security policy by OID
+        /// </summary>
+        SecurityPolicy GetPolicy(String policyOid);
+
 		/// <summary>
 		/// Gets a specific role.
 		/// </summary>
