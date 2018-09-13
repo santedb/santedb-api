@@ -214,12 +214,20 @@ namespace SanteDB.Core.Services
 		/// <returns>Returns the role.</returns>
 		SecurityRole GetRole(Guid roleId);
 
-		/// <summary>
-		/// Gets a specific user.
-		/// </summary>
-		/// <param name="userId">The id of the user to retrieve.</param>
-		/// <returns>Returns the user.</returns>
-		SecurityUser GetUser(Guid userId);
+
+        /// <summary>
+        /// Gets a specific role.
+        /// </summary>
+        /// <param name="roleName">The id of the role to retrieve.</param>
+        /// <returns>Returns the role.</returns>
+        SecurityRole GetRole(String roleName);
+
+        /// <summary>
+        /// Gets a specific user.
+        /// </summary>
+        /// <param name="userId">The id of the user to retrieve.</param>
+        /// <returns>Returns the user.</returns>
+        SecurityUser GetUser(Guid userId);
 
 		/// <summary>
 		/// Gets the specified security user based on the principal
