@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -101,5 +102,15 @@ namespace SanteDB.Core.Services
         /// some matching implementations may optimize database round-trips using a single pass.
         /// </remarks>
         IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationName) where T : IdentifiedData;
+
+        /// <summary>
+        /// Performs a score against the specified query (how confident the match is that the <paramref name="input"/> matches the <paramref name="query"/>
+        /// </summary>
+        /// <typeparam name="T">The type of data being matched</typeparam>
+        /// <param name="input">The record being scored</param>
+        /// <param name="query">The original query</param>
+        /// <param name="configurationName">The configuration name to use for scoring</param>
+        /// <returns>The record match result of the object</returns>
+        IRecordMatchResult<T> Score<T>(T input, Expression<Func<T, bool>> query, String configurationName) where T: IdentifiedData;
     }
 }

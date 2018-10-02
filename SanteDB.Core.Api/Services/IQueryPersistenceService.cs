@@ -27,6 +27,12 @@ namespace SanteDB.Core.Services
 	/// </summary>
 	public interface IQueryPersistenceService
 	{
+
+        /// <summary>
+        /// Find the query ID by the query tag
+        /// </summary>
+        Guid FindQueryId(object queryTag);
+
 		/// <summary>
 		/// Register a query set
 		/// </summary>
@@ -70,5 +76,9 @@ namespace SanteDB.Core.Services
         /// <param name="results">The result keys</param>
         void AddResults(Guid queryId, IEnumerable<Guid> results);
 
+        /// <summary>
+        /// Set or update the query tag of an existing query id
+        /// </summary>
+        void SetQueryTag(Guid queryId, object value);
     }
 }
