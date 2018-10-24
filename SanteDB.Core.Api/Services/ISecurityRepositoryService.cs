@@ -335,5 +335,10 @@ namespace SanteDB.Core.Services
 		/// </summary>
 		/// <param name="userId">The id of the user to be unlocked.</param>
 		void UnlockUser(Guid userId);
+
+        /// <summary>
+        /// Get the provenance object
+        /// </summary>
+        SecurityProvenance GetProvenance(Guid provenanceId);
 	}
 }
