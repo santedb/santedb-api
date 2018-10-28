@@ -646,6 +646,21 @@ namespace SanteDB.Core.Http
             this.Responding?.Invoke(this, args);
         }
 
+        /// <summary>
+        /// Perform a lock on the specified resource
+        /// </summary>
+        public TResult Lock<TResult>(string url)
+        {
+            return this.Invoke<Object, TResult>("LOCK", url, null, null, null);
+        }
+
+        /// <summary>
+        /// Perform an unlock
+        /// </summary>
+        public TResult Unlock<TResult>(string url)
+        {
+            return this.Invoke<Object, TResult>("UNLOCK", url, null, null, null);
+        }
     }
     /// <summary>
     /// Service client error type

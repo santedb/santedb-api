@@ -90,7 +90,6 @@ namespace SanteDB.Core.Http
         /// <param name="patch">The patch to apply</param>
         String Patch<TPatch>(string url, string contentType, String ifMatch, TPatch patch);
 
-
         /// <summary>
         /// Executes a post against the url
         /// </summary>
@@ -131,6 +130,16 @@ namespace SanteDB.Core.Http
         /// <param name="url">URL.</param>
         /// <typeparam name="TResult">The 1st type parameter.</typeparam>
         IDictionary<String, String> Head(String resourceName, params KeyValuePair<String, Object>[] query);
+
+        /// <summary>
+        /// Lock the specified resource
+        /// </summary>
+        TResult Lock<TResult>(String url);
+
+        /// <summary>
+        /// Unlock the specified resource
+        /// </summary>
+        TResult Unlock<TResult>(String url);
 
         /// <summary>
         /// Perform a raw get

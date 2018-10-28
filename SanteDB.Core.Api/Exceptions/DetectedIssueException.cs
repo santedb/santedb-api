@@ -73,13 +73,15 @@ namespace SanteDB.Core.Exceptions
         /// </summary>
         public override string ToString()
         {
-            var sb = new StringBuilder("BRE Violations:");
+            var sb = new StringBuilder("BRE Violations/Detected Issues:");
             foreach (var i in this.Issues)
 #if DEBUG
                 sb.AppendFormat("\r\n{0}- {1}", i.Priority, i.Text);
 #else
                 sb.AppendFormat("\r\n{0}- {1}", i.Priority, i.Text);
 #endif
+
+            sb.AppendFormat("\r\n\r\nAt: {0}", this.StackTrace);
             return sb.ToString();
         }
 

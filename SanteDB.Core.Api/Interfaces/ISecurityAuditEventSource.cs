@@ -47,7 +47,7 @@ namespace SanteDB.Core.Interfaces
     /// <summary>
     /// Security audit event source
     /// </summary>
-    public interface ISecurityAuditEventSource : IAuditEventSource
+    public interface ISecurityAuditEventSource
     {
 
         /// <summary>
