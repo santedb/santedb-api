@@ -54,6 +54,11 @@ namespace SanteDB.Core.Mail
 		/// Indicates the alert is transient and shouldn't be persisted
 		/// </summary>
 		Transient = 0x10,
+        
+        /// <summary>
+        /// Indicates the message is archived
+        /// </summary>
+        Archived = 0x20,
 
 		/// <summary>
 		/// Idicates a high priority alert.
