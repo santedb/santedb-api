@@ -37,7 +37,7 @@ namespace SanteDB.Core
         /// <typeparam name="T">The type of service to be retrieved</typeparam>
         /// <param name="me">The reference to the service provider</param>
         /// <returns>The fetched / registered service implementation</returns>
-        public static T GetSerivce<T>(this IServiceProvider me)
+        public static T GetService<T>(this IServiceProvider me)
         {
             return (T)me.GetService(typeof(T));
         }
