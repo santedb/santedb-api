@@ -21,7 +21,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Change password of a principal
         /// </summary>
-        void ChangePassword(String userName, String password, IPrincipal principal);
+        void ChangePassword(String userName, String password);
 
         /// <summary>
         /// Add users to roles
@@ -32,6 +32,19 @@ namespace SanteDB.Core.Security
         /// Remove users from roles
         /// </summary>
         void RemoveUsersFromRoles(String[] users, String[] roles);
+
+        /// <summary>
+        /// Get all roles from database
+        /// </summary>
+        String[] GetAllRoles();
+
+        /// <summary>
+        /// Determine if user is in role
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="role"></param>
+        /// <returns></returns>
+        bool IsUserInRole(String user, String role);
     }
 
 }
