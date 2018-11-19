@@ -53,7 +53,7 @@ namespace SanteDB.Core.Services.Impl
         /// <param name="breType">The instance of the BRE</param>
         public static void AddBusinessRuleService<TModel>(this IServiceProvider me, Type breType) where TModel : IdentifiedData
         {
-            var cbre = me.GetSerivce<IBusinessRulesService<TModel>>();
+            var cbre = me.GetService<IBusinessRulesService<TModel>>();
             if (cbre == null)
                 (me as IServiceManager)?.AddServiceProvider(breType);
             else
