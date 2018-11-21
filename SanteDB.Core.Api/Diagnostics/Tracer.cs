@@ -41,12 +41,12 @@ namespace SanteDB.Core.Diagnostics
         {
             m_writers.Add(new KeyValuePair<TraceWriter, EventLevel>(tw, filter));
         }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Tracer"/> class.
-		/// </summary>
-		/// <param name="source">Source.</param>
-		private Tracer(String source)
+        
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Tracer"/> class.
+        /// </summary>
+        /// <param name="source">Source.</param>
+        private Tracer(String source)
 		{
 			this.m_source = source;
 		}

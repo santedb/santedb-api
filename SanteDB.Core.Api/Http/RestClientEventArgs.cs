@@ -101,12 +101,18 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// REST response client event args
         /// </summary>
-        public RestResponseEventArgs(String method, String url, NameValueCollection query, String contentType, Object responseBody, int statusCode, long contentLength) :
+        public RestResponseEventArgs(String method, String url, NameValueCollection query, String contentType, Object responseBody, int statusCode, long contentLength, IDictionary<String, String> headers) :
             base(method, url, query, contentType, responseBody)
         {
             this.StatusCode = statusCode;
             this.ContentLength = contentLength;
+            this.Headers = headers;
         }
+
+        /// <summary>
+        /// Get the headers from the service
+        /// </summary>
+        public IDictionary<String, String> Headers { get; private set; }
 
         /// <summary>
         /// Content length
@@ -117,6 +123,19 @@ namespace SanteDB.Core.Http
         /// Identifies the response code
         /// </summary>
         public int StatusCode { get; set; }
+
+        /// <summary>
+        /// Gets the etag
+        /// </summary>
+        public string ETag
+        {
+            get
+            {
+                string et = null;
+                this.Headers.TryGetValue("ETag", out et);
+                return et;
+            }
+        }
     }
 
 }

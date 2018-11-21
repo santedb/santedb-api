@@ -17,56 +17,91 @@
  * User: fyfej
  * Date: 2017-9-1
  */
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Roles;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Http
 {
-	/// <summary>
-	/// Represents a body serializer that uses XmlSerializer
-	/// </summary>
-	internal class XmlBodySerializer : IBodySerializer
-	{
-
+    /// <summary>
+    /// Represents a body serializer that uses XmlSerializer
+    /// </summary>
+    internal class XmlBodySerializer : IBodySerializer
+    {
         // Serializers
         private static Dictionary<Type, XmlSerializer> m_serializers = new Dictionary<Type, XmlSerializer>();
 
-		// Serializer
-		private XmlSerializer m_serializer;
+        // Serializer
+        private XmlSerializer m_serializer;
 
-		/// <summary>
-		/// Creates a new body serializer
-		/// </summary>
-		public XmlBodySerializer(Type type)
-		{
+        // Type
+        private Type m_type;
+
+        /// <summary>
+        /// Creates a new body serializer
+        /// </summary>
+        public XmlBodySerializer(Type type, params Type[] extraTypes)
+        {
+            this.m_type = type;
             if (!m_serializers.TryGetValue(type, out this.m_serializer))
             {
-                this.m_serializer = new XmlSerializer(type);
+                this.m_serializer = new XmlSerializer(type, extraTypes);
                 lock (m_serializers)
                     if (!m_serializers.ContainsKey(type))
                         m_serializers.Add(type, this.m_serializer);
             }
-		}
+        }
 
-		#region IBodySerializer implementation
+        #region IBodySerializer implementation
 
-		/// <summary>
-		/// Serialize the object
-		/// </summary>
-		public void Serialize(System.IO.Stream s, object o)
-		{
-			this.m_serializer.Serialize(s, o);
-		}
+        /// <summary>
+        /// Serialize the object
+        /// </summary>
+        public void Serialize(System.IO.Stream s, object o)
+        {
+            if (o.GetType() == this.m_type)
+                this.m_serializer.Serialize(s, o);
+            else // Slower
+            {
+                XmlSerializer xsz = new XmlSerializer(o.GetType(), (o as Bundle)?.Item.Select(i => i.GetType()).Distinct().ToArray() ?? new Type[0]);
+                xsz.Serialize(s, o);
+            }
+        }
 
-		/// <summary>
-		/// Serialize the reply stream
-		/// </summary>
-		public object DeSerialize(System.IO.Stream s)
-		{
-			return this.m_serializer.Deserialize(s);
-		}
+        /// <summary>
+        /// Serialize the reply stream
+        /// </summary>
+        public object DeSerialize(System.IO.Stream s)
+        {
+            XmlSerializer serializer = null;
+            using (XmlReader bodyReader = XmlReader.Create(s))
+            {
+                while (bodyReader.NodeType != XmlNodeType.Element)
+                    bodyReader.Read();
 
-		#endregion IBodySerializer implementation
-	}
+                // Find candidate type
+                Type eType = m_serializers.Keys.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
+                    o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
+                if(eType == null)
+                    eType = typeof(Patient).GetTypeInfo().Assembly.ExportedTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
+                        o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
+
+                if (!m_serializers.TryGetValue(eType, out serializer))
+                {
+                    serializer = new XmlSerializer(eType);
+                    lock (m_serializers)
+                        if (!m_serializers.ContainsKey(eType))
+                            m_serializers.Add(eType, serializer);
+                }
+                return serializer.Deserialize(s);
+            }
+        }
+
+        #endregion IBodySerializer implementation
+    }
 }

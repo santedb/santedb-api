@@ -20,6 +20,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Serialization;
 using System;
 using System.IO;
 
@@ -46,7 +47,8 @@ namespace SanteDB.Core.Http
 				DateFormatHandling = DateFormatHandling.IsoDateFormat,
 				NullValueHandling = NullValueHandling.Ignore,
 				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-				TypeNameHandling = TypeNameHandling.Auto
+				TypeNameHandling = TypeNameHandling.Auto,
+                SerializationBinder = new ModelSerializationBinder()
 			};
 
 			this.m_serializer.Converters.Add(new StringEnumConverter());
@@ -72,7 +74,7 @@ namespace SanteDB.Core.Http
 		{
 			using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
 			using (JsonTextReader jr = new JsonTextReader(tr))
-				return this.m_serializer.Deserialize(jr, this.m_type);
+				return this.m_serializer.Deserialize(jr);
 		}
 
 		#endregion IBodySerializer implementation

@@ -68,6 +68,17 @@ namespace SanteDB.Core.Http
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <summary>
+        /// Convert headers
+        /// </summary>
+        private IDictionary<String, String> ConvertHeaders(WebHeaderCollection headers)
+        {
+            Dictionary<String, String> retVal = new Dictionary<string, string>();
+            foreach (var k in headers.AllKeys) 
+                retVal.Add(k, headers[k]);
+            return retVal;
+        }
+
+        /// <summary>
         /// Fire that progress has changed
         /// </summary>
         protected void FireProgressChanged(object state, float progress)
@@ -227,6 +238,7 @@ namespace SanteDB.Core.Http
 
                 // Get the responst
                 byte[] retVal = null;
+                WebHeaderCollection headers = null;
                 Exception requestException = null;
                 var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
                 {
@@ -235,7 +247,8 @@ namespace SanteDB.Core.Http
                     else
                         try
                         {
-                            this.Responding?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, o.Result.ContentLength));
+                            headers = o.Result.Headers;
+                            this.Responding?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(headers)));
 
                             byte[] buffer = new byte[2048];
                             int br = 1;
@@ -301,9 +314,9 @@ namespace SanteDB.Core.Http
                 httpTask.Wait();
                 if (requestException != null)
                     throw requestException;
+                
 
-
-                this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0, this.ConvertHeaders(headers)));
 
                 return retVal;
             }
@@ -323,7 +336,7 @@ namespace SanteDB.Core.Http
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 500, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 500, 0, null));
                 throw;
             }
         }
@@ -376,13 +389,13 @@ namespace SanteDB.Core.Http
                 // Invoke
                 WebHeaderCollection responseHeaders = null;
                 var retVal = this.InvokeInternal<TBody, TResult>(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.ContentType, requestEventArgs.AdditionalHeaders, out responseHeaders, body, requestEventArgs.Query);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, requestEventArgs.ContentType, retVal, 200, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, requestEventArgs.ContentType, retVal, 200, 0, this.ConvertHeaders(responseHeaders)));
                 return retVal;
             }
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, parameters, contentType, null, 500, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, parameters, contentType, null, 500, 0, null));
                 throw;
             }
         }
@@ -577,7 +590,7 @@ namespace SanteDB.Core.Http
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("PATCH", url, null, contentType, null, 500, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("PATCH", url, null, contentType, null, 500, 0, null));
                 throw;
             }
 
@@ -618,7 +631,7 @@ namespace SanteDB.Core.Http
                         fault = o.Exception.InnerExceptions.First();
                     else
                     {
-                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, o.Result.ContentLength));
+                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
                         foreach (var itm in o.Result.Headers.AllKeys)
                             retVal.Add(itm, o.Result.Headers[itm]);
                     }
@@ -626,14 +639,14 @@ namespace SanteDB.Core.Http
                 httpTask.Wait();
                 if (fault != null)
                     throw fault;
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, 0, retVal));
 
                 return retVal;
             }
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 500, 0));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 500, 0, null));
                 throw;
             }
         }
