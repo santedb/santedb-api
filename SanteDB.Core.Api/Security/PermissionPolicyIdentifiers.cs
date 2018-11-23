@@ -154,6 +154,7 @@ namespace SanteDB.Core.Security
         /// Indicates the user can update metadata
         /// </summary>
         public const string UnrestrictedMetadata = UnrestrictedAll + ".4";
+
         /// <summary>
         /// Indicates the user can read metadata
         /// </summary>
@@ -185,9 +186,43 @@ namespace SanteDB.Core.Security
         public const string QueryWarehouseData = UnrestrictedWarehouse + ".3";
 
         /// <summary>
+        /// Write all materials 
+        /// </summary>
+        public const string WriteMaterials = UnrestrictedMetadata + ".1.0";
+        /// <summary>
+        /// delete alll materials
+        /// </summary>
+        public const string DeleteMaterials = UnrestrictedMetadata + ".1.1";
+        /// <summary>
+        /// Read materials
+        /// </summary>
+        public const string ReadMaterials = ReadMetadata + ".1.2";
+        /// <summary>
+        /// Query materials
+        /// </summary>
+        public const string QueryMaterials = ReadMetadata + ".1.3";
+
+        /// <summary>
+        /// Write all facilities 
+        /// </summary>
+        public const string WritePlacesAndOrgs = UnrestrictedMetadata + ".2.0";
+        /// <summary>
+        /// delete alll facilities
+        /// </summary>
+        public const string DeletePlacesAndOrgs = UnrestrictedMetadata + ".2.1";
+        /// <summary>
+        /// Read facilities
+        /// </summary>
+        public const string ReadPlacesAndOrgs = ReadMetadata + ".2.2";
+        /// <summary>
+        /// Query facilities
+        /// </summary>
+        public const string QueryPlacesAndOrgs = ReadMetadata + ".2.3";
+
+        /// <summary>
         /// Override policy permission
         /// </summary>
-        public const string OverridePolicyPermission = "1.3.6.1.4.1.33349.3.1.5.9.2.3";
+        public const string OverridePolicyPermission = UnrestrictedAll + ".999";
         #endregion
 
         #region SanteDB Client Functions
