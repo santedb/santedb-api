@@ -84,21 +84,31 @@ namespace SanteDB.Core.Http
                 while (bodyReader.NodeType != XmlNodeType.Element)
                     bodyReader.Read();
 
+                // Service fault?
                 // Find candidate type
-                Type eType = m_serializers.Keys.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
-                    o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
-                if(eType == null)
-                    eType = typeof(Patient).GetTypeInfo().Assembly.ExportedTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
-                        o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
+                if (this.m_serializer.CanDeserialize(bodyReader))
+                    serializer = this.m_serializer;
 
-                if (!m_serializers.TryGetValue(eType, out serializer))
+                else if (bodyReader.LocalName == "RestServiceFault" &&
+                   bodyReader.NamespaceURI == "http://santedb.org/fault")
+                    serializer = new XmlSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
+                else
                 {
-                    serializer = new XmlSerializer(eType);
-                    lock (m_serializers)
-                        if (!m_serializers.ContainsKey(eType))
-                            m_serializers.Add(eType, serializer);
+                    Type eType = m_serializers.FirstOrDefault(o => o.Value.CanDeserialize(bodyReader)).Key;
+                    if (eType == null)
+                        eType = typeof(Patient).GetTypeInfo().Assembly.ExportedTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
+                            o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
+                    if (eType == null)
+                        throw new KeyNotFoundException($"Could not determine how to de-serialize {bodyReader.NamespaceURI}#{bodyReader.Name}");
+                    if (!m_serializers.TryGetValue(eType, out serializer))
+                    {
+                        serializer = new XmlSerializer(eType);
+                        lock (m_serializers)
+                            if (!m_serializers.ContainsKey(eType))
+                                m_serializers.Add(eType, serializer);
+                    }
                 }
-                return serializer.Deserialize(s);
+                return serializer.Deserialize(bodyReader);
             }
         }
 

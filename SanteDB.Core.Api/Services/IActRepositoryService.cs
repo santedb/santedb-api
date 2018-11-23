@@ -66,21 +66,6 @@ namespace SanteDB.Core.Services
 		/// <returns>Returns the act.</returns>
 		TAct Obsolete<TAct>(Guid key) where TAct : Act;
 
-        /// <summary>
-        /// Cancels a specific act.
-        /// </summary>
-        /// <typeparam name="TAct">The type of the act.</typeparam>
-        /// <param name="act">The act.</param>
-        /// <returns>Returns the act.</returns>
-        TAct Cancel<TAct>(TAct act) where TAct : Act;
-
-        /// <summary>
-        /// Nullifies a specific act.
-        /// </summary>
-        /// <typeparam name="TAct">The type of the act.</typeparam>
-        /// <param name="act">The act.</param>
-        /// <returns>Returns the act.</returns>
-        TAct Nullify<TAct>(TAct act) where TAct : Act;
 
         /// <summary>
         /// Inserts or updates the specific act.

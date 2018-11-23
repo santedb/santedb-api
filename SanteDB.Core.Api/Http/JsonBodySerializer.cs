@@ -74,7 +74,7 @@ namespace SanteDB.Core.Http
 		{
 			using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
 			using (JsonTextReader jr = new JsonTextReader(tr))
-				return this.m_serializer.Deserialize(jr);
+				return this.m_serializer.Deserialize(jr, this.m_type);
 		}
 
 		#endregion IBodySerializer implementation
