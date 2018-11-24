@@ -17,7 +17,7 @@
  * User: justin
  * Date: 2018-6-21
  */
-using SanteDB.Core.Model;
+using SanteDB.Core.Model.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -25,20 +25,16 @@ using System.Linq.Expressions;
 namespace SanteDB.Core.Services
 {
 	/// <summary>
-	/// Persistable query provider is an extensable interface which can perform a query with state
+	/// Represents a repository which deals with metadata such as assigning authorities,
+	/// concept classes, etc.
 	/// </summary>
-	public interface IPersistableQueryRepositoryService<TEntity>
+	public interface ITemplateDefinitionRepositoryService : IRepositoryService<TemplateDefinition>
 	{
+        
         /// <summary>
-        /// Performs a query which
+        /// Get tempate definition
         /// </summary>
-        /// <typeparam name="TEntity">The underlying entity type which is being queried</typeparam>
-        /// <param name="query">The query to be executed</param>
-        /// <param name="offset">The offset</param>
-        /// <param name="count">The number of results</param>
-        /// <param name="totalResults">The total results in the query</param>
-        /// <param name="queryId">The unique identifier for the query</param>
-        IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId);
-
-	}
+        TemplateDefinition GetTemplateDefinition(string mnemonic);
+        
+    }
 }

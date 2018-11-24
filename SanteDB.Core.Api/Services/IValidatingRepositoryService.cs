@@ -17,27 +17,19 @@
  * User: justin
  * Date: 2018-6-21
  */
-using SanteDB.Core.Model.DataTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using SanteDB.Core.Model;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a repository service for managing assigning authorities.
-	/// </summary>
-	public interface IAssigningAuthorityRepositoryService : IRepositoryService<AssigningAuthority>
-	{
-
+    /// <summary>
+    /// Represents a repository that can validate
+    /// </summary>
+    public interface IValidatingRepositoryService<TModel> : IRepositoryService<TModel> 
+        where TModel : IdentifiedData
+    {
         /// <summary>
-        /// Get by domain
+        /// Validates the supplied data and returns a valid copy (or) throws an appropriate exception
         /// </summary>
-        AssigningAuthority Get(String domain);
-
-        /// <summary>
-        /// Get assigning authority by uri 
-        /// </summary>
-        AssigningAuthority Get(Uri uri);
-	}
+        TModel Validate(TModel data);
+    }
 }

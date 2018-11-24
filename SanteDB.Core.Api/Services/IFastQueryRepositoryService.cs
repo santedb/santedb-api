@@ -30,13 +30,13 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a query repository service which can find lean queries
     /// </summary>
-    public interface IFastQueryRepositoryService : IPersistableQueryRepositoryService
+    public interface IFastQueryRepositoryService<TEntity> : IPersistableQueryRepositoryService<TEntity>
     {
 
         /// <summary>
         /// Perform a quick search (instructs the data persistence layer not to load as many properties)
         /// </summary>
-        IEnumerable<TEntity> FindFast<TEntity>(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId) where TEntity : IdentifiedData;
+        IEnumerable<TEntity> FindFast(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId);
 
     }
 }

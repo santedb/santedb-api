@@ -29,32 +29,8 @@ namespace SanteDB.Core.Services
 	/// for ensuring that patient roles in the IMS database are in a consistent
 	/// state.
 	/// </summary>
-	public interface IPatientRepositoryService
+	public interface IPatientRepositoryService : IRepositoryService<Patient>, IValidatingRepositoryService<Patient>
 	{
-		/// <summary>
-		/// Searches the patient service for the specified patient matching the
-		/// given predicate
-		/// </summary>
-		/// <param name="predicate"></param>
-		/// <returns></returns>
-		IEnumerable<Patient> Find(Expression<Func<Patient, bool>> predicate);
-
-		/// <summary>
-		/// Searches the database for the specified patient
-		/// </summary>
-		IEnumerable<Patient> Find(Expression<Func<Patient, bool>> predicate, int offset, int? count, out int totalCount);
-
-		/// <summary>
-		/// Gets the specified patient
-		/// </summary>
-		Patient Get(Guid id, Guid versionId);
-
-		/// <summary>
-		/// Inserts the given patient
-		/// </summary>
-		/// <param name="p"></param>
-		/// <returns></returns>
-		Patient Insert(Patient p);
 
 		/// <summary>
 		/// Merges two patients together
@@ -65,18 +41,6 @@ namespace SanteDB.Core.Services
 		Patient Merge(Patient survivor, Patient victim);
 
 		/// <summary>
-		/// Obsoletes the given patient
-		/// </summary>
-		Patient Obsolete(Guid key);
-
-		/// <summary>
-		/// Updates the given patient only if they already exist
-		/// </summary>
-		/// <param name="p"></param>
-		/// <returns></returns>
-		Patient Save(Patient p);
-
-		/// <summary>
 		/// Un-merges two patients from each other
 		/// </summary>
 		/// <param name="patient">The patient which is to be un-merged</param>
@@ -84,9 +48,5 @@ namespace SanteDB.Core.Services
 		/// <returns>A new patient representing the split record</returns>
 		Patient UnMerge(Patient patient, Guid versionKey);
 
-		/// <summary>
-		/// Validate the specified patient, or rather ensure the patient is valid
-		/// </summary>
-		Patient Validate(Patient p);
 	}
 }

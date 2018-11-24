@@ -20,6 +20,7 @@
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -88,23 +89,56 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository which can nullify an object
     /// </summary>
-    public interface INullifyRepositoryService
+    public interface INullifyRepositoryService<TModel> : IRepositoryService<TModel>
+        where TModel : IdentifiedData
     {
         /// <summary>
-        /// Nullifies a specific model
+        /// Nullifies a specific instance
         /// </summary>
-        TModel Nullify<TModel>(Guid id);
+        TModel Nullify(Guid id);
     }
 
     /// <summary>
     /// Represents a repository that can cancel an act
     /// </summary>
-    public interface ICancelRepositoryService 
+    public interface ICancelRepositoryService<TModel> : IRepositoryService<TModel>
+        where TModel : IdentifiedData
     {
 
         /// <summary>
         /// Cancels the specified object
         /// </summary>
-        TModel Cancel<TModel>(Guid id);
+        TModel Cancel(Guid id);
+    }
+
+    /// <summary>
+    /// Represents a repository service that applies permission
+    /// </summary>
+    public interface ISecuredRepositoryService
+    {
+        /// <summary>
+        /// Demand write permission
+        /// </summary>
+        void DemandWrite(object data);
+
+        /// <summary>
+        /// Demand read permission
+        /// </summary>
+        void DemandRead(Guid key);
+
+        /// <summary>
+        /// Demand delete permission
+        /// </summary>
+        void DemandDelete(Guid key);
+
+        /// <summary>
+        /// Demand alter permission
+        /// </summary>
+        void DemandAlter(object data);
+
+        /// <summary>
+        /// Demand query permission
+        /// </summary>
+        void DemandQuery();
     }
 }
