@@ -19,7 +19,6 @@
  */
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Xml.Serialization;
 
 #pragma warning disable CS1591
@@ -30,10 +29,10 @@ namespace SanteDB.Core.Interop
     /// Service resource operations
     /// </summary>
     [XmlType(nameof(ResourceCapability), Namespace = "http://santedb.org/model"), Flags]
-    public enum ResourceCapability 
+    public enum ResourceCapability
     {
         [XmlEnum("none")]
-        None = 0x00, 
+        None = 0x00,
         [XmlEnum("create")]
         Create = 0x001,
         [XmlEnum("create-update")]
@@ -61,25 +60,25 @@ namespace SanteDB.Core.Interop
     public class ServiceResourceOptions
     {
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ServiceOptions"/> class.
-		/// </summary>
-	    public ServiceResourceOptions()
-	    {
-		    
-	    }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceOptions"/> class.
+        /// </summary>
+        public ServiceResourceOptions()
+        {
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ServiceResourceOptions"/> class
-		/// with a specific resource name, and verbs.
-		/// </summary>
-		/// <param name="resourceName">The name of the resource of the service resource options.</param>
-		/// <param name="operations">The list of HTTP verbs of the resource option.</param>
-	    public ServiceResourceOptions(string resourceName, ResourceCapability operations)
-	    {
-		    this.ResourceName = resourceName;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceResourceOptions"/> class
+        /// with a specific resource name, and verbs.
+        /// </summary>
+        /// <param name="resourceName">The name of the resource of the service resource options.</param>
+        /// <param name="operations">The list of HTTP verbs of the resource option.</param>
+        public ServiceResourceOptions(string resourceName, ResourceCapability operations)
+        {
+            this.ResourceName = resourceName;
             this.Capabilities = operations;
-	    }
+        }
 
         /// <summary>
         /// Gets the name of the resource

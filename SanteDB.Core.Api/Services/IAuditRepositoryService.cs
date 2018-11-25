@@ -20,10 +20,7 @@
 using MARC.HI.EHRS.SVC.Auditing.Data;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
@@ -60,6 +57,6 @@ namespace SanteDB.Core.Services
         /// <param name="totalResults">Total results matching query</param>
         /// <returns>The located audits trimmed for offset and count</returns>
         IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults);
-        
+
     }
 }

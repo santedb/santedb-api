@@ -23,19 +23,19 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a service that can do clinical protocols
-	/// </summary>
-	public interface IClinicalProtocolRepositoryService
-	{
-		/// <summary>
-		/// Find protocols in the repository service
-		/// </summary>
-		IEnumerable<Core.Model.Acts.Protocol> FindProtocol(Expression<Func<Core.Model.Acts.Protocol, bool>> predicate, int offset, int? count, out int totalResults);
+    /// <summary>
+    /// Represents a service that can do clinical protocols
+    /// </summary>
+    public interface IClinicalProtocolRepositoryService
+    {
+        /// <summary>
+        /// Find protocols in the repository service
+        /// </summary>
+        IEnumerable<Core.Model.Acts.Protocol> FindProtocol(Expression<Func<Core.Model.Acts.Protocol, bool>> predicate, int offset, int? count, out int totalResults);
 
-		/// <summary>
-		/// Find protocols in the repository service
-		/// </summary>
-		Core.Model.Acts.Protocol InsertProtocol(Core.Model.Acts.Protocol data);
-	}
+        /// <summary>
+        /// Find protocols in the repository service
+        /// </summary>
+        Core.Model.Acts.Protocol InsertProtocol(Core.Model.Acts.Protocol data);
+    }
 }

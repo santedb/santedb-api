@@ -24,56 +24,56 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents an alerting service.
-	/// </summary>
-	public interface IMailMessageRepositoryService
-	{
-		/// <summary>
-		/// Fired when an alert is received.
-		/// </summary>
-		event EventHandler<MailMessageEventArgs> Committed;
+    /// <summary>
+    /// Represents an alerting service.
+    /// </summary>
+    public interface IMailMessageRepositoryService
+    {
+        /// <summary>
+        /// Fired when an alert is received.
+        /// </summary>
+        event EventHandler<MailMessageEventArgs> Committed;
 
-		/// <summary>
-		/// Fired when an alert was raised and is being processed.
-		/// </summary>
-		event EventHandler<MailMessageEventArgs> Received;
+        /// <summary>
+        /// Fired when an alert was raised and is being processed.
+        /// </summary>
+        event EventHandler<MailMessageEventArgs> Received;
 
-		/// <summary>
-		/// Broadcasts an alert.
-		/// </summary>
-		/// <param name="message">The message.</param>
-		void Broadcast(MailMessage message);
+        /// <summary>
+        /// Broadcasts an alert.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        void Broadcast(MailMessage message);
 
-		/// <summary>
-		/// Searches for alerts.
-		/// </summary>
-		/// <param name="predicate">The predicate to use to search for alerts.</param>
-		/// <param name="offset">The offset of the search.</param>
-		/// <param name="count">The count of the search results.</param>
-		/// <param name="totalCount">The total count of the alerts.</param>
-		/// <returns>Returns a list of alerts.</returns>
-		IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount);
+        /// <summary>
+        /// Searches for alerts.
+        /// </summary>
+        /// <param name="predicate">The predicate to use to search for alerts.</param>
+        /// <param name="offset">The offset of the search.</param>
+        /// <param name="count">The count of the search results.</param>
+        /// <param name="totalCount">The total count of the alerts.</param>
+        /// <returns>Returns a list of alerts.</returns>
+        IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount);
 
-		/// <summary>
-		/// Gets an alert.
-		/// </summary>
-		/// <param name="id">The id of the alert to be retrieved.</param>
-		/// <returns>Returns an alert.</returns>
-		MailMessage Get(Guid id);
+        /// <summary>
+        /// Gets an alert.
+        /// </summary>
+        /// <param name="id">The id of the alert to be retrieved.</param>
+        /// <returns>Returns an alert.</returns>
+        MailMessage Get(Guid id);
 
-		/// <summary>
-		/// Inserts an alert message.
-		/// </summary>
-		/// <param name="message">The alert message to be inserted.</param>
-		/// <returns>Returns the inserted alert.</returns>
-		MailMessage Insert(MailMessage message);
+        /// <summary>
+        /// Inserts an alert message.
+        /// </summary>
+        /// <param name="message">The alert message to be inserted.</param>
+        /// <returns>Returns the inserted alert.</returns>
+        MailMessage Insert(MailMessage message);
 
-		/// <summary>
-		/// Saves an alert.
-		/// </summary>
-		/// <param name="message">The alert message to be saved.</param>
-		/// <returns>Returns the saved alert.</returns>
-		MailMessage Save(MailMessage message);
-	}
+        /// <summary>
+        /// Saves an alert.
+        /// </summary>
+        /// <param name="message">The alert message to be saved.</param>
+        /// <returns>Returns the saved alert.</returns>
+        MailMessage Save(MailMessage message);
+    }
 }

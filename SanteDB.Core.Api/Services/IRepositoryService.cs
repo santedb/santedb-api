@@ -17,10 +17,7 @@
  * User: justin
  * Date: 2018-6-21
  */
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;

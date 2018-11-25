@@ -17,24 +17,20 @@
  * User: justin
  * Date: 2018-6-21
  */
-using SanteDB.Core.Services;
+using Newtonsoft.Json;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Map;
+using SanteDB.Core.Model.Patch;
+using SanteDB.Core.Model.Query;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Patch;
 using System.Reflection;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using SanteDB.Core.Model.Interfaces;
-using System.Collections;
-using SanteDB.Core.Model.Attributes;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model.Query;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Map;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -123,7 +119,7 @@ namespace SanteDB.Core.Services.Impl
                         if (existingValue != null && updatedValue == null) // remove
                         {
                             // Generate tests
-                            if(typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()))
+                            if (typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()))
                                 retVal.AddRange(this.GenerateTests(existingValue, $"{path}{serializationName}"));
                             retVal.Add(new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", null));
                         }
@@ -325,7 +321,7 @@ namespace SanteDB.Core.Services.Impl
                                 // HACK: Patches with no version code don't adhere to ths
                                 if (String.IsNullOrEmpty(patch.Version) && force)
                                     this.m_tracer.TraceWarning("Patch specifies removal of non-existing relationship {0} -> Ignoring", op);
-                                else if(!force)
+                                else if (!force)
                                     throw new PatchAssertionException("Cannot remove a non-existing relationship");
                             }
                         }

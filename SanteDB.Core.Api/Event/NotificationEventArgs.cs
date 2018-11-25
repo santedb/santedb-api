@@ -19,44 +19,40 @@
  */
 using SanteDB.Core.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
-	/// <summary>
-	/// Represents notification event arguments.
-	/// </summary>
-	public class NotificationEventArgs<T> : EventArgs where T : IdentifiedData
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="NotificationEventArgs{T}"/> class.
-		/// </summary>
-		public NotificationEventArgs()
-		{
+    /// <summary>
+    /// Represents notification event arguments.
+    /// </summary>
+    public class NotificationEventArgs<T> : EventArgs where T : IdentifiedData
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NotificationEventArgs{T}"/> class.
+        /// </summary>
+        public NotificationEventArgs()
+        {
 
-		}
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="NotificationEventArgs{T}"/> class
-		/// with identified data.
-		/// </summary>
-		/// <param name="data">The raw request data.</param>
-		public NotificationEventArgs(T data)
-		{
-			if (data == null)
-			{
-				throw new ArgumentNullException($"{nameof(data)} cannot be null");
-			}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NotificationEventArgs{T}"/> class
+        /// with identified data.
+        /// </summary>
+        /// <param name="data">The raw request data.</param>
+        public NotificationEventArgs(T data)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException($"{nameof(data)} cannot be null");
+            }
 
-			this.Data = data;
-		}
+            this.Data = data;
+        }
 
-		/// <summary>
-		/// Gets or sets the data of the notification.
-		/// </summary>
-		public T Data { get; }
-	}
+        /// <summary>
+        /// Gets or sets the data of the notification.
+        /// </summary>
+        public T Data { get; }
+    }
 }

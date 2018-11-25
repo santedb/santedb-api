@@ -21,30 +21,30 @@ using System;
 
 namespace SanteDB.Core.Mail
 {
-	/// <summary>
-	/// Represents alert event arguments.
-	/// </summary>
-	public class MailMessageEventArgs : EventArgs
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="MailMessageEventArgs"/> class
-		/// with a specified alert message.
-		/// </summary>
-		/// <param name="message">The alert message.</param>
-		public MailMessageEventArgs(MailMessage message)
-		{
-			this.Message = message;
-		}
+    /// <summary>
+    /// Represents alert event arguments.
+    /// </summary>
+    public class MailMessageEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MailMessageEventArgs"/> class
+        /// with a specified alert message.
+        /// </summary>
+        /// <param name="message">The alert message.</param>
+        public MailMessageEventArgs(MailMessage message)
+        {
+            this.Message = message;
+        }
 
-		/// <summary>
-		/// Allows the handler to instruct the alert engine to ignore (not to persist) the
-		/// alert.
-		/// </summary>
-		public bool Ignore { get; set; }
+        /// <summary>
+        /// Allows the handler to instruct the alert engine to ignore (not to persist) the
+        /// alert.
+        /// </summary>
+        public bool Ignore { get; set; }
 
-		/// <summary>
-		/// Gets the alert message.
-		/// </summary>
-		public MailMessage Message { get; internal set; }
-	}
+        /// <summary>
+        /// Gets the alert message.
+        /// </summary>
+        public MailMessage Message { get; internal set; }
+    }
 }

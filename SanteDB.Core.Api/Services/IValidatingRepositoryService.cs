@@ -24,7 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository that can validate
     /// </summary>
-    public interface IValidatingRepositoryService<TModel> : IRepositoryService<TModel> 
+    public interface IValidatingRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
         /// <summary>

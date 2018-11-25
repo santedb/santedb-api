@@ -20,10 +20,7 @@
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
@@ -49,7 +46,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents the match result
     /// </summary>
-    public interface IRecordMatchResult<T> 
+    public interface IRecordMatchResult<T>
     {
         /// <summary>
         /// Gets or sets the score of the result
@@ -130,6 +127,6 @@ namespace SanteDB.Core.Services
         /// <param name="query">The original query</param>
         /// <param name="configurationName">The configuration name to use for scoring</param>
         /// <returns>The record match result of the object</returns>
-        IRecordMatchResult<T> Score<T>(T input, Expression<Func<T, bool>> query, String configurationName) where T: IdentifiedData;
+        IRecordMatchResult<T> Score<T>(T input, Expression<Func<T, bool>> query, String configurationName) where T : IdentifiedData;
     }
 }

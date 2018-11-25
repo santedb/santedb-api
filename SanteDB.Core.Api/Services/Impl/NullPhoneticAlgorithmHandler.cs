@@ -23,28 +23,28 @@ using System;
 
 namespace SanteDB.Core.Services.Impl
 {
-	/// <summary>
-	/// null algorithm phonetic algorithm
-	/// </summary>
-	public class NullPhoneticAlgorithmHandler : IPhoneticAlgorithmHandler
-	{
-		/// <summary>
-		/// Gets the algorithm id
-		/// </summary>
-		public Guid AlgorithmId
-		{
-			get
-			{
-				return PhoneticAlgorithmKeys.None;
-			}
-		}
+    /// <summary>
+    /// null algorithm phonetic algorithm
+    /// </summary>
+    public class NullPhoneticAlgorithmHandler : IPhoneticAlgorithmHandler
+    {
+        /// <summary>
+        /// Gets the algorithm id
+        /// </summary>
+        public Guid AlgorithmId
+        {
+            get
+            {
+                return PhoneticAlgorithmKeys.None;
+            }
+        }
 
-		/// <summary>
-		/// Generate the phonetic code
-		/// </summary>
-		public string GenerateCode(string input)
-		{
-			return null;
-		}
-	}
+        /// <summary>
+        /// Generate the phonetic code
+        /// </summary>
+        public string GenerateCode(string input)
+        {
+            return null;
+        }
+    }
 }

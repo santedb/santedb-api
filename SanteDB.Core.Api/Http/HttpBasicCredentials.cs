@@ -19,10 +19,8 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Http
 {
@@ -44,7 +42,7 @@ namespace SanteDB.Core.Http
             this.m_password = password;
 
         }
-        
+
         /// <summary>
         /// Creates the basic credential 
         /// </summary>

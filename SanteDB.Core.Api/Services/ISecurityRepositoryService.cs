@@ -20,37 +20,35 @@
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Security repository service is responsible for the maintenance of security entities
-	/// </summary>
-	public interface ISecurityRepositoryService
-	{
-		/// <summary>
-		/// Changes a user's password.
-		/// </summary>
-		/// <param name="userId">The id of the user.</param>
-		/// <param name="password">The new password of the user.</param>
-		/// <returns>Returns the updated user.</returns>
-		SecurityUser ChangePassword(Guid userId, String password);
+    /// <summary>
+    /// Security repository service is responsible for the maintenance of security entities
+    /// </summary>
+    public interface ISecurityRepositoryService
+    {
+        /// <summary>
+        /// Changes a user's password.
+        /// </summary>
+        /// <param name="userId">The id of the user.</param>
+        /// <param name="password">The new password of the user.</param>
+        /// <returns>Returns the updated user.</returns>
+        SecurityUser ChangePassword(Guid userId, String password);
 
-		/// <summary>
-		/// Creates a user with a specified password.
-		/// </summary>
-		/// <param name="userInfo">The security user.</param>
-		/// <param name="password">The password.</param>
-		/// <returns>Returns the newly created user.</returns>
-		SecurityUser CreateUser(SecurityUser userInfo, String password);
+        /// <summary>
+        /// Creates a user with a specified password.
+        /// </summary>
+        /// <param name="userInfo">The security user.</param>
+        /// <param name="password">The password.</param>
+        /// <returns>Returns the newly created user.</returns>
+        SecurityUser CreateUser(SecurityUser userInfo, String password);
 
-		/// <summary>
-		/// Get a user by user name
-		/// </summary>
-		SecurityUser GetUser(String userName);
+        /// <summary>
+        /// Get a user by user name
+        /// </summary>
+        SecurityUser GetUser(String userName);
 
         /// <summary>
         /// Get the specified security policy by OID
@@ -64,31 +62,31 @@ namespace SanteDB.Core.Services
         /// <returns>Returns the role.</returns>
         SecurityRole GetRole(String roleName);
 
-		/// <summary>
-		/// Gets the specified security user based on the principal
-		/// </summary>
-		SecurityUser GetUser(IIdentity identity);
+        /// <summary>
+        /// Gets the specified security user based on the principal
+        /// </summary>
+        SecurityUser GetUser(IIdentity identity);
 
-		/// <summary>
-		/// Get the user entity
-		/// </summary>
-		UserEntity GetUserEntity(IIdentity identity);
+        /// <summary>
+        /// Get the user entity
+        /// </summary>
+        UserEntity GetUserEntity(IIdentity identity);
 
-		/// <summary>
-		/// Locks a specific user.
-		/// </summary>
-		/// <param name="userId">The id of the user to lock.</param>
-		void LockUser(Guid userId);
+        /// <summary>
+        /// Locks a specific user.
+        /// </summary>
+        /// <param name="userId">The id of the user to lock.</param>
+        void LockUser(Guid userId);
 
-		/// <summary>
-		/// Unlocks a specific user.
-		/// </summary>
-		/// <param name="userId">The id of the user to be unlocked.</param>
-		void UnlockUser(Guid userId);
+        /// <summary>
+        /// Unlocks a specific user.
+        /// </summary>
+        /// <param name="userId">The id of the user to be unlocked.</param>
+        void UnlockUser(Guid userId);
 
         /// <summary>
         /// Get the provenance object
         /// </summary>
         SecurityProvenance GetProvenance(Guid provenanceId);
-	}
+    }
 }

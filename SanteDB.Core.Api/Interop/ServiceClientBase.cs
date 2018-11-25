@@ -22,37 +22,37 @@ using SanteDB.Core.Http.Description;
 
 namespace SanteDB.Core.Interop.Clients
 {
-	/// <summary>
-	/// Represents a basic service client
-	/// </summary>
-	public abstract class ServiceClientBase
-	{
-		// The configuration
-		private IRestClientDescription m_configuration;
+    /// <summary>
+    /// Represents a basic service client
+    /// </summary>
+    public abstract class ServiceClientBase
+    {
+        // The configuration
+        private IRestClientDescription m_configuration;
 
-		// The rest client
-		private IRestClient m_restClient;
+        // The rest client
+        private IRestClient m_restClient;
 
-		/// <summary>
-		/// Gets the client.
-		/// </summary>
-		/// <value>The client.</value>
-		public IRestClient Client
-		{
-			get
-			{
-				return this.m_restClient;
-			}
-		}
+        /// <summary>
+        /// Gets the client.
+        /// </summary>
+        /// <value>The client.</value>
+        public IRestClient Client
+        {
+            get
+            {
+                return this.m_restClient;
+            }
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.Mobile.Core.Interop.Clients.ServiceClientBase"/> class.
-		/// </summary>
-		/// <param name="clientName">Client name.</param>
-		public ServiceClientBase(IRestClient restClient)
-		{
-			this.m_restClient = restClient;
-			this.m_configuration = this.m_restClient.Description;
-		}
-	}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.Mobile.Core.Interop.Clients.ServiceClientBase"/> class.
+        /// </summary>
+        /// <param name="clientName">Client name.</param>
+        public ServiceClientBase(IRestClient restClient)
+        {
+            this.m_restClient = restClient;
+            this.m_configuration = this.m_restClient.Description;
+        }
+    }
 }

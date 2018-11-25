@@ -17,23 +17,18 @@
  * User: justin
  * Date: 2018-6-21
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Protocol;
-using SanteDB.Core.Services;
-using System.Threading;
-using SanteDB.Core.Model.Constants;
-using System.Globalization;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.EntityLoader;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Entities;
 
 namespace SanteDB.Core.Protocol
 {
@@ -181,7 +176,7 @@ namespace SanteDB.Core.Protocol
             try
             {
                 var parmDict = new ParameterDictionary<String, Object>();
-                if(parameters != null)
+                if (parameters != null)
                     foreach (var itm in parameters)
                         parmDict.Add(itm.Key, itm.Value);
 
@@ -190,7 +185,7 @@ namespace SanteDB.Core.Protocol
 
                 Patient currentProcessing = null;
                 bool isCurrentProcessing = false;
-                if(p.Key.HasValue)
+                if (p.Key.HasValue)
                     isCurrentProcessing = this.m_patientPromise.TryGetValue(p.Key.Value, out currentProcessing);
                 if (p.Key.HasValue && !isCurrentProcessing)
                 {
@@ -217,7 +212,7 @@ namespace SanteDB.Core.Protocol
                                 //    .Union(EntitySource.Current.Provider.Query<CodedObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
                                 //    .Union(EntitySource.Current.Provider.Query<TextObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
                                 //    .Union(EntitySource.Current.Provider.Query<PatientEncounter>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
-                                    
+
                                 (ApplicationServiceContext.Current.GetService(typeof(IDataCachingService)) as IDataCachingService)?.Add(p);
                             }
                             currentProcessing.Participations = new List<ActParticipation>(p.Participations);
@@ -256,7 +251,7 @@ namespace SanteDB.Core.Protocol
 
                 // Initialize for protocol execution
                 parmDict.Add("runProtocols", execProtocols.Distinct());
-                if(!this.IgnoreViewModelInitializer)
+                if (!this.IgnoreViewModelInitializer)
                     foreach (var o in this.Protocols.Distinct()) o.Initialize(currentProcessing, parmDict);
 
                 parmDict.Remove("runProtocols");
@@ -265,11 +260,11 @@ namespace SanteDB.Core.Protocol
                 lock (currentProcessing)
                 {
                     var thdPatient = currentProcessing.Copy() as Patient;
-                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o=>o.Act?.MoodConceptKey != ActMoodKeys.Propose && o.Act?.StatusConceptKey != StatusKeys.Nullified && o.Act?.StatusConceptKey != StatusKeys.Obsolete && o.Act?.StatusConceptKey != StatusKeys.Cancelled));
+                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && o.Act?.StatusConceptKey != StatusKeys.Nullified && o.Act?.StatusConceptKey != StatusKeys.Obsolete && o.Act?.StatusConceptKey != StatusKeys.Cancelled));
 
                     // Let's ensure that there are some properties loaded eh?
-                    if(this.IgnoreViewModelInitializer)
-                        foreach(var itm in thdPatient.LoadCollection<ActParticipation>("Participations"))
+                    if (this.IgnoreViewModelInitializer)
+                        foreach (var itm in thdPatient.LoadCollection<ActParticipation>("Participations"))
                         {
                             itm.LoadProperty<Act>("TargetAct").LoadProperty<Concept>("TypeConcept");
                             foreach (var itmPtcpt in itm.LoadProperty<Act>("TargetAct").LoadCollection<ActParticipation>("Participations"))
@@ -286,14 +281,14 @@ namespace SanteDB.Core.Protocol
                 if (asEncounters)
                 {
                     List<PatientEncounter> encounters = new List<PatientEncounter>();
-                    foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o=>(o.StopTime ?? o.ActTime.AddDays(7)) - o.StartTime))
+                    foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime.AddDays(7)) - o.StartTime))
                     {
 
                         act.StopTime = act.StopTime ?? act.ActTime;
                         // Is there a candidate encounter which is bound by start/end
-                        var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue) 
+                        var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue)
                             && (act.StopTime ?? DateTimeOffset.MaxValue) >= (e.StartTime ?? DateTimeOffset.MinValue)
-                            && !e.Relationships.Any(r=>r.TargetAct?.Protocols.Intersect(act.Protocols, new ProtocolComparer()).Count() == r.TargetAct?.Protocols.Count())
+                            && !e.Relationships.Any(r => r.TargetAct?.Protocols.Intersect(act.Protocols, new ProtocolComparer()).Count() == r.TargetAct?.Protocols.Count())
                         );
 
                         // Create candidate
@@ -369,7 +364,7 @@ namespace SanteDB.Core.Protocol
             finally
             {
                 lock (m_patientPromise)
-                    if(p.Key.HasValue && this.m_patientPromise.ContainsKey(p.Key.Value))
+                    if (p.Key.HasValue && this.m_patientPromise.ContainsKey(p.Key.Value))
                         m_patientPromise.Remove(p.Key.Value);
             }
         }

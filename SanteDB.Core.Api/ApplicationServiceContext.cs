@@ -18,17 +18,13 @@
  * Date: 2018-6-21
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core
 {
     /// <summary>
     /// Application context
     /// </summary>
-    public static class ApplicationServiceContext 
+    public static class ApplicationServiceContext
     {
 
         /// <summary>
@@ -46,7 +42,7 @@ namespace SanteDB.Core
         /// Gets or sets the current application service context
         /// </summary>
         public static IServiceProvider Current { get; set; }
-        
+
         /// <summary>
         /// Type of application hosting this SanteDB
         /// </summary>

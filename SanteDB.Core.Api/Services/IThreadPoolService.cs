@@ -21,20 +21,20 @@ using System;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a thread pooling service
-	/// </summary>
-	public interface IThreadPoolService
-	{
-		/// <summary>
-		/// Queues the specified action into the worker pool
-		/// </summary>
-		void QueueUserWorkItem(Action<Object> action);
+    /// <summary>
+    /// Represents a thread pooling service
+    /// </summary>
+    public interface IThreadPoolService
+    {
+        /// <summary>
+        /// Queues the specified action into the worker pool
+        /// </summary>
+        void QueueUserWorkItem(Action<Object> action);
 
-		/// <summary>
-		/// Queues the specified action into the worker pool
-		/// </summary>
-		void QueueUserWorkItem(Action<Object> action, Object parm);
+        /// <summary>
+        /// Queues the specified action into the worker pool
+        /// </summary>
+        void QueueUserWorkItem(Action<Object> action, Object parm);
 
         /// <summary>
         /// Queue a user work item

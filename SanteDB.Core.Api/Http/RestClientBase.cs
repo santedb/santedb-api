@@ -30,8 +30,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http.Headers;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace SanteDB.Core.Http
@@ -73,7 +71,7 @@ namespace SanteDB.Core.Http
         private IDictionary<String, String> ConvertHeaders(WebHeaderCollection headers)
         {
             Dictionary<String, String> retVal = new Dictionary<string, string>();
-            foreach (var k in headers.AllKeys) 
+            foreach (var k in headers.AllKeys)
                 retVal.Add(k, headers[k]);
             return retVal;
         }
@@ -141,7 +139,7 @@ namespace SanteDB.Core.Http
 
             // HACK:
             uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
-            
+
             // Add query string
             if (query != null)
                 uriBuilder.Query = CreateQueryString(query);
@@ -170,7 +168,7 @@ namespace SanteDB.Core.Http
 
             // Compress?
             if (this.Description.Binding.Optimize)
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] =  "lzma,bzip2,gzip,deflate";
+                retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
 
 
             // Return type?
@@ -283,7 +281,7 @@ namespace SanteDB.Core.Http
                                             gzs.CopyTo(oms);
                                             retVal = oms.ToArray();
                                         }
-                                            break;
+                                        break;
                                     case "bzip2":
                                         using (var lzmas = new BZip2Stream(ms, CompressionMode.Decompress, leaveOpen: true))
                                         using (var oms = new MemoryStream())
@@ -314,15 +312,16 @@ namespace SanteDB.Core.Http
                 httpTask.Wait();
                 if (requestException != null)
                     throw requestException;
-                
+
 
                 this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0, this.ConvertHeaders(headers)));
 
                 return retVal;
             }
-            catch(WebException e)
+            catch (WebException e)
             {
-                switch (this.ValidateResponse(e.Response)) {
+                switch (this.ValidateResponse(e.Response))
+                {
                     case ServiceClientErrorType.Valid:
                         return this.Get(url);
                     default:

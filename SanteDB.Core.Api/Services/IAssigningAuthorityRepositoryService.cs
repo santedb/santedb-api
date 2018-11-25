@@ -19,16 +19,14 @@
  */
 using SanteDB.Core.Model.DataTypes;
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a repository service for managing assigning authorities.
-	/// </summary>
-	public interface IAssigningAuthorityRepositoryService : IRepositoryService<AssigningAuthority>
-	{
+    /// <summary>
+    /// Represents a repository service for managing assigning authorities.
+    /// </summary>
+    public interface IAssigningAuthorityRepositoryService : IRepositoryService<AssigningAuthority>
+    {
 
         /// <summary>
         /// Get by domain
@@ -39,5 +37,5 @@ namespace SanteDB.Core.Services
         /// Get assigning authority by uri 
         /// </summary>
         AssigningAuthority Get(Uri uri);
-	}
+    }
 }

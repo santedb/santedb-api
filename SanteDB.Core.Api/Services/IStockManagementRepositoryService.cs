@@ -25,26 +25,26 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a stock management repository service.
-	/// </summary>
-	public interface IStockManagementRepositoryService
-	{
-		/// <summary>
-		/// Performs a stock adjustment for the specified facility and material.
-		/// </summary>
-		/// <param name="manufacturedMaterial">The manufactured material to be adjusted.</param>
-		/// <param name="place">The facility for which the stock is to be adjusted.</param>
-		/// <param name="quantity">The quantity to be adjusted.</param>
-		/// <param name="reason">The reason for the stock to be adjusted.</param>
-		Act Adjust(ManufacturedMaterial manufacturedMaterial, Place place, int quantity, Concept reason);
+    /// <summary>
+    /// Represents a stock management repository service.
+    /// </summary>
+    public interface IStockManagementRepositoryService
+    {
+        /// <summary>
+        /// Performs a stock adjustment for the specified facility and material.
+        /// </summary>
+        /// <param name="manufacturedMaterial">The manufactured material to be adjusted.</param>
+        /// <param name="place">The facility for which the stock is to be adjusted.</param>
+        /// <param name="quantity">The quantity to be adjusted.</param>
+        /// <param name="reason">The reason for the stock to be adjusted.</param>
+        Act Adjust(ManufacturedMaterial manufacturedMaterial, Place place, int quantity, Concept reason);
 
-		/// <summary>
-		/// Gets the balance for the material.
-		/// </summary>
-		/// <param name="place">The facility for which to get the balance of stock.</param>
-		/// <param name="manufacturedMaterial">The manufactured material for which to retrieve the balance.</param>
-		int GetBalance(Place place, ManufacturedMaterial manufacturedMaterial);
+        /// <summary>
+        /// Gets the balance for the material.
+        /// </summary>
+        /// <param name="place">The facility for which to get the balance of stock.</param>
+        /// <param name="manufacturedMaterial">The manufactured material for which to retrieve the balance.</param>
+        int GetBalance(Place place, ManufacturedMaterial manufacturedMaterial);
 
         /// <summary>
         /// Get the total amount of consumed objects 
@@ -55,14 +55,14 @@ namespace SanteDB.Core.Services
         /// <param name="endPeriod">The end period</param>
         IEnumerable<ActParticipation> GetConsumed(Guid manufacturedMaterialKey, Guid placeKey, DateTimeOffset? startPeriod, DateTimeOffset? endPeriod);
 
-		/// <summary>
-		/// Find adjustments matching the specified
-		/// </summary>
-		/// <param name="manufacturedMaterialKey">The manufactured material key.</param>
-		/// <param name="placeKey">The place key.</param>
-		/// <param name="startPeriod">The start period.</param>
-		/// <param name="endPeriod">The end period.</param>
-		/// <returns>IEnumerable&lt;Act&gt;.</returns>
-		IEnumerable<Act> FindAdjustments(Guid manufacturedMaterialKey, Guid placeKey, DateTimeOffset? startPeriod, DateTimeOffset? endPeriod);
-	}
+        /// <summary>
+        /// Find adjustments matching the specified
+        /// </summary>
+        /// <param name="manufacturedMaterialKey">The manufactured material key.</param>
+        /// <param name="placeKey">The place key.</param>
+        /// <param name="startPeriod">The start period.</param>
+        /// <param name="endPeriod">The end period.</param>
+        /// <returns>IEnumerable&lt;Act&gt;.</returns>
+        IEnumerable<Act> FindAdjustments(Guid manufacturedMaterialKey, Guid placeKey, DateTimeOffset? startPeriod, DateTimeOffset? endPeriod);
+    }
 }

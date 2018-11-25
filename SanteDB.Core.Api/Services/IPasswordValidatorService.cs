@@ -18,10 +18,6 @@
  * Date: 2018-6-21
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
@@ -36,6 +32,6 @@ namespace SanteDB.Core.Services
         /// Validate the password
         /// </summary>
         bool Validate(String password);
-        
+
     }
 }

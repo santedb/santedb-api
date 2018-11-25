@@ -19,64 +19,63 @@
  */
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.IO;
 
 namespace SanteDB.Core.Http
 {
-	/// <summary>
-	/// Represents a body serializer that uses JSON
-	/// </summary>
-	internal class JsonBodySerializer : IBodySerializer
-	{
-		// Serializer
-		private JsonSerializer m_serializer;
+    /// <summary>
+    /// Represents a body serializer that uses JSON
+    /// </summary>
+    internal class JsonBodySerializer : IBodySerializer
+    {
+        // Serializer
+        private JsonSerializer m_serializer;
 
-		// The type
-		private Type m_type;
+        // The type
+        private Type m_type;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SanteDB.Core.Http.JsonBodySerializer"/> class.
-		/// </summary>
-		public JsonBodySerializer(Type type)
-		{
-			this.m_serializer = new JsonSerializer()
-			{
-				DateFormatHandling = DateFormatHandling.IsoDateFormat,
-				NullValueHandling = NullValueHandling.Ignore,
-				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-				TypeNameHandling = TypeNameHandling.Auto,
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SanteDB.Core.Http.JsonBodySerializer"/> class.
+        /// </summary>
+        public JsonBodySerializer(Type type)
+        {
+            this.m_serializer = new JsonSerializer()
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Auto,
                 SerializationBinder = new ModelSerializationBinder()
-			};
+            };
 
-			this.m_serializer.Converters.Add(new StringEnumConverter());
-			this.m_type = type;
-		}
+            this.m_serializer.Converters.Add(new StringEnumConverter());
+            this.m_type = type;
+        }
 
-		#region IBodySerializer implementation
+        #region IBodySerializer implementation
 
-		/// <summary>
-		/// Serialize
-		/// </summary>
-		public void Serialize(System.IO.Stream s, object o)
-		{
-			using (TextWriter tw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
-			using (JsonTextWriter jw = new JsonTextWriter(tw))
-				this.m_serializer.Serialize(jw, o);
-		}
+        /// <summary>
+        /// Serialize
+        /// </summary>
+        public void Serialize(System.IO.Stream s, object o)
+        {
+            using (TextWriter tw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
+            using (JsonTextWriter jw = new JsonTextWriter(tw))
+                this.m_serializer.Serialize(jw, o);
+        }
 
-		/// <summary>
-		/// De-serialize the body
-		/// </summary>
-		public object DeSerialize(System.IO.Stream s)
-		{
-			using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
-			using (JsonTextReader jr = new JsonTextReader(tr))
-				return this.m_serializer.Deserialize(jr, this.m_type);
-		}
+        /// <summary>
+        /// De-serialize the body
+        /// </summary>
+        public object DeSerialize(System.IO.Stream s)
+        {
+            using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
+            using (JsonTextReader jr = new JsonTextReader(tr))
+                return this.m_serializer.Deserialize(jr, this.m_type);
+        }
 
-		#endregion IBodySerializer implementation
-	}
+        #endregion IBodySerializer implementation
+    }
 }

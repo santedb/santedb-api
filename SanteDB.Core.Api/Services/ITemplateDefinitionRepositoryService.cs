@@ -18,23 +18,20 @@
  * Date: 2018-6-21
  */
 using SanteDB.Core.Model.DataTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a repository which deals with metadata such as assigning authorities,
-	/// concept classes, etc.
-	/// </summary>
-	public interface ITemplateDefinitionRepositoryService : IRepositoryService<TemplateDefinition>
-	{
-        
+    /// <summary>
+    /// Represents a repository which deals with metadata such as assigning authorities,
+    /// concept classes, etc.
+    /// </summary>
+    public interface ITemplateDefinitionRepositoryService : IRepositoryService<TemplateDefinition>
+    {
+
         /// <summary>
         /// Get tempate definition
         /// </summary>
         TemplateDefinition GetTemplateDefinition(string mnemonic);
-        
+
     }
 }

@@ -17,18 +17,17 @@
  * User: justin
  * Date: 2018-6-21
  */
-using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Persistable query provider is an extensable interface which can perform a query with state
-	/// </summary>
-	public interface IPersistableQueryRepositoryService<TEntity>
-	{
+    /// <summary>
+    /// Persistable query provider is an extensable interface which can perform a query with state
+    /// </summary>
+    public interface IPersistableQueryRepositoryService<TEntity>
+    {
         /// <summary>
         /// Performs a query which
         /// </summary>
@@ -40,5 +39,5 @@ namespace SanteDB.Core.Services
         /// <param name="queryId">The unique identifier for the query</param>
         IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId);
 
-	}
+    }
 }

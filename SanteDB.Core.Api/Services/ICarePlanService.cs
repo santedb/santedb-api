@@ -25,15 +25,15 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a class which can create care plans
-	/// </summary>
-	public interface ICarePlanService
-	{
-		/// <summary>
-		/// Gets the list of protocols which can be or should be used to create the care plans
-		/// </summary>
-		List<IClinicalProtocol> Protocols { get; }
+    /// <summary>
+    /// Represents a class which can create care plans
+    /// </summary>
+    public interface ICarePlanService
+    {
+        /// <summary>
+        /// Gets the list of protocols which can be or should be used to create the care plans
+        /// </summary>
+        List<IClinicalProtocol> Protocols { get; }
 
         /// <summary>
         /// Create a care plam
@@ -54,5 +54,5 @@ namespace SanteDB.Core.Services
         /// Creates a care plan for the patient with the specified protocolsonly
         /// </summary>
         CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, params Guid[] protocols);
-	}
+    }
 }

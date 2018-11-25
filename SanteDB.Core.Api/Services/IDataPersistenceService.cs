@@ -23,34 +23,34 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Non-generic form of the data persistene service
-	/// </summary>
-	public interface IDataPersistenceService
-	{
-		/// <summary>
-		/// Inserts the specified object
-		/// </summary>
-		Object Insert(Object data);
+    /// <summary>
+    /// Non-generic form of the data persistene service
+    /// </summary>
+    public interface IDataPersistenceService
+    {
+        /// <summary>
+        /// Inserts the specified object
+        /// </summary>
+        Object Insert(Object data);
 
-		/// <summary>
-		/// Updates the specified data
-		/// </summary>
-		Object Update(Object data);
+        /// <summary>
+        /// Updates the specified data
+        /// </summary>
+        Object Update(Object data);
 
-		/// <summary>
-		/// Obsoletes the specified data
-		/// </summary>
-		Object Obsolete(Object data);
+        /// <summary>
+        /// Obsoletes the specified data
+        /// </summary>
+        Object Obsolete(Object data);
 
-		/// <summary>
-		/// Gets the specified data
-		/// </summary>
-		Object Get(Guid id);
+        /// <summary>
+        /// Gets the specified data
+        /// </summary>
+        Object Get(Guid id);
 
-		/// <summary>
-		/// Query based on the expression given
-		/// </summary>
-		IEnumerable Query(Expression query, int offset, int? count, out int totalResults);
-	}
+        /// <summary>
+        /// Query based on the expression given
+        /// </summary>
+        IEnumerable Query(Expression query, int offset, int? count, out int totalResults);
+    }
 }

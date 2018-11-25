@@ -42,12 +42,12 @@ namespace SanteDB.Core.Services
         }
     }
 
-	/// <summary>
-	/// Represents a data caching service which allows services to retrieve
-	/// cached objects
-	/// </summary>
-	public interface IDataCachingService
-	{
+    /// <summary>
+    /// Represents a data caching service which allows services to retrieve
+    /// cached objects
+    /// </summary>
+    public interface IDataCachingService
+    {
         /// <summary>
         /// Item was added to cache
         /// </summary>
@@ -61,25 +61,25 @@ namespace SanteDB.Core.Services
         /// </summary>
         event EventHandler<DataCacheEventArgs> Removed;
 
-		/// <summary>
-		/// Get the specified cache item
-		/// </summary>
-		TData GetCacheItem<TData>(Guid key) where TData : IdentifiedData;
+        /// <summary>
+        /// Get the specified cache item
+        /// </summary>
+        TData GetCacheItem<TData>(Guid key) where TData : IdentifiedData;
 
-		/// <summary>
-		/// Gets the specified cache item
-		/// </summary>
-		object GetCacheItem(Guid key);
+        /// <summary>
+        /// Gets the specified cache item
+        /// </summary>
+        object GetCacheItem(Guid key);
 
-		/// <summary>
-		/// Adds the specified item to the cache
-		/// </summary>
-		void Add(IdentifiedData data);
+        /// <summary>
+        /// Adds the specified item to the cache
+        /// </summary>
+        void Add(IdentifiedData data);
 
-		/// <summary>
-		/// Removes an object from the cache
-		/// </summary>
-		void Remove(Guid key);
+        /// <summary>
+        /// Removes an object from the cache
+        /// </summary>
+        void Remove(Guid key);
 
         /// <summary>
         /// Clear all keys in the cache
@@ -90,5 +90,5 @@ namespace SanteDB.Core.Services
         /// Gets the current size of the cache
         /// </summary>
         long Size { get; }
-	}
+    }
 }

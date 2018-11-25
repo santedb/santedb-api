@@ -17,11 +17,6 @@
  * User: justin
  * Date: 2018-11-19
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security
 {
@@ -91,7 +86,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Administer data warehouse
         /// </summary>
-        public const string AdministerWarehouse  = UnrestrictedAdministration + ".10";
+        public const string AdministerWarehouse = UnrestrictedAdministration + ".10";
 
         /// <summary>
         /// Unrestricted access to the audit repository
@@ -113,7 +108,7 @@ namespace SanteDB.Core.Security
         /// Login to an interactive session (with user interaction)
         /// </summary>
         public const string LoginAsService = Login + ".0";
-                                                
+
         /// <summary>
         /// Access clinical data permission 
         /// </summary>

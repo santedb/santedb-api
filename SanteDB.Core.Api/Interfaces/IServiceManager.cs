@@ -22,16 +22,16 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Interfaces
 {
-	/// <summary>
-	/// Represents a service manager
-	/// </summary>
-	public interface IServiceManager
-	{
-		/// <summary>
-		/// Add the specified service provider
-		/// </summary>
-		/// <param name="serviceType">Type of the service.</param>
-		void AddServiceProvider(Type serviceType);
+    /// <summary>
+    /// Represents a service manager
+    /// </summary>
+    public interface IServiceManager
+    {
+        /// <summary>
+        /// Add the specified service provider
+        /// </summary>
+        /// <param name="serviceType">Type of the service.</param>
+        void AddServiceProvider(Type serviceType);
 
         /// <summary>
         /// Get all services
@@ -42,5 +42,5 @@ namespace SanteDB.Core.Interfaces
         /// Removes a service provider
         /// </summary>
         void RemoveServiceProvider(Type serviceType);
-	}
+    }
 }

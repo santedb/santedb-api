@@ -22,49 +22,49 @@ using System.Net;
 
 namespace SanteDB.Core.Http
 {
-	/// <summary>
-	/// Rest client exception.
-	/// </summary>
-	public class RestClientException<TResult> : System.Net.WebException 
-	{
-		/// <summary>
-		/// The result
-		/// </summary>
-		/// <value>The result.</value>
-		public TResult Result
-		{
-			get;
-			set;
-		}
+    /// <summary>
+    /// Rest client exception.
+    /// </summary>
+    public class RestClientException<TResult> : System.Net.WebException
+    {
+        /// <summary>
+        /// The result
+        /// </summary>
+        /// <value>The result.</value>
+        public TResult Result
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Create a new rest client exception
         /// </summary>
         public RestClientException(String message, Exception inner) : this(default(TResult), inner, (inner as RestClientException<TResult>)?.Status ?? WebExceptionStatus.UnknownError, (inner as RestClientException<TResult>)?.Response)
         {
-            if((inner as RestClientException<TResult>)!= null)
+            if ((inner as RestClientException<TResult>) != null)
                 this.Result = (inner as RestClientException<TResult>).Result;
 
         }
 
-		/// <summary>
-		/// Create the client exception
-		/// </summary>
-		public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", inner, status, response)
-		{
-			this.Result = result;
-		}
+        /// <summary>
+        /// Create the client exception
+        /// </summary>
+        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", inner, status, response)
+        {
+            this.Result = result;
+        }
 
-		/// <summary>
-		/// Returns a string that represents the current object.
-		/// </summary>
-		/// <returns>A string that represents the current object.</returns>
-		/// <filterpriority>2</filterpriority>
-		public override string ToString()
-		{
-			return string.Format("[RestClientException: {0}, Result={1}, Status={2}, HttpResult={3}]\r\n{4}", this.Message, Result, this.Status, (this.Response as HttpWebResponse)?.StatusCode, this.StackTrace);
-		}
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
+        /// <filterpriority>2</filterpriority>
+        public override string ToString()
+        {
+            return string.Format("[RestClientException: {0}, Result={1}, Status={2}, HttpResult={3}]\r\n{4}", this.Message, Result, this.Status, (this.Response as HttpWebResponse)?.StatusCode, this.StackTrace);
+        }
 
 
-	}
+    }
 }

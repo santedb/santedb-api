@@ -21,19 +21,19 @@ using System;
 
 namespace SanteDB.Core.Interfaces
 {
-	/// <summary>
-	/// Phonetic algorithm handler
-	/// </summary>
-	public interface IPhoneticAlgorithmHandler
-	{
-		/// <summary>
-		/// Gets the algorithm ID
-		/// </summary>
-		Guid AlgorithmId { get; }
+    /// <summary>
+    /// Phonetic algorithm handler
+    /// </summary>
+    public interface IPhoneticAlgorithmHandler
+    {
+        /// <summary>
+        /// Gets the algorithm ID
+        /// </summary>
+        Guid AlgorithmId { get; }
 
-		/// <summary>
-		/// Generate a phonetic code from the input data
-		/// </summary>
-		String GenerateCode(String input);
-	}
+        /// <summary>
+        /// Generate a phonetic code from the input data
+        /// </summary>
+        String GenerateCode(String input);
+    }
 }

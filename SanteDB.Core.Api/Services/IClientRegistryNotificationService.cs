@@ -22,27 +22,27 @@ using SanteDB.Core.Model.Roles;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Represents a client registry notification service.
-	/// </summary>
-	public interface IClientRegistryNotificationService
-	{
-		/// <summary>
-		/// Notify that duplicates have been resolved.
-		/// </summary>
-		/// <param name="eventArgs">The notification event arguments.</param>
-		void NotifyDuplicatesResolved(NotificationEventArgs<Patient> eventArgs);
+    /// <summary>
+    /// Represents a client registry notification service.
+    /// </summary>
+    public interface IClientRegistryNotificationService
+    {
+        /// <summary>
+        /// Notify that duplicates have been resolved.
+        /// </summary>
+        /// <param name="eventArgs">The notification event arguments.</param>
+        void NotifyDuplicatesResolved(NotificationEventArgs<Patient> eventArgs);
 
-		/// <summary>
-		/// Notify that a registration occurred.
-		/// </summary>
-		/// <param name="eventArgs">The notification event arguments.</param>
-		void NotifyRegister(NotificationEventArgs<Patient> eventArgs);
+        /// <summary>
+        /// Notify that a registration occurred.
+        /// </summary>
+        /// <param name="eventArgs">The notification event arguments.</param>
+        void NotifyRegister(NotificationEventArgs<Patient> eventArgs);
 
-		/// <summary>
-		/// Notify that an update occurred.
-		/// </summary>
-		/// <param name="eventArgs">The notification event arguments.</param>
-		void NotifyUpdate(NotificationEventArgs<Patient> eventArgs);
-	}
+        /// <summary>
+        /// Notify that an update occurred.
+        /// </summary>
+        /// <param name="eventArgs">The notification event arguments.</param>
+        void NotifyUpdate(NotificationEventArgs<Patient> eventArgs);
+    }
 }

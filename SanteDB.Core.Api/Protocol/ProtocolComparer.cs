@@ -17,9 +17,8 @@
  * User: justin
  * Date: 2018-6-21
  */
-using System;
-using System.Collections.Generic;
 using SanteDB.Core.Model.Acts;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Protocol
 {

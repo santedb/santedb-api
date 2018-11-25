@@ -19,49 +19,49 @@
  */
 namespace SanteDB.Core.Mail
 {
-	/// <summary>
-	/// Represents a flag for an alert message.
-	/// </summary>
-	public enum MailMessageFlags
-	{
-		/// <summary>
-		/// Just a normal alert
-		/// </summary>
-		None = 0x0,
+    /// <summary>
+    /// Represents a flag for an alert message.
+    /// </summary>
+    public enum MailMessageFlags
+    {
+        /// <summary>
+        /// Just a normal alert
+        /// </summary>
+        None = 0x0,
 
-		/// <summary>
-		/// Indicates the message requires some immediate action!
-		/// </summary>
-		Alert = 0x1,
+        /// <summary>
+        /// Indicates the message requires some immediate action!
+        /// </summary>
+        Alert = 0x1,
 
-		/// <summary>
-		/// Indicates whether someone has acknowledged the alert
-		/// </summary>
-		Acknowledged = 0x2,
+        /// <summary>
+        /// Indicates whether someone has acknowledged the alert
+        /// </summary>
+        Acknowledged = 0x2,
 
-		/// <summary>
-		/// Indicates the alert is high priority but doesn't require immediate action
-		/// </summary>
-		HighPriority = 0x4,
+        /// <summary>
+        /// Indicates the alert is high priority but doesn't require immediate action
+        /// </summary>
+        HighPriority = 0x4,
 
-		/// <summary>
-		/// Indicates the alert is a system alert
-		/// </summary>
-		System = 0x8,
+        /// <summary>
+        /// Indicates the alert is a system alert
+        /// </summary>
+        System = 0x8,
 
-		/// <summary>
-		/// Indicates the alert is transient and shouldn't be persisted
-		/// </summary>
-		Transient = 0x10,
-        
+        /// <summary>
+        /// Indicates the alert is transient and shouldn't be persisted
+        /// </summary>
+        Transient = 0x10,
+
         /// <summary>
         /// Indicates the message is archived
         /// </summary>
         Archived = 0x20,
 
-		/// <summary>
-		/// Idicates a high priority alert.
-		/// </summary>
-		HighPriorityAlert = HighPriority | Alert
-	}
+        /// <summary>
+        /// Idicates a high priority alert.
+        /// </summary>
+        HighPriorityAlert = HighPriority | Alert
+    }
 }

@@ -25,11 +25,11 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services
 {
-	/// <summary>
-	/// Detected issue priority
-	/// </summary>
-	public enum DetectedIssuePriorityType : int
-	{
+    /// <summary>
+    /// Detected issue priority
+    /// </summary>
+    public enum DetectedIssuePriorityType : int
+    {
         /// <summary>
         /// The issue is an error, processing cannot continue
         /// </summary>
@@ -42,95 +42,95 @@ namespace SanteDB.Core.Services
         /// The issue is just a warning, processing will continue
         /// </summary>
 		Warning = 4
-	}
+    }
 
-	/// <summary>
-	/// Represents a service that executes business rules based on triggers which happen in the persistence layer
-	/// </summary>
-	/// <remarks>
-	/// Note: This can be done, instead with events on the persistence layer on the SanteDB datalayer, however there
-	/// may come a time when a rule is fired without persistence occurring
-	/// </remarks>
-	public interface IBusinessRulesService<TModel> where TModel : IdentifiedData
-	{
+    /// <summary>
+    /// Represents a service that executes business rules based on triggers which happen in the persistence layer
+    /// </summary>
+    /// <remarks>
+    /// Note: This can be done, instead with events on the persistence layer on the SanteDB datalayer, however there
+    /// may come a time when a rule is fired without persistence occurring
+    /// </remarks>
+    public interface IBusinessRulesService<TModel> where TModel : IdentifiedData
+    {
         /// <summary>
         /// Gets or sets the rule to be run after this rule (for chained rules)
         /// </summary>
         IBusinessRulesService<TModel> Next { get; set; }
 
-		/// <summary>
-		/// Called after an insert occurs
-		/// </summary>
-		TModel AfterInsert(TModel data);
+        /// <summary>
+        /// Called after an insert occurs
+        /// </summary>
+        TModel AfterInsert(TModel data);
 
-		/// <summary>
-		/// Called after obsolete committed
-		/// </summary>
-		/// <param name="data"></param>
-		/// <returns></returns>
-		TModel AfterObsolete(TModel data);
+        /// <summary>
+        /// Called after obsolete committed
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        TModel AfterObsolete(TModel data);
 
-		/// <summary>
-		/// Called after query
-		/// </summary>
-		IEnumerable<TModel> AfterQuery(IEnumerable<TModel> results);
+        /// <summary>
+        /// Called after query
+        /// </summary>
+        IEnumerable<TModel> AfterQuery(IEnumerable<TModel> results);
 
-		/// <summary>
-		/// Called after retrieve
-		/// </summary>
-		TModel AfterRetrieve(TModel result);
+        /// <summary>
+        /// Called after retrieve
+        /// </summary>
+        TModel AfterRetrieve(TModel result);
 
-		/// <summary>
-		/// Called after update committed
-		/// </summary>
-		TModel AfterUpdate(TModel data);
+        /// <summary>
+        /// Called after update committed
+        /// </summary>
+        TModel AfterUpdate(TModel data);
 
-		/// <summary>
-		/// Called before an insert occurs
-		/// </summary>
-		TModel BeforeInsert(TModel data);
+        /// <summary>
+        /// Called before an insert occurs
+        /// </summary>
+        TModel BeforeInsert(TModel data);
 
-		/// <summary>
-		/// Called before obsolete
-		/// </summary>
-		TModel BeforeObsolete(TModel data);
+        /// <summary>
+        /// Called before obsolete
+        /// </summary>
+        TModel BeforeObsolete(TModel data);
 
-		/// <summary>
-		/// Called before an update occurs
-		/// </summary>
-		TModel BeforeUpdate(TModel data);
+        /// <summary>
+        /// Called before an update occurs
+        /// </summary>
+        TModel BeforeUpdate(TModel data);
 
-		/// <summary>
-		/// Called to validate a specific object
-		/// </summary>
-		List<DetectedIssue> Validate(TModel data);
+        /// <summary>
+        /// Called to validate a specific object
+        /// </summary>
+        List<DetectedIssue> Validate(TModel data);
 
-	}
+    }
 
-	/// <summary>
-	/// Represents a detected issue
-	/// </summary>
-	[JsonObject(nameof(DetectedIssue))]
-	[XmlType(nameof(DetectedIssue), Namespace = "http://santedb.org/issue")]
-	public class DetectedIssue
-	{
-		/// <summary>
-		/// Represents a detected issue priority
-		/// </summary>
-		[XmlAttribute("priority"), JsonProperty("priority")]
-		public DetectedIssuePriorityType Priority { get; set; }
+    /// <summary>
+    /// Represents a detected issue
+    /// </summary>
+    [JsonObject(nameof(DetectedIssue))]
+    [XmlType(nameof(DetectedIssue), Namespace = "http://santedb.org/issue")]
+    public class DetectedIssue
+    {
+        /// <summary>
+        /// Represents a detected issue priority
+        /// </summary>
+        [XmlAttribute("priority"), JsonProperty("priority")]
+        public DetectedIssuePriorityType Priority { get; set; }
 
-		/// <summary>
-		/// Text related to the issue
-		/// </summary>
-		[XmlText, JsonProperty("text")]
-		public String Text { get; set; }
+        /// <summary>
+        /// Text related to the issue
+        /// </summary>
+        [XmlText, JsonProperty("text")]
+        public String Text { get; set; }
 
-		/// <summary>
-		/// The type of issue (a concept)
-		/// </summary>
-		[XmlAttribute("type"), JsonProperty("type")]
-		public Guid TypeKey { get; set; }
+        /// <summary>
+        /// The type of issue (a concept)
+        /// </summary>
+        [XmlAttribute("type"), JsonProperty("type")]
+        public Guid TypeKey { get; set; }
 
     }
 }

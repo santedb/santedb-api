@@ -17,13 +17,8 @@
  * User: justin
  * Date: 2018-8-13
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
