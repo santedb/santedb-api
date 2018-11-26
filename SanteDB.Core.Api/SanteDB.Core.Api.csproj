@@ -36,6 +36,8 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Configuration\SanteDBConfiguration.cs" />
+    <Compile Include="Exceptions\ConfigurationException.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
     <Compile Include="Mail\MailMessageFlags.cs" />
@@ -78,6 +80,7 @@
     <Compile Include="Protocol\ProtocolComparer.cs" />
     <Compile Include="Security\ISecurityInformationService.cs" />
     <Compile Include="Security\PermissionPolicyIdentifiers.cs" />
+    <Compile Include="Services\IConfigurationManager.cs" />
     <Compile Include="Services\IExtensionTypeRepository.cs" />
     <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
