@@ -15,37 +15,35 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-21
+ * Date: 2018-11-7
  */
 using System;
+using System.Security.Principal;
 
-namespace SanteDB.Core
+namespace DisconnectedClient.Core.Services
 {
     /// <summary>
-    /// Application context
-    /// </summary>
-    public static class ApplicationServiceContext
+	/// Represents an identity service which authenticates devices.
+	/// </summary>
+	public interface IDeviceIdentityProviderService
     {
+        /// <summary>
+        /// Fired after an authentication request has been made.
+        /// </summary>
+        event EventHandler<AuthenticatedEventArgs> Authenticated;
 
         /// <summary>
-        /// Helper extension method for getting strongly typed service
+        /// Fired prior to an authentication request being made.
         /// </summary>
-        /// <typeparam name="T">The type of service to be retrieved</typeparam>
-        /// <param name="me">The reference to the service provider</param>
-        /// <returns>The fetched / registered service implementation</returns>
-        public static T GetService<T>(this IServiceProvider me)
-        {
-            return (T)me.GetService(typeof(T));
-        }
+        event EventHandler<AuthenticatingEventArgs> Authenticating;
 
         /// <summary>
-        /// Gets or sets the current application service context
+        /// Authenticates the specified device identifier.
         /// </summary>
-        public static IApplicationServiceContext Current { get; set; }
+        /// <param name="deviceId">The device identifier.</param>
+        /// <param name="deviceSecret">The device secret.</param>
+        /// <returns>Returns the authenticated device principal.</returns>
+        IPrincipal Authenticate(string deviceId, string deviceSecret);
 
-        /// <summary>
-        /// Type of application hosting this SanteDB
-        /// </summary>
-        public static SanteDBHostType HostType { get; set; }
     }
 }

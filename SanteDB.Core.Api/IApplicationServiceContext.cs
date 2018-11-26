@@ -22,30 +22,30 @@ using System;
 namespace SanteDB.Core
 {
     /// <summary>
-    /// Application context
+    /// Represents an application service context
     /// </summary>
-    public static class ApplicationServiceContext
+    public interface IApplicationServiceContext : IServiceProvider
     {
 
         /// <summary>
-        /// Helper extension method for getting strongly typed service
+        /// Fired when the service context is starting
         /// </summary>
-        /// <typeparam name="T">The type of service to be retrieved</typeparam>
-        /// <param name="me">The reference to the service provider</param>
-        /// <returns>The fetched / registered service implementation</returns>
-        public static T GetService<T>(this IServiceProvider me)
-        {
-            return (T)me.GetService(typeof(T));
-        }
+        event EventHandler Starting;
 
         /// <summary>
-        /// Gets or sets the current application service context
+        /// Fired when the service context is started
         /// </summary>
-        public static IApplicationServiceContext Current { get; set; }
+        event EventHandler Started;
 
         /// <summary>
-        /// Type of application hosting this SanteDB
+        /// Fired when the service is stopping
         /// </summary>
-        public static SanteDBHostType HostType { get; set; }
+        event EventHandler Stopping;
+
+        /// <summary>
+        /// Fired when the service has stopped
+        /// </summary>
+        event EventHandler Stopped;
+
     }
 }

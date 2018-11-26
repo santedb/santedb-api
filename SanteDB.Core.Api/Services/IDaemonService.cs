@@ -15,37 +15,44 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-21
+ * Date: 2018-6-28
  */
 using System;
 
-namespace SanteDB.Core
+namespace DisconnectedClient.Core.Services
 {
     /// <summary>
-    /// Application context
+    /// Daemon service which runs when the application is started
     /// </summary>
-    public static class ApplicationServiceContext
+    public interface IDaemonService
     {
-
         /// <summary>
-        /// Helper extension method for getting strongly typed service
+        /// Starts the specified daemon service
         /// </summary>
-        /// <typeparam name="T">The type of service to be retrieved</typeparam>
-        /// <param name="me">The reference to the service provider</param>
-        /// <returns>The fetched / registered service implementation</returns>
-        public static T GetService<T>(this IServiceProvider me)
-        {
-            return (T)me.GetService(typeof(T));
-        }
-
+        bool Start();
         /// <summary>
-        /// Gets or sets the current application service context
+        /// Stop the service
         /// </summary>
-        public static IApplicationServiceContext Current { get; set; }
-
+        bool Stop();
         /// <summary>
-        /// Type of application hosting this SanteDB
+        /// True when daemon is running
         /// </summary>
-        public static SanteDBHostType HostType { get; set; }
+        bool IsRunning { get; }
+        /// <summary>
+        /// Fired when the daemon is starting
+        /// </summary>
+        event EventHandler Starting;
+        /// <summary>
+        /// Fired when the daemon is started
+        /// </summary>
+        event EventHandler Started;
+        /// <summary>
+        /// Fired when the daemon is stopping
+        /// </summary>
+        event EventHandler Stopping;
+        /// <summary>
+        /// Fired when the daemon has stopped
+        /// </summary>
+        event EventHandler Stopped;
     }
 }

@@ -36,6 +36,7 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="IApplicationServiceContext.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
     <Compile Include="Mail\MailMessageFlags.cs" />
@@ -78,6 +79,8 @@
     <Compile Include="Protocol\ProtocolComparer.cs" />
     <Compile Include="Security\ISecurityInformationService.cs" />
     <Compile Include="Security\PermissionPolicyIdentifiers.cs" />
+    <Compile Include="Services\IAuditDispatchService.cs" />
+    <Compile Include="Services\IConfigurationManager.cs" />
     <Compile Include="Services\IExtensionTypeRepository.cs" />
     <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
@@ -122,7 +125,6 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <PackageReference Include="MARC.HI.EHRS.SVC.Auditing.Core" Version="2.0.1.8" />
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
         <PackageReference Include="SharpCompress" Version="0.18.2" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
@@ -155,7 +157,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
