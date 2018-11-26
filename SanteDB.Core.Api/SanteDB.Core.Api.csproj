@@ -37,6 +37,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="IApplicationServiceContext.cs" />
+    <Compile Include="Configuration\SanteDBConfiguration.cs" />
+    <Compile Include="Exceptions\ConfigurationException.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
     <Compile Include="Mail\MailMessageFlags.cs" />
