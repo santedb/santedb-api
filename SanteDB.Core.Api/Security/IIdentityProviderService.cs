@@ -181,7 +181,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the identity</param>
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
-        IIdentity CreateIdentity(String userName, String password);
+        IIdentity CreateIdentity(String userName, String password, IPrincipal principal);
 
         /// <summary>
         /// Authenticate the user creating an identity
@@ -195,9 +195,14 @@ namespace SanteDB.Core.Security.Services
         IPrincipal Authenticate(String userName, String password, String tfaSecret);
 
         /// <summary>
+        /// Perform a re-authentication of the principal
+        /// </summary>
+        IPrincipal ReAuthenticate(IPrincipal principal);
+
+        /// <summary>
         /// Change user password
         /// </summary>
-        void ChangePassword(String userName, String newPassword);
+        void ChangePassword(String userName, String newPassword, IPrincipal principal);
 
         /// <summary>
         /// Set the user's two factor authentication secret

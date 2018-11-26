@@ -101,37 +101,37 @@ namespace SanteDB.Core.Services
         /// Insert the specified data.
         /// </summary>
         /// <param name="data">Data.</param>
-        TData Insert(TData data, TransactionMode mode, IPrincipal overrideAuth = null);
+        TData Insert(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
-        TData Update(TData data, TransactionMode mode, IPrincipal overrideAuth = null);
+        TData Update(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Obsolete the specified identified data
         /// </summary>
         /// <param name="data">Data.</param>
-        TData Obsolete(TData data, TransactionMode mode, IPrincipal overrideAuth = null);
+        TData Obsolete(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Get the specified key.
         /// </summary>
         /// <param name="key">Key.</param>
-        TData Get(Guid key, Guid? versionKey, bool loadFast = false, IPrincipal overrideAuth = null);
+        TData Get(Guid key, Guid? versionKey, bool loadFast, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, IPrincipal overrideAuth = null);
+        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal overrideAuth = null);
+        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal);
         
         /// <summary>
         /// Performs a fast count

@@ -30,17 +30,17 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Creates a role
         /// </summary>
-        void CreateRole(String roleName);
+        void CreateRole(String roleName, IPrincipal principal);
 
         /// <summary>
         /// Add users to roles
         /// </summary>
-        void AddUsersToRoles(String[] users, String[] roles);
+        void AddUsersToRoles(String[] users, String[] roles, IPrincipal principal);
 
         /// <summary>
         /// Remove users from specified roles
         /// </summary>
-        void RemoveUsersFromRoles(String[] users, String[] roles);
+        void RemoveUsersFromRoles(String[] users, String[] roles, IPrincipal principal);
 
         /// <summary>
         /// Find all users in a specified role

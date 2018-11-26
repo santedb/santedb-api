@@ -124,8 +124,7 @@ namespace SanteDB.Core.Configuration
         /// Get the specified section
         /// </summary>
         /// <returns>The section.</returns>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public T GetSection<T>()
+        public T GetSection<T>() 
         {
             return (T)this.GetSection(typeof(T));
         }

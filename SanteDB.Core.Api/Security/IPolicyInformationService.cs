@@ -50,7 +50,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="securable">The object to which policies should be added</param>
         /// <param name="rule">The rule to be applied to the securable</param>
         /// <param name="policyOids">The oids of the policies to add</param>
-        void AddPolicies(Object securable, PolicyGrantType rule, params String[] policyOids);
+        void AddPolicies(Object securable, PolicyGrantType rule, IPrincipal principal, params String[] policyOids);
     }
 
 

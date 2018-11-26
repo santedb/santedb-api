@@ -34,6 +34,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Queries or continues a query 
         /// </summary>
-        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext = null);
+        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext);
     }
 }
