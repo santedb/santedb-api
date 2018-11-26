@@ -15,42 +15,25 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-21
+ * Date: 2018-6-22
  */
+using SanteDB.Core.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Security.Principal;
 
-namespace SanteDB.Core
+namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents an application service context
+    /// Data persistence service lean mode
     /// </summary>
-    public interface IApplicationServiceContext : IServiceProvider
+    public interface IFastQueryDataPersistenceService<TEntity> : IStoredQueryDataPersistenceService<TEntity> where TEntity : IdentifiedData
     {
-
         /// <summary>
-        /// Fired when the service context is starting
+        /// Queries or continues a query in lean mode
         /// </summary>
-        event EventHandler Starting;
-
-        /// <summary>
-        /// Fired when the service context is started
-        /// </summary>
-        event EventHandler Started;
-
-        /// <summary>
-        /// Fired when the service is stopping
-        /// </summary>
-        event EventHandler Stopping;
-
-        /// <summary>
-        /// Fired when the service has stopped
-        /// </summary>
-        event EventHandler Stopped;
-
-        /// <summary>
-        /// Get whether the service is running
-        /// </summary>
-        bool IsRunning { get; }
+        IEnumerable<TEntity> QueryFast(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext = null);
 
     }
 }

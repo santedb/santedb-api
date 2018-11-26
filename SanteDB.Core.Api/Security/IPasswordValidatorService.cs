@@ -19,38 +19,19 @@
  */
 using System;
 
-namespace SanteDB.Core
+namespace SanteDB.Core.Security.Services
 {
+
     /// <summary>
-    /// Represents an application service context
+    /// Represents a password validation service
     /// </summary>
-    public interface IApplicationServiceContext : IServiceProvider
+    public interface IPasswordValidatorService
     {
 
         /// <summary>
-        /// Fired when the service context is starting
+        /// Validate the password
         /// </summary>
-        event EventHandler Starting;
-
-        /// <summary>
-        /// Fired when the service context is started
-        /// </summary>
-        event EventHandler Started;
-
-        /// <summary>
-        /// Fired when the service is stopping
-        /// </summary>
-        event EventHandler Stopping;
-
-        /// <summary>
-        /// Fired when the service has stopped
-        /// </summary>
-        event EventHandler Stopped;
-
-        /// <summary>
-        /// Get whether the service is running
-        /// </summary>
-        bool IsRunning { get; }
+        bool Validate(String password);
 
     }
 }

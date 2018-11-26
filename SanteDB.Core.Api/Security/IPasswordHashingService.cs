@@ -15,23 +15,24 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-21
+ * Date: 2018-6-28
  */
 using System;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security.Services
 {
-
     /// <summary>
-    /// Represents a password validation service
+    /// Password hashing service.
     /// </summary>
-    public interface IPasswordValidatorService
+    public interface IPasswordHashingService
     {
 
         /// <summary>
-        /// Validate the password
+        /// Compute the password hash
         /// </summary>
-        bool Validate(String password);
-
+        /// <returns>The hash.</returns>
+        /// <param name="password">Password.</param>
+        String ComputeHash(String password);
     }
 }
+

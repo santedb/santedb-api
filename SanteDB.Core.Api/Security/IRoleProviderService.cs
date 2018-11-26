@@ -17,66 +17,56 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.DisconnectedClient.Core.Security;
 using System;
 using System.Security.Principal;
 
-namespace DisconnectedClient.Core.Services
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents a service which is capableof retrieving roles
     /// </summary>
     public interface IRoleProviderService
     {
+        /// <summary>
+        /// Creates a role
+        /// </summary>
+        void CreateRole(String roleName);
 
         /// <summary>
-        /// Find all users in a role
+        /// Add users to roles
         /// </summary>
-        string[] FindUsersInRole(string role);
+        void AddUsersToRoles(String[] users, String[] roles);
+
+        /// <summary>
+        /// Remove users from specified roles
+        /// </summary>
+        void RemoveUsersFromRoles(String[] users, String[] roles);
+
+        /// <summary>
+        /// Find all users in a specified role
+        /// </summary>
+        String[] FindUsersInRole(String role);
 
         /// <summary>
         /// Get all roles
         /// </summary>
-        /// <returns></returns>
-        string[] GetAllRoles();
+        String[] GetAllRoles();
 
         /// <summary>
-        /// Get all rolesfor user
+        /// Get all roles
         /// </summary>
-        /// <returns></returns>
-        string[] GetAllRoles(String userName);
+        String[] GetAllRoles(string userName);
 
         /// <summary>
-        /// Determine if the user is in the specified role
+        /// User user in the specified role
         /// </summary>
-        bool IsUserInRole(IPrincipal principal, string roleName);
+        bool IsUserInRole(String userName, String roleName);
 
         /// <summary>
-        /// Determine if user is in role
+        /// Is user in the specified role
         /// </summary>
-        bool IsUserInRole(string userName, string roleName);
-
-        /// <summary>
-        /// Adds the specified users to the specified roles
-        /// </summary>
-        void AddUsersToRoles(string[] userNames, string[] roleNames, IPrincipal principal = null);
-
+        bool IsUserInRole(IPrincipal principal, String roleName);
     }
 
-    /// <summary>
-    /// Represents an offline role provider service
-    /// </summary>
-    public interface IOfflineRoleProviderService : IRoleProviderService
-    {
-        /// <summary>
-        /// Create offline role
-        /// </summary>
-        void CreateRole(string value, IPrincipal principal);
-
-        /// <summary>
-        /// Add specified policies to the specified roles
-        /// </summary>
-        void AddPoliciesToRoles(IPolicyInstance[] policies, string[] roles, IPrincipal principal);
-    }
 }
 

@@ -19,7 +19,7 @@
  */
 using SanteDB.Core.Model.Security;
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.Core.Security
 {
     /// <summary>
     /// Represents a policy instance class
@@ -30,7 +30,15 @@ namespace SanteDB.DisconnectedClient.Core.Security
         /// Security policy instance
         /// </summary>
 		IPolicy Policy { get; }
+
+        /// <summary>
+        /// Gets the policy grant
+        /// </summary>
         PolicyGrantType Rule { get; }
+
+        /// <summary>
+        /// Gets the securable
+        /// </summary>
         object Securable { get; }
     }
 }

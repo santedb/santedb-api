@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-21
  */
+using SanteDB.Core.Security.Services;
 using System;
 using System.Text.RegularExpressions;
 

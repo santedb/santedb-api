@@ -45,6 +45,11 @@ namespace SanteDB.Core.Services
         IEnumerable<Concept> FindConceptsByReferenceTerm(string code, Uri codeSystem);
 
         /// <summary>
+        /// Get concept set members
+        /// </summary>
+        IEnumerable<Concept> GetConceptSetMembers(string mnemonic);
+
+        /// <summary>
         /// Finds a concept by reference term.
         /// </summary>
         /// <param name="code">The code of the reference term.</param>

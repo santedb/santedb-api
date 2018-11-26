@@ -15,35 +15,29 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-11-7
+ * Date: 2018-6-28
  */
+using SanteDB.Core.Model.Security;
 using System;
 using System.Security.Principal;
 
-namespace DisconnectedClient.Core.Services
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
-	/// Represents an identity service which authenticates devices.
-	/// </summary>
-	public interface IDeviceIdentityProviderService
+    /// Represents a policy decision service
+    /// </summary>
+    public interface IPolicyDecisionService
     {
         /// <summary>
-        /// Fired after an authentication request has been made.
+        /// Make a simple policy decision for a specific securable
         /// </summary>
-        event EventHandler<AuthenticatedEventArgs> Authenticated;
+        PolicyDecision GetPolicyDecision(IPrincipal principal, Object securable);
 
         /// <summary>
-        /// Fired prior to an authentication request being made.
+        /// Get a policy decision outcome (i.e. make a policy decision)
         /// </summary>
-        event EventHandler<AuthenticatingEventArgs> Authenticating;
-
-        /// <summary>
-        /// Authenticates the specified device identifier.
-        /// </summary>
-        /// <param name="deviceId">The device identifier.</param>
-        /// <param name="deviceSecret">The device secret.</param>
-        /// <returns>Returns the authenticated device principal.</returns>
-        IPrincipal Authenticate(string deviceId, string deviceSecret);
+        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
 
     }
 }
+

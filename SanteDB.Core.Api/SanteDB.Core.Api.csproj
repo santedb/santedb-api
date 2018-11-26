@@ -36,6 +36,12 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
+    <Compile Include="Configuration\IConfigurationSection.cs" />
+    <Compile Include="Event\DataEventArgs.cs" />
+    <Compile Include="Event\SecureAccessEventArgs.cs" />
+    <Compile Include="Exceptions\DomainStateException.cs" />
+    <Compile Include="Exceptions\PolicyViolationException.cs" />
     <Compile Include="IApplicationServiceContext.cs" />
     <Compile Include="Configuration\SanteDBConfiguration.cs" />
     <Compile Include="Exceptions\ConfigurationException.cs" />
@@ -79,15 +85,29 @@
     <Compile Include="Patch\SimplePatchService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\ProtocolComparer.cs" />
-    <Compile Include="Security\ISecurityInformationService.cs" />
+    <Compile Include="Security\AuthenticationContext.cs" />
+    <Compile Include="Security\Claims\GenericClaim.cs" />
+    <Compile Include="Security\Principal\GenericIdentity.cs" />
+    <Compile Include="Security\Principal\GenericPrincipal.cs" />
+    <Compile Include="Security\Claims\IClaim.cs" />
+    <Compile Include="Security\Claims\IClaimsIdentity.cs" />
+    <Compile Include="Security\Claims\IClaimsPrincipal.cs" />
+    <Compile Include="Security\IPolicy.cs" />
+    <Compile Include="Security\IPolicyInstance.cs" />
     <Compile Include="Security\PermissionPolicyIdentifiers.cs" />
+    <Compile Include="Security\PolicyDecision.cs" />
+    <Compile Include="Security\PolicyDecisionDetail.cs" />
     <Compile Include="Services\IAuditDispatchService.cs" />
     <Compile Include="Services\IConfigurationManager.cs" />
+    <Compile Include="Services\IDaemonService.cs" />
+    <Compile Include="Security\IDeviceIdentityProviderService.cs" />
     <Compile Include="Services\IExtensionTypeRepository.cs" />
+    <Compile Include="Security\IIdentityProviderService.cs" />
+    <Compile Include="Services\IFastQueryDataPersistenceService.cs" />
     <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
     <Compile Include="Interfaces\IAuditEventSource.cs" />
-    <Compile Include="Services\IAuditRepositoryService.cs" />
+    <Compile Include="Security\IAuditRepositoryService.cs" />
     <Compile Include="Services\IBusinessRulesService.cs" />
     <Compile Include="Services\ICarePlanService.cs" />
     <Compile Include="Protocol\IClinicalProtocol.cs" />
@@ -99,13 +119,18 @@
     <Compile Include="Services\IFastQueryRepositoryService.cs" />
     <Compile Include="Services\Impl\RegexPasswordValidator.cs" />
     <Compile Include="Services\IAliasProvider.cs" />
-    <Compile Include="Services\IPasswordValidatorService.cs" />
+    <Compile Include="Security\IPasswordHashingService.cs" />
+    <Compile Include="Security\IPasswordValidatorService.cs" />
     <Compile Include="Services\IPatchService.cs" />
+    <Compile Include="Security\IPolicyDecisionService.cs" />
+    <Compile Include="Security\IPolicyInformationService.cs" />
     <Compile Include="Services\IRecordMatchingConfigurationService.cs" />
     <Compile Include="Services\IRecordMatchingService.cs" />
     <Compile Include="Services\IRecordMergingService.cs" />
     <Compile Include="Services\IReportProgressChanged.cs" />
     <Compile Include="Services\IRepositoryService.cs" />
+    <Compile Include="Security\IRoleProviderService.cs" />
+    <Compile Include="Services\IStoredQueryDataPersistenceService.cs" />
     <Compile Include="Services\ITemplateDefinitionRepositoryService.cs" />
     <Compile Include="Services\Impl\BaseBusinessRulesService.cs" />
     <Compile Include="Services\Impl\NullPhoneticAlgorithmHandler.cs" />
@@ -123,6 +148,7 @@
     <Compile Include="Services\ITagPersistenceService.cs" />
     <Compile Include="Services\IThreadPoolService.cs" />
     <Compile Include="Services\IValidatingRepositoryService.cs" />
+    <Compile Include="Services\ServiceProviderAttribute.cs" />
   </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
@@ -159,9 +185,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Configuration\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

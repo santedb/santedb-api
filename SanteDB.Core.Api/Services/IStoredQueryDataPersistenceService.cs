@@ -15,24 +15,25 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-28
+ * Date: 2018-6-22
  */
+using SanteDB.Core.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Security.Principal;
 
-namespace SanteDB.DisconnectedClient.Core.Serices
+namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Password hashing service.
+    /// Represents a data persistence provider that can store and continue queries
     /// </summary>
-    public interface IPasswordHashingService
+    public interface IStoredQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
+        where TEntity: IdentifiedData
     {
-
         /// <summary>
-        /// Compute the password hash
+        /// Queries or continues a query 
         /// </summary>
-        /// <returns>The hash.</returns>
-        /// <param name="password">Password.</param>
-        String ComputeHash(String password);
+        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext = null);
     }
 }
-

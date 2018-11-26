@@ -17,11 +17,12 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Security.Claims;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 
-namespace DisconnectedClient.Core.Services
+namespace SanteDB.Core.Security.Services
 {
 
     /// <summary>
@@ -30,11 +31,11 @@ namespace DisconnectedClient.Core.Services
     public class AuthenticatingEventArgs : AuthenticatedEventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DisconnectedClient.Core.Services.AuthenticatingEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.Core.Services.AuthenticatingEventArgs"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="password">Password.</param>
-        public AuthenticatingEventArgs(String userName, String password) : base(userName, password, true)
+        public AuthenticatingEventArgs(String userName) : base(userName, null, true)
         {
 
         }
@@ -57,14 +58,13 @@ namespace DisconnectedClient.Core.Services
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DisconnectedClient.Core.Services.AuthenticatingEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="SanteDB.Core.Services.AuthenticatingEventArgs"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
-        /// <param name="password">Password.</param>
-        public AuthenticatedEventArgs(String userName, String password, bool success)
+        public AuthenticatedEventArgs(String userName, IPrincipal principal, bool success)
         {
             this.UserName = userName;
-            this.Password = password;
+
             this.Success = success;
         }
 
@@ -78,16 +78,6 @@ namespace DisconnectedClient.Core.Services
         /// </summary>
         /// <value>The name of the user.</value>
         public String UserName
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Gets or sets the password.
-        /// </summary>
-        /// <value>The password.</value>
-        public String Password
         {
             get;
             private set;
@@ -108,12 +98,12 @@ namespace DisconnectedClient.Core.Services
     /// <summary>
     /// Override event args
     /// </summary>
-    public class OverrideEventArgs : EventArgs
+    public class SecurityOverrideEventArgs : EventArgs
     {
         /// <summary>
         /// Creates the override event args
         /// </summary>
-        public OverrideEventArgs(IPrincipal principal, string purposeOfUse, IEnumerable<String> scopes) 
+        public SecurityOverrideEventArgs(IPrincipal principal, string purposeOfUse, IEnumerable<String> scopes) 
         {
             this.Principal = principal;
             this.PurposeOfUse = purposeOfUse;
@@ -142,96 +132,120 @@ namespace DisconnectedClient.Core.Services
     }
 
     /// <summary>
-    /// Represents an identity provider
+    /// Identifies a class which can generate TFA secrets
+    /// </summary>
+    public interface ITwoFactorSecretGenerator
+    {
+        /// <summary>
+        /// Gets the name of the TFA generator
+        /// </summary>
+        String Name { get; }
+
+        /// <summary>
+        /// Generate a TFA secret
+        /// </summary>
+        String GenerateTfaSecret();
+
+        /// <summary>
+        /// Validates the secret 
+        /// </summary>
+        bool Validate(String secret);
+    }
+
+    /// <summary>
+    /// Identity provider service
     /// </summary>
     public interface IIdentityProviderService
     {
 
         /// <summary>
-        /// Occurs when authenticating.
+        /// Fired prior to an authentication event
         /// </summary>
         event EventHandler<AuthenticatingEventArgs> Authenticating;
 
         /// <summary>
-        /// Occurs when authenticated.
+        /// Fired after an authentication decision being made
         /// </summary>
         event EventHandler<AuthenticatedEventArgs> Authenticated;
 
         /// <summary>
-        /// Fired when the user is wishing to override
-        /// </summary>
-        event EventHandler<OverrideEventArgs> Overridding;
-
-        /// <summary>
-        /// Authenticate the user
-        /// </summary>
-        IPrincipal Authenticate(string userName, string password);
-
-        /// <summary>
-        /// Authenticate the specified principal with the password
-        /// </summary>
-        /// <param name="principal">Principal.</param>
-        /// <param name="password">Password.</param>
-        IPrincipal Authenticate(IPrincipal principal, string password);
-
-        /// <summary>
-        /// Authenticate the specified principal with the password
-        /// </summary>
-        /// <param name="principal">Principal.</param>
-        /// <param name="password">Password.</param>
-        IPrincipal Authenticate(IPrincipal principal, string password, string tfaSecret);
-
-        /// <summary>
-        /// Gets an un-authenticated identity
-        /// </summary>
-        IIdentity GetIdentity(string userName);
-
-        /// <summary>
-        /// Authenticate the user using a TwoFactorAuthentication secret
-        /// </summary>
-        IPrincipal Authenticate(string userName, string password, string tfaSecret);
-
-        /// <summary>
-        /// Change the user's password
-        /// </summary>
-        void ChangePassword(string userName, string newPassword, IPrincipal principal);
-
-        /// <summary>
-        /// Changes the user's password
-        /// </summary>
-        void ChangePassword(string userName, string password);
-
-        /// <summary>
-        /// Creates the specified user
-        /// </summary>
-        IIdentity CreateIdentity(string userName, string password);
-
-        /// <summary>
-        /// Create an identity with the specified data
-        /// </summary>
-        IIdentity CreateIdentity(Guid sid, String userName, String password);
-
-        /// <summary>
-        /// Locks the user account out
-        /// </summary>
-        void SetLockout(string userName, bool v);
-
-        /// <summary>
-        /// Deletes the specified identity
+        /// Retrieves an identity from the object
         /// </summary>
         /// <param name="userName"></param>
-        void DeleteIdentity(string userName);
+        /// <returns></returns>
+        IIdentity GetIdentity(String userName);
+
+        /// <summary>
+        /// Create a basic identity in the provider
+        /// </summary>
+        /// <param name="userName">The username of the identity</param>
+        /// <param name="password">The intitial password of the identity</param>
+        /// <returns>The created identity</returns>
+        IIdentity CreateIdentity(String userName, String password);
+
+        /// <summary>
+        /// Authenticate the user creating an identity
+        /// </summary>
+        /// <returns></returns>
+        IPrincipal Authenticate(String userName, String password);
+
+        /// <summary>
+        /// Authenticate the user using two factor authentication
+        /// </summary>
+        IPrincipal Authenticate(String userName, String password, String tfaSecret);
+
+        /// <summary>
+        /// Change user password
+        /// </summary>
+        void ChangePassword(String userName, String newPassword);
+
+        /// <summary>
+        /// Set the user's two factor authentication secret
+        /// </summary>
+        String GenerateTfaSecret(String userName);
+
+        /// <summary>
+        /// Delete an identity
+        /// </summary>
+        void DeleteIdentity(String userName);
+
+        /// <summary>
+        /// Set lockout
+        /// </summary>
+        void SetLockout(String userName, bool lockout);
+
+        /// <summary>
+        /// Adds a claim to the specified user account
+        /// </summary>
+        void AddClaim(String userName, IClaim claim);
+
+        /// <summary>
+        /// Removes a claim from the specified user account
+        /// </summary>
+        void RemoveClaim(String userName, String claimType);
+
     }
 
     /// <summary>
-    /// Represents an offline identity provider service
+    /// Represents an identity provider that allows for elevation
     /// </summary>
-    public interface IOfflineIdentityProviderService : IIdentityProviderService
+    public interface IElevatableIdentityProviderService : IIdentityProviderService
     {
+
         /// <summary>
-        /// Create a local offline identity
+        /// The caller has requested an override
         /// </summary>
-        IIdentity CreateIdentity(Guid sid, string username, string password, IPrincipal principal);
+        event EventHandler<SecurityOverrideEventArgs> OverrideRequested;
+
+        /// <summary>
+        /// Requests the currently established principal to be elevated
+        /// </summary>
+        /// <param name="principal">The principal to be elevated</param>
+        /// <param name="password">The password for the principal</param>
+        /// <param name="purpose">The reason for the elevation</param>
+        /// <param name="policies">One or more policies which the principal is seeking override</param>
+        IPrincipal Elevate(IPrincipal principal, String password, String purpose, params String[] policies);
     }
+   
 }
 

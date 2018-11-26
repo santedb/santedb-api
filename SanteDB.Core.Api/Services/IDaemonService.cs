@@ -19,7 +19,7 @@
  */
 using System;
 
-namespace DisconnectedClient.Core.Services
+namespace SanteDB.Core.Services
 {
     /// <summary>
     /// Daemon service which runs when the application is started

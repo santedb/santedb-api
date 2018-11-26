@@ -1,9 +1,9 @@
-﻿using SanteDB.DisconnectedClient.Core.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.Core.Configuration;
 
 namespace SanteDB.Core.Services
 {
@@ -44,7 +44,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the specified configuration section
         /// </summary>
-        T GetSection<T>();
+        T GetSection<T>() where T : IConfigurationSection;
 
         /// <summary>
         /// Gets the specified application setting

@@ -26,7 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 
-namespace SanteDB.DisconnectedClient.Core.Configuration
+namespace SanteDB.Core.Configuration
 {
 
     /// <summary>

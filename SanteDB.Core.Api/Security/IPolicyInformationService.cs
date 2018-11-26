@@ -17,11 +17,13 @@
  * User: justin
  * Date: 2018-6-28
  */
-using SanteDB.DisconnectedClient.Core.Security;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 
-namespace DisconnectedClient.Core.Services
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents a contract for a policy information service
@@ -41,17 +43,16 @@ namespace DisconnectedClient.Core.Services
         /// Get a specific policy
         /// </summary>
         IPolicy GetPolicy(string policyOid);
+
+        /// <summary>
+        /// Adds the specified policies to the specified securable object
+        /// </summary>
+        /// <param name="securable">The object to which policies should be added</param>
+        /// <param name="rule">The rule to be applied to the securable</param>
+        /// <param name="policyOids">The oids of the policies to add</param>
+        void AddPolicies(Object securable, PolicyGrantType rule, params String[] policyOids);
     }
 
-    /// <summary>
-    /// Represents an offline policy information service
-    /// </summary>
-    public interface IOfflinePolicyInformationService : IPolicyInformationService
-    {
-        /// <summary>
-        /// Create a local offline policy
-        /// </summary>
-        void CreatePolicy(IPolicy policy, IPrincipal principal);
-    }
+
 }
 

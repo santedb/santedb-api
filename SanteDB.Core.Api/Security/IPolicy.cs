@@ -18,7 +18,7 @@
  * Date: 2018-6-28
  */
 
-namespace SanteDB.DisconnectedClient.Core.Security
+namespace SanteDB.Core.Security
 {
     /// <summary>
     /// Represents a simple policy
