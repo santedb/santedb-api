@@ -98,6 +98,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string AdministerApplet = UnrestrictedAdministration + ".12";
 
+        /// <summary>
+        /// Allows identity to alter administrative object policy
+        /// </summary>
+        public const string AssignPolicy = UnrestrictedAdministration + ".13";
+
 
         /// <summary>
         /// Policy identifier for allowance of login

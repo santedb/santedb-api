@@ -35,7 +35,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Add users to roles
         /// </summary>
-        void AddUsersToRoles(String[] users, String[] roles, IPrincipal principal);
+        void AddUsersToRoles(String[] users, String[] roles,  IPrincipal principal);
 
         /// <summary>
         /// Remove users from specified roles

@@ -181,7 +181,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the identity</param>
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
-        IIdentity CreateIdentity(String userName, String password, IPrincipal principal);
+        IIdentity CreateIdentity(String userName, String password,  IPrincipal principal);
 
         /// <summary>
         /// Authenticate the user creating an identity
@@ -212,22 +212,22 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Delete an identity
         /// </summary>
-        void DeleteIdentity(String userName);
+        void DeleteIdentity(String userName, IPrincipal principal);
 
         /// <summary>
         /// Set lockout
         /// </summary>
-        void SetLockout(String userName, bool lockout);
+        void SetLockout(String userName, bool lockout, IPrincipal principal);
 
         /// <summary>
         /// Adds a claim to the specified user account
         /// </summary>
-        void AddClaim(String userName, IClaim claim);
+        void AddClaim(String userName, IClaim claim, IPrincipal principal);
 
         /// <summary>
         /// Removes a claim from the specified user account
         /// </summary>
-        void RemoveClaim(String userName, String claimType);
+        void RemoveClaim(String userName, String claimType, IPrincipal principal);
 
     }
 
