@@ -25,6 +25,7 @@ namespace SanteDB.Core.Event
             this.Offset = offset;
             this.Count = count;
             this.QueryId = queryId;
+            this.Query = query;
         }
 
         /// <summary>
