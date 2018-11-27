@@ -18,6 +18,7 @@
  * Date: 2018-6-28
  */
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
@@ -134,7 +135,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Identifies a class which can generate TFA secrets
     /// </summary>
-    public interface ITwoFactorSecretGenerator
+    public interface ITwoFactorSecretGenerator : IServiceImplementation
     {
         /// <summary>
         /// Gets the name of the TFA generator
@@ -155,7 +156,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Identity provider service
     /// </summary>
-    public interface IIdentityProviderService
+    public interface IIdentityProviderService : IServiceImplementation
     {
 
         /// <summary>

@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
@@ -28,7 +29,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a contract for a policy information service
     /// </summary>
-    public interface IPolicyInformationService
+    public interface IPolicyInformationService : IServiceImplementation
     {
         /// Get active policies for the specified securable type
         /// </summary>

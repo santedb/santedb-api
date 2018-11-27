@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -40,7 +41,7 @@ namespace SanteDB.Core.Configuration
         /// Gets the list of section types in this configuration
         /// </summary>
         [XmlArray("sections"), XmlArrayItem("add")]
-        public List<String> SectionTypes { get; set; }
+        public List<TypeReferenceConfiguration> SectionTypes { get; set; }
 
     }
 
@@ -96,7 +97,7 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = new XmlSerializer(typeof(SanteDBBaseConfiguration)).Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => Type.GetType(o)).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
+            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
         }
 
         /// <summary>
@@ -105,8 +106,12 @@ namespace SanteDB.Core.Configuration
         /// <param name="dataStream">Data stream.</param>
         public void Save(Stream dataStream)
         {
-            this.SectionTypes = this.Sections.Select(o => o.GetType().AssemblyQualifiedName).ToList();
-            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => Type.GetType(o)).ToArray()).Serialize(dataStream, this);
+            this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
+            var namespaces = this.Sections.Select(o => o.GetType().GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
+            XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
+            xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+
+            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).ToArray()).Serialize(dataStream, this, xmlns);
         }
 
         /// <summary>
@@ -145,7 +150,6 @@ namespace SanteDB.Core.Configuration
         public void AddSection<T>(T section)
         {
             this.Sections.Add(section);
-            this.SectionTypes.Add(typeof(T).AssemblyQualifiedName);
         }
 
         /// <summary>

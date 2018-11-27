@@ -29,6 +29,11 @@ namespace SanteDB.Core.Services.Impl
     public abstract class RegexPasswordValidator : IPasswordValidatorService
     {
 
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public String ServiceName => "Regular Expression Password Validator";
+
         // Default password pattern
         public const string DefaultPasswordPattern = @"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$";
 

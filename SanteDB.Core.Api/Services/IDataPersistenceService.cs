@@ -52,7 +52,7 @@ namespace SanteDB.Core.Services
     /// Represents a data persistence service which is capable of storing and retrieving data
     /// to/from a data store
     /// </summary>
-    public interface IDataPersistenceService<TData> where TData : IdentifiedData
+    public interface IDataPersistenceService<TData> : IServiceImplementation where TData : IdentifiedData
     {
         /// <summary>
         /// Occurs when inserted.

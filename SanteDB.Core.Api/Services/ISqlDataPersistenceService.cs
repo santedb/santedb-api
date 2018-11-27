@@ -24,7 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a data persistence service where arbitrary SQL can be run
     /// </summary>
-    public interface ISqlDataPersistenceService
+    public interface ISqlDataPersistenceService : IServiceImplementation
     {
 
         /// <summary>

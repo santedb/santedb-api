@@ -5,7 +5,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a factory service which can be used to generate default factories
     /// </summary>
-    public interface IRepositoryServiceFactory
+    public interface IRepositoryServiceFactory : IServiceImplementation
     {
 
         /// <summary>

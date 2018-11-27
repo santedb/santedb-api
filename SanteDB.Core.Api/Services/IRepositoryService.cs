@@ -27,7 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository service base
     /// </summary>
-    public interface IRepositoryService<TModel> where TModel : IdentifiedData
+    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
         /// <summary>
         /// Gets the specified model.

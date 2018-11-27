@@ -25,7 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Taggable persistence service
     /// </summary>
-    public interface ITagPersistenceService
+    public interface ITagPersistenceService : IServiceImplementation
     {
 
         /// <summary>

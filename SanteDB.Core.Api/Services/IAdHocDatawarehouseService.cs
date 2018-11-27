@@ -27,7 +27,7 @@ namespace SanteDB.Core.Services
     /// Represents a simple data warehousing service which allows business rules to stash
     /// pre-computed values.
     /// </summary>
-    public interface IAdHocDatawarehouseService
+    public interface IAdHocDatawarehouseService : IServiceImplementation
     {
         /// <summary>
         /// Gets the provider mnemonic

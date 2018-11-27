@@ -24,7 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a thread pooling service
     /// </summary>
-    public interface IThreadPoolService
+    public interface IThreadPoolService : IServiceImplementation
     {
         /// <summary>
         /// Queues the specified action into the worker pool

@@ -29,13 +29,18 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// Create a new service attibute
+        /// Identifies a service provider
         /// </summary>
-        public ServiceProviderAttribute(ServiceInstantiationType type)
+        public ServiceProviderAttribute(String name, ServiceInstantiationType type = ServiceInstantiationType.Singleton)
         {
-            this.Type = type;
+            this.Name = name;
         }
 
+        /// <summary>
+        /// Gets the name of the service
+        /// </summary>
+        public String Name { get; set; }
+        
         /// <summary>
         /// Service type
         /// </summary>

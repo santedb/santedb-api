@@ -25,7 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a patch service which can calculate and apply patches
     /// </summary>
-    public interface IPatchService
+    public interface IPatchService : IServiceImplementation
     {
         /// <summary>
         /// Performs a DIFF and creates the related patch which can be used to update <paramref name="existing"/>

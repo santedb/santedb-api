@@ -38,7 +38,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a configuration manager service
     /// </summary>
-    public interface IConfigurationManager
+    public interface IConfigurationManager : IServiceImplementation
     {
 
         /// <summary>

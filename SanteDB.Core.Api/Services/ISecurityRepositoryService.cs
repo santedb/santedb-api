@@ -27,7 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Security repository service is responsible for the maintenance of security entities
     /// </summary>
-    public interface ISecurityRepositoryService
+    public interface ISecurityRepositoryService : IServiceImplementation
     {
         /// <summary>
         /// Changes a user's password.

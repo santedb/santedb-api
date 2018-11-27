@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.Core.Security.Services
@@ -24,7 +25,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Password hashing service.
     /// </summary>
-    public interface IPasswordHashingService
+    public interface IPasswordHashingService : IServiceImplementation
     {
 
         /// <summary>

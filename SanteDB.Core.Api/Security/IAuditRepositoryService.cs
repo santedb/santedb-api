@@ -18,6 +18,7 @@
  * Date: 2018-6-21
  */
 using SanteDB.Core.Auditing;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -27,7 +28,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a service which can persist and retrieve audits
     /// </summary>
-    public interface IAuditRepositoryService
+    public interface IAuditRepositoryService : IServiceImplementation
     {
 
         /// <summary>

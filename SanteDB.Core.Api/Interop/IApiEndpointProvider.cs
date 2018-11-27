@@ -15,30 +15,31 @@
  * the License.
  * 
  * User: justin
- * Date: 2018-6-28
+ * Date: 2018-11-23
  */
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Services;
+using SanteDB.Core.Interop;
 using System;
-using System.Security.Principal;
 
-namespace SanteDB.Core.Security.Services
+namespace SanteDB.Core.Interop
 {
     /// <summary>
-    /// Represents a policy decision service
+    /// Represents an SanteDB API endpoint
     /// </summary>
-    public interface IPolicyDecisionService : IServiceImplementation
+    public interface IApiEndpointProvider
     {
         /// <summary>
-        /// Make a simple policy decision for a specific securable
+        /// Gets the service type
         /// </summary>
-        PolicyDecision GetPolicyDecision(IPrincipal principal, Object securable);
+        ServiceEndpointType ApiType { get; }
 
         /// <summary>
-        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// Service URL
         /// </summary>
-        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
+        String[] Url { get; }
 
+        /// <summary>
+        /// Capabilities
+        /// </summary>
+        ServiceEndpointCapabilities Capabilities { get; }
     }
 }
-

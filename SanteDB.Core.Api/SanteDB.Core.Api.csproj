@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
+    <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
     <Compile Include="Event\DataEventArgs.cs" />
     <Compile Include="Event\SecureAccessEventArgs.cs" />
     <Compile Include="Exceptions\DomainStateException.cs" />
@@ -45,6 +46,7 @@
     <Compile Include="IApplicationServiceContext.cs" />
     <Compile Include="Configuration\SanteDBConfiguration.cs" />
     <Compile Include="Exceptions\ConfigurationException.cs" />
+    <Compile Include="Interop\IApiEndpointProvider.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
     <Compile Include="Mail\MailMessageFlags.cs" />
@@ -130,6 +132,7 @@
     <Compile Include="Services\IReportProgressChanged.cs" />
     <Compile Include="Services\IRepositoryService.cs" />
     <Compile Include="Security\IRoleProviderService.cs" />
+    <Compile Include="Services\IServiceImplementation.cs" />
     <Compile Include="Services\IStoredQueryDataPersistenceService.cs" />
     <Compile Include="Services\ITemplateDefinitionRepositoryService.cs" />
     <Compile Include="Services\Impl\BaseBusinessRulesService.cs" />

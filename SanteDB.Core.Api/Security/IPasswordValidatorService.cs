@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-21
  */
+using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.Core.Security.Services
@@ -25,7 +26,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a password validation service
     /// </summary>
-    public interface IPasswordValidatorService
+    public interface IPasswordValidatorService : IServiceImplementation
     {
 
         /// <summary>

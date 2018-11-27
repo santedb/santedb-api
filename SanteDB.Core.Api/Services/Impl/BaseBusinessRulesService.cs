@@ -77,6 +77,12 @@ namespace SanteDB.Core.Services.Impl
     /// </summary>
     public abstract class BaseBusinessRulesService<TModel> : IBusinessRulesService<TModel> where TModel : IdentifiedData
     {
+
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public string ServiceName => $"Business rules for {typeof(TModel).FullName}";
+
         /// <summary>
         /// Gets the next behavior
         /// </summary>

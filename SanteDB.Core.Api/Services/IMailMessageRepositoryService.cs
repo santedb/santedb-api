@@ -27,7 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents an alerting service.
     /// </summary>
-    public interface IMailMessageRepositoryService
+    public interface IMailMessageRepositoryService : IServiceImplementation
     {
         /// <summary>
         /// Fired when an alert is received.

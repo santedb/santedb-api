@@ -25,7 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Query persistence service
     /// </summary>
-    public interface IQueryPersistenceService
+    public interface IQueryPersistenceService : IServiceImplementation
     {
 
         /// <summary>

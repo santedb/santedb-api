@@ -24,7 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Daemon service which runs when the application is started
     /// </summary>
-    public interface IDaemonService
+    public interface IDaemonService : IServiceImplementation
     {
         /// <summary>
         /// Starts the specified daemon service

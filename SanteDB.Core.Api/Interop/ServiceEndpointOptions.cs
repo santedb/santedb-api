@@ -54,6 +54,8 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlEnum("fhir")]
         Hl7FhirInterface,
+        [XmlEnum("v2")]
+        Hl7v2Interface,
         /// <summary>
         /// The service endpoint is a GS1 interface
         /// </summary>
@@ -91,7 +93,22 @@ namespace SanteDB.Core.Interop
         /// Endpoint supports compression
         /// </summary>
         [XmlEnum("compress")]
-        Compression = 0x1
+        Compression = 0x1,
+        /// <summary>
+        /// Node authentication
+        /// </summary>
+        [XmlEnum("nodeauth")]
+        CertificateAuth = 0x8,
+        /// <summary>
+        /// Service has CORS
+        /// </summary>
+        [XmlEnum("cors")]
+        Cors = 0x10,
+        /// <summary>
+        /// Service can produce view model objects
+        /// </summary>
+        ViewModel = 0x20
+
     }
 
     /// <summary>

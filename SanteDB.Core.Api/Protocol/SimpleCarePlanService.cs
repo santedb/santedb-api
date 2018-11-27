@@ -36,8 +36,14 @@ namespace SanteDB.Core.Protocol
     /// Represents a care plan service that can bundle protocol acts together 
     /// based on their start/stop times
     /// </summary>
+    [ServiceProvider("Simple Care Planning Service")]
     public class SimpleCarePlanService : ICarePlanService
     {
+
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public string ServiceName => "Default Care Planning Service";
 
         /// <summary>
         /// True if the view model initializer for the care plans should be ignored

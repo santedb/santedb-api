@@ -28,7 +28,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a class which can create care plans
     /// </summary>
-    public interface ICarePlanService
+    public interface ICarePlanService : IServiceImplementation
     {
         /// <summary>
         /// Gets the list of protocols which can be or should be used to create the care plans

@@ -59,7 +59,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Gets a message that describes the current exception.
         /// </summary>
-        /// <returns>The error message that explains the reason for the exception, or an empty string ("").</returns>
+        /// <returns>The error message that explains the reason for the exception, or an empty string (").</returns>
         /// <filterpriority>1</filterpriority>
         /// <value>The message.</value>
         public override string Message

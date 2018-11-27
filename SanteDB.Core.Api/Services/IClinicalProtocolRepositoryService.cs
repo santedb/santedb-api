@@ -26,7 +26,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that can do clinical protocols
     /// </summary>
-    public interface IClinicalProtocolRepositoryService
+    public interface IClinicalProtocolRepositoryService : IServiceImplementation
     {
         /// <summary>
         /// Find protocols in the repository service

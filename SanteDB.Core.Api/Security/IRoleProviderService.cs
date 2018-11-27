@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-28
  */
+using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
@@ -25,7 +26,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a service which is capableof retrieving roles
     /// </summary>
-    public interface IRoleProviderService
+    public interface IRoleProviderService : IServiceImplementation
     {
         /// <summary>
         /// Creates a role

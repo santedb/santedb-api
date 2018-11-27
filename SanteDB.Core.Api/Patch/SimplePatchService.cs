@@ -37,6 +37,7 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// Represents a simple patch service which can calculate patches and apply them
     /// </summary>
+    [ServiceProvider("Basic Patching Service")]
     public class SimplePatchService : IPatchService
     {
         // Ignore properties
@@ -54,6 +55,11 @@ namespace SanteDB.Core.Services.Impl
 
         // Lock object
         private object m_lockObject = new object();
+
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public string ServiceName => "Basic patching service";
 
         /// <summary>
         /// Perform a diff using a simple .compare() method

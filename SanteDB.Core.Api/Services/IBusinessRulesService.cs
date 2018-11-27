@@ -51,7 +51,7 @@ namespace SanteDB.Core.Services
     /// Note: This can be done, instead with events on the persistence layer on the SanteDB datalayer, however there
     /// may come a time when a rule is fired without persistence occurring
     /// </remarks>
-    public interface IBusinessRulesService<TModel> where TModel : IdentifiedData
+    public interface IBusinessRulesService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
         /// <summary>
         /// Gets or sets the rule to be run after this rule (for chained rules)

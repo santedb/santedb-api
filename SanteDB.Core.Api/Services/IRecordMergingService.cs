@@ -24,7 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service which appropriately merges / unmerges records
     /// </summary>
-    public interface IRecordMergingService<T>
+    public interface IRecordMergingService<T> : IServiceImplementation
     {
 
         /// <summary>

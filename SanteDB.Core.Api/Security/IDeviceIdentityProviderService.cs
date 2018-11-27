@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-11-7
  */
+using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
@@ -25,7 +26,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
 	/// Represents an identity service which authenticates devices.
 	/// </summary>
-	public interface IDeviceIdentityProviderService
+	public interface IDeviceIdentityProviderService : IServiceImplementation
     {
         /// <summary>
         /// Fired after an authentication request has been made.

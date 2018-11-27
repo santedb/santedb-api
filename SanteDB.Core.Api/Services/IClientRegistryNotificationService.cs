@@ -25,7 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a client registry notification service.
     /// </summary>
-    public interface IClientRegistryNotificationService
+    public interface IClientRegistryNotificationService : IServiceImplementation
     {
         /// <summary>
         /// Notify that duplicates have been resolved.
