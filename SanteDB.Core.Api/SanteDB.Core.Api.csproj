@@ -148,6 +148,8 @@
     <Compile Include="Services\ITagPersistenceService.cs" />
     <Compile Include="Services\IThreadPoolService.cs" />
     <Compile Include="Services\IValidatingRepositoryService.cs" />
+    <Compile Include="Data\PersistenceEntitySource.cs" />
+    <Compile Include="Data\RepositoryEntitySource.cs" />
     <Compile Include="Services\ServiceProviderAttribute.cs" />
   </ItemGroup>
   <Choose>
