@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-21
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -66,6 +67,13 @@ namespace SanteDB.Core.Exceptions
         {
         }
 
+        /// <summary>
+        /// Detected issue exception
+        /// </summary>
+        public DetectedIssueException(DetectedIssue issue) : this(new List<DetectedIssue>() {  issue })
+        {
+
+        }
         /// <summary>
         /// Write to string
         /// </summary>

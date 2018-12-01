@@ -36,6 +36,7 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BusinessRules\DetectedIssue.cs" />
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
@@ -87,8 +88,13 @@
     <Compile Include="Patch\SimplePatchService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\ProtocolComparer.cs" />
+    <Compile Include="Security\AuditUtil.cs" />
     <Compile Include="Security\AuthenticationContext.cs" />
     <Compile Include="Security\Claims\GenericClaim.cs" />
+    <Compile Include="Security\Claims\SanteDBClaimTypes.cs" />
+    <Compile Include="Security\DataPolicyIdentifiers.cs" />
+    <Compile Include="Security\IApplicationIdentityProviderService.cs" />
+    <Compile Include="Security\ISession.cs" />
     <Compile Include="Security\Principal\GenericIdentity.cs" />
     <Compile Include="Security\Principal\GenericPrincipal.cs" />
     <Compile Include="Security\Claims\IClaim.cs" />
@@ -99,6 +105,7 @@
     <Compile Include="Security\PermissionPolicyIdentifiers.cs" />
     <Compile Include="Security\PolicyDecision.cs" />
     <Compile Include="Security\PolicyDecisionDetail.cs" />
+    <Compile Include="BusinessRules\DetectedIssueKeys.cs" />
     <Compile Include="Services\IAuditDispatchService.cs" />
     <Compile Include="Services\IConfigurationManager.cs" />
     <Compile Include="Services\IDaemonService.cs" />
@@ -119,10 +126,12 @@
     <Compile Include="Services\IAdHocDatawarehouseService.cs" />
     <Compile Include="Services\IDataPersistenceService.cs" />
     <Compile Include="Services\IFastQueryRepositoryService.cs" />
+    <Compile Include="Services\IMessagePersistenceService.cs" />
     <Compile Include="Services\Impl\RegexPasswordValidator.cs" />
     <Compile Include="Services\IAliasProvider.cs" />
     <Compile Include="Security\IPasswordHashingService.cs" />
     <Compile Include="Security\IPasswordValidatorService.cs" />
+    <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPatchService.cs" />
     <Compile Include="Security\IPolicyDecisionService.cs" />
     <Compile Include="Security\IPolicyInformationService.cs" />
@@ -133,6 +142,8 @@
     <Compile Include="Services\IRepositoryService.cs" />
     <Compile Include="Security\IRoleProviderService.cs" />
     <Compile Include="Services\IServiceImplementation.cs" />
+    <Compile Include="Services\ISessionIdentityProviderService.cs" />
+    <Compile Include="Services\ISessionProviderService.cs" />
     <Compile Include="Services\IStoredQueryDataPersistenceService.cs" />
     <Compile Include="Services\ITemplateDefinitionRepositoryService.cs" />
     <Compile Include="Services\Impl\BaseBusinessRulesService.cs" />
