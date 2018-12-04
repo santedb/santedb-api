@@ -26,7 +26,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a session identity service that can provide identities
     /// </summary>
-    public interface ISessionIdentityProviderService
+    public interface ISessionIdentityProviderService : IServiceImplementation
     {
 
         /// <summary>

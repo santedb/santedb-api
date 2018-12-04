@@ -97,7 +97,7 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = new XmlSerializer(typeof(SanteDBBaseConfiguration)).Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
+            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o=>o!=null).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
         }
 
         /// <summary>
