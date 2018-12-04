@@ -95,6 +95,7 @@
     <Compile Include="Security\DataPolicyIdentifiers.cs" />
     <Compile Include="Security\IApplicationIdentityProviderService.cs" />
     <Compile Include="Security\ISession.cs" />
+    <Compile Include="Security\Principal\IDeviceIdentity.cs" />
     <Compile Include="Security\Principal\GenericIdentity.cs" />
     <Compile Include="Security\Principal\GenericPrincipal.cs" />
     <Compile Include="Security\Claims\IClaim.cs" />
