@@ -39,5 +39,10 @@ namespace SanteDB.Core.Security.Claims
         /// Add an identity
         /// </summary>
         void AddIdentity(IIdentity identity);
+
+        /// <summary>
+        /// Determine if the principal has a claim
+        /// </summary>
+        bool HasClaim(Func<IClaim, bool> predicate);
     }
 }

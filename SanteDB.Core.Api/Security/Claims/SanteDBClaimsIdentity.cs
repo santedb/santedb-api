@@ -15,7 +15,7 @@ namespace SanteDB.Core.Security.Claims
     {
         // Claims made about the user
         private List<IClaim> m_claims;
-
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.ClaimsIdentity"/> class.
         /// </summary>
@@ -37,8 +37,17 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Create new claims identity from the specified identity
         /// </summary>
-        public SanteDBClaimsIdentity(IIdentity identity) : this(identity.Name, identity.IsAuthenticated, identity.AuthenticationType)
+        public SanteDBClaimsIdentity(IIdentity identity) : this(identity, null)
         {
+        }
+
+        /// <summary>
+        /// Creates new claims identity from specified identity and claims
+        /// </summary>
+        public SanteDBClaimsIdentity(IIdentity identity, IEnumerable<IClaim> claims)
+            : this(identity.Name, identity.IsAuthenticated, identity.AuthenticationType, claims)
+        {
+            
         }
 
         /// <summary>

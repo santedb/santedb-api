@@ -113,6 +113,7 @@ namespace SanteDB.Core.Security.Claims
             return this.m_identities.SelectMany(o => o.Claims).Where(o => o.Type == claimType);
         }
 
+       
         /// <summary>
         /// Gets the primary identity
         /// </summary>
