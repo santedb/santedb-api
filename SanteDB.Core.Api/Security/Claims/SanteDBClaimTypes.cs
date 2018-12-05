@@ -140,6 +140,24 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public const string SanteDBSessionIdClaim = "http://santedb.org/claims/session-id";
 
-       
+        /// <summary>
+        /// Name claims
+        /// </summary>
+        public const string Name = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
+
+        /// <summary>
+        /// Actor
+        /// </summary>
+        public const string Actor = "http://schemas.xmlsoap.org/ws/2009/09/identity/claims/actor";
+
+        /// <summary>
+        /// Name identifier
+        /// </summary>
+        public const string NameIdentifier = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+
+        /// <summary>
+        /// Is persistent
+        /// </summary>
+        public const string IsPersistent = "http://santedb.org/claims/persistent";
     }
 }

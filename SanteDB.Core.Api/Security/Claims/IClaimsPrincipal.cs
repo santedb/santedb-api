@@ -19,16 +19,25 @@ namespace SanteDB.Core.Security.Claims
         /// Gets the claims
         /// </summary>
         IEnumerable<IClaim> Claims { get; }
-
-        /// <summary>
-        /// Gets the primary identity
-        /// </summary>
-        IClaimsIdentity Identity { get; }
-
+        
         /// <summary>
         /// Gets all the identities
         /// </summary>
         IClaimsIdentity[] Identities { get; }
 
+        /// <summary>
+        /// Find all claims
+        /// </summary>
+        IClaim FindFirst(string santeDBDeviceIdentifierClaim);
+
+        /// <summary>
+        /// Find all claims
+        /// </summary>
+        IEnumerable<IClaim> FindAll(string santeDBDeviceIdentifierClaim);
+
+        /// <summary>
+        /// Add an identity
+        /// </summary>
+        void AddIdentity(IIdentity identity);
     }
 }

@@ -9,13 +9,13 @@ namespace SanteDB.Core.Security.Claims
     /// <summary>
     /// Represents a generic claim
     /// </summary>
-    public class GenericClaim : IClaim
+    public class SanteDBClaim : IClaim
     {
 
         /// <summary>
         /// Creates a new generic claim
         /// </summary>
-        public GenericClaim(String type, String value)
+        public SanteDBClaim(String type, String value)
         {
             this.Type = type;
             this.Value = value;

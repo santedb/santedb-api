@@ -90,7 +90,9 @@
     <Compile Include="Protocol\ProtocolComparer.cs" />
     <Compile Include="Security\AuditUtil.cs" />
     <Compile Include="Security\AuthenticationContext.cs" />
-    <Compile Include="Security\Claims\GenericClaim.cs" />
+    <Compile Include="Security\Claims\SanteDBClaim.cs" />
+    <Compile Include="Security\Claims\SanteDBClaimsIdentity.cs" />
+    <Compile Include="Security\Claims\SanteDBClaimsPrincipal.cs" />
     <Compile Include="Security\Claims\SanteDBClaimTypes.cs" />
     <Compile Include="Security\DataPolicyIdentifiers.cs" />
     <Compile Include="Security\IApplicationIdentityProviderService.cs" />
