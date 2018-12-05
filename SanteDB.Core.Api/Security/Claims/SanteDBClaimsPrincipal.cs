@@ -39,7 +39,7 @@ namespace SanteDB.Core.Security.Claims
         {
             this.m_identities = new List<IClaimsIdentity>()
             {
-                new SanteDBClaimsIdentity(identity)
+                identity as IClaimsIdentity ?? new SanteDBClaimsIdentity(identity)
             };
         }
 
