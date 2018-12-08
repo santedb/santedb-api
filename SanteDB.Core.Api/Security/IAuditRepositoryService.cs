@@ -58,6 +58,6 @@ namespace SanteDB.Core.Security.Services
         /// <param name="totalResults">Total results matching query</param>
         /// <returns>The located audits trimmed for offset and count</returns>
         IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults);
-
+        
     }
 }
