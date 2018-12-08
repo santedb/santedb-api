@@ -170,14 +170,14 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// Represents event data associated with a data retrieval operation
     /// </summary>
-    public class DataRetrievingEventArgs<TData> : QueryRequestEventArgs<TData>
+    public class DataRetrievingEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
 
         /// <summary>
         /// Creates a new pre-retrieval event args object
         /// </summary>
-        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal overrideAuthContext = null) : base(o => o.Key == identifier, 0, 1, null, overrideAuthContext)
+        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal overrideAuthContext = null) : base(overrideAuthContext) 
         {
             this.Id = identifier;
             this.VersionId = versionId;
@@ -196,20 +196,30 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Gets the data retrieved
         /// </summary>
-        public TData OverrideResult { get; set; }
+        public TData Result { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance cancel.
+        /// </summary>
+        /// <value><c>true</c> if this instance cancel; otherwise, <c>false</c>.</value>
+        public bool Cancel
+        {
+            get;
+            set;
+        }
     }
 
     /// <summary>
     /// A class used to store event information related to post-retrieval events
     /// </summary>
-    public class DataRetrievedEventArgs<TData> : QueryResultEventArgs<TData>
+    public class DataRetrievedEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
 
         /// <summary>
         /// Post retrieval data
         /// </summary>
-        public DataRetrievedEventArgs(TData data, IPrincipal executionPrincipal) : base(o => o.Key == data.Key, new TData[] { data }, 0, 1, data == null ? 0 : 1, null, executionPrincipal)
+        public DataRetrievedEventArgs(TData data, IPrincipal executionPrincipal) : base(executionPrincipal)
         {
             this.Data = data;
         }

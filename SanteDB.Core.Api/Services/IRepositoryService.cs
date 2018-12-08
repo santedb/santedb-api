@@ -24,11 +24,50 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
+
+    /// <summary>
+    /// Represents event args fired at the repository level
+    /// </summary>
+    public class RepositoryEventArgs<TModel> : EventArgs
+    {
+        /// <summary>
+        /// Creates a new instance of repository data event args
+        /// </summary>
+        public RepositoryEventArgs(TModel data)
+        {
+            this.Data = data;
+        }
+
+        /// <summary>
+        /// Gets the data elements related to the event
+        /// </summary>
+        public TModel Data { get; private set; }
+
+    }
+
     /// <summary>
     /// Represents a repository service base
     /// </summary>
     public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
+
+        /// <summary>
+        /// Fired after data was inserted 
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Inserted;
+        /// <summary>
+        /// Fired after data was saved
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Saved;
+        /// <summary>
+        /// Fired after data was retrieved
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Retrieved;
+        /// <summary>
+        /// Fired after data was queried
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<IEnumerable<TModel>>> Queried;
+
         /// <summary>
         /// Gets the specified model.
         /// </summary>
