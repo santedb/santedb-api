@@ -51,23 +51,7 @@ namespace SanteDB.Core.Services
     public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
 
-        /// <summary>
-        /// Fired after data was inserted 
-        /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Inserted;
-        /// <summary>
-        /// Fired after data was saved
-        /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Saved;
-        /// <summary>
-        /// Fired after data was retrieved
-        /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Retrieved;
-        /// <summary>
-        /// Fired after data was queried
-        /// </summary>
-        event EventHandler<RepositoryEventArgs<IEnumerable<TModel>>> Queried;
-
+       
         /// <summary>
         /// Gets the specified model.
         /// </summary>
@@ -122,6 +106,30 @@ namespace SanteDB.Core.Services
         TModel Obsolete(Guid key);
     }
 
+    /// <summary>
+    /// Repreents a repository which notifies of changes
+    /// </summary>
+    /// <typeparam name="TModel"></typeparam>
+    public interface INotifyRepositoryService<TModel> : IRepositoryService<TModel>
+        where TModel : IdentifiedData
+    {
+        /// <summary>
+        /// Fired after data was inserted 
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Inserted;
+        /// <summary>
+        /// Fired after data was saved
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Saved;
+        /// <summary>
+        /// Fired after data was retrieved
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<TModel>> Retrieved;
+        /// <summary>
+        /// Fired after data was queried
+        /// </summary>
+        event EventHandler<RepositoryEventArgs<IEnumerable<TModel>>> Queried;
+    }
     /// <summary>
     /// Represents a repository which can nullify an object
     /// </summary>
