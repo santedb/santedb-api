@@ -141,7 +141,7 @@ namespace SanteDB.Core.Configuration
         /// <param name="t">T.</param>
         public object GetSection(Type t)
         {
-            if (!this.SectionTypes.Any(o => o.Type == t))
+            if (this.SectionTypes?.Any(o => o.Type == t) == false)
                 throw new InvalidOperationException($"Section type {t.FullName} is not registered");
             return this.Sections.Find(o => o.GetType().Equals(t));
         }
