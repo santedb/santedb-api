@@ -16,7 +16,7 @@
  - the License.
  - 
  - User: justin
- - Date: 2018-6-21
+ - Date: 2018-6-22
  -->
 <xs:schema xmlns:tns="http://santedb.org/warehousing" elementFormDefault="qualified" targetNamespace="http://santedb.org/warehousing" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:import namespace="http://microsoft.com/wsdl/types/" schemaLocation="BaseTypes.xsd" />
