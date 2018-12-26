@@ -23,6 +23,27 @@ using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
 {
+
+    /// <summary>
+    /// Represents methods of authentication
+    /// </summary>
+    [Flags]
+    public enum AuthenticationMethod
+    {
+        /// <summary>
+        /// Perform only local authentication
+        /// </summary>
+        Local = 0x1,
+        /// <summary>
+        /// Perform only online authentication
+        /// </summary>
+        Online = 0x2,
+        /// <summary>
+        /// Use either method
+        /// </summary>
+        Any = Local | Online
+    }
+
     /// <summary>
 	/// Represents an identity service which authenticates devices.
 	/// </summary>
@@ -43,9 +64,9 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         /// <param name="deviceId">The device identifier.</param>
         /// <param name="deviceSecret">The device secret.</param>
-        /// <param name="localOnly">When true, indicates that only local authorities should be used</param>
+        /// <param name="authMethod">Identifies the allowed authentication methods</param>
         /// <returns>Returns the authenticated device principal.</returns>
-        IPrincipal Authenticate(string deviceId, string deviceSecret, bool localOnly = false);
+        IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any);
 
     }
 }
