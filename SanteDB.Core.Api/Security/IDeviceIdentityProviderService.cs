@@ -43,8 +43,9 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         /// <param name="deviceId">The device identifier.</param>
         /// <param name="deviceSecret">The device secret.</param>
+        /// <param name="localOnly">When true, indicates that only local authorities should be used</param>
         /// <returns>Returns the authenticated device principal.</returns>
-        IPrincipal Authenticate(string deviceId, string deviceSecret);
+        IPrincipal Authenticate(string deviceId, string deviceSecret, bool localOnly = false);
 
     }
 }
