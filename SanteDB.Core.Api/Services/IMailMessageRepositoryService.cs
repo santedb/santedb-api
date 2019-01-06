@@ -18,6 +18,7 @@
  * Date: 2018-7-31
  */
 using SanteDB.Core.Mail;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -53,7 +54,7 @@ namespace SanteDB.Core.Services
         /// <param name="count">The count of the search results.</param>
         /// <param name="totalCount">The total count of the alerts.</param>
         /// <returns>Returns a list of alerts.</returns>
-        IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount);
+        IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy);
 
         /// <summary>
         /// Gets an alert.
