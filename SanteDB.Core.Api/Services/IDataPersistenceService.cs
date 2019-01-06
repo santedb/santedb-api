@@ -20,12 +20,14 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Map;
 using SanteDB.Core.Security;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Security.Principal;
+using SanteDB.Core.Model.Query;
 
 namespace SanteDB.Core.Services
 {
@@ -47,6 +49,8 @@ namespace SanteDB.Core.Services
         /// </summary>
         Commit
     }
+
+
 
     /// <summary>
     /// Represents a data persistence service which is capable of storing and retrieving data
@@ -131,7 +135,7 @@ namespace SanteDB.Core.Services
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal);
+        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
         
         /// <summary>
         /// Performs a fast count

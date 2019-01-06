@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-6-22
  */
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -27,6 +28,7 @@ namespace SanteDB.Core.Services
     /// Represents a query repository service which can find lean queries
     /// </summary>
     public interface IFastQueryRepositoryService<TEntity> : IPersistableQueryRepositoryService<TEntity>
+        where TEntity : IdentifiedData
     {
 
         /// <summary>

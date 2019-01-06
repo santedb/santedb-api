@@ -18,6 +18,7 @@
  * Date: 2018-6-22
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -82,7 +83,7 @@ namespace SanteDB.Core.Services
         /// <param name="count">The count.</param>
         /// <param name="totalResults">The total results.</param>
         /// <returns>Returns a list of identified data.</returns>
-        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults);
+        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
 
         /// <summary>
         /// Inserts the specified data.

@@ -18,6 +18,7 @@
  * Date: 2018-11-26
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -34,6 +35,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Queries or continues a query 
         /// </summary>
-        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext);
+        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext, params ModelSort<TEntity>[] orderBy);
     }
 }

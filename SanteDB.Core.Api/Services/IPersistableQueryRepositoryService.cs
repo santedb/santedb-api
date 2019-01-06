@@ -17,16 +17,19 @@
  * User: justin
  * Date: 2018-6-22
  */
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using SanteDB.Core.Model.Query;
 
 namespace SanteDB.Core.Services
 {
     /// <summary>
     /// Persistable query provider is an extensable interface which can perform a query with state
     /// </summary>
-    public interface IPersistableQueryRepositoryService<TEntity>
+    public interface IPersistableQueryRepositoryService<TEntity> : IRepositoryService<TEntity>
+        where TEntity : IdentifiedData
     {
         /// <summary>
         /// Performs a query which
@@ -37,7 +40,7 @@ namespace SanteDB.Core.Services
         /// <param name="count">The number of results</param>
         /// <param name="totalResults">The total results in the query</param>
         /// <param name="queryId">The unique identifier for the query</param>
-        IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId);
+        IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TEntity>[] orderBy);
 
     }
 }
