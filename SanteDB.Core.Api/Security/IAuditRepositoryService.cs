@@ -18,6 +18,7 @@
  * Date: 2018-11-26
  */
 using SanteDB.Core.Auditing;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="count">Count of results in the current call </param>
         /// <param name="totalResults">Total results matching query</param>
         /// <returns>The located audits trimmed for offset and count</returns>
-        IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults);
+        IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy);
         
     }
 }
