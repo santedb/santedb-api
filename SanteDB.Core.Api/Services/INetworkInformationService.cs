@@ -31,13 +31,14 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Network interface ctor
         /// </summary>
-        public NetworkInterfaceInfo(String name, String macAddress, bool isActive, String manufacturer, string ipAddress)
+        public NetworkInterfaceInfo(String name, String macAddress, bool isActive, String manufacturer, string ipAddress, string gateway)
         {
             this.Name = name;
             this.MacAddress = macAddress;
             this.IsActive = isActive;
             this.Manufacturer = manufacturer;
             this.IpAddress = ipAddress;
+            this.Gateway = gateway;
         }
 
         /// <summary>
@@ -64,6 +65,11 @@ namespace SanteDB.Core.Services
         /// Manufacturer
         /// </summary>
         public String Manufacturer { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the gateway 
+        /// </summary>
+        public String Gateway { get; private set; }
     }
 
     /// <summary>
