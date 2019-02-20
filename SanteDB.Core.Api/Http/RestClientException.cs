@@ -62,7 +62,7 @@ namespace SanteDB.Core.Http
         /// <filterpriority>2</filterpriority>
         public override string ToString()
         {
-            return string.Format("[RestClientException: {0}, Result={1}, Status={2}, HttpResult={3}]\r\n{4}", this.Message, Result, this.Status, (this.Response as HttpWebResponse)?.StatusCode, this.StackTrace);
+            return string.Format("[RestClientException: {0}, Status={2}, HttpResult={3}]\r\n--SERVER FAULT--\r\n{1}\r\n--END SERVER FAULT--\r\n-- STACK TRACE--\r\n{4}", this.Message, Result, this.Status, (this.Response as HttpWebResponse)?.StatusCode, this.StackTrace);
         }
 
 
