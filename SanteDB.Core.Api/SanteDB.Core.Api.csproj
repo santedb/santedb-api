@@ -40,8 +40,12 @@
     <Compile Include="Attributes\PluginDependencyAttribute.cs" />
     <Compile Include="BusinessRules\DetectedIssue.cs" />
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
+    <Compile Include="Configuration\Data\DataConfigurationSection.cs" />
+    <Compile Include="Configuration\Data\IDataFeature.cs" />
+    <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
+    <Compile Include="Configuration\Data\IDataProvider.cs" />
     <Compile Include="Event\DataEventArgs.cs" />
     <Compile Include="Event\SecureAccessEventArgs.cs" />
     <Compile Include="Exceptions\DomainStateException.cs" />
@@ -86,6 +90,7 @@
     <Compile Include="Interop\ServiceEndpointOptions.cs" />
     <Compile Include="Interop\ServiceOptions.cs" />
     <Compile Include="Interop\ServiceResourceOptions.cs" />
+    <Compile Include="OperatingSystemID.cs" />
     <Compile Include="SanteDBHostType.cs" />
     <Compile Include="Patch\SimplePatchService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

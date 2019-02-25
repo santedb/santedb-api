@@ -43,9 +43,6 @@ namespace SanteDB.Core
         /// </summary>
         public static IApplicationServiceContext Current { get; set; }
 
-        /// <summary>
-        /// Type of application hosting this SanteDB
-        /// </summary>
-        public static SanteDBHostType HostType { get; set; }
+
     }
 }

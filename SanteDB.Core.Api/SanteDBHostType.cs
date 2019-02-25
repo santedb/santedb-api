@@ -29,12 +29,8 @@ namespace SanteDB.Core
         /// </summary>
         Server,
         /// <summary>
-        /// Environment is a mobile client
+        /// Environment is using client side API
         /// </summary>
-        MobileClient,
-        /// <summary>
-        /// Environment is another client
-        /// </summary>
-        OtherClient
+        Client
     }
 }
