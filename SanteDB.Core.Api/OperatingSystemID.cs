@@ -26,7 +26,11 @@ namespace SanteDB.Core
         /// <summary>
         /// Host is running on Android
         /// </summary>
-        Android = 0x8
+        Android = 0x8,
+        /// <summary>
+        /// Host is another operating system (don't use any native libraries)
+        /// </summary>
+        Other = 0x10
     }
 
 }

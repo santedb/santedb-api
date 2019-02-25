@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace SanteDB.Core.Configuration.Data
 {
+
     /// <summary>
     /// Represents a particular feature for deployment
     /// </summary>
@@ -20,11 +21,6 @@ namespace SanteDB.Core.Configuration.Data
         /// Get the SQL required to deploy the feature
         /// </summary>
         String GetDeploySql(String invariantName);
-
-        /// <summary>
-        /// Un-deploy sql
-        /// </summary>
-        String GetUnDeploySql(String invariantName);
 
         /// <summary>
         /// Get SQL required to determine if feature is installed

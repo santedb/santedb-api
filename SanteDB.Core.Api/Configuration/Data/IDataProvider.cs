@@ -46,7 +46,11 @@ namespace SanteDB.Core.Configuration.Data
         /// <summary>
         /// Option is a password
         /// </summary>
-        Password
+        Password,
+        /// <summary>
+        /// Option is a filename
+        /// </summary>
+        FileName
     }
 
     /// <summary>
@@ -88,12 +92,12 @@ namespace SanteDB.Core.Configuration.Data
         /// <summary>
         /// Get data features matching this invariant name
         /// </summary>
-        IEnumerable<IDataFeature> GetDataFeatures();
+        IEnumerable<IDataFeature> GetFeatures(ConnectionString connectionString);
 
         /// <summary>
         /// Get databases
         /// </summary>
-        IEnumerable<String> GetDatabases(String connectionStringName);
+        IEnumerable<String> GetDatabases(ConnectionString connectionString);
 
         /// <summary>
         /// Deploy the specified data feature to the specified configuration option

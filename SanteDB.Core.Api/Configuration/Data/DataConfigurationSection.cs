@@ -63,6 +63,15 @@ namespace SanteDB.Core.Configuration.Data
     {
 
         /// <summary>
+        /// Creates a new instance of the connection string
+        /// </summary>
+        public ConnectionString(string providerName, string connectionString)
+        {
+            this.Provider = providerName;
+            this.Value = connectionString;
+        }
+
+        /// <summary>
         /// Gets or sets the name
         /// </summary>
         [XmlAttribute("name")]
