@@ -23,36 +23,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
 
 namespace SanteDB.Core.Services
 {
-
-    /// <summary>
-    /// Represents a connection string
-    /// </summary>
-    public sealed class ConnectionStringInfo
-    {
-
-        /// <summary>
-        /// Gets the specified connection string
-        /// </summary>
-        public ConnectionStringInfo(string provider, string connectionString)
-        {
-            this.ProviderName = provider;
-            this.ConnectionString = connectionString;
-        }
-
-        /// <summary>
-        /// Gets the provider name
-        /// </summary>
-        public String ProviderName { get; private set; }
-
-        /// <summary>
-        /// Gets the specified connection string
-        /// </summary>
-        public String ConnectionString { get; set; }
-
-    }
 
     /// <summary>
     /// Represents a configuration manager service
@@ -73,7 +47,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the specified connection string
         /// </summary>
-        ConnectionStringInfo GetConnectionString(String key);
+        ConnectionString GetConnectionString(String key);
 
         /// <summary>
         /// Get the configuration object

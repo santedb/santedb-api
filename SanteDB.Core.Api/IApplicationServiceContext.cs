@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-11-26
  */
+using SanteDB.Core.Configuration.Data;
 using System;
 
 namespace SanteDB.Core
@@ -52,5 +53,14 @@ namespace SanteDB.Core
         /// </summary>
         bool IsRunning { get; }
 
+        /// <summary>
+        /// Gets the operating system of the current application context
+        /// </summary>
+        OperatingSystemID OperatingSystem { get; }
+
+        /// <summary>
+        /// Type of application hosting this SanteDB
+        /// </summary>
+        SanteDBHostType HostType { get; }
     }
 }

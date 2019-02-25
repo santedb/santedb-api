@@ -376,7 +376,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
-                    ApplicationServiceContext.HostType == SanteDBHostType.Server ?
+                    ApplicationServiceContext.Current.HostType == SanteDBHostType.Server ?
                     new  AuditCode("110152", "DCM") { DisplayName = "Destination" } :
                     new  AuditCode("110153", "DCM") { DisplayName = "Source" }
                 }
@@ -397,7 +397,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointId = remoteAddress,
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 ActorRoleCode = new List<AuditCode>() {
-                    ApplicationServiceContext.HostType == SanteDBHostType.Server ?
+                    ApplicationServiceContext.Current.HostType == SanteDBHostType.Server ?
                     new  AuditCode("110153", "DCM") { DisplayName = "Source" } :
                     new  AuditCode("110152", "DCM") { DisplayName = "Destination" } 
                 }
