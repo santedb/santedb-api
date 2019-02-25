@@ -50,15 +50,23 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Identifies a service provider
         /// </summary>
-        public ServiceProviderAttribute(String name, ServiceInstantiationType type = ServiceInstantiationType.Singleton)
+        public ServiceProviderAttribute(String name, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null)
         {
             this.Name = name;
+            this.Type = type;
+            this.Configuration = configurationType;
+
         }
 
         /// <summary>
         /// Gets the name of the service
         /// </summary>
         public String Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the configuration type
+        /// </summary>
+        public Type Configuration { get; set; }
         
         /// <summary>
         /// Service type

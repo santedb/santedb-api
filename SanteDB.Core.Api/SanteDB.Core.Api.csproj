@@ -36,6 +36,8 @@
     <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Attributes\PluginAttribute.cs" />
+    <Compile Include="Attributes\PluginDependencyAttribute.cs" />
     <Compile Include="BusinessRules\DetectedIssue.cs" />
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
