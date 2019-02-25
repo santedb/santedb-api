@@ -81,6 +81,16 @@ namespace SanteDB.Core.Configuration.Data
         Dictionary<String, ConfigurationOptionType> Options { get; }
 
         /// <summary>
+        /// Creates the specified connection string
+        /// </summary>
+        ConnectionString CreateConnectionString(Dictionary<String, Object> options);
+
+        /// <summary>
+        /// Parse the specified connection string
+        /// </summary>
+        Dictionary<String, Object> ParseConnectionString(ConnectionString connectionString);
+
+        /// <summary>
         /// Add the necessary information to the operating system configuration
         /// </summary>
         bool Configure(SanteDBConfiguration configuration, Dictionary<String, Object> options);

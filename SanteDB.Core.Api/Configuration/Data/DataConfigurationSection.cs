@@ -93,7 +93,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         public String GetComponent(String component)
         {
-            var values = this.Value.Split(';').ToDictionary(o => o.Split('=')[0], o => o.Split('=')[1]);
+            var values = this.Value.Split(';').ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
             String retVal = null;
             values.TryGetValue(component, out retVal);
             return retVal;
