@@ -45,7 +45,7 @@
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
-    <Compile Include="Configuration\Data\IDataProvider.cs" />
+    <Compile Include="Configuration\Data\IDataConfigurationProvider.cs" />
     <Compile Include="Event\DataEventArgs.cs" />
     <Compile Include="Event\SecureAccessEventArgs.cs" />
     <Compile Include="Exceptions\DomainStateException.cs" />

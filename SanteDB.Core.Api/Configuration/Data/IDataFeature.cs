@@ -18,6 +18,11 @@ namespace SanteDB.Core.Configuration.Data
         String Name { get; }
 
         /// <summary>
+        /// Gets the description of the feature
+        /// </summary>
+        String Description { get; }
+
+        /// <summary>
         /// Get the SQL required to deploy the feature
         /// </summary>
         String GetDeploySql(String invariantName);

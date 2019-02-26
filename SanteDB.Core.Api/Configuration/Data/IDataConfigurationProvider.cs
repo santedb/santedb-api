@@ -50,13 +50,17 @@ namespace SanteDB.Core.Configuration.Data
         /// <summary>
         /// Option is a filename
         /// </summary>
-        FileName
+        FileName,
+        /// <summary>
+        /// Database name
+        /// </summary>
+        DatabaseName
     }
 
     /// <summary>
     /// Represents a storage provider
     /// </summary>
-    public interface IDataProvider : IReportProgressChanged
+    public interface IDataConfigurationProvider : IReportProgressChanged
     {
 
         /// <summary>
@@ -83,6 +87,11 @@ namespace SanteDB.Core.Configuration.Data
         /// Get the configuration options
         /// </summary>
         Dictionary<String, ConfigurationOptionType> Options { get; }
+
+        /// <summary>
+        /// Gets the groupings for the options
+        /// </summary>
+        Dictionary<String, String[]> OptionGroups { get; }
 
         /// <summary>
         /// Creates the specified connection string

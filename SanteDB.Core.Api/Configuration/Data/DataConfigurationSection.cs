@@ -72,6 +72,17 @@ namespace SanteDB.Core.Configuration.Data
         }
 
         /// <summary>
+        /// Creates a new connection string
+        /// </summary>
+        public ConnectionString(String providerName, Dictionary<String, Object> values)
+        {
+            this.Provider = providerName;
+            this.Value = String.Empty;
+            foreach (var itm in values)
+                this.SetComponent(itm.Key, itm.Value?.ToString());
+        }
+
+        /// <summary>
         /// Gets or sets the name
         /// </summary>
         [XmlAttribute("name")]
@@ -102,10 +113,29 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         public String GetComponent(String component)
         {
-            var values = this.Value.Split(';').ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            var values = this.Value.Split(';').Where(t=>t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+
             String retVal = null;
             values.TryGetValue(component, out retVal);
             return retVal;
+        }
+
+        /// <summary>
+        /// Set the specified component of the connection string
+        /// </summary>
+        public void SetComponent(String component, String value)
+        {
+            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            if (values.ContainsKey(component))
+            {
+                if (String.IsNullOrEmpty(value))
+                    values.Remove(component);
+                else
+                    values[component] = value;
+            }
+            else if(!String.IsNullOrEmpty(value))
+                values.Add(component, value.ToString());
+            this.Value = String.Join(";", values.Select(o => $"{o.Key}={o.Value}"));
         }
 
         /// <summary>
