@@ -26,37 +26,7 @@ namespace SanteDB.Core.Configuration.Data
 {
 
     
-    /// <summary>
-    /// Configuration options type
-    /// </summary>
-    public enum ConfigurationOptionType
-    {
-        /// <summary>
-        /// Option is a string
-        /// </summary>
-        String,
-        /// <summary>
-        /// Option is a boolean
-        /// </summary>
-        Boolean,
-        /// <summary>
-        /// Option is a numeric
-        /// </summary>
-        Numeric,
-        /// <summary>
-        /// Option is a password
-        /// </summary>
-        Password,
-        /// <summary>
-        /// Option is a filename
-        /// </summary>
-        FileName,
-        /// <summary>
-        /// Database name
-        /// </summary>
-        DatabaseName
-    }
-
+    
     /// <summary>
     /// Represents a storage provider
     /// </summary>
@@ -94,6 +64,11 @@ namespace SanteDB.Core.Configuration.Data
         Dictionary<String, String[]> OptionGroups { get; }
 
         /// <summary>
+        /// Get the database provider type
+        /// </summary>
+        Type DbProviderType { get; }
+
+        /// <summary>
         /// Creates the specified connection string
         /// </summary>
         ConnectionString CreateConnectionString(Dictionary<String, Object> options);
@@ -123,7 +98,15 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         bool Deploy(IDataFeature feature, String connectionStringName, SanteDBConfiguration configuration);
 
-        
+        /// <summary>
+        /// Create the specified database in the provider
+        /// </summary>
+        ConnectionString CreateDatabase(ConnectionString connectionString, string databaseName, string databaseOwner);
+
+        /// <summary>
+        /// Tests the specified connection string
+        /// </summary>
+        bool TestConnectionString(ConnectionString connectionString);
     }
 }
 

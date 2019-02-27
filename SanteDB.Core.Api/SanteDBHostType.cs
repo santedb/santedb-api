@@ -31,6 +31,10 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is using client side API
         /// </summary>
-        Client
+        Client,
+        /// <summary>
+        /// Environment is not in either client or server
+        /// </summary>
+        Other
     }
 }

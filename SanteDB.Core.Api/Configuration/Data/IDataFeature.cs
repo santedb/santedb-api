@@ -23,13 +23,18 @@ namespace SanteDB.Core.Configuration.Data
         String Description { get; }
 
         /// <summary>
+        /// Gets the database provider for which the feature is intended
+        /// </summary>
+        String InvariantName { get; }
+
+        /// <summary>
         /// Get the SQL required to deploy the feature
         /// </summary>
-        String GetDeploySql(String invariantName);
+        String GetDeploySql();
 
         /// <summary>
         /// Get SQL required to determine if feature is installed
         /// </summary>
-        String GetCheckSql(String invariantName);
+        String GetCheckSql();
     }
 }
