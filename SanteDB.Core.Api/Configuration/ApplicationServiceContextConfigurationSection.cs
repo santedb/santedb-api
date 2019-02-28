@@ -61,7 +61,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// General extended application settings
         /// </summary>
-        [XmlElement("appSetting"), XmlArrayItem("add"), JsonProperty("setting")]
+        [XmlArray("appSettings"), XmlArrayItem("add"), JsonProperty("setting")]
         public List<AppSettingKeyValuePair> AppSettings
         {
             get;
@@ -78,6 +78,22 @@ namespace SanteDB.Core.Configuration
     public class AppSettingKeyValuePair
     {
 
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public AppSettingKeyValuePair()
+        {
+
+        }
+
+        /// <summary>
+        /// Creates a new key/value pair
+        /// </summary>
+        public AppSettingKeyValuePair(String key, String value)
+        {
+            this.Key = key;
+            this.Value = value;
+        }
         /// <summary>
         /// The key of the setting
         /// </summary>

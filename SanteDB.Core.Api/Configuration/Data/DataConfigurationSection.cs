@@ -62,6 +62,15 @@ namespace SanteDB.Core.Configuration.Data
     public class ConnectionString
     {
 
+
+        /// <summary>
+        /// Connection string
+        /// </summary>
+        public ConnectionString()
+        {
+
+        }
+
         /// <summary>
         /// Creates a new instance of the connection string
         /// </summary>

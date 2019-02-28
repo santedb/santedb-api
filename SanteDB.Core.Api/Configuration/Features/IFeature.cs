@@ -8,6 +8,25 @@ namespace SanteDB.Core.Configuration
 {
 
     /// <summary>
+    /// Feature installation state
+    /// </summary>
+    public enum FeatureInstallState
+    {
+        /// <summary>
+        /// The feature is fully installed
+        /// </summary>
+        Installed,
+        /// <summary>
+        /// The feature is partially installed
+        /// </summary>
+        PartiallyInstalled,
+        /// <summary>
+        /// The feature is not installed
+        /// </summary>
+        NotInstalled
+    }
+
+    /// <summary>
     /// Identifies the flags for configuration
     /// </summary>
     [Flags]
@@ -24,7 +43,11 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// The task should be executed automatically if not already run
         /// </summary>
-        AutoSetup = 0x2
+        AutoSetup = 0x2,
+        /// <summary>
+        /// The feature is a system feature and cannot be uninstalled.
+        /// </summary>
+        NoRemove = 0x4
     }
 
     /// <summary>
@@ -107,6 +130,6 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Returns true if the configuration supplied is configured for this feature
         /// </summary>
-        bool IsConfigured(SanteDBConfiguration configuration);
+        FeatureInstallState QueryState(SanteDBConfiguration configuration);
     }
 }

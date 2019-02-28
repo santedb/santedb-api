@@ -55,7 +55,6 @@ namespace SanteDB.Core.Services
             this.Name = name;
             this.Type = type;
             this.Configuration = configurationType;
-
         }
 
         /// <summary>
@@ -72,5 +71,10 @@ namespace SanteDB.Core.Services
         /// Service type
         /// </summary>
         public ServiceInstantiationType Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets the dependencies of this service
+        /// </summary>
+        public Type[] Dependencies { get; set; }
     }
 }

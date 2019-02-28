@@ -85,7 +85,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Returns true if the object is configured
         /// </summary>
-        public virtual bool IsConfigured(SanteDBConfiguration configuration)
+        public virtual FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
             var isServiceInstalled = configuration.GetSection<ApplicationServiceContextConfigurationSection>()?.ServiceProviders.Any(o=>o.Type == typeof(TService)) == true;
             // First, this configuration type is available
@@ -94,15 +94,15 @@ namespace SanteDB.Core.Configuration.Features
                 try
                 {
                     this.Configuration = configuration.GetSection(this.ConfigurationType);
-                    return isServiceInstalled;
+                    return isServiceInstalled && this.Configuration != null ? FeatureInstallState.Installed : isServiceInstalled || this.Configuration != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
                 }
                 catch
                 {
-                    return false;
+                    return isServiceInstalled ? FeatureInstallState.Installed : FeatureInstallState.NotInstalled;
                 }
             }
             else
-                return isServiceInstalled;
+                return isServiceInstalled ? FeatureInstallState.Installed : FeatureInstallState.NotInstalled;
         }
 
         /// <summary>
@@ -110,11 +110,6 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public class InstallTask : IConfigurationTask
         {
-
-            /// <summary>
-            /// Main install
-            /// </summary>
-            public String Id => $"Install-{this.Feature.Name}";
 
             /// <summary>
             /// Get the name of the task
@@ -145,15 +140,24 @@ namespace SanteDB.Core.Configuration.Features
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
             /// <summary>
+            /// Get the service type
+            /// </summary>
+            private Type GetServiceType()
+            {
+                var serviceType = this.Feature.GetType();
+                while (!serviceType.GetTypeInfo().IsGenericType)
+                    serviceType = serviceType.GetTypeInfo().BaseType;
+                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                return serviceType;
+            }
+
+            /// <summary>
             /// Execute the specified configuration task
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, $"Installing Service {this.Feature.Name}..."));
-                var serviceType = this.Feature.GetType();
-                while (!serviceType.GetTypeInfo().IsGenericType)
-                    serviceType = serviceType.GetTypeInfo().BaseType;
-                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                var serviceType = this.GetServiceType();
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
@@ -173,7 +177,7 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                // No rollback needed
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == this.GetServiceType());
                 return true;
             }
 
@@ -182,7 +186,8 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
-                return true;
+                return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == this.GetServiceType()) ||
+                    configuration.GetSection(this.Feature.ConfigurationType) == null;
             }
         }
 
@@ -227,11 +232,23 @@ namespace SanteDB.Core.Configuration.Features
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
             /// <summary>
+            /// Get the service type
+            /// </summary>
+            private Type GetServiceType()
+            {
+                var serviceType = this.Feature.GetType();
+                while (!serviceType.GetTypeInfo().IsGenericType)
+                    serviceType = serviceType.GetTypeInfo().BaseType;
+                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                return serviceType;
+            }
+
+            /// <summary>
             /// Execute the specified configuration task
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                var serviceType = this.Feature.GetType().GetTypeInfo().GenericTypeArguments[0];
+                var serviceType = this.GetServiceType();
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, $"Removing Service {this.Feature.Name}..."));
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
@@ -249,8 +266,7 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                // No rollback needed
-                return true;
+                return false;
             }
 
             /// <summary>
@@ -258,7 +274,8 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
-                return true;
+                return configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == this.GetServiceType()) &&
+                   configuration.GetSection(this.Feature.ConfigurationType) != null;
             }
         }
     }
