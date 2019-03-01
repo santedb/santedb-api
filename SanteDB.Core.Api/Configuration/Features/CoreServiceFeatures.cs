@@ -42,7 +42,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Flags for the configuration feature
         /// </summary>
-        public FeatureFlags Flags => FeatureFlags.AutoSetup;
+        public FeatureFlags Flags => FeatureFlags.AutoSetup | FeatureFlags.NoRemove;
 
         /// <summary>
         /// Create the installation tasks

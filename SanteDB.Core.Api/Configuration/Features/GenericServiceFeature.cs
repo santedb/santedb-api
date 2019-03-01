@@ -64,7 +64,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Get the flags for this feature
         /// </summary>
-        public virtual FeatureFlags Flags => FeatureFlags.None;
+        public virtual FeatureFlags Flags => typeof(TService).GetTypeInfo().Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
 
         /// <summary>
         /// Create the installation tasks
