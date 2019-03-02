@@ -45,6 +45,7 @@
     <Compile Include="Configuration\Data\IDataFeature.cs" />
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Configuration\Features\CoreServiceFeatures.cs" />
+    <Compile Include="Configuration\Features\GenericFeatureConfiguration.cs" />
     <Compile Include="Configuration\Features\GenericServiceFeature.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\Features\IFeature.cs" />

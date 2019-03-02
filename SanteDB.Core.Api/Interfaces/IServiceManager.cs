@@ -42,5 +42,11 @@ namespace SanteDB.Core.Interfaces
         /// Removes a service provider
         /// </summary>
         void RemoveServiceProvider(Type serviceType);
+
+        /// <summary>
+        /// Gets the service contract types
+        /// </summary>
+        /// <returns></returns> 
+        IEnumerable<Type> GetAllTypes();
     }
 }

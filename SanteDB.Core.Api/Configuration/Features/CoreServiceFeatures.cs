@@ -1,9 +1,11 @@
-﻿using SanteDB.Core.Protocol;
+﻿using SanteDB.Core.Interfaces;
+using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +16,15 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     public class CoreServiceFeatures : IFeature
     {
+
+        /// <summary>
+        /// Creates a new core service feature
+        /// </summary>
+        public CoreServiceFeatures()
+        {
+
+        }
+
         /// <summary>
         /// Get the name of the feature
         /// </summary>
@@ -32,7 +43,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Gets the configuration option type
         /// </summary>
-        public Type ConfigurationType => null;
+        public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
         /// <summary>
         /// Gets or sets the configuration object
@@ -73,11 +84,30 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
+
+            // Get the configuratoin
             switch (configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Count(
                 s => s.Type == typeof(SimplePatchService) || s.Type == typeof(SimpleCarePlanService)
                 ))
             {
                 case 2:
+                    var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
+                    var types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
+                    var config = new GenericFeatureConfiguration();
+
+                    // Map configuration over to the features section
+                    foreach (var pvd in types.Where(t =>t.GetTypeInfo().IsInterface && typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())).ToArray())
+                    {
+                        config.Options.Add(pvd.Name, () =>
+                            types
+                                .Where(t => !t.GetTypeInfo().IsInterface && !t.GetTypeInfo().IsAbstract && !t.GetTypeInfo().ContainsGenericParameters && pvd.GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()))
+                        );
+                        config.Values.Add(pvd.Name, sp.FirstOrDefault(o => pvd.GetTypeInfo().IsAssignableFrom(o.Type.GetTypeInfo()))?.Type);
+                    }
+
+                    if (this.Configuration == null)
+                        this.Configuration = config;
+
                     return FeatureInstallState.Installed;
                 case 1:
                     return FeatureInstallState.PartiallyInstalled;
@@ -191,7 +221,7 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                if(!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o=>o.Type == typeof(SimpleCarePlanService)))
+                if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService)))
                 {
                     this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, "Registering SimpleCarePlanService..."));
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
@@ -205,7 +235,7 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t=>t.Type == typeof(SimpleCarePlanService));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleCarePlanService));
                 return true;
             }
 
