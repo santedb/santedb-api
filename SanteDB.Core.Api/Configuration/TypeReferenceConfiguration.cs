@@ -35,6 +35,14 @@ namespace SanteDB.Core.Configuration
     {
 
         /// <summary>
+        /// Represents a type reference configuration
+        /// </summary>
+        public TypeReferenceConfiguration()
+        {
+
+        }
+
+        /// <summary>
         /// Create a new type reference from string
         /// </summary>
         public TypeReferenceConfiguration(string typeAqn)
