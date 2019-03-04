@@ -17,6 +17,7 @@
  * User: justin
  * Date: 2018-11-27
  */
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,9 +34,12 @@ namespace SanteDB.Core.Configuration
     public sealed class TypeReferenceConfiguration
     {
 
-        public TypeReferenceConfiguration()
+        /// <summary>
+        /// Create a new type reference from string
+        /// </summary>
+        public TypeReferenceConfiguration(string typeAqn)
         {
-
+            this.TypeXml = typeAqn;
         }
 
         /// <summary>
@@ -49,13 +53,13 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Gets the type
         /// </summary>
-        [XmlAttribute("type")]
+        [XmlAttribute("type"), JsonProperty("type")]
         public String TypeXml { get; set; }
 
         /// <summary>
         /// Gets the type
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         public Type Type
         {
             get => Type.GetType(this.TypeXml);
