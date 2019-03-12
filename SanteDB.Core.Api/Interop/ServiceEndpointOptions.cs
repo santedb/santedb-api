@@ -65,7 +65,12 @@ namespace SanteDB.Core.Interop
         /// The service endpoint is the ACS
         /// </summary>
         [XmlEnum("acs")]
-        AuthenticationService
+        AuthenticationService,
+        /// <summary>
+        /// The service endpoint represents API
+        /// </summary>
+        [XmlEnum("meta")]
+        Metadata
     }
 
     /// <summary>
