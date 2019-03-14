@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using System;
+using System.IO;
 
 namespace SanteDB.Core.Http
 {
@@ -26,6 +27,44 @@ namespace SanteDB.Core.Http
     /// </summary>
     public class DefaultContentTypeMapper : IContentTypeMapper
     {
+
+        /// <summary>
+        /// Get the content type of the file
+        /// </summary>
+        public static string GetContentType(string filename)
+        {
+            string extension = Path.GetExtension(filename);
+            switch (extension.Substring(1).ToLower())
+            {
+                case "htm":
+                case "html":
+                    return "text/html";
+                case "js":
+                    return "application/javascript";
+                case "css":
+                    return "text/css";
+                case "svg":
+                    return "image/svg+xml";
+                case "ttf":
+                    return "application/x-font-ttf";
+                case "eot":
+                    return "application/vnd.ms-fontobject";
+                case "woff":
+                    return "application/font-woff";
+                case "woff2":
+                    return "application/font-woff2";
+                case "gif":
+                    return "image/gif";
+                case "ico":
+                    return "image/x-icon";
+                case "png":
+                    return "image/png";
+                case "yaml":
+                    return "application/x-yaml";
+                default:
+                    return "application/x-octet-stream";
+            }
+        }
         #region IBodySerializerBinder implementation
 
         /// <summary>

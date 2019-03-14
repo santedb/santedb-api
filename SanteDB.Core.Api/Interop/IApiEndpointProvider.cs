@@ -41,5 +41,10 @@ namespace SanteDB.Core.Interop
         /// Capabilities
         /// </summary>
         ServiceEndpointCapabilities Capabilities { get; }
+
+        /// <summary>
+        /// Gets the contract type
+        /// </summary>
+        Type ContractType { get; }
     }
 }

@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Configuration;
 using System;
 using System.Xml.Serialization;
 
@@ -54,6 +55,9 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlEnum("fhir")]
         Hl7FhirInterface,
+        /// <summary>
+        /// The service endpoint is the v2 service
+        /// </summary>
         [XmlEnum("v2")]
         Hl7v2Interface,
         /// <summary>
@@ -122,6 +126,27 @@ namespace SanteDB.Core.Interop
     [XmlType(nameof(ServiceEndpointOptions), Namespace = "http://santedb.org/model"), JsonObject(nameof(ServiceEndpointOptions))]
     public class ServiceEndpointOptions
     {
+
+        /// <summary>
+        /// Default ctor for serialization
+        /// </summary>
+        public ServiceEndpointOptions()
+        {
+
+        }
+
+        /// <summary>
+        /// Create a new endpoint option from the specified provider
+        /// </summary>
+        public ServiceEndpointOptions(IApiEndpointProvider o)
+        {
+            this.ServiceType = o.ApiType;
+            this.BaseUrl = o.Url;
+            this.Capabilities = o.Capabilities;
+            if(o.ContractType != null)
+                this.Contract = new TypeReferenceConfiguration(o.ContractType);
+        }
+
         /// <summary>
         /// Gets or sets the service endpoint type
         /// </summary>
@@ -139,5 +164,11 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlAttribute("url"), JsonProperty("url")]
         public string[] BaseUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contract
+        /// </summary>
+        [XmlElement("contract"), JsonProperty("contract")]
+        public TypeReferenceConfiguration Contract { get; set; }
     }
 }
