@@ -114,10 +114,11 @@ namespace SanteDB.Core.Interop
         /// </summary>
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
-        public ServiceResourceOptions(string resourceName, List<ServiceResourceCapability> operations)
+        public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations)
         {
             this.ResourceName = resourceName;
             this.Capabilities = operations;
+            this.ResourceType = resourceType;
         }
 
         /// <summary>
@@ -132,6 +133,11 @@ namespace SanteDB.Core.Interop
         [XmlElement("cap"), JsonProperty("cap")]
         public List<ServiceResourceCapability> Capabilities { get; set; }
 
+        /// <summary>
+        /// Gets the type of resource
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Type ResourceType { get; set; }
     }
 }
 #pragma warning restore CS1591
