@@ -45,6 +45,6 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Gets the contract type
         /// </summary>
-        Type ContractType { get; }
+        Type BehaviorType { get; }
     }
 }

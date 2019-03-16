@@ -36,7 +36,7 @@ namespace SanteDB.Core.Interop
         /// </summary>
         public ServiceOptions()
         {
-            this.Services = new List<ServiceResourceOptions>();
+            this.Resources = new List<ServiceResourceOptions>();
             this.Endpoints = new List<ServiceEndpointOptions>();
         }
 
@@ -50,7 +50,7 @@ namespace SanteDB.Core.Interop
         /// Gets the service resource options
         /// </summary>
         [XmlElement("resource"), JsonProperty("resource")]
-        public List<ServiceResourceOptions> Services { get; set; }
+        public List<ServiceResourceOptions> Resources { get; set; }
 
         /// <summary>
         /// Gets or sets the endpoint options

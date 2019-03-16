@@ -19,6 +19,7 @@
  */
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 #pragma warning disable CS1591
@@ -28,8 +29,8 @@ namespace SanteDB.Core.Interop
     /// <summary>
     /// Service resource operations
     /// </summary>
-    [XmlType(nameof(ResourceCapability), Namespace = "http://santedb.org/model"), Flags]
-    public enum ResourceCapability
+    [XmlType(nameof(ResourceCapabilityType), Namespace = "http://santedb.org/model"), Flags]
+    public enum ResourceCapabilityType
     {
         [XmlEnum("none")]
         None = 0x00,
@@ -56,6 +57,45 @@ namespace SanteDB.Core.Interop
     /// <summary>
     /// Service resource options
     /// </summary>
+    [XmlType(nameof(ServiceResourceCapability), Namespace = "http://santedb.org/model"), JsonObject(nameof(ServiceResourceCapability))]
+    public class ServiceResourceCapability
+    {
+
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public ServiceResourceCapability()
+        {
+
+        }
+
+        /// <summary>
+        /// Creates a new resource demand
+        /// </summary>
+        /// <param name="capability"></param>
+        /// <param name="demand"></param>
+        public ServiceResourceCapability(ResourceCapabilityType capability, String[] demand)
+        {
+            this.Capability = capability;
+            this.Demand = demand;
+        }
+
+        /// <summary>
+        /// Gets or sets the capabilities
+        /// </summary>
+        [XmlAttribute("cap"), JsonProperty("cap")]
+        public ResourceCapabilityType Capability { get; set; }
+
+        /// <summary>
+        /// Gets or sets the demand
+        /// </summary>
+        [XmlElement("demand"), JsonProperty("demand")]
+        public String[] Demand { get; set; }
+    }
+
+    /// <summary>
+    /// Service resource options
+    /// </summary>
     [XmlType(nameof(ServiceResourceOptions), Namespace = "http://santedb.org/model"), JsonObject(nameof(ServiceResourceOptions))]
     public class ServiceResourceOptions
     {
@@ -74,7 +114,7 @@ namespace SanteDB.Core.Interop
         /// </summary>
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
-        public ServiceResourceOptions(string resourceName, ResourceCapability operations)
+        public ServiceResourceOptions(string resourceName, List<ServiceResourceCapability> operations)
         {
             this.ResourceName = resourceName;
             this.Capabilities = operations;
@@ -89,8 +129,9 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Gets or sets the operations supported by this resource
         /// </summary>
-        [XmlAttribute("cap"), JsonProperty("cap")]
-        public ResourceCapability Capabilities { get; set; }
+        [XmlElement("cap"), JsonProperty("cap")]
+        public List<ServiceResourceCapability> Capabilities { get; set; }
+
     }
 }
 #pragma warning restore CS1591

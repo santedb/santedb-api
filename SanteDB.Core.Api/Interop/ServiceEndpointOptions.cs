@@ -20,6 +20,8 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Interop
@@ -116,6 +118,7 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Service can produce view model objects
         /// </summary>
+        [XmlEnum("viewModel")]
         ViewModel = 0x20
 
     }
@@ -138,13 +141,19 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Create a new endpoint option from the specified provider
         /// </summary>
-        public ServiceEndpointOptions(IApiEndpointProvider o)
+        public ServiceEndpointOptions(IApiEndpointProvider provider)
         {
-            this.ServiceType = o.ApiType;
-            this.BaseUrl = o.Url;
-            this.Capabilities = o.Capabilities;
-            if(o.ContractType != null)
-                this.Contract = new TypeReferenceConfiguration(o.ContractType);
+            this.ServiceType = provider.ApiType;
+            this.BaseUrl = provider.Url;
+            this.Capabilities = provider.Capabilities;
+            if (provider.BehaviorType != null)
+            {
+                this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);
+                this.Contracts = provider.BehaviorType.GetTypeInfo().ImplementedInterfaces
+                    .Where(t => t.GetTypeInfo().GetCustomAttributes(Type.GetType("RestSrvr.Attributes.ServiceContractAttribute, RestSrvr, Version=1.28.0.0")) != null)
+                    .Select(t=>new TypeReferenceConfiguration(t))
+                    .ToArray();
+            }
         }
 
         /// <summary>
@@ -169,6 +178,12 @@ namespace SanteDB.Core.Interop
         /// Gets or sets the contract
         /// </summary>
         [XmlElement("contract"), JsonProperty("contract")]
-        public TypeReferenceConfiguration Contract { get; set; }
+        public TypeReferenceConfiguration[] Contracts { get; set; }
+
+        /// <summary>
+        /// Gets or sets the behaviors
+        /// </summary>
+        [XmlElement("behavior"), JsonProperty("behavior")]
+        public TypeReferenceConfiguration Behavior { get; set; }
     }
 }
