@@ -40,6 +40,7 @@ namespace SanteDB.Core.Exceptions
         {
             this.PolicyId = policyId;
             this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : outcome;
+            this.Principal = principal;
         }
 
         /// <summary>
