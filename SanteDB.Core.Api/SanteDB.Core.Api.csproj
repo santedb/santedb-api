@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="Attributes\PluginAttribute.cs" />
     <Compile Include="Attributes\PluginDependencyAttribute.cs" />
+    <Compile Include="Attributes\PluginTraceSourceAttribute.cs" />
     <Compile Include="BusinessRules\DetectedIssue.cs" />
     <Compile Include="Configuration\ApplicationServiceContextConfigurationSection.cs" />
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
@@ -45,6 +46,7 @@
     <Compile Include="Configuration\Data\IDataFeature.cs" />
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
     <Compile Include="Configuration\Features\CoreServiceFeatures.cs" />
+    <Compile Include="Configuration\Features\DiagnosticsFeature.cs" />
     <Compile Include="Configuration\Features\GenericFeatureConfiguration.cs" />
     <Compile Include="Configuration\Features\GenericServiceFeature.cs" />
     <Compile Include="Configuration\IConfigurationSection.cs" />

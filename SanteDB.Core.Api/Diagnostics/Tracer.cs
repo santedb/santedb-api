@@ -46,7 +46,7 @@ namespace SanteDB.Core.Diagnostics
         /// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Tracer"/> class.
         /// </summary>
         /// <param name="source">Source.</param>
-        private Tracer(String source)
+        public Tracer(String source)
         {
             this.m_source = source;
         }

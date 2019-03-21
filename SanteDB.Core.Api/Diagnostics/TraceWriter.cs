@@ -17,6 +17,8 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Services;
 using System;
 using System.Diagnostics.Tracing;
 
@@ -53,9 +55,12 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public virtual void TraceEvent(EventLevel level, String source, String format, params Object[] args)
         {
+            var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DiagnosticsConfigurationSection>()?.Sources.Find(o => o.SourceName == source)?.Filter;
+
             if (this.m_filter == EventLevel.LogAlways)
                 this.WriteTrace(level, source, format, args);
-            else if (this.m_filter >= level)
+            else if (this.m_filter >= level && 
+                sourceConfig.GetValueOrDefault() >= level)
                 this.WriteTrace(level, source, format, args);
         }
 

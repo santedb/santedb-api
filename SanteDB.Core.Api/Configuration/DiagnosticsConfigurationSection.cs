@@ -41,12 +41,19 @@ namespace SanteDB.Core.Configuration
         public DiagnosticsConfigurationSection()
         {
             this.TraceWriter = new List<TraceWriterConfiguration>();
+            this.Sources = new List<TraceSourceConfiguration>();
         }
+
+        /// <summary>
+        /// Gets or sets the sources to filter on
+        /// </summary>
+        [XmlArray("sources"), XmlArrayItem("add"), JsonProperty("sources")]
+        public List<TraceSourceConfiguration> Sources { get; set; }
 
         /// <summary>
         /// Trace writers
         /// </summary>
-        [XmlElement("trace"), JsonProperty("trace")]
+        [XmlArray("writers"), XmlArrayItem("add"), JsonProperty("writers")]
         public List<TraceWriterConfiguration> TraceWriter
         {
             get;
@@ -58,6 +65,31 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [JsonProperty("mode"), XmlIgnore]
         public EventLevel Mode { get; set; }
+    }
+
+    /// <summary>
+    /// Represents the configuration of a single trace source
+    /// </summary>
+    [XmlType(nameof(TraceSourceConfiguration), Namespace = "http://santedb.org/configuration")]
+    public class TraceSourceConfiguration
+    {
+
+        /// <summary>
+        /// Gets the source name
+        /// </summary>
+        [XmlAttribute("name"), JsonProperty("name")]
+        public String SourceName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the filter of the trace writer
+        /// </summary>
+        /// <value>The filter.</value>
+        [XmlAttribute("filter"), JsonProperty("filter")]
+        public EventLevel Filter
+        {
+            get;
+            set;
+        }
     }
 
     /// <summary>
@@ -81,8 +113,8 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Gets or sets the source name
         /// </summary>
-        [XmlAttribute("source"), JsonProperty("name")]
-        public String SourceName { get; set; }
+        [XmlAttribute("name"), JsonProperty("name")]
+        public String WriterName { get; set; }
 
         /// <summary>
         /// Gets or sets the initialization data.
