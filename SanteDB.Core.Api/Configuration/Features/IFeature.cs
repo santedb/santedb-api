@@ -27,6 +27,46 @@ namespace SanteDB.Core.Configuration
 {
 
     /// <summary>
+    /// Feature group constants
+    /// </summary>
+    public static class FeatureGroup
+    {
+        /// <summary>
+        /// Feature is a system feature
+        /// </summary>
+        public const string System = "System";
+        /// <summary>
+        /// Feature is related to messaging
+        /// </summary>
+        public const string Messaging = "Messaging";
+        /// <summary>
+        /// Feature is related to development
+        /// </summary>
+        public const string Development = "Development";
+        /// <summary>
+        /// Feature is related to persistence
+        /// </summary>
+        public const string Persistence = "Persistence";
+        /// <summary>
+        /// Feature is related to diagnostics
+        /// </summary>
+        public const string Diagnostics = "Diagnostics";
+        /// <summary>
+        /// Feature is an operating system / runtime feature
+        /// </summary>
+        public const string OperatingSystem = "Operating System";
+        /// <summary>
+        /// Performance
+        /// </summary>
+        public const string Performance = "Performance";
+        /// <summary>
+        /// Feature is a security feature
+        /// </summary>
+        public const string Security = "Security";
+
+    }
+
+    /// <summary>
     /// Feature installation state
     /// </summary>
     public enum FeatureInstallState
@@ -56,7 +96,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         None = 0x0,
         /// <summary>
-        /// The task should always be run
+        /// The feature should always be configured
         /// </summary>
         AlwaysConfigure = 0x1,
         /// <summary>
@@ -66,7 +106,12 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// The feature is a system feature and cannot be uninstalled.
         /// </summary>
-        NoRemove = 0x4
+        NoRemove = 0x4,
+        /// <summary>
+        /// The feature is a system feature
+        /// </summary>
+        SystemFeature = 0x8 | NoRemove | AutoSetup | AlwaysConfigure
+
     }
 
     /// <summary>
@@ -97,7 +142,11 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Database name
         /// </summary>
-        DatabaseName
+        DatabaseName,
+        /// <summary>
+        /// Object type
+        /// </summary>
+        Object
     }
 
     /// <summary>

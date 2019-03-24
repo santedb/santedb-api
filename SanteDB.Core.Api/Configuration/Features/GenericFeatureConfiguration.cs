@@ -40,6 +40,7 @@ namespace SanteDB.Core.Configuration.Features
         {
             this.Options = new Dictionary<string, Func<Object>>();
             this.Values = new Dictionary<string, object>();
+            this.Categories = new Dictionary<String, String[]>();
         }
 
         /// <summary>
@@ -51,5 +52,10 @@ namespace SanteDB.Core.Configuration.Features
         /// Gets the current set configuration values
         /// </summary>
         public Dictionary<String, Object> Values { get; }
+
+        /// <summary>
+        /// If the configuration is broken into categories
+        /// </summary>
+        public Dictionary<String, String[]> Categories { get; set; }
     }
 }

@@ -22,6 +22,7 @@ using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -52,12 +53,12 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Description
         /// </summary>
-        public string Description => "Core features of the SanteDB API";
+        public string Description => "Core services for this SanteDB API hosting environment. This configuration should only be used by advanced users.";
 
         /// <summary>
         /// The group of these features
         /// </summary>
-        public string Group => "System";
+        public string Group => FeatureGroup.System;
 
         /// <summary>
         /// Gets the configuration option type
@@ -72,7 +73,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Flags for the configuration feature
         /// </summary>
-        public FeatureFlags Flags => FeatureFlags.AutoSetup | FeatureFlags.NoRemove;
+        public FeatureFlags Flags => FeatureFlags.SystemFeature;
 
         /// <summary>
         /// Create the installation tasks
@@ -82,7 +83,8 @@ namespace SanteDB.Core.Configuration.Features
             return new IConfigurationTask[]
             {
                 new InstallCarePlannerServiceTask(this),
-                new InstallPatchServiceTask(this)
+                new InstallPatchServiceTask(this),
+                new ConfigureServicesTask(this)
             };
         }
 
@@ -117,11 +119,19 @@ namespace SanteDB.Core.Configuration.Features
                     // Map configuration over to the features section
                     foreach (var pvd in types.Where(t =>t.GetTypeInfo().IsInterface && typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())).ToArray())
                     {
-                        config.Options.Add(pvd.Name, () =>
-                            types
-                                .Where(t => !t.GetTypeInfo().IsInterface && !t.GetTypeInfo().IsAbstract && !t.GetTypeInfo().ContainsGenericParameters && pvd.GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()))
-                        );
+                        if (pvd.Name == "IDaemonService") continue;
+                        config.Options.Add(pvd.Name, () => types.Where(t => !t.GetTypeInfo().IsInterface && !t.GetTypeInfo().IsAbstract && !t.GetTypeInfo().ContainsGenericParameters && pvd.GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())));
                         config.Values.Add(pvd.Name, sp.FirstOrDefault(o => pvd.GetTypeInfo().IsAssignableFrom(o.Type.GetTypeInfo()))?.Type);
+                    }
+
+                    List<String> removeOptions = new List<string>();
+                    foreach (var o in config.Options)
+                        if ((o.Value() as IEnumerable).OfType<Object>().Count() == 0)
+                            removeOptions.Add(o.Key);
+                    foreach(var itm in removeOptions)
+                    {
+                        config.Options.Remove(itm);
+                        config.Values.Remove(itm);
                     }
 
                     if (this.Configuration == null)
@@ -133,6 +143,101 @@ namespace SanteDB.Core.Configuration.Features
                 case 0:
                 default:
                     return FeatureInstallState.NotInstalled;
+            }
+        }
+
+
+        /// <summary>
+        /// Configure services task
+        /// </summary>
+        public class ConfigureServicesTask : IConfigurationTask
+        {
+
+            // Backup
+            private ApplicationServiceContextConfigurationSection m_backup = null;
+
+            /// <summary>
+            /// Configure services task
+            /// </summary>
+            public ConfigureServicesTask(CoreServiceFeatures feature)
+            {
+                this.Feature = feature;
+            }
+
+            /// <summary>
+            /// Get the name
+            /// </summary>
+            public string Name => "Save Service Configuration";
+
+            /// <summary>
+            /// Description
+            /// </summary>
+            public string Description => "Registers the selected services";
+
+            /// <summary>
+            /// Gets the feature
+            /// </summary>
+            public IFeature Feature { get; }
+
+            /// <summary>
+            /// Progress has changed
+            /// </summary>
+            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+            /// <summary>
+            /// Execute the service
+            /// </summary>
+            public bool Execute(SanteDBConfiguration configuration)
+            {
+                this.m_backup = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+
+                // Get the configuration
+                var config = this.Feature.Configuration as GenericFeatureConfiguration;
+                if (config != null)
+                {
+                    var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
+                    var types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
+                    var appConfig = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+                    // Map configuration over to the features section
+                    foreach (var pvd in types.Where(t => t.GetTypeInfo().IsInterface && typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())).ToArray())
+                    {
+
+                        Object value = null;
+                        if (config.Values.TryGetValue(pvd.Name, out value) &&
+                            value != null &&
+                            !sp.Any(t => value as Type == t.Type))
+                            appConfig.ServiceProviders.Add(new TypeReferenceConfiguration(value as Type));
+                    }
+
+                    // Remove any sp which aren't configured for any service impl
+                    sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).GetTypeInfo().IsAssignableFrom(r.Type.GetTypeInfo()) &&
+                        typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(r.Type.GetTypeInfo()));
+                }
+
+                return true;
+            }
+
+            /// <summary>
+            /// Perform a rollback
+            /// </summary>
+            /// <param name="configuration"></param>
+            /// <returns></returns>
+            public bool Rollback(SanteDBConfiguration configuration)
+            {
+                if (this.m_backup != null)
+                {
+                    configuration.RemoveSection<ApplicationServiceContextConfigurationSection>();
+                    configuration.AddSection(this.m_backup);
+                }
+                return true;
+            }
+
+            /// <summary>
+            /// Verify the state
+            /// </summary>
+            public bool VerifyState(SanteDBConfiguration configuration)
+            {
+                return true;
             }
         }
 

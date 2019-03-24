@@ -150,7 +150,7 @@ namespace SanteDB.Core.Interop
             {
                 this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);
                 this.Contracts = provider.BehaviorType.GetTypeInfo().ImplementedInterfaces
-                    .Where(t => t.GetTypeInfo().GetCustomAttributes(Type.GetType("RestSrvr.Attributes.ServiceContractAttribute, RestSrvr, Version=1.28.0.0")) != null)
+                    .Where(t => t.GetTypeInfo().GetCustomAttributes(Type.GetType("RestSrvr.Attributes.ServiceContractAttribute, RestSrvr, Version=1.31.0.0")) != null)
                     .Select(t=>new TypeReferenceConfiguration(t))
                     .ToArray();
             }

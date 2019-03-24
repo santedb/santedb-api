@@ -19,7 +19,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Gets the name of the feature
         /// </summary>
-        public string Name => "Diagnostics";
+        public string Name => "Logging / Tracing";
 
         /// <summary>
         /// Get the description of the diagnostics feature
@@ -29,12 +29,12 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Get the group for the diagnostics feature
         /// </summary>
-        public string Group => "System";
+        public string Group => FeatureGroup.Diagnostics;
 
         /// <summary>
         /// Configuration type
         /// </summary>
-        public Type ConfigurationType => typeof(DiagnosticsConfigurationSection);
+        public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
         /// <summary>
         /// Gets or sets the configuration object
@@ -44,14 +44,16 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Get the flags
         /// </summary>
-        public FeatureFlags Flags => FeatureFlags.AutoSetup | FeatureFlags.AlwaysConfigure | FeatureFlags.NoRemove;
+        public FeatureFlags Flags => FeatureFlags.SystemFeature;
 
         /// <summary>
         /// Create the installation tasks
         /// </summary>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
-            return new IConfigurationTask[0];
+            return new IConfigurationTask[] {
+                new ConfigureDiagnosticsTask(this)
+            };
         }
 
         /// <summary>
@@ -71,42 +73,145 @@ namespace SanteDB.Core.Configuration.Features
             var config = configuration.GetSection<DiagnosticsConfigurationSection>();
             if (config == null)
                 config = new DiagnosticsConfigurationSection();
-            this.Configuration = config;
 
             // Configuration for trace sources missing?
+            GenericFeatureConfiguration configFeature = new GenericFeatureConfiguration();
+
+            // Configuration features
             var asms = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
                 .Select(t => t.GetTypeInfo().Assembly)
                 .Distinct();
-            foreach(var source in asms.SelectMany(a=>a.GetCustomAttributes<PluginTraceSourceAttribute>()))
+            foreach (var source in asms.SelectMany(a => a.GetCustomAttributes<PluginTraceSourceAttribute>()))
             {
-                if (!config.Sources.Any(s => s.SourceName == source.TraceSourceName))
-                    config.Sources.Add(new TraceSourceConfiguration()
-                    {
-                        SourceName = source.TraceSourceName,
-#if DEBUG
-                        Filter = System.Diagnostics.Tracing.EventLevel.Verbose
-#else
-                        Filter = System.Diagnostics.Tracing.EventLevel.Error
-#endif
-                    });
+                configFeature.Options.Add(source.TraceSourceName, () => Enum.GetValues(typeof(System.Diagnostics.Tracing.EventLevel)));
+                var src = config.Sources.FirstOrDefault(
+                    s => s.SourceName == source.TraceSourceName);
+                if (src != null)
+                    configFeature.Values.Add(source.TraceSourceName, src.Filter);
+                else
+                    configFeature.Values.Add(source.TraceSourceName, System.Diagnostics.Tracing.EventLevel.Warning);
             }
+
+            configFeature.Categories.Add("Sources", configFeature.Options.Keys.ToArray());
 
             // Writers?
             var tw = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
                 .Where(t => typeof(TraceWriter).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()) && !t.GetTypeInfo().IsAbstract)
                 .Distinct();
-            if (config.TraceWriter.Count == 0)
-                config.TraceWriter.AddRange(tw.Select(o => new TraceWriterConfiguration()
-                {
-                    TraceWriterClassXml = o.AssemblyQualifiedName,
-#if DEBUG
-                    Filter = System.Diagnostics.Tracing.EventLevel.Verbose
-#else
-                        Filter = System.Diagnostics.Tracing.EventLevel.Error
-#endif
-                }));
+
+            configFeature.Options.Add("writer", () => tw);
+            configFeature.Options.Add("filter", () => Enum.GetValues(typeof(System.Diagnostics.Tracing.EventLevel)));
+
+            configFeature.Options.Add("initializationData", () => ConfigurationOptionType.FileName);
+            configFeature.Categories.Add("Writers", new string[] { "writer", "initializationData", "filter" });
+
+
+            configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter?.GetType() ?? tw.FirstOrDefault());
+            configFeature.Values.Add("initializationData", config.TraceWriter.FirstOrDefault()?.InitializationData ?? "santedb.log");
+            configFeature.Values.Add("filter", config.Mode);
+            this.Configuration = configFeature;
             return FeatureInstallState.Installed;
         }
-        
+
+
+        /// <summary>
+        /// Configure the diagnostics services
+        /// </summary>
+        private class ConfigureDiagnosticsTask : IConfigurationTask
+        {
+            /// <summary>
+            /// Backup of diagnostics
+            /// </summary>
+            private DiagnosticsConfigurationSection m_backup;
+
+            /// <summary>
+            /// Constructor for the diagnostics task
+            /// </summary>
+            public ConfigureDiagnosticsTask(DiagnosticsFeature feature)
+            {
+                this.Feature = feature;
+            }
+
+            /// <summary>
+            /// Gets the name of the task
+            /// </summary>
+            public string Name => "Configure Diagnostics";
+
+            /// <summary>
+            /// Configures the diagnostics subsystem
+            /// </summary>
+            public string Description => "Configures the diagnostics subsystem";
+
+            /// <summary>
+            /// Gets the feature associated with this task
+            /// </summary>
+            public IFeature Feature { get; }
+
+            /// <summary>
+            /// Progress has changed
+            /// </summary>
+            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+            /// <summary>
+            /// Execute the configuration
+            /// </summary>
+            public bool Execute(SanteDBConfiguration configuration)
+            {
+                this.m_backup = configuration.GetSection<DiagnosticsConfigurationSection>();
+
+                configuration.RemoveSection<DiagnosticsConfigurationSection>();
+                var featureConfig = this.Feature.Configuration as GenericFeatureConfiguration;
+                var config = new DiagnosticsConfigurationSection();
+
+                // Configure writers
+                config.TraceWriter.AddRange(this.m_backup.TraceWriter.Where(t => t.WriterName != "main"));
+                config.TraceWriter.Add(new TraceWriterConfiguration()
+                {
+                    WriterName = "main",
+                    InitializationData = featureConfig.Values["initializationData"] as String,
+                    TraceWriterClassXml = (featureConfig.Values["writer"] as Type).AssemblyQualifiedName,
+                    Filter = (System.Diagnostics.Tracing.EventLevel)featureConfig.Values["filter"]
+                });
+                config.Mode = System.Diagnostics.Tracing.EventLevel.LogAlways;
+
+                // Configure sources
+                foreach (var k in featureConfig.Categories["Sources"])
+                {
+                    config.Sources.Add(new TraceSourceConfiguration()
+                    {
+                        SourceName = k, 
+                        Filter = (System.Diagnostics.Tracing.EventLevel)featureConfig.Values[k]
+                    });
+                }
+
+                config.Sources.AddRange(this.m_backup.Sources.Where(s => !featureConfig.Categories["Sources"].Contains(s.SourceName)));
+                configuration.AddSection(config);
+                return true;
+
+            }
+
+            /// <summary>
+            /// Rollback configuration
+            /// </summary>
+            /// <param name="configuration"></param>
+            /// <returns></returns>
+            public bool Rollback(SanteDBConfiguration configuration)
+            {
+                if (this.m_backup != null)
+                {
+                    configuration.RemoveSection<DiagnosticsConfigurationSection>();
+                    configuration.AddSection(this.m_backup);
+                }
+                return true;
+            }
+
+            /// <summary>
+            /// Verify that configuration needsto occur
+            /// </summary>
+            public bool VerifyState(SanteDBConfiguration configuration)
+            {
+                return true;
+            }
+        }
     }
 }
