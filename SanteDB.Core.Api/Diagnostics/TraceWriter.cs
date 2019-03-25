@@ -60,7 +60,8 @@ namespace SanteDB.Core.Diagnostics
             if (this.m_filter == EventLevel.LogAlways)
                 this.WriteTrace(level, source, format, args);
             else if (this.m_filter >= level && 
-                sourceConfig.GetValueOrDefault() >= level)
+                (sourceConfig.GetValueOrDefault() >= level ||
+                sourceConfig.GetValueOrDefault() == EventLevel.LogAlways))
                 this.WriteTrace(level, source, format, args);
         }
 
