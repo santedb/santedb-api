@@ -54,11 +54,6 @@ namespace SanteDB.Core
         bool IsRunning { get; }
 
         /// <summary>
-        /// Gets the operating system of the current application context
-        /// </summary>
-        OperatingSystemID OperatingSystem { get; }
-
-        /// <summary>
         /// Type of application hosting this SanteDB
         /// </summary>
         SanteDBHostType HostType { get; }
