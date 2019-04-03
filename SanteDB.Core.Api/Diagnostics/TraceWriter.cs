@@ -21,6 +21,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Diagnostics.Tracing;
+using System.Linq;
 
 namespace SanteDB.Core.Diagnostics
 {
@@ -55,7 +56,10 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public virtual void TraceEvent(EventLevel level, String source, String format, params Object[] args)
         {
-            var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DiagnosticsConfigurationSection>()?.Sources.Find(o => o.SourceName == source)?.Filter;
+            var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()
+                .GetSection<DiagnosticsConfigurationSection>()?.Sources
+                .OrderByDescending(o=>o.SourceName.Length)
+                .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
 
             if (this.m_filter == EventLevel.LogAlways)
                 this.WriteTrace(level, source, format, args);

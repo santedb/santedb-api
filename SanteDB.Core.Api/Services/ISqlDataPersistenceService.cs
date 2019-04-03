@@ -18,6 +18,8 @@
  * Date: 2019-1-12
  */
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
@@ -35,6 +37,8 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Executes the arbitrary SQL
         /// </summary>
-        void Execute(String sql);
+        void ExecuteNonQuery(String sql);
+
+
     }
 }

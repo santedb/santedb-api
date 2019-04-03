@@ -163,6 +163,7 @@
     <Compile Include="Services\ISessionIdentityProviderService.cs" />
     <Compile Include="Services\ISessionProviderService.cs" />
     <Compile Include="Services\IStoredQueryDataPersistenceService.cs" />
+    <Compile Include="Services\ISubscriptionExecutor.cs" />
     <Compile Include="Services\ITemplateDefinitionRepositoryService.cs" />
     <Compile Include="Services\Impl\BaseBusinessRulesService.cs" />
     <Compile Include="Services\Impl\NullPhoneticAlgorithmHandler.cs" />
