@@ -157,11 +157,17 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
+
                 this.m_backup = configuration.GetSection<DiagnosticsConfigurationSection>();
 
                 configuration.RemoveSection<DiagnosticsConfigurationSection>();
                 var featureConfig = this.Feature.Configuration as GenericFeatureConfiguration;
                 var config = new DiagnosticsConfigurationSection();
+
+                if (featureConfig == null) {
+                    this.Feature.QueryState(configuration);
+                    featureConfig = this.Feature.Configuration as GenericFeatureConfiguration;
+                }
 
                 // Configure writers
                 config.TraceWriter.AddRange(this.m_backup.TraceWriter.Where(t => t.WriterName != "main"));
