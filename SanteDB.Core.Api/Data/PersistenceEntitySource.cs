@@ -57,10 +57,10 @@ namespace SanteDB.Core.Data
         public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, IVersionedEntity, new()
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
-            if (persistenceService != null && key.HasValue)
-                return persistenceService.Query(o => o.Key == key, AuthenticationContext.SystemPrincipal).FirstOrDefault();
-            else if (persistenceService != null && key.HasValue && versionKey.HasValue)
+            if (persistenceService != null && key.HasValue && versionKey.HasValue)
                 return persistenceService.Query(o => o.Key == key && o.VersionKey == versionKey, AuthenticationContext.Current.Principal).FirstOrDefault();
+            else if (persistenceService != null && key.HasValue)
+                return persistenceService.Query(o => o.Key == key, AuthenticationContext.SystemPrincipal).FirstOrDefault();
             return default(TObject);
         }
 
