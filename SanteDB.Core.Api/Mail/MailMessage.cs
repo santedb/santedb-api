@@ -71,7 +71,10 @@ namespace SanteDB.Core.Mail
         public String DateTimeXml
         {
             get { return this.TimeStamp.DateTime.ToString("o"); }
-            set { this.TimeStamp = DateTime.Parse(value); }
+            set
+            {
+                this.TimeStamp = DateTime.Parse(value);
+            }
         }
 
         /// <summary>
