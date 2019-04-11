@@ -76,7 +76,12 @@ namespace SanteDB.Core.Interop
         /// The service endpoint represents API
         /// </summary>
         [XmlEnum("meta")]
-        Metadata
+        Metadata,
+        /// <summary>
+        /// The service endpoint represents the BIS
+        /// </summary>
+        [XmlEnum("bis")]
+        BusinessIntelligenceService
     }
 
     /// <summary>
