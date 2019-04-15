@@ -31,7 +31,7 @@ namespace SanteDB.Core.Configuration
     /// Represents a class that can be used to reference types in configuration files
     /// </summary>
     [XmlType(nameof(TypeReferenceConfiguration), Namespace = "http://santedb.org/configuration")]
-    public sealed class TypeReferenceConfiguration
+    public class TypeReferenceConfiguration
     {
 
         /// <summary>
