@@ -39,16 +39,6 @@ namespace SanteDB.Core.Configuration.Data
         public DataConfigurationSection()
         {
             this.ConnectionString = new List<ConnectionString>();
-            this.Providers = new List<ProviderRegistrationConfiguration>();
-        }
-
-        /// <summary>
-        /// Gets or sets the list of providers
-        /// </summary>
-        [XmlArray("providers"), XmlArrayItem("add"), JsonIgnore]
-        public List<ProviderRegistrationConfiguration> Providers
-        {
-            get;set;
         }
 
         /// <summary>
@@ -62,20 +52,6 @@ namespace SanteDB.Core.Configuration.Data
             set;
         }
 
-    }
-
-    /// <summary>
-    /// A class representing the registration of an invariant with a provider.
-    /// </summary>
-    [XmlType(nameof(ProviderRegistrationConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class ProviderRegistrationConfiguration : TypeReferenceConfiguration
-    {
-
-        /// <summary>
-        /// Gets or sets the invariant name
-        /// </summary>
-        [XmlAttribute("invariant")]
-        public String Invariant { get; set; }
     }
 
     /// <summary>

@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Security.Principal;
@@ -36,6 +37,13 @@ namespace SanteDB.Core.Services
         /// <param name="password">The new password of the user.</param>
         /// <returns>Returns the updated user.</returns>
         SecurityUser ChangePassword(Guid userId, String password);
+
+        /// <summary>
+        /// Gets the specified provider entity from the specified identity
+        /// </summary>
+        /// <param name="identity">The identity to resolve to a provider</param>
+        /// <returns>The provider entity if the user has one</returns>
+        Provider GetProviderEntity(IIdentity identity);
 
         /// <summary>
         /// Creates a user with a specified password.
