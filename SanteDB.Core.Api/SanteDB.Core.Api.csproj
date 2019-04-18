@@ -201,7 +201,7 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.42.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.43.0.0" />
         <PackageReference Include="SharpCompress" Version="0.18.2" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>
