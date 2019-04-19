@@ -95,9 +95,13 @@ namespace SanteDB.Core.Security.Audit
         SecurityRolesChanged,
         [XmlEnum("SecurityAuditCode-SecurityObjectChanged")]
         SecurityObjectChanged,
+        [XmlEnum("SecurityAuditCode-AuditLoggingStarted")]
+        AuditLoggingStarted,
+        [XmlEnum("SecurityAuditCode-AuditLoggingStopped")]
+        AuditLoggingStopped,
 
     }
-    #pragma warning restore CS1591
+#pragma warning restore CS1591
 
     /// <summary>
     /// Security utility
@@ -349,7 +353,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add user actor
         /// </summary>
-        internal static void AddUserActor(AuditData audit)
+        public static void AddUserActor(AuditData audit)
         {
             var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
 
@@ -387,7 +391,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add device actor
         /// </summary>
-        internal static void AddRemoteDeviceActor(AuditData audit, String remoteAddress)
+        public static void AddRemoteDeviceActor(AuditData audit, String remoteAddress)
         {
             if (remoteAddress == null) return;
 
