@@ -35,9 +35,9 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="principal">The principal for which the session is to be established</param>
         /// <param name="expiry">The time when the session is to expire</param>
-        /// <param name="aud">The audience of the session</param>
+        /// <param name="remoteEp">The remote endpoint</param>
         /// <returns>The session information that was established</returns>
-        ISession Establish(IPrincipal principal, DateTimeOffset expiry, String aud);
+        ISession Establish(IPrincipal principal, DateTimeOffset expiry, String remoteEp);
 
         /// <summary>
         /// Authenticates the session identifier as evidence of session

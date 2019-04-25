@@ -103,7 +103,7 @@ namespace SanteDB.Core.Security.Claims
         /// Override claim
         /// </summary>
         public const string SanteDBOverrideClaim = "http://santedb.org/claims/override";
-
+        
         /// <summary>
         /// Patient identifier claim
         /// </summary>
