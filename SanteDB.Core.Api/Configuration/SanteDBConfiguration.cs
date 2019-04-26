@@ -34,6 +34,7 @@ namespace SanteDB.Core.Configuration
     /// SanteDB Base configuration
     /// </summary>
     [XmlType(nameof(SanteDBBaseConfiguration), Namespace = "http://santedb.org/configuration")]
+    [XmlRoot(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/configuration")]
     public class SanteDBBaseConfiguration
     {
         /// <summary>
