@@ -56,17 +56,21 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public virtual void TraceEvent(EventLevel level, String source, String format, params Object[] args)
         {
-            var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()
-                .GetSection<DiagnosticsConfigurationSection>()?.Sources
-                .OrderByDescending(o=>o.SourceName.Length)
-                .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
+            try
+            {
+                var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()
+                    .GetSection<DiagnosticsConfigurationSection>()?.Sources
+                    .OrderByDescending(o => o.SourceName.Length)
+                    .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
 
-            if (this.m_filter == EventLevel.LogAlways)
-                this.WriteTrace(level, source, format, args);
-            else if (this.m_filter >= level && 
-                (sourceConfig.GetValueOrDefault() >= level ||
-                sourceConfig.GetValueOrDefault() == EventLevel.LogAlways))
-                this.WriteTrace(level, source, format, args);
+                if (this.m_filter == EventLevel.LogAlways)
+                    this.WriteTrace(level, source, format, args);
+                else if (this.m_filter >= level &&
+                    (sourceConfig.GetValueOrDefault() >= level ||
+                    sourceConfig.GetValueOrDefault() == EventLevel.LogAlways))
+                    this.WriteTrace(level, source, format, args);
+            }
+            catch { }
         }
 
         /// <summary>
