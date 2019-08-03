@@ -18,6 +18,8 @@
  * Date: 2019-1-12
  */
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
@@ -32,5 +34,10 @@ namespace SanteDB.Core.Services
         /// </summary>
         IRecordMatchingConfiguration GetConfiguration(String name);
 
+
+        /// <summary>
+        /// Gets the names of configurations in this provider
+        /// </summary>
+        IEnumerable<String> Configurations { get; }
     }
 }
