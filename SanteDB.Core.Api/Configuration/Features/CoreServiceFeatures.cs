@@ -180,7 +180,7 @@ namespace SanteDB.Core.Configuration.Features
             public IFeature Feature { get; }
 
             /// <summary>
-            /// Progress has changed
+            /// Fired when the progress has changed
             /// </summary>
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 

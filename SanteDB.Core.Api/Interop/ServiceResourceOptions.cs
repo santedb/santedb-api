@@ -114,6 +114,7 @@ namespace SanteDB.Core.Interop
         /// </summary>
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
+        /// <param name="resourceType">The type of resource which options are being fetched for</param>
         public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations)
         {
             this.ResourceName = resourceName;

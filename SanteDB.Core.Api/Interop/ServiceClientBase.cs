@@ -46,9 +46,9 @@ namespace SanteDB.Core.Interop.Clients
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Mobile.Core.Interop.Clients.ServiceClientBase"/> class.
+        /// Initializes a new instance of the <see cref="ServiceClientBase"/> class.
         /// </summary>
-        /// <param name="clientName">Client name.</param>
+        /// <param name="restClient">The instance of the IRestClient implementation to use</param>
         public ServiceClientBase(IRestClient restClient)
         {
             this.m_restClient = restClient;

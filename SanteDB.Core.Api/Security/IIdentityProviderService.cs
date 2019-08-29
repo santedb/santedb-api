@@ -32,10 +32,9 @@ namespace SanteDB.Core.Security.Services
     public class AuthenticatingEventArgs : AuthenticatedEventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Core.Services.AuthenticatingEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="AuthenticatingEventArgs"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
-        /// <param name="password">Password.</param>
         public AuthenticatingEventArgs(String userName) : base(userName, null, true)
         {
 
@@ -59,9 +58,11 @@ namespace SanteDB.Core.Security.Services
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Core.Services.AuthenticatingEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="Services.AuthenticatingEventArgs"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
+        /// <param name="principal">The principal that was authenticated</param>
+        /// <param name="success">True if the authentication was granted</param>
         public AuthenticatedEventArgs(String userName, IPrincipal principal, bool success)
         {
             this.UserName = userName;
@@ -182,6 +183,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the identity</param>
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
+        /// <param name="principal">The principal that was created</param>
         IIdentity CreateIdentity(String userName, String password,  IPrincipal principal);
 
         /// <summary>

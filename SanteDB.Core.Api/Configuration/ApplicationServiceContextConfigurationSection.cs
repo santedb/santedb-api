@@ -33,9 +33,6 @@ namespace SanteDB.Core.Configuration
     public class ApplicationServiceContextConfigurationSection : IConfigurationSection
     {
 
-        // Service providers
-        private IEnumerable<Type> m_serviceProviders;
-
         /// <summary>
         /// Create new santedb configuration object
         /// </summary>

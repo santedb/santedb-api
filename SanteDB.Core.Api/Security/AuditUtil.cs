@@ -114,10 +114,11 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that the audit log was used
         /// </summary>
-        /// <param name="action"></param>
-        /// <param name="outcome"></param>
-        /// <param name="query"></param>
-        /// <param name="auditIds"></param>
+        /// <param name="action">The action that occurred</param>
+        /// <param name="outcome">The outcome of the action</param>
+        /// <param name="query">The query which was being executed</param>
+        /// <param name="auditIds">The identifiers of any objects disclosed</param>
+        /// <param name="remoteAddress">The remote address</param>
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, String remoteAddress, params Guid[] auditIds)
         {
             traceSource.TraceVerbose("Create AuditLogUsed audit");

@@ -55,6 +55,9 @@ namespace SanteDB.Core.BusinessRules
     {
 
 
+        /// <summary>
+        /// Default ctor for detected issues
+        /// </summary>
         public DetectedIssue()
         {
 

@@ -24,9 +24,21 @@ namespace SanteDB.Core.Security
     /// </summary>
     public interface IPolicy
     {
+        /// <summary>
+        /// Gets whether the policy can be overridden
+        /// </summary>
         bool CanOverride { get; }
+        /// <summary>
+        /// Gets whether the policy is active
+        /// </summary>
         bool IsActive { get; }
+        /// <summary>
+        /// Gets the name of the policy
+        /// </summary>
         string Name { get; }
+        /// <summary>
+        /// Gets the OID of the policy
+        /// </summary>
         string Oid { get; }
     }
 }

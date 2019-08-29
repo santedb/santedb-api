@@ -32,10 +32,11 @@ namespace SanteDB.Core.Exceptions
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Exceptions.PolicyViolationException"/> class.
+        /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
         /// <param name="policyId">Policy identifier.</param>
         /// <param name="outcome">Outcome.</param>
+        /// <param name="principal">The principal that the action was attempted as</param>
         public PolicyViolationException(IPrincipal principal, string policyId, PolicyGrantType outcome)
         {
             this.PolicyId = policyId;
@@ -44,11 +45,12 @@ namespace SanteDB.Core.Exceptions
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Exceptions.PolicyViolationException"/> class.
+        /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
-        /// <param name="policy">Policy.</param>
-        /// <param name="outcome">Outcome.</param>
-        /// <param name="principal">The principal</param>
+        /// <param name="policy">The policy which was violated</param>
+        /// <param name="outcome">The outcome of the action (Deny or Elevate)</param>
+        /// <param name="principal">The principal which attempted the action</param>
+        /// <param name="evidence">The policy decision structure from the PDP which outlines each of the policy decisions made to derive the <paramref name="outcome"/></param>
         public PolicyViolationException(IPrincipal principal, IPolicy policy, PolicyGrantType outcome, PolicyDecision evidence)
         {
             this.Policy = policy;
