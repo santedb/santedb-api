@@ -32,7 +32,9 @@ namespace SanteDB.Core.Security.Claims
     public class SanteDBClaimsPrincipal : IClaimsPrincipal
     {
 
-        // Get the identities
+        /// <summary>
+        /// Identities that this claims principal contains
+        /// </summary>
         protected List<IClaimsIdentity> m_identities;
 
         /// <summary>

@@ -57,6 +57,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="offset">Offset within the result set</param>
         /// <param name="count">Count of results in the current call </param>
         /// <param name="totalResults">Total results matching query</param>
+        /// <param name="orderBy">Identifies the model sorting options for the query</param>
         /// <returns>The located audits trimmed for offset and count</returns>
         IEnumerable<AuditData> Find(Expression<Func<AuditData, bool>> query, int offset, int? count, out int totalResults, params ModelSort<AuditData>[] orderBy);
         

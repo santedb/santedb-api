@@ -36,10 +36,11 @@ namespace SanteDB.Core.Security.Claims
         private List<IClaim> m_claims;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Core.Security.ClaimsIdentity"/> class.
+        /// Initializes a new instance of the <see cref="SanteDBClaimsIdentity"/> class.
         /// </summary>
         /// <param name="userName">User name.</param>
         /// <param name="isAuthenticated">If set to <c>true</c> is authenticated.</param>
+        /// <param name="authenticationMethod">Identifies how the principal was authenticated</param>
         public SanteDBClaimsIdentity(String userName, bool isAuthenticated, string authenticationMethod, IEnumerable<IClaim> claims = null)
         {
             if (claims != null)

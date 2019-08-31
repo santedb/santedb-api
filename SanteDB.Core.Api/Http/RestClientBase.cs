@@ -37,11 +37,12 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a simple rest client
     /// </summary>
+    /// <remarks>This class represets a base class from which specific implementations of a REST client can be implemented</remarks>
     public abstract class RestClientBase : IRestClient
     {
         // Configuration
         private IRestClientDescription m_configuration;
-        private ICredentialProvider m_credentialProvider;
+        
         // Get tracer
         private static Tracer s_tracer = Tracer.GetTracer(typeof(RestClientBase));
 
@@ -86,16 +87,16 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Core.Http.RestClient"/> class.
+        /// Initializes a new instance of the <see cref="IRestClient"/> class.
         /// </summary>
         public RestClientBase()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Core.Http.RestClient"/> class.
+        /// Initializes a new instance of the <see cref="IRestClient"/> class.
         /// </summary>
-        /// <param name="binder">The serialization binder to use.</param>
+        /// <param name="config">The configuraiton of this client</param>
         public RestClientBase(IRestClientDescription config)
         {
             this.m_configuration = config;
@@ -104,8 +105,8 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create the query string from a list of query parameters
         /// </summary>
-        /// <param name="query"></param>
-        /// <returns></returns>
+        /// <param name="query">The query to be sent to the server</param>
+        /// <returns>The query string</returns>
         public static String CreateQueryString(NameValueCollection query)
         {
             String queryString = String.Empty;
@@ -125,7 +126,8 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create the HTTP request
         /// </summary>
-        /// <param name="url">URL.</param>
+        /// <param name="query">The query which should be executed on the server</param>
+        /// <param name="resourceName">The name of the resource at the base URL to be executed</param>
         protected virtual WebRequest CreateHttpRequest(String resourceName, NameValueCollection query)
         {
             // URL is relative to base address
@@ -188,32 +190,28 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the specified item
         /// </summary>
-        /// <param name="resourceName">Resource name.</param>
-        /// <param name="queryString">Query string.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
-        /// <param name="url">URL.</param>
-        /// <typeparam name="TResult">The 1st type parameter.</typeparam>
+        /// <param name="url">The resource URL which should be fetched</param>
+        /// <typeparam name="TResult">The expected response from the server</typeparam>
         public TResult Get<TResult>(string url)
         {
             return this.Get<TResult>(url, null);
         }
 
         /// <summary>
-        /// Gets a inumerable result set of type T
+        /// Fetches the specified result from the server
         /// </summary>
-        /// <param name="resourceName">Resource name.</param>
-        /// <param name="query">Query.</param>
-        /// <typeparam name="T">The 1st type parameter.</typeparam>
-        /// <param name="url">URL.</param>
-        /// <typeparam name="TResult">The 1st type parameter.</typeparam>
+        /// <param name="query">The query to be executed on th eserver</param>
+        /// <param name="url">The resource URL to fetch from the server</param>
+        /// <typeparam name="TResult">The expected result from the server</typeparam>
         public TResult Get<TResult>(string url, params KeyValuePair<string, object>[] query)
         {
             return this.Invoke<Object, TResult>("GET", url, null, null, query);
         }
 
         /// <summary>
-        /// Gets the specified URL in raw format
+        /// Retrieves a raw byte array of data from the specified location
         /// </summary>
+        /// <param name="url">The resource URL to fetch from the server</param>
         public byte[] Get(String url)
         {
             NameValueCollection parameters = new NameValueCollection();
@@ -343,29 +341,28 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Invokes the specified method against the URL provided
         /// </summary>
-        /// <param name="method">Method.</param>
-        /// <param name="resourceName">Resource name.</param>
-        /// <param name="contentType">Content type.</param>
-        /// <param name="body">Body.</param>
-        /// <typeparam name="TBody">The 1st type parameter.</typeparam>
-        /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
-        /// <param name="url">URL.</param>
+        /// <param name="method">The HTTP method to be executed</param>
+        /// <param name="contentType">Content type of <paramref name="body"/></param>
+        /// <param name="body">The body to be sent to the server</param>
+        /// <typeparam name="TBody">The type of the <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response from the server</typeparam>
+        /// <param name="url">The URL on which the invokation should occur</param>
         public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body)
         {
             return this.Invoke<TBody, TResult>(method, url, contentType, body, null);
         }
 
         /// <summary>
-        /// Invoke the specified method
+        /// Invoke the specified method against the server
         /// </summary>
-        /// <typeparam name="TBody"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="method"></param>
-        /// <param name="url"></param>
-        /// <param name="contentType"></param>
-        /// <param name="body"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="method">The HTTP method to be executed</param>
+        /// <param name="url">The resource URL to be executed against</param>
+        /// <param name="contentType">The content/type of <paramref name="body"/></param>
+        /// <param name="body">The contents of the request to send to the server</param>
+        /// <param name="query">The query to append to the URL</param>
+        /// <returns>The server response</returns>
         public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, params KeyValuePair<string, object>[] query)
         {
             NameValueCollection parameters = new NameValueCollection();
@@ -400,58 +397,65 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Invokes the specified method against the url provided
+        /// Implementation specific implementatoin of invoke
         /// </summary>
-        /// <param name="method">Method.</param>
-        /// <param name="url">URL.</param>
-        /// <param name="contentType">Content type.</param>
-        /// <param name="body">Body.</param>
-        /// <param name="query">Query.</param>
-        /// <typeparam name="TBody">The 1st type parameter.</typeparam>
-        /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response (response hint) from the server</typeparam>
+        /// <param name="method">The method to invoke on the server</param>
+        /// <param name="url">The resource URL to be invoked</param>
+        /// <param name="contentType">The content/type of <paramref name="body"/></param>
+        /// <param name="requestHeaders">Additional request headers to be sent to the server</param>
+        /// <param name="responseHeaders">Response headers from the server</param>
+        /// <param name="body">The body / contents to be submitted to the server</param>
+        /// <param name="query">The query to be affixed to the URL</param>
+        /// <returns>The response from the server</returns>
         protected abstract TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query);
 
         /// <summary>
-        /// Executes a post against the url
+        /// Execute a post against the <paramref name="url"/>
         /// </summary>
-        /// <param name="url">URL.</param>
-        /// <param name="contentType">Content type.</param>
-        /// <param name="body">Body.</param>
-        /// <typeparam name="TBody">The 1st type parameter.</typeparam>
-        /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="url">The resource URL</param>
+        /// <param name="contentType">The content/type of <paramref name="body"/></param>
+        /// <param name="body">The body contents to be submitted to the server</param>
+        /// <returns>The result from the server</returns>
         public TResult Post<TBody, TResult>(string url, string contentType, TBody body)
         {
             return this.Invoke<TBody, TResult>("POST", url, contentType, body);
         }
 
         /// <summary>
-        /// Deletes the specified object
+        /// Executes an HTTP delete operation on the server
         /// </summary>
-        /// <param name="url">URL.</param>
-        /// <typeparam name="TResult">The 1st type parameter.</typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="url">The resource URL which should be executed against</param>
+        /// <returns>The response from the server</returns>
         public TResult Delete<TResult>(string url)
         {
             return this.Invoke<Object, TResult>("DELETE", url, null, null);
         }
 
         /// <summary>
-        /// Executes a PUT for the specified object
+        /// Executes an HTTP PUT against the server
         /// </summary>
-        /// <param name="url">URL.</param>
-        /// <param name="contentType">Content type.</param>
-        /// <param name="body">Body.</param>
-        /// <typeparam name="TBody">The 1st type parameter.</typeparam>
-        /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected result from the server</typeparam>
+        /// <param name="url">The resource URL to be executed against</param>
+        /// <param name="contentType">The content/type to use to serialize <paramref name="body"/></param>
+        /// <param name="body">The content to be submitted to the server</param>
+        /// <returns>The response from th eserver</returns>
         public TResult Put<TBody, TResult>(string url, string contentType, TBody body)
         {
             return this.Invoke<TBody, TResult>("PUT", url, contentType, body);
         }
 
         /// <summary>
-        /// Executes an Options against the URL
+        /// Executes an HTTP options against the server
         /// </summary>
-        /// <param name="url">URL.</param>
-        /// <typeparam name="TResult">The 1st type parameter.</typeparam>
+        /// <typeparam name="TResult">The expected result type from the server</typeparam>
+        /// <param name="url">The reosurce url to execute options against</param>
+        /// <returns>The result from the server</returns>
         public TResult Options<TResult>(string url)
         {
             return this.Invoke<Object, TResult>("OPTIONS", url, null, null);
@@ -460,7 +464,6 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials to be used for this client
         /// </summary>
-        /// <value>The credentials.</value>
         public Credentials Credentials
         {
             get;
@@ -478,9 +481,8 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Get the description of this service
+        /// Get the description (configuration) of this service
         /// </summary>
-        /// <value>The description.</value>
         public IRestClientDescription Description { get { return this.m_configuration; } set { this.m_configuration = value; } }
 
         #endregion IRestClient implementation
@@ -489,7 +491,7 @@ namespace SanteDB.Core.Http
         /// Validate the response
         /// </summary>
         /// <returns><c>true</c>, if response was validated, <c>false</c> otherwise.</returns>
-        /// <param name="response">Response.</param>
+        /// <param name="response">The WebResponse from the server</param>
         protected virtual ServiceClientErrorType ValidateResponse(WebResponse response)
         {
             if (response is HttpWebResponse)
@@ -550,19 +552,18 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
-        /// <filterpriority>2</filterpriority>
-        /// <remarks>Call <see cref="Dispose"/> when you are finished using the <see cref="SanteDB.Core.Http.RestClientBase"/>.
-        /// The <see cref="Dispose"/> method leaves the <see cref="SanteDB.Core.Http.RestClientBase"/> in an unusable
-        /// state. After calling <see cref="Dispose"/>, you must release all references to the
-        /// <see cref="SanteDB.Core.Http.RestClientBase"/> so the garbage collector can reclaim the memory that the
-        /// <see cref="SanteDB.Core.Http.RestClientBase"/> was occupying.</remarks>
         public void Dispose()
         {
         }
 
         /// <summary>
-        /// Patches the specified <paramref name="patch"/>
+        /// Patches the specified resource at <paramref name="url"/> with <paramref name="patch"/> when <paramref name="ifMatch"/> is true
         /// </summary>
+        /// <param name="url">The resource URL to patch</param>
+        /// <param name="contentType">The content/type of the patch (dictates serialization)</param>
+        /// <param name="ifMatch">Identifies the If-Match header</param>
+        /// <param name="patch">The patch contents</param>
+        /// <returns>The new ETAG of the patched resource</returns>
         public String Patch<TPatch>(string url, string contentType, String ifMatch, TPatch patch)
         {
             try
@@ -598,6 +599,9 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Perform a head operation against the specified url
         /// </summary>
+        /// <param name="query">The query to execute</param>
+        /// <param name="resourceName">The name of the resource (url)</param>
+        /// <returns>The HTTP headers (result of the HEAD operation)</returns>
         public IDictionary<string, string> Head(string resourceName, params KeyValuePair<String, Object>[] query)
         {
             NameValueCollection parameters = new NameValueCollection();
@@ -661,6 +665,9 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Perform a lock on the specified resource
         /// </summary>
+        /// <param name="url">The URL of the resource to lock</param>
+        /// <returns>The result of the lock operation from the server</returns>
+        /// <typeparam name="TResult">Expected result type</typeparam>
         public TResult Lock<TResult>(string url)
         {
             return this.Invoke<Object, TResult>("LOCK", url, null, null, null);
@@ -669,6 +676,9 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Perform an unlock
         /// </summary>
+        /// <param name="url">The resource URL to unlock</param>
+        /// <returns>The result of the unlock from the server</returns>
+        /// <typeparam name="TResult">The expected type of result</typeparam>
         public TResult Unlock<TResult>(string url)
         {
             return this.Invoke<Object, TResult>("UNLOCK", url, null, null, null);

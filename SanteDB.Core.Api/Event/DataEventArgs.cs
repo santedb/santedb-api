@@ -96,10 +96,15 @@ namespace SanteDB.Core.Event
     public class QueryResultEventArgs<TData> : QueryEventArgsBase<TData> where TData : class
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Services.DataQueryResultEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="QueryResultEventArgs{TData}"/> class.
         /// </summary>
         /// <param name="query">Query.</param>
         /// <param name="results">Results.</param>
+        /// <param name="count">The number of results which are to be returned</param>
+        /// <param name="offset">The offset of the result set</param>
+        /// <param name="principal">The principal under which the query was executed</param>
+        /// <param name="queryId">The unique identifier for the query</param>
+        /// <param name="totalResults">The total results in the result set</param>
         public QueryResultEventArgs(Expression<Func<TData, bool>> query, IEnumerable<TData> results, int offset, int? count, int totalResults, Guid? queryId, IPrincipal principal) : base(query, offset, count, queryId, principal)
         {
             this.Results = results;
@@ -112,12 +117,17 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// Data query pre event arguments.
     /// </summary>
+    /// <remarks>This event allows cancellation and re-writing of queries by plugins prior to the query being executed on the persistence layer</remarks>
     public class QueryRequestEventArgs<TData> : QueryEventArgsBase<TData> where TData : class
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Services.DataQueryPreEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="QueryRequestEventArgs{TData}"/> class.
         /// </summary>
-        /// <param name="query">Query.</param>
+        /// <param name="query">The query about to be executed</param>
+        /// <param name="queryId">The query identifier</param>
+        /// <param name="principal">The principal which is executing the query</param>
+        /// <param name="offset">The requested offset in the result set</param>
+        /// <param name="count">The requested total results to be returned in this result set</param>
         public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal) : base(query, offset, count, queryId, principal)
         {
         }
@@ -137,12 +147,14 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// Data persistence pre event arguments.
     /// </summary>
+    /// <remarks>This class allows for cancelation of a persistence event (create, update, delete) by plugins and/or modification of the data to be persisted</remarks>
     public class DataPersistingEventArgs<TData> : DataPersistedEventArgs<TData> where TData : class
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Services.DataPersistencePreEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="DataPersistingEventArgs{TData}"/> class.
         /// </summary>
-        /// <param name="data">Data.</param>
+        /// <param name="data">The data to be persisted</param>
+        /// <param name="principal">The principal under which the persistence is taking place</param>
         public DataPersistingEventArgs(TData data, IPrincipal principal) : base(data, principal)
         {
         }
@@ -162,13 +174,15 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// Data persistence event arguments.
     /// </summary>
+    /// <remarks>This event is fired whenever data has been successfully perssited to the database</remarks>
     public class DataPersistedEventArgs<TData> : SecureAccessEventArgs where TData : class
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.SanteDB.Core.Services.DataPersistenceEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="DataPersistedEventArgs{TData}"/> class.
         /// </summary>
-        /// <param name="data">Data.</param>
+        /// <param name="data">The data that was persisted</param>
+        /// <param name="principal">The principal which was responsible for the creation of the data</param>
         public DataPersistedEventArgs(TData data, IPrincipal principal) : base(principal)
         {
             this.Data = data;
@@ -189,6 +203,7 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// Represents event data associated with a data retrieval operation
     /// </summary>
+    /// <remarks>This event allows for the cancelation / inspection of queries to the data store prior to being executed</remarks>
     public class DataRetrievingEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
@@ -196,7 +211,10 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Creates a new pre-retrieval event args object
         /// </summary>
-        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal overrideAuthContext = null) : base(overrideAuthContext) 
+        /// <param name="identifier">The identifier of the object being retrieved</param>
+        /// <param name="principal">The principal under which the query is being executed, or null if the current <see cref="AuthenticationContext"/> is being used</param>
+        /// <param name="versionId">The version identifier of the object being retrieved if supplied</param>
+        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal) 
         {
             this.Id = identifier;
             this.VersionId = versionId;
@@ -231,6 +249,7 @@ namespace SanteDB.Core.Event
     /// <summary>
     /// A class used to store event information related to post-retrieval events
     /// </summary>
+    /// <remarks>This event allows for inpection of data which was retrieved by identifier</remarks>
     public class DataRetrievedEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
@@ -238,6 +257,8 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Post retrieval data
         /// </summary>
+        /// <param name="data">The data which was retrieved from the database</param>
+        /// <param name="executionPrincipal">The prinicpal under which the query was executed</param>
         public DataRetrievedEventArgs(TData data, IPrincipal executionPrincipal) : base(executionPrincipal)
         {
             this.Data = data;
