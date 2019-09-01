@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -52,6 +53,11 @@ namespace SanteDB.Core.Security.Services
         /// <param name="rule">The rule to be applied to the securable</param>
         /// <param name="policyOids">The oids of the policies to add</param>
         void AddPolicies(Object securable, PolicyGrantType rule, IPrincipal principal, params String[] policyOids);
+
+        /// <summary>
+        /// Gets the policy instance for the specified object
+        /// </summary>
+        IPolicyInstance GetPolicyInstance(object securable, string policyOid);
     }
 
 
