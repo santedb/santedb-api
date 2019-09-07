@@ -17,6 +17,8 @@
  * User: justi
  * Date: 2019-1-12
  */
+using System;
+
 namespace SanteDB.Core.Security
 {
     /// <summary>
@@ -24,6 +26,10 @@ namespace SanteDB.Core.Security
     /// </summary>
     public interface IPolicy
     {
+        /// <summary>
+        /// Gets the UUID for the policy
+        /// </summary>
+        Guid Key { get; }
         /// <summary>
         /// Gets whether the policy can be overridden
         /// </summary>
