@@ -78,7 +78,7 @@ namespace SanteDB.Core.Interfaces
     }
 
     /// <summary>
-    /// Represents a service which creates data event related audits
+    /// Represents a service which creates data events which need to be audited
     /// </summary>
     public interface IAuditEventSource
     {

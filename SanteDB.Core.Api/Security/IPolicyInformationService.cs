@@ -58,6 +58,11 @@ namespace SanteDB.Core.Security.Services
         /// Gets the policy instance for the specified object
         /// </summary>
         IPolicyInstance GetPolicyInstance(object securable, string policyOid);
+
+        /// <summary>
+        /// Removes the specified policies from the user account
+        /// </summary>
+        void RemovePolicies(Object securable, IPrincipal principal, params string[] oid);
     }
 
 
