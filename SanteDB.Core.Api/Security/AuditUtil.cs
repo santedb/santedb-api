@@ -161,6 +161,38 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
+        /// Audit the creation of an object
+        /// </summary>
+        public static void AuditCreate<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        {
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+        }
+
+        /// <summary>
+        /// Audit the update of an object
+        /// </summary>
+        public static void AuditUpdate<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        {
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+        }
+
+        /// <summary>
+        /// Audit a deletion
+        /// </summary>
+        public static void AuditDelete<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        {
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+        }
+
+        /// <summary>
+        /// Audit the update of an object
+        /// </summary>
+        public static void AuditQuery<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] results) 
+        {
+            AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, remoteAddress, results);
+        }
+
+        /// <summary>
         /// Audit that security objects were created
         /// </summary>
         public static void AuditSecurityCreationAction(IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties, String remoteAddress)

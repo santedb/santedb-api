@@ -94,7 +94,6 @@
     <Compile Include="Http\RestClientException.cs" />
     <Compile Include="Http\RestClientEventArgs.cs" />
     <Compile Include="Http\XmlBodySerializer.cs" />
-    <Compile Include="Interfaces\ISecurityAuditEventSource.cs" />
     <Compile Include="Interop\ServiceClientBase.cs" />
     <Compile Include="Interop\ServiceEndpointOptions.cs" />
     <Compile Include="Interop\ServiceOptions.cs" />
@@ -136,7 +135,6 @@
     <Compile Include="Services\IFastQueryDataPersistenceService.cs" />
     <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
-    <Compile Include="Interfaces\IAuditEventSource.cs" />
     <Compile Include="Security\IAuditRepositoryService.cs" />
     <Compile Include="Services\IBusinessRulesService.cs" />
     <Compile Include="Services\ICarePlanService.cs" />
