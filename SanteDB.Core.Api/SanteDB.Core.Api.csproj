@@ -114,6 +114,7 @@
     <Compile Include="Security\IApplicationIdentityProviderService.cs" />
     <Compile Include="Security\IDataSigningService.cs" />
     <Compile Include="Security\ISession.cs" />
+    <Compile Include="Security\Principal\IApplicationIdentity.cs" />
     <Compile Include="Security\Principal\IDeviceIdentity.cs" />
     <Compile Include="Security\Principal\GenericIdentity.cs" />
     <Compile Include="Security\Principal\GenericPrincipal.cs" />

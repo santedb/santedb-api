@@ -18,6 +18,7 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
 
@@ -25,11 +26,49 @@ namespace SanteDB.Core.Services
 {
 
     /// <summary>
+    /// Event arguments for session establishment
+    /// </summary>
+    public class SessionEstablishedEventArgs : EventArgs
+    {
+
+        /// <summary>
+        /// Gets the principal which was used to establish sessions
+        /// </summary>
+        public IPrincipal Principal { get; private set; }
+
+        /// <summary>
+        /// Gets the established session
+        /// </summary>
+        public ISession Session { get; private set; }
+
+        /// <summary>
+        /// Gets whether session established was successful
+        /// </summary>
+        public bool Success { get; private set; }
+
+        /// <summary>
+        /// Creates a new session establishement args
+        /// </summary>
+        public SessionEstablishedEventArgs(IPrincipal principal, ISession session, bool success)
+        {
+            this.Success = success;
+            this.Session = session;
+            this.Principal = principal;
+        }
+    }
+
+    /// <summary>
     /// Represents a service which is responsible for the storage and retrieval of sessions
     /// </summary>
     public interface ISessionProviderService : IServiceImplementation
     {
 
+      
+        /// <summary>
+        /// Fired when the session provider service has established
+        /// </summary>
+        event EventHandler<SessionEstablishedEventArgs> Established;
+        
         /// <summary>
         /// Establishes a session for the specified principal
         /// </summary>

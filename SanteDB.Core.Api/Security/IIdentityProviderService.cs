@@ -66,7 +66,7 @@ namespace SanteDB.Core.Security.Services
         public AuthenticatedEventArgs(String userName, IPrincipal principal, bool success)
         {
             this.UserName = userName;
-
+            this.Principal = principal;
             this.Success = success;
         }
 

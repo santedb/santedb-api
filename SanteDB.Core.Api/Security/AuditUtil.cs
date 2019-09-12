@@ -29,6 +29,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -99,7 +100,12 @@ namespace SanteDB.Core.Security.Audit
         AuditLoggingStarted,
         [XmlEnum("SecurityAuditCode-AuditLoggingStopped")]
         AuditLoggingStopped,
-
+        [XmlEnum("SecurityAuditCode-SessionStarted")]
+        SessionStarted,
+        [XmlEnum("SecurityAuditCode-SessionStopped")]
+        SessionStopped,
+        [XmlEnum("SecurityAuditCode-AccessControlDecision")]
+        AccessControlDecision,
     }
 #pragma warning restore CS1591
 
@@ -325,7 +331,7 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceInfo("Dispatching Audit - {0}", audit.Key);
             
             // If the current principal is SYSTEM then we don't need to send an audit
-            ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(o =>
+            Action<object> workitem = (o) =>
             {
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                 // Translate codes to DICOM
@@ -347,7 +353,13 @@ namespace SanteDB.Core.Security.Audit
 
                 ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
                 ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
-            });
+            };
+
+            // Action
+            if (ApplicationServiceContext.Current.IsRunning)
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(workitem); // background
+            else
+                workitem(null); // service is stopped
 
         }
 
@@ -480,21 +492,14 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
                 UserName = principal?.Identity?.Name ?? identityName,
                 UserIsRequestor = true,
-                ActorRoleCode = ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
+                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
                     new AuditCode(o, null)
                 ).ToList()
             });
             AddLocalDeviceActor(audit);
             AddRemoteDeviceActor(audit, remoteAddress);
-
-            audit.AuditableObjects.Add(new AuditableObject()
-            {
-                IDTypeCode = AuditableObjectIdType.Uri,
-                NameData = identityProvider.GetType().AssemblyQualifiedName,
-                ObjectId = $"http://santedb.org/auth/{identityProvider.GetType().FullName.Replace(".", "/")}",
-                Type = AuditableObjectType.SystemObject,
-                Role = AuditableObjectRole.Job
-            });
+            
+           
 
             SendAudit(audit);
         }
@@ -571,6 +576,66 @@ namespace SanteDB.Core.Security.Audit
                     }
                 });
             
+            SendAudit(audit);
+        }
+
+        /// <summary>
+        /// Audit that a session has begun
+        /// </summary>
+        public static void AuditSessionStart(ISession session, IPrincipal principal, String remoteAddress, bool success)
+        {
+            traceSource.TraceVerbose("Create session audit");
+
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SessionStarted));
+            audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
+                UserName = principal?.Identity?.Name,
+                UserIsRequestor = true,
+                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
+                    new AuditCode(o, null)
+                ).ToList()
+            });
+            AddLocalDeviceActor(audit);
+            AddRemoteDeviceActor(audit, remoteAddress);
+
+            // Audit the actual session that is created
+            
+            var cprincipal = principal as IClaimsPrincipal;
+            var deviceIdentity = cprincipal.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
+            var applicationIdentity = cprincipal.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+
+            if(session != null)
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    Role = AuditableObjectRole.SecurityResource,
+                    ObjectId = BitConverter.ToString(session.Id).Replace("-",""),
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode("Session", "SanteDBTable"),
+                    LifecycleType = AuditableObjectLifecycle.Creation,
+                    ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("method", principal.Identity?.AuthenticationType),
+                        deviceIdentity != cprincipal.Identity && applicationIdentity != cprincipal.Identity ? new ObjectDataExtension("userIdentity", principal.Identity.Name) : null,
+                        deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
+                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
+                    }.OfType<ObjectDataExtension>().ToList()
+                });
+            else
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    Role = AuditableObjectRole.SecurityResource,
+                    LifecycleType = AuditableObjectLifecycle.Creation,
+                    ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("method", principal.Identity?.AuthenticationType),
+                        deviceIdentity != cprincipal.Identity && applicationIdentity != cprincipal.Identity ? new ObjectDataExtension("userIdentity", principal.Identity.Name) : null,
+                        deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
+                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
+                    }.OfType<ObjectDataExtension>().ToList()
+                });
+
             SendAudit(audit);
         }
     }

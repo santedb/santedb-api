@@ -43,6 +43,16 @@ namespace SanteDB.Core.Diagnostics
         }
 
         /// <summary>
+        /// Dispose trace writers
+        /// </summary>
+        public static void DisposeWriters()
+        {
+            foreach (var itm in m_writers)
+                (itm.Key as IDisposable)?.Dispose();
+            return;
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.Core.Diagnostics.Tracer"/> class.
         /// </summary>
         /// <param name="source">Source.</param>
