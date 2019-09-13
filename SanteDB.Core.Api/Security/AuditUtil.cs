@@ -234,54 +234,8 @@ namespace SanteDB.Core.Security.Audit
             // Objects
             audit.AuditableObjects = data.Select(o =>
             {
-
-                var idTypeCode = AuditableObjectIdType.Custom;
-                var roleCode = AuditableObjectRole.Resource;
-                var objType = AuditableObjectType.Other;
-
-                if (o is Patient)
-                {
-                    idTypeCode = AuditableObjectIdType.PatientNumber;
-                    roleCode = AuditableObjectRole.Patient;
-                    objType = AuditableObjectType.Person;
-                }
-                else if (o is UserEntity || o is Provider)
-                {
-                    idTypeCode = AuditableObjectIdType.UserIdentifier;
-                    objType = AuditableObjectType.Person;
-                    roleCode = AuditableObjectRole.Provider;
-                }
-                else if (o is Entity)
-                    idTypeCode = AuditableObjectIdType.EnrolleeNumber;
-                else if (o is Act)
-                {
-                    idTypeCode = AuditableObjectIdType.EncounterNumber;
-                    roleCode = AuditableObjectRole.Report;
-                    if ((o as Act)?.ReasonConceptKey == NullReasonKeys.Masked) // Masked 
-                        lifecycle = AuditableObjectLifecycle.Deidentification;
-                }
-                else if (o is SecurityUser)
-                {
-                    idTypeCode = AuditableObjectIdType.UserIdentifier;
-                    roleCode = AuditableObjectRole.SecurityUser;
-                    objType = AuditableObjectType.SystemObject;
-                }
-                else if(o is AuditData)
-                {
-                    idTypeCode = AuditableObjectIdType.ReportNumber;
-                    roleCode = AuditableObjectRole.SecurityResource;
-                    objType = AuditableObjectType.SystemObject;
-                }
-
-                return new AuditableObject()
-                {
-                    IDTypeCode = idTypeCode,
-                    CustomIdTypeCode = idTypeCode == AuditableObjectIdType.Custom ? new AuditCode(o.GetType().Name, o.GetType().Namespace) : null,
-                    LifecycleType = lifecycle,
-                    ObjectId = (o as IIdentifiedEntity)?.Key?.ToString() ?? (o as AuditData)?.Key.ToString() ?? (o.GetType().GetRuntimeProperty("Id")?.GetValue(o)?.ToString()),
-                    Role = roleCode,
-                    Type = objType
-                };
+                var obj = CreateAuditableObject(o, lifecycle);
+                return obj;
             }).ToList();
 
             // Query performed
@@ -298,6 +252,69 @@ namespace SanteDB.Core.Security.Audit
             }
 
             SendAudit(audit);
+        }
+
+        /// <summary>
+        /// Create an auditable object from the specified object
+        /// </summary>
+        /// <typeparam name="TData"></typeparam>
+        /// <param name="obj">The object to translate</param>
+        private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
+        {
+            var idTypeCode = AuditableObjectIdType.Custom;
+            var roleCode = AuditableObjectRole.Resource;
+            var objType = AuditableObjectType.Other;
+
+            if (obj is Patient)
+            {
+                idTypeCode = AuditableObjectIdType.PatientNumber;
+                roleCode = AuditableObjectRole.Patient;
+                objType = AuditableObjectType.Person;
+            }
+            else if (obj is UserEntity || obj is Provider)
+            {
+                idTypeCode = AuditableObjectIdType.UserIdentifier;
+                objType = AuditableObjectType.Person;
+                roleCode = AuditableObjectRole.Provider;
+            }
+            else if (obj is Entity)
+                idTypeCode = AuditableObjectIdType.EnrolleeNumber;
+            else if (obj is Act)
+            {
+                idTypeCode = AuditableObjectIdType.EncounterNumber;
+                roleCode = AuditableObjectRole.Report;
+                if ((obj as Act)?.ReasonConceptKey == NullReasonKeys.Masked) // Masked 
+                    lifecycle = AuditableObjectLifecycle.Deidentification;
+            }
+            else if (obj is SecurityUser)
+            {
+                idTypeCode = AuditableObjectIdType.UserIdentifier;
+                roleCode = AuditableObjectRole.SecurityUser;
+                objType = AuditableObjectType.SystemObject;
+            }
+            else if (obj is AuditData)
+            {
+                idTypeCode = AuditableObjectIdType.ReportNumber;
+                roleCode = AuditableObjectRole.SecurityResource;
+                objType = AuditableObjectType.SystemObject;
+            }
+            else if(obj is Guid)
+            {
+                idTypeCode = AuditableObjectIdType.Uri;
+                roleCode = AuditableObjectRole.MasterFile;
+                objType = AuditableObjectType.SystemObject;
+            }
+
+            return new AuditableObject()
+            {
+                IDTypeCode = idTypeCode,
+                CustomIdTypeCode = idTypeCode == AuditableObjectIdType.Custom ? new AuditCode(obj.GetType().Name, obj.GetType().Namespace) : null,
+                LifecycleType = lifecycle,
+                ObjectId = (obj as IIdentifiedEntity)?.Key?.ToString() ?? (obj as AuditData)?.Key.ToString() ?? (obj.GetType().GetRuntimeProperty("Id")?.GetValue(obj)?.ToString()) ?? obj.ToString(),
+                Role = roleCode,
+                Type = objType
+            };
+
         }
 
         /// <summary>
@@ -670,5 +687,85 @@ namespace SanteDB.Core.Security.Audit
 
             SendAudit(audit);
         }
+
+        /// <summary>
+        /// Audit that a session has begun
+        /// </summary>
+        public static void AuditSessionStop(ISession session, IPrincipal principal, String remoteAddress, bool success)
+        {
+            traceSource.TraceVerbose("End session audit");
+
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SessionStopped));
+            audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
+                UserName = principal?.Identity?.Name,
+                UserIsRequestor = true,
+                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
+                    new AuditCode(o, null)
+                ).ToList()
+            });
+            AddLocalDeviceActor(audit);
+            AddRemoteDeviceActor(audit, remoteAddress);
+
+            // Audit the actual session that is created
+            var cprincipal = principal as IClaimsPrincipal;
+            var deviceIdentity = cprincipal.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
+            var applicationIdentity = cprincipal.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+
+            if (session != null)
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    Role = AuditableObjectRole.SecurityResource,
+                    ObjectId = BitConverter.ToString(session.Id).Replace("-", ""),
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode("Session", "SanteDBTable"),
+                    LifecycleType = AuditableObjectLifecycle.Creation,
+                    ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("method", principal.Identity?.AuthenticationType),
+                        deviceIdentity != cprincipal.Identity && applicationIdentity != cprincipal.Identity ? new ObjectDataExtension("userIdentity", principal.Identity.Name) : null,
+                        deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
+                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
+                    }.OfType<ObjectDataExtension>().ToList()
+                });
+            else
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    Role = AuditableObjectRole.SecurityResource,
+                    LifecycleType = AuditableObjectLifecycle.Creation,
+                    ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("method", principal.Identity?.AuthenticationType),
+                        deviceIdentity != cprincipal.Identity && applicationIdentity != cprincipal.Identity ? new ObjectDataExtension("userIdentity", principal.Identity.Name) : null,
+                        deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
+                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
+                    }.OfType<ObjectDataExtension>().ToList()
+                });
+
+            SendAudit(audit);
+        }
+
+        /// <summary>
+        /// Audit the export of data 
+        /// </summary>
+        public static void AuditDataExport(params object[] exportedData)
+        {
+            AuditCode eventTypeId = CreateAuditActionCode(EventTypeCodes.Export);
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, eventTypeId);
+
+            AddLocalDeviceActor(audit);
+            AddUserActor(audit);
+
+            audit.AuditableObjects = exportedData.Select(o =>
+            {
+                var obj = CreateAuditableObject(o, AuditableObjectLifecycle.Export);
+                return obj;
+            }).ToList();
+
+            SendAudit(audit);
+        }
+
     }
 }

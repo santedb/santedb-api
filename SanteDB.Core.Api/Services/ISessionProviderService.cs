@@ -68,7 +68,12 @@ namespace SanteDB.Core.Services
         /// Fired when the session provider service has established
         /// </summary>
         event EventHandler<SessionEstablishedEventArgs> Established;
-        
+
+        /// <summary>
+        /// Fired when the session provider service has ended by the user's decision
+        /// </summary>
+        event EventHandler<SessionEstablishedEventArgs> Abandoned;
+
         /// <summary>
         /// Establishes a session for the specified principal
         /// </summary>
