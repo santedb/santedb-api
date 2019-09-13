@@ -125,7 +125,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
         /// <param name="remoteAddress">The remote address</param>
-        public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, String remoteAddress, params Guid[] auditIds)
+        public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
             traceSource.TraceVerbose("Create AuditLogUsed audit");
             AuditData audit = new AuditData(DateTime.Now, action, outcome, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AuditLogUsed));
@@ -133,7 +133,7 @@ namespace SanteDB.Core.Security.Audit
             // User actors
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
             // Add objects to which the thing was done
             audit.AuditableObjects = auditIds.Select(o => new AuditableObject()
             {
@@ -163,46 +163,46 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the creation of an object
         /// </summary>
-        public static void AuditCreate<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        public static void AuditCreate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
         }
 
         /// <summary>
         /// Audit the update of an object
         /// </summary>
-        public static void AuditUpdate<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        public static void AuditUpdate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
         }
 
         /// <summary>
         /// Audit a deletion
         /// </summary>
-        public static void AuditDelete<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] resourceData)
+        public static void AuditDelete<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.Import, outcome, queryPerformed, remoteAddress, resourceData);
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
         }
 
         /// <summary>
         /// Audit the update of an object
         /// </summary>
-        public static void AuditQuery<TData>(OutcomeIndicator outcome, string queryPerformed, string remoteAddress, params TData[] results) 
+        public static void AuditQuery<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] results) 
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, remoteAddress, results);
+            AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, results);
         }
 
         /// <summary>
         /// Audit that security objects were created
         /// </summary>
-        public static void AuditSecurityCreationAction(IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties, String remoteAddress)
+        public static void AuditSecurityCreationAction(IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties)
         {
             traceSource.TraceVerbose("Create SecurityCreationAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Create, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -219,7 +219,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Autility utility which can be used to send a data audit 
         /// </summary>
-        public static void AuditDataAction<TData>(EventTypeCodes typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, String remoteAddress, params TData[] data) 
+        public static void AuditDataAction<TData>(EventTypeCodes typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, params TData[] data) 
         {
 
             traceSource.TraceVerbose("Create AuditDataAction audit");
@@ -229,7 +229,7 @@ namespace SanteDB.Core.Security.Audit
 
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             // Objects
             audit.AuditableObjects = data.Select(o =>
@@ -303,14 +303,14 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
-        public static void AuditSecurityDeletionAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties, String remoteAddress)
+        public static void AuditSecurityDeletionAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
         {
             traceSource.TraceVerbose("Create SecurityDeletionAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Delete, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -327,14 +327,14 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
-        public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties, String remoteAddress)
+        public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
         {
             traceSource.TraceVerbose("Create SecurityAttributeAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -436,8 +436,9 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add device actor
         /// </summary>
-        public static void AddRemoteDeviceActor(AuditData audit, String remoteAddress)
+        public static void AddRemoteDeviceActor(AuditData audit)
         {
+            var remoteAddress = ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint();
             if (remoteAddress == null) return;
 
             // For the current device name
@@ -457,7 +458,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit an override operation
         /// </summary>
-        public static void AuditOverride(IPrincipal principal, string purposeOfUse, string[] policies, bool success, String remoteAddress)
+        public static void AuditOverride(IPrincipal principal, string purposeOfUse, string[] policies, bool success)
         {
 
             traceSource.TraceVerbose("Create Override audit");
@@ -474,7 +475,7 @@ namespace SanteDB.Core.Security.Audit
                 ).ToList()
             });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects.AddRange(policies.Select(o => new AuditableObject()
             {
@@ -512,7 +513,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a login of a principal
         /// </summary>
-        public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, String remoteAddress, bool successfulLogin = true)
+        public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin = true)
         {
 
             traceSource.TraceVerbose("Create Login audit");
@@ -529,7 +530,7 @@ namespace SanteDB.Core.Security.Audit
                 ).ToList()
             });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
             
            
 
@@ -539,7 +540,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a login of a principal
         /// </summary>
-        public static void AuditLogout(IPrincipal principal, String remoteAddress)
+        public static void AuditLogout(IPrincipal principal)
         {
             if (principal == null)
                 throw new ArgumentNullException(nameof(principal));
@@ -555,7 +556,7 @@ namespace SanteDB.Core.Security.Audit
                 UserIsRequestor = true
             });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             SendAudit(audit);
         }
@@ -563,14 +564,13 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
-        public static void AuditRestrictedFunction(Exception ex, Uri url, String remoteAddress, params string[] mitigations)
+        public static void AuditRestrictedFunction(Exception ex, Uri url, params string[] mitigations)
         {
             traceSource.TraceVerbose("Create RestrictedFunction audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, mitigations.Length > 0 ? OutcomeIndicator.MinorFail : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAlert));
             AddUserActor(audit);
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
             audit.AuditableObjects.Add(new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Uri,
@@ -614,7 +614,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
-        public static void AuditSessionStart(ISession session, IPrincipal principal, String remoteAddress, bool success)
+        public static void AuditSessionStart(ISession session, IPrincipal principal, bool success)
         {
             traceSource.TraceVerbose("Create session audit");
 
@@ -630,7 +630,7 @@ namespace SanteDB.Core.Security.Audit
                 ).ToList()
             });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             // Audit the actual session that is created
             

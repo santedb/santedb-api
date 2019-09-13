@@ -103,6 +103,7 @@
     <Compile Include="Patch\SimplePatchService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol\ProtocolComparer.cs" />
+    <Compile Include="Security\AuditDaemonService.cs" />
     <Compile Include="Security\AuditUtil.cs" />
     <Compile Include="Security\AuthenticationContext.cs" />
     <Compile Include="Security\Claims\SanteDBClaim.cs" />
@@ -157,6 +158,7 @@
     <Compile Include="Services\IRecordMatchingConfigurationService.cs" />
     <Compile Include="Services\IRecordMatchingService.cs" />
     <Compile Include="Services\IRecordMergingService.cs" />
+    <Compile Include="Services\IRemoteEndpointResolver.cs" />
     <Compile Include="Services\IReportProgressChanged.cs" />
     <Compile Include="Services\IRepositoryService.cs" />
     <Compile Include="Security\IRoleProviderService.cs" />
