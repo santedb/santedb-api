@@ -37,12 +37,7 @@ namespace SanteDB.Core.Services
         /// <param name="password">The new password of the user.</param>
         /// <returns>Returns the updated user.</returns>
         SecurityUser ChangePassword(Guid userId, String password);
-
-        /// <summary>
-        /// Changes the user's password
-        /// </summary>
-        void ChangePassword(String userName, String password);
-
+        
         /// <summary>
         /// Gets the specified provider entity from the specified identity
         /// </summary>
@@ -101,10 +96,6 @@ namespace SanteDB.Core.Services
         /// Get the provenance object
         /// </summary>
         SecurityProvenance GetProvenance(Guid provenanceId);
-
-        /// <summary>
-        /// Sets the specified user's roles to only those in the roles array
-        /// </summary>
-        void SetUserRoles(SecurityUser user, string[] roles);
+        
     }
 }
