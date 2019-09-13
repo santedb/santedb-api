@@ -640,7 +640,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name,
+                UserName = principal?.Identity?.Name ,
                 UserIsRequestor = true,
                 ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
                     new AuditCode(o, null)
@@ -652,8 +652,8 @@ namespace SanteDB.Core.Security.Audit
             // Audit the actual session that is created
             
             var cprincipal = principal as IClaimsPrincipal;
-            var deviceIdentity = cprincipal.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
-            var applicationIdentity = cprincipal.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+            var deviceIdentity = cprincipal?.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
+            var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
 
             if(session != null)
                 audit.AuditableObjects.Add(new AuditableObject()
@@ -691,7 +691,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
-        public static void AuditSessionStop(ISession session, IPrincipal principal, String remoteAddress, bool success)
+        public static void AuditSessionStop(ISession session, IPrincipal principal, bool success)
         {
             traceSource.TraceVerbose("End session audit");
 
@@ -700,19 +700,19 @@ namespace SanteDB.Core.Security.Audit
             {
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name,
+                UserName = principal?.Identity?.Name ?? AuthenticationContext.Current.Principal.Identity.Name,
                 UserIsRequestor = true,
                 ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
                     new AuditCode(o, null)
                 ).ToList()
             });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit, remoteAddress);
+            AddRemoteDeviceActor(audit);
 
             // Audit the actual session that is created
-            var cprincipal = principal as IClaimsPrincipal;
-            var deviceIdentity = cprincipal.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
-            var applicationIdentity = cprincipal.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+            var cprincipal = (principal ?? AuthenticationContext.Current.Principal) as IClaimsPrincipal;
+            var deviceIdentity = cprincipal?.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
+            var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
 
             if (session != null)
                 audit.AuditableObjects.Add(new AuditableObject()

@@ -96,5 +96,10 @@ namespace SanteDB.Core.Services
         /// <param name="refreshToken">The refresh token that will extend the session</param>
         /// <returns>The extended session</returns>
         ISession Extend(byte[] refreshToken);
+
+        /// <summary>
+        /// Abandons the session 
+        /// </summary>
+        void Abandon(ISession session);
     }
 }
