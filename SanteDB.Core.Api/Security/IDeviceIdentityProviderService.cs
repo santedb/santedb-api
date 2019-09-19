@@ -68,5 +68,25 @@ namespace SanteDB.Core.Security.Services
         /// <returns>Returns the authenticated device principal.</returns>
         IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any);
 
+
+        /// <summary>
+        /// Gets the specified identity for an device.
+        /// </summary>
+        /// <param name="name">The name of the application for which to retrieve the identity.</param>
+        /// <returns>Returns the identity of the application.</returns>
+        IIdentity GetIdentity(string name);
+
+        /// <summary>
+        /// Set the lockout status 
+        /// </summary>
+        /// <param name="name">The name of the device</param>
+        /// <param name="lockoutState">The status of the lockout</param>
+        /// <param name="principal">The principal which is locking the device</param>
+        void SetLockout(string name, bool lockoutState, IPrincipal principal);
+
+        /// <summary>
+        /// Change the device secret
+        /// </summary>
+        void ChangeSecret(string name, string deviceSecret, IPrincipal systemPrincipal);
     }
 }

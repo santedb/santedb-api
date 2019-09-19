@@ -71,6 +71,26 @@ namespace SanteDB.Core.Services
         SecurityRole GetRole(String roleName);
 
         /// <summary>
+        /// Locks a device principal
+        /// </summary>
+        void LockDevice(Guid key);
+
+        /// <summary>
+        /// Locks an application
+        /// </summary>
+        void LockApplication(Guid key);
+
+        /// <summary>
+        /// Removes a lock from a device
+        /// </summary>
+        void UnlockDevice(Guid key);
+
+        /// <summary>
+        /// Removes a lock from an application
+        /// </summary>
+        void UnlockApplication(Guid key);
+
+        /// <summary>
         /// Gets the specified security user based on the principal
         /// </summary>
         SecurityUser GetUser(IIdentity identity);

@@ -53,5 +53,22 @@ namespace SanteDB.Core.Security.Services
 		/// <param name="name">The name of the application for which to retrieve the identity.</param>
 		/// <returns>Returns the identity of the application.</returns>
 		IIdentity GetIdentity(string name);
-	}
+
+
+        /// <summary>
+        /// Set the lockout status 
+        /// </summary>
+        /// <param name="name">The name of the device</param>
+        /// <param name="lockoutState">The status of the lockout</param>
+        /// <param name="principal">The principal which is locking the device</param>
+        void SetLockout(string name, bool lockoutState, IPrincipal principal);
+
+        /// <summary>
+        /// Change the specified application identity's secret
+        /// </summary>
+        /// <param name="name">The name of the application</param>
+        /// <param name="secret">The new secret</param>
+        /// <param name="principal">The principal that is changing the secret</param>
+        void ChangeSecret(String name, String secret, IPrincipal principal);
+    }
 }
