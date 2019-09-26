@@ -57,5 +57,10 @@ namespace SanteDB.Core
         /// Type of application hosting this SanteDB
         /// </summary>
         SanteDBHostType HostType { get; }
+
+        /// <summary>
+        /// Gets the start time
+        /// </summary>
+        DateTime StartTime { get; }
     }
 }
