@@ -18,9 +18,13 @@
  * Date: 2019-1-12
  */
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Services
@@ -116,6 +120,10 @@ namespace SanteDB.Core.Services
         /// Get the provenance object
         /// </summary>
         SecurityProvenance GetProvenance(Guid provenanceId);
-        
+
+        /// <summary>
+        /// Find provenance objects matching the specified object
+        /// </summary>
+        IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy);
     }
 }

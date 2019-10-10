@@ -101,5 +101,7 @@ namespace SanteDB.Core.Services
         /// Abandons the session 
         /// </summary>
         void Abandon(ISession session);
+
+
     }
 }
