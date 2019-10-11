@@ -36,5 +36,13 @@ namespace SanteDB.Core.Services
         /// <returns>The authenticated principal</returns>
         IPrincipal Authenticate(ISession session);
 
+
+        /// <summary>
+        /// Gets an un-authenticated principal from the specified session
+        /// </summary>
+        /// <param name="session">The session to get an authenticated principal from</param>
+        /// <returns>The unauthenticated principal</returns>
+        IIdentity[] GetIdentities(ISession session);
+        
     }
 }
