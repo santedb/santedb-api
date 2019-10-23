@@ -33,17 +33,17 @@ namespace SanteDB.Core.BusinessRules
     public enum DetectedIssuePriorityType : int
     {
         /// <summary>
-        /// The issue is an error, processing cannot continue
+        /// The issue is an error, processing cannot continue until the issue is corrected
         /// </summary>
 		Error = 1,
         /// <summary>
-        /// The issue is for information only
+        /// The issue is a warning (dismissable)
         /// </summary>
-		Informational = 2,
+		Warning = 2,
         /// <summary>
-        /// The issue is just a warning, processing will continue
+        /// The issue is for information, processing will continue
         /// </summary>
-		Warning = 4
+		Information = 4
     }
 
     /// <summary>
@@ -88,6 +88,7 @@ namespace SanteDB.Core.BusinessRules
         /// <summary>
         /// The type of issue (a concept)
         /// </summary>
+        /// <seealso cref="DetectedIssueKeys"/>
         [XmlAttribute("type"), JsonProperty("type")]
         public Guid TypeKey { get; set; }
 
