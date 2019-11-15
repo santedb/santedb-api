@@ -115,6 +115,7 @@ namespace SanteDB.Core.Http
             {
                 foreach (var v in kv.Value)
                 {
+                    if (v == null) continue;
                     queryString += String.Format("{0}={1}&", kv.Key, Uri.EscapeDataString(v));
                 }
             }

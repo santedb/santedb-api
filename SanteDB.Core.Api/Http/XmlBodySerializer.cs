@@ -17,6 +17,7 @@
  * User: justi
  * Date: 2019-1-12
  */
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Roles;
 using System;
@@ -35,6 +36,9 @@ namespace SanteDB.Core.Http
     {
         // Serializers
         private static Dictionary<Type, XmlSerializer> m_serializers = new Dictionary<Type, XmlSerializer>();
+
+        // Xml types
+        private static List<Type> m_xmlTypes = null;
 
         // Serializer
         private XmlSerializer m_serializer;
@@ -95,8 +99,11 @@ namespace SanteDB.Core.Http
                 else
                 {
                     Type eType = m_serializers.FirstOrDefault(o => o.Value.CanDeserialize(bodyReader)).Key;
+
+                    if (m_xmlTypes == null)
+                        m_xmlTypes = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes().Where(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>() != null).ToList();
                     if (eType == null)
-                        eType = typeof(Patient).GetTypeInfo().Assembly.ExportedTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
+                        eType = m_xmlTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
                             o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
                     if (eType == null)
                         throw new KeyNotFoundException($"Could not determine how to de-serialize {bodyReader.NamespaceURI}#{bodyReader.Name}");
