@@ -104,7 +104,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         /// <value>The trace writer.</value>
         [XmlIgnore]
-        public TraceWriter TraceWriter
+        public Type TraceWriter
         {
             get;
             set;
@@ -133,10 +133,10 @@ namespace SanteDB.Core.Configuration
         [XmlElement("writer")]
         public String TraceWriterClassXml
         {
-            get { return this.TraceWriter.GetType().AssemblyQualifiedName; }
+            get { return this.TraceWriter.AssemblyQualifiedName; }
             set
             {
-                this.TraceWriter = Activator.CreateInstance(Type.GetType(value), this.Filter, this.InitializationData) as TraceWriter;
+                this.TraceWriter = Type.GetType(value);
             }
         }
 
