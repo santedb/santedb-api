@@ -150,7 +150,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="url">The resource URL to execute the GET against</param>
         /// <returns>The raw bytestream response</returns>
-        byte[] Get(String url);
+        byte[] Get(String url, params KeyValuePair<string, object>[] query);
 
         /// <summary>
         /// Gets the service client description

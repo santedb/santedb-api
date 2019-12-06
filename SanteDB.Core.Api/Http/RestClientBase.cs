@@ -214,7 +214,7 @@ namespace SanteDB.Core.Http
         /// Retrieves a raw byte array of data from the specified location
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
-        public byte[] Get(String url)
+        public byte[] Get(String url, params KeyValuePair<string, object>[] query)
         {
             NameValueCollection parameters = new NameValueCollection();
 
@@ -222,7 +222,7 @@ namespace SanteDB.Core.Http
             {
 
 
-                var requestEventArgs = new RestRequestEventArgs("GET", url, null, null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, new NameValueCollection(query), null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -246,7 +246,7 @@ namespace SanteDB.Core.Http
                         try
                         {
                             headers = o.Result.Headers;
-                            this.Responding?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(headers)));
+                            this.Responding?.Invoke(this, new RestResponseEventArgs("GET", url, requestEventArgs.Query, o.Result.ContentType, null, 200, o.Result.ContentLength, this.ConvertHeaders(headers)));
 
                             byte[] buffer = new byte[2048];
                             int br = 1;
