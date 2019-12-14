@@ -55,6 +55,9 @@
     <Compile Include="Configuration\Features\IConfigurationTask.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
     <Compile Include="Configuration\Data\IDataConfigurationProvider.cs" />
+    <Compile Include="Diagnostics\IDiagnosticsProbe.cs" />
+    <Compile Include="Diagnostics\DiagnosticsProbeBase.cs" />
+    <Compile Include="Diagnostics\DiagnosticsProbeManager.cs" />
     <Compile Include="Event\DataEventArgs.cs" />
     <Compile Include="Event\SecureAccessEventArgs.cs" />
     <Compile Include="Exceptions\DomainStateException.cs" />
