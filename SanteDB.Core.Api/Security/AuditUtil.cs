@@ -382,24 +382,6 @@ namespace SanteDB.Core.Security.Audit
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                // Translate codes to DICOM
-                if (audit.EventTypeCode != null)
-                {
-                    IConceptRepositoryService icpcr = ApplicationServiceContext.Current.GetService<IConceptRepositoryService>();
-                    var concept = icpcr.GetConcept(audit.EventTypeCode.Code);
-                    if (concept != null)
-                    {
-                        var refTerm = icpcr.GetConceptReferenceTerm(concept.Key.Value, "DCM");
-                        if (refTerm != null)
-                            audit.EventTypeCode = new AuditCode(refTerm.Mnemonic, "DCM") { DisplayName = refTerm.LoadCollection<ReferenceTermName>("DisplayNames")?.FirstOrDefault()?.Name };
-                        else
-                            audit.EventTypeCode.DisplayName = concept.LoadCollection<ConceptName>("ConceptNames").FirstOrDefault()?.Name;
-                    }
-                    traceSource.TraceVerbose("Mapped Audit Type Code - {0}-{1}-{2}", audit.EventTypeCode.CodeSystem, audit.EventTypeCode.Code, audit.EventTypeCode.DisplayName);
-
-                }
-
                 ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
                 ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
             };
