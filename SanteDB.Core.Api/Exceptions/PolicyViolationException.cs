@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using System;
 using System.Security;
 using System.Security.Principal;
@@ -42,6 +43,7 @@ namespace SanteDB.Core.Exceptions
             this.PolicyId = policyId;
             this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : outcome;
             this.Principal = principal;
+            
         }
 
         /// <summary>
