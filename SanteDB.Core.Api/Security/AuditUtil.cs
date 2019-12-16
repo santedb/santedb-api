@@ -382,8 +382,9 @@ namespace SanteDB.Core.Security.Audit
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
-                ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
                 ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
+                ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
+
             };
 
             // Action
@@ -617,14 +618,14 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceVerbose("Create session audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SessionStarted));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStarted));
             audit.Actors.Add(new AuditActorData()
             {
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
                 UserName = principal?.Identity?.Name ,
                 UserIsRequestor = true,
-                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
+                ActorRoleCode = principal == null ? null : principal.Identity is IApplicationIdentity || principal.Identity is IDeviceIdentity ? new List<AuditCode>() { new AuditCode(principal.Identity.GetType().Name, "IdentityType") } : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
                     new AuditCode(o, null)
                 ).ToList()
             });
@@ -677,7 +678,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceVerbose("End session audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SessionStopped));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStopped));
             audit.Actors.Add(new AuditActorData()
             {
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
