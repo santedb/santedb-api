@@ -133,7 +133,6 @@ namespace SanteDB.Core.Security.Audit
             // User actors
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
             // Add objects to which the thing was done
             audit.AuditableObjects = auditIds.Select(o => new AuditableObject()
             {
@@ -171,7 +170,6 @@ namespace SanteDB.Core.Security.Audit
             // User actors
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
             // Audit policy
             audit.AuditableObjects = new List<AuditableObject>() {
                 new AuditableObject()
@@ -197,7 +195,6 @@ namespace SanteDB.Core.Security.Audit
             // User actors
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
             // Audit policy
             audit.AuditableObjects = new List<AuditableObject>() {
                 new AuditableObject()
@@ -266,7 +263,6 @@ namespace SanteDB.Core.Security.Audit
             var audit = new AuditData(DateTime.Now, ActionType.Create, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -293,7 +289,6 @@ namespace SanteDB.Core.Security.Audit
 
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
 
             // Objects
             audit.AuditableObjects = data.Select(o =>
@@ -391,7 +386,6 @@ namespace SanteDB.Core.Security.Audit
             var audit = new AuditData(DateTime.Now, ActionType.Delete, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -415,7 +409,6 @@ namespace SanteDB.Core.Security.Audit
             var audit = new AuditData(DateTime.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
-            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects = objects.Select(obj => new AuditableObject()
             {
@@ -465,14 +458,17 @@ namespace SanteDB.Core.Security.Audit
         public static void AddUserActor(AuditData audit, IPrincipal principal = null)
         {
             var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-
+            
             principal = principal ?? AuthenticationContext.Current.Principal;
             // For the user
             audit.Actors.Add(new AuditActorData()
             {
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint(),
+                NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 UserName = principal.Identity.Name,
+                ActorRoleCode = new List<AuditCode>() {
+                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                },
                 UserIsRequestor = true
             });
         }
@@ -495,27 +491,7 @@ namespace SanteDB.Core.Security.Audit
             });
 
         }
-
-        /// <summary>
-        /// Add device actor
-        /// </summary>
-        public static void AddRemoteDeviceActor(AuditData audit)
-        {
-            var remoteAddress = ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint();
-            if (remoteAddress == null) return;
-
-            // For the current device name
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointId = remoteAddress,
-                NetworkAccessPointType = NetworkAccessPointType.IPAddress,
-                ActorRoleCode = new List<AuditCode>() {
-                    new  AuditCode("110153", "DCM") { DisplayName = "Source" } 
-                }
-            });
-
-        }
-
+    
         /// <summary>
         /// Audit an override operation
         /// </summary>
@@ -525,18 +501,8 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceVerbose("Create Override audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.EmergencyOverrideStarted, new AuditCode(purposeOfUse, SanteDBClaimTypes.XspaPurposeOfUseClaim));
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name,
-                UserIsRequestor = true,
-                ActorRoleCode = ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
-                    new AuditCode(o, null)
-                ).ToList()
-            });
+            AddUserActor(audit, principal);
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit);
 
             audit.AuditableObjects.AddRange(policies.Select(o => new AuditableObject()
             {
@@ -580,21 +546,8 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceVerbose("Create Login audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name ?? identityName,
-                UserIsRequestor = true,
-                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
-                    new AuditCode(o, null)
-                ).ToList()
-            });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit);
-            
-           
-
+            AddUserActor(audit);
             SendAudit(audit);
         }
 
@@ -609,15 +562,8 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceVerbose("Create Logout audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Logout));
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                UserName = principal.Identity.Name,
-                UserIsRequestor = true
-            });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit);
+            AddUserActor(audit, principal);
 
             SendAudit(audit);
         }
@@ -680,18 +626,8 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceVerbose("Create session audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStarted));
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name ,
-                UserIsRequestor = true,
-                ActorRoleCode = principal == null ? null : principal.Identity is IApplicationIdentity || principal.Identity is IDeviceIdentity ? new List<AuditCode>() { new AuditCode(principal.Identity.GetType().Name, "IdentityType") } : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
-                    new AuditCode(o, null)
-                ).ToList()
-            });
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit);
+            AddUserActor(audit, principal);
 
             // Audit the actual session that is created
             
@@ -740,18 +676,9 @@ namespace SanteDB.Core.Security.Audit
             traceSource.TraceVerbose("End session audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStopped));
-            audit.Actors.Add(new AuditActorData()
-            {
-                NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
-                UserName = principal?.Identity?.Name ?? AuthenticationContext.Current.Principal.Identity.Name,
-                UserIsRequestor = true,
-                ActorRoleCode = principal == null ? null : ApplicationServiceContext.Current.GetService<IRoleProviderService>()?.GetAllRoles(principal.Identity.Name).Select(o =>
-                    new AuditCode(o, null)
-                ).ToList()
-            });
+
             AddLocalDeviceActor(audit);
-            AddRemoteDeviceActor(audit);
+            AddUserActor(audit, principal);
 
             // Audit the actual session that is created
             var cprincipal = (principal ?? AuthenticationContext.Current.Principal) as IClaimsPrincipal;
