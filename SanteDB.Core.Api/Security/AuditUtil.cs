@@ -106,6 +106,8 @@ namespace SanteDB.Core.Security.Audit
         SessionStopped,
         [XmlEnum("SecurityAuditCode-AccessControlDecision")]
         AccessControlDecision,
+        [XmlEnum("SecurityAuditCode-SecondaryUseQuery")]
+        SecondaryUseQuery,
     }
 #pragma warning restore CS1591
 
