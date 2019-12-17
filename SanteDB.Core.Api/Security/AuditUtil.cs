@@ -51,7 +51,7 @@ namespace SanteDB.Core.Security.Audit
     public enum EventTypeCodes
     {
         [XmlEnum("SecurityAuditCode-ApplicationActivity")]
-        ApplicationActtivity,
+        ApplicationActivity,
         [XmlEnum("SecurityAuditCode-AuditLogUsed")]
         AuditLogUsed,
         [XmlEnum("SecurityAuditCode-Export")]
@@ -157,6 +157,70 @@ namespace SanteDB.Core.Security.Audit
             }
 
             SendAudit(audit);
+
+        }
+
+        /// <summary>
+        /// Audit an access control decision
+        /// </summary>
+        public static void AuditAccessControlDecision(IPrincipal principal, string policy, PolicyGrantType action)
+        {
+            traceSource.TraceInfo($"ACS: {principal} - {policy} - {action}");
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
+
+            // User actors
+            AddLocalDeviceActor(audit);
+            AddUserActor(audit);
+            AddRemoteDeviceActor(audit);
+            // Audit policy
+            audit.AuditableObjects = new List<AuditableObject>() {
+                new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode("PolicyId", null),
+                    ObjectId = policy,
+                    Role = AuditableObjectRole.SecurityResource,
+                    Type = AuditableObjectType.SystemObject,
+                    ObjectData = new List<ObjectDataExtension>() { new ObjectDataExtension(policy, action.ToString()) }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Audit an access control decision
+        /// </summary>
+        public static void AuditAccessControlDecision(IPrincipal principal, PolicyDecision decision)
+        {
+            traceSource.TraceInfo($"ACS: {principal} - {decision.Securable} - {decision.Outcome}");
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, decision.Outcome == PolicyGrantType.Grant ? OutcomeIndicator.Success : decision.Outcome == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
+
+            // User actors
+            AddLocalDeviceActor(audit);
+            AddUserActor(audit);
+            AddRemoteDeviceActor(audit);
+            // Audit policy
+            audit.AuditableObjects = new List<AuditableObject>() {
+                new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode(decision.Securable.GetType().Name, null),
+                    ObjectId = (decision.Securable as IIdentifiedEntity).Key.ToString() ?? decision.ToString(),
+                    Role = AuditableObjectRole.SecurityResource,
+                    Type = AuditableObjectType.SystemObject,
+                    ObjectData = decision.Details.Select(o=> new ObjectDataExtension(o.PolicyId, o.Outcome.ToString())).ToList(),
+                }
+            };
+
+            SendAudit(audit);
+        }
+
+        /// <summary>
+        /// Audit masking of a particular object
+        /// </summary>
+        public static void AuditMasking<TModel>(TModel targetOfMasking)
+            where TModel : IdentifiedData
+        {
+            AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, ActionType.Execute, AuditableObjectLifecycle.Deidentification, EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, null, targetOfMasking);
 
         }
 
@@ -398,16 +462,17 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add user actor
         /// </summary>
-        public static void AddUserActor(AuditData audit)
+        public static void AddUserActor(AuditData audit, IPrincipal principal = null)
         {
             var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
 
+            principal = principal ?? AuthenticationContext.Current.Principal;
             // For the user
             audit.Actors.Add(new AuditActorData()
             {
                 NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                UserName = AuthenticationContext.Current.Principal.Identity.Name,
+                UserName = principal.Identity.Name,
                 UserIsRequestor = true
             });
         }
@@ -425,9 +490,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
-                    ApplicationServiceContext.Current.HostType == SanteDBHostType.Server ?
-                    new  AuditCode("110152", "DCM") { DisplayName = "Destination" } :
-                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                    new  AuditCode("110152", "DCM") { DisplayName = "Destination" } 
                 }
             });
 
@@ -447,9 +510,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointId = remoteAddress,
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 ActorRoleCode = new List<AuditCode>() {
-                    ApplicationServiceContext.Current.HostType == SanteDBHostType.Server ?
-                    new  AuditCode("110153", "DCM") { DisplayName = "Source" } :
-                    new  AuditCode("110152", "DCM") { DisplayName = "Destination" } 
+                    new  AuditCode("110153", "DCM") { DisplayName = "Source" } 
                 }
             });
 
