@@ -178,6 +178,12 @@ namespace SanteDB.Core.Security.Services
         IIdentity GetIdentity(String userName);
 
         /// <summary>
+        /// Retrieves an identity by the security identifier
+        /// </summary>
+        /// <param name="sid">The security identifier</param>
+        IIdentity GetIdentity(Guid sid);
+
+        /// <summary>
         /// Create a basic identity in the provider
         /// </summary>
         /// <param name="userName">The username of the identity</param>
