@@ -437,7 +437,12 @@ namespace SanteDB.Core.Security.Audit
         public static void SendAudit(AuditData audit)
         {
             traceSource.TraceInfo("Dispatching Audit - {0}", audit.Key);
-            
+
+            // Get audit metadata
+            foreach (var itm in ApplicationServiceContext.Current.GetService<IAuditMetadataProvider>()?.GetMetadata())
+                if (itm.Value != null && !audit.Metadata.Any(o => o.Key == itm.Key))
+                    audit.AddMetadata(itm.Key, itm.Value?.ToString());
+
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
@@ -480,13 +485,13 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AddLocalDeviceActor(AuditData audit)
         {
-
+            
             // For the current device name
             audit.Actors.Add(new AuditActorData()
             {
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetHostName(),
+                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetHostName(),
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
-                UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>().GetMachineName(),
+                UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
                     new  AuditCode("110152", "DCM") { DisplayName = "Destination" } 
                 }
