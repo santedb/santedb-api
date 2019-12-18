@@ -115,6 +115,7 @@
     <Compile Include="Security\Claims\SanteDBClaimTypes.cs" />
     <Compile Include="Security\DataPolicyIdentifiers.cs" />
     <Compile Include="Security\IApplicationIdentityProviderService.cs" />
+    <Compile Include="Security\IAuditMetadataProvider.cs" />
     <Compile Include="Security\IDataSigningService.cs" />
     <Compile Include="Security\ISession.cs" />
     <Compile Include="Security\Principal\IApplicationIdentity.cs" />
