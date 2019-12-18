@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="SanteDB.Core.Model" Version="1.84.0.0" />
+    <PackageReference Include="SanteDB.Core.Model" Version="1.85.0.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
