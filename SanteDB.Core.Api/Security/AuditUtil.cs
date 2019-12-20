@@ -446,6 +446,7 @@ namespace SanteDB.Core.Security.Audit
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
+                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                 ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
                 ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
 
