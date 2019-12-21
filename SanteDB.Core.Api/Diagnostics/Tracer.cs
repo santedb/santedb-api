@@ -74,7 +74,7 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public void TraceEvent(System.Diagnostics.Tracing.EventLevel level, string format, params Object[] args)
         {
-            foreach (var w in m_writers)
+            foreach (var w in m_writers.ToArray())
             {
                 if (level <= w.Value || w.Value == EventLevel.LogAlways)
                     w.Key.TraceEvent(level, this.m_source, format, args);
