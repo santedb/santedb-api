@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: justi
- * Date: 2019-1-12
+ * User: Justin Fyfe
+ * Date: 2019-9-30
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
