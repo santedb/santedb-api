@@ -556,11 +556,11 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
-        public static void AuditRestrictedFunction(Exception ex, Uri url, params string[] mitigations)
+        public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String,String> requestHeaders, IDictionary<String, String> responseHeaders)
         {
             traceSource.TraceVerbose("Create RestrictedFunction audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, mitigations.Length > 0 ? OutcomeIndicator.MinorFail : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.UseOfARestrictedFunction));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkEntry, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
             AddUserActor(audit);
             AddLocalDeviceActor(audit);
             audit.AuditableObjects.Add(new AuditableObject()
@@ -580,11 +580,7 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/policy/{(ex as PolicyViolationException).PolicyId}",
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    ObjectData = new List<ObjectDataExtension>(mitigations.Select(o=>new ObjectDataExtension("mitigation", Encoding.UTF8.GetBytes(o))))
-                    {
-                        new ObjectDataExtension("decision", new byte[] { (byte)(ex as PolicyViolationException).PolicyDecision }),
-                        new ObjectDataExtension("policyId", Encoding.UTF8.GetBytes((ex as PolicyViolationException).PolicyId))
-                    }
+                    NameData = ex.ToString()
                 });
             else
                 audit.AuditableObjects.Add(new AuditableObject()
@@ -594,12 +590,25 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/error/{ex.GetType().Name}",
                     Role= AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    ObjectData = new List<ObjectDataExtension>(mitigations.Select(o => new ObjectDataExtension("mitigation", Encoding.UTF8.GetBytes(o))))
-                    {
-                        new ObjectDataExtension("exception", Encoding.UTF8.GetBytes(ex.ToString()))
-                    }
+                    NameData = ex.ToString()
                 });
-            
+
+            audit.AuditableObjects.Add(new AuditableObject()
+            {
+                IDTypeCode = AuditableObjectIdType.Uri,
+                Type = AuditableObjectType.Other,
+                Role = AuditableObjectRole.RoutingCriteria,
+                ObjectId = "HttpRequest",
+                ObjectData = requestHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+            });
+            audit.AuditableObjects.Add(new AuditableObject()
+            {
+                IDTypeCode = AuditableObjectIdType.Uri,
+                Type = AuditableObjectType.Other,
+                Role = AuditableObjectRole.Report,
+                ObjectId = "HttpResponse",
+                ObjectData = responseHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+            });
             SendAudit(audit);
         }
 
