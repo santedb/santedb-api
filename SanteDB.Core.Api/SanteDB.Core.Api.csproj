@@ -116,7 +116,9 @@
     <Compile Include="Security\DataPolicyIdentifiers.cs" />
     <Compile Include="Security\IApplicationIdentityProviderService.cs" />
     <Compile Include="Security\IAuditMetadataProvider.cs" />
+    <Compile Include="Security\Claims\IClaimTypeHandler.cs" />
     <Compile Include="Security\IDataSigningService.cs" />
+    <Compile Include="Security\IPolicyEnforcementService.cs" />
     <Compile Include="Security\ISession.cs" />
     <Compile Include="Security\Principal\IApplicationIdentity.cs" />
     <Compile Include="Security\Principal\IDeviceIdentity.cs" />
@@ -208,7 +210,7 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.87.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.88.0.0" />
         <PackageReference Include="SharpCompress" Version="0.24.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>

@@ -177,50 +177,27 @@ namespace SanteDB.Core.Security.Audit
                 new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("PolicyId", null),
-                    ObjectId = policy,
-                    Role = AuditableObjectRole.SecurityResource,
+                    CustomIdTypeCode = new AuditCode("$Action", "SanteDBAction"),
+                    ObjectId = Guid.Empty.ToString(),
+                    Role = AuditableObjectRole.SecurityGranularityDefinition,
                     Type = AuditableObjectType.SystemObject,
                     ObjectData = new List<ObjectDataExtension>() { new ObjectDataExtension(policy, action.ToString()) }
                 }
             };
-        }
-
-        /// <summary>
-        /// Audit an access control decision
-        /// </summary>
-        public static void AuditAccessControlDecision(IPrincipal principal, PolicyDecision decision)
-        {
-            traceSource.TraceInfo($"ACS: {principal} - {decision.Securable} - {decision.Outcome}");
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, decision.Outcome == PolicyGrantType.Grant ? OutcomeIndicator.Success : decision.Outcome == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
-
-            // User actors
-            AddLocalDeviceActor(audit);
-            AddUserActor(audit);
-            // Audit policy
-            audit.AuditableObjects = new List<AuditableObject>() {
-                new AuditableObject()
-                {
-                    IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode(decision.Securable.GetType().Name, null),
-                    ObjectId = (decision.Securable as IIdentifiedEntity).Key.ToString() ?? decision.ToString(),
-                    Role = AuditableObjectRole.SecurityResource,
-                    Type = AuditableObjectType.SystemObject,
-                    ObjectData = decision.Details.Select(o=> new ObjectDataExtension(o.PolicyId, o.Outcome.ToString())).ToList(),
-                }
-            };
-
-            SendAudit(audit);
+            AuditUtil.SendAudit(audit);
         }
 
         /// <summary>
         /// Audit masking of a particular object
         /// </summary>
-        public static void AuditMasking<TModel>(TModel targetOfMasking)
+        /// <param name="targetOfMasking">The object which was masked</param>
+        /// <param name="wasRemoved">True if the object was removed instead of masked</param>
+        public static void AuditMasking<TModel>(TModel targetOfMasking, bool wasRemoved)
             where TModel : IdentifiedData
         {
             AuditUtil.AuditDataAction(EventTypeCodes.ApplicationActivity, ActionType.Execute, AuditableObjectLifecycle.Deidentification, EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, null, targetOfMasking);
 
+            // TODO: Implement this
         }
 
         /// <summary>
