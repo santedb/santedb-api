@@ -39,7 +39,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Occurs when queried.
         /// </summary>
-        event EventHandler<QueryResultEventArgs<IdentifiedData>> Executed;
+        event EventHandler<QueryResultEventArgs<SubscriptionDefinition>> Executed;
 
         /// <summary>
         /// Occurs when querying.

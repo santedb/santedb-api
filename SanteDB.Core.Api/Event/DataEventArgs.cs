@@ -128,8 +128,18 @@ namespace SanteDB.Core.Event
         /// <param name="principal">The principal which is executing the query</param>
         /// <param name="offset">The requested offset in the result set</param>
         /// <param name="count">The requested total results to be returned in this result set</param>
-        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal) : base(query, offset, count, queryId, principal)
+        /// <param name="tag">A query tag object</param>
+        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, dynamic tag = null) : base(query, offset, count, queryId, principal)
         {
+            this.QueryTag = tag;
+        }
+
+        /// <summary>
+        /// Gets the query tag
+        /// </summary>
+        public dynamic QueryTag
+        {
+            get;
         }
 
         /// <summary>
