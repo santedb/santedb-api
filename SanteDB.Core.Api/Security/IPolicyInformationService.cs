@@ -32,6 +32,7 @@ namespace SanteDB.Core.Security.Services
     /// </summary>
     public interface IPolicyInformationService : IServiceImplementation
     {
+        /// <summary>
         /// Get active policies for the specified securable type
         /// </summary>
         IEnumerable<IPolicyInstance> GetActivePolicies(object securable);

@@ -432,9 +432,9 @@ namespace SanteDB.Core.Security.Audit
                     f.EventSpecified && f.Event.HasFlag(audit.EventIdentifier));
 
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                if (filters.Any(f => f.InsertLocal))
+                if (filters == null || filters.Any(f => f.InsertLocal))
                     ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
-                if(filters.Any(f=>f.SendRemote))
+                if(filters == null || filters.Any(f=>f.SendRemote))
                     ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
 
             };
