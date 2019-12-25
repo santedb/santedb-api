@@ -159,5 +159,11 @@ namespace SanteDB.Core.Security.Claims
         /// Is persistent
         /// </summary>
         public const string IsPersistent = "http://santedb.org/claims/persistent";
+
+        /// <summary>
+        /// Language claim
+        /// </summary>
+        public const string Language = "http://santedb.org/claims/language";
+
     }
 }
