@@ -35,6 +35,10 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is not in either client or server
         /// </summary>
-        Other
+        Other,
+        /// <summary>
+        /// Environment is a test environment (like unit test)
+        /// </summary>
+        Test
     }
 }
