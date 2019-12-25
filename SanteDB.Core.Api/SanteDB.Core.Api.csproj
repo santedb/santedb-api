@@ -42,6 +42,8 @@
     <Compile Include="Attributes\PluginTraceSourceAttribute.cs" />
     <Compile Include="BusinessRules\DetectedIssue.cs" />
     <Compile Include="Configuration\ApplicationServiceContextConfigurationSection.cs" />
+    <Compile Include="Configuration\AuditAccountabilityConfigurationSection.cs" />
+    <Compile Include="Configuration\AuditFilterConfiguration.cs" />
     <Compile Include="Configuration\ConfigurationRequiredAttribute.cs" />
     <Compile Include="Configuration\Data\DataConfigurationSection.cs" />
     <Compile Include="Configuration\Data\IDataFeature.cs" />
@@ -141,6 +143,7 @@
     <Compile Include="Services\IExtensionTypeRepository.cs" />
     <Compile Include="Security\IIdentityProviderService.cs" />
     <Compile Include="Services\IFastQueryDataPersistenceService.cs" />
+    <Compile Include="Services\IFreetextSearchService.cs" />
     <Compile Include="Services\IMailMessageRepositoryService.cs" />
     <Compile Include="Services\IAssigningAuthorityRepositoryService.cs" />
     <Compile Include="Security\IAuditRepositoryService.cs" />
