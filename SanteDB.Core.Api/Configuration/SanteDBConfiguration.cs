@@ -52,6 +52,9 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(SanteDBConfiguration), Namespace = "http://santedb.org/configuration")]
     public sealed class SanteDBConfiguration : SanteDBBaseConfiguration
     {
+        // Serializer
+        private static XmlSerializer s_baseSerializer = new XmlSerializer(typeof(SanteDBConfiguration));
+        private static XmlSerializer s_serializer;
 
         /// <summary>
         /// SanteDB configuration
@@ -95,9 +98,13 @@ namespace SanteDB.Core.Configuration
             }
 
             // Load the base types
-            var tbaseConfig = new XmlSerializer(typeof(SanteDBBaseConfiguration)).Deserialize(configStream) as SanteDBBaseConfiguration;
+            var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            return new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o=>o!=null).ToArray()).Deserialize(configStream) as SanteDBConfiguration;
+
+            if (s_serializer == null)
+                s_serializer = new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+
+            return s_serializer.Deserialize(configStream) as SanteDBConfiguration;
         }
 
         /// <summary>
@@ -111,7 +118,10 @@ namespace SanteDB.Core.Configuration
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
-            new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).ToArray()).Serialize(dataStream, this, xmlns);
+            if (s_serializer == null)
+                s_serializer = new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+
+            s_serializer.Serialize(dataStream, this, xmlns);
         }
 
         /// <summary>

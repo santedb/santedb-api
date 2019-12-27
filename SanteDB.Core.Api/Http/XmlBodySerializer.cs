@@ -36,6 +36,8 @@ namespace SanteDB.Core.Http
     {
         // Serializers
         private static Dictionary<Type, XmlSerializer> m_serializers = new Dictionary<Type, XmlSerializer>();
+        // Fault serializer
+        private static XmlSerializer m_faultSerializer = new XmlSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
 
         // Xml types
         private static List<Type> m_xmlTypes = null;
@@ -95,7 +97,7 @@ namespace SanteDB.Core.Http
 
                 else if (bodyReader.LocalName == "RestServiceFault" &&
                    bodyReader.NamespaceURI == "http://santedb.org/fault")
-                    serializer = new XmlSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
+                    serializer = m_faultSerializer;
                 else
                 {
                     Type eType = m_serializers.FirstOrDefault(o => o.Value.CanDeserialize(bodyReader)).Key;
