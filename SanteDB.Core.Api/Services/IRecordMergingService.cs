@@ -17,16 +17,30 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core.Event;
+using SanteDB.Core.Model;
+using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
+
     /// <summary>
     /// Represents a service which appropriately merges / unmerges records
     /// </summary>
     public interface IRecordMergingService<T> : IServiceImplementation
+        where T : IdentifiedData
     {
 
+        /// <summary>
+        /// Fired prior to a merge occurring
+        /// </summary>
+        event EventHandler<DataMergingEventArgs<T>> Merging;
+        /// <summary>
+        /// Fired after a merge has occurred
+        /// </summary>
+        event EventHandler<DataMergeEventArgs<T>> Merged;
+ 
         /// <summary>
         /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="master"/>
         /// </summary>

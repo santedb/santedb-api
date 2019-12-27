@@ -55,12 +55,15 @@
     <Compile Include="Configuration\IConfigurationSection.cs" />
     <Compile Include="Configuration\Features\IFeature.cs" />
     <Compile Include="Configuration\Features\IConfigurationTask.cs" />
+    <Compile Include="Configuration\ResourceMergeConfiguration.cs" />
+    <Compile Include="Configuration\ResourceMergeConfigurationSection.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
     <Compile Include="Configuration\Data\IDataConfigurationProvider.cs" />
     <Compile Include="Diagnostics\IDiagnosticsProbe.cs" />
     <Compile Include="Diagnostics\DiagnosticsProbeBase.cs" />
     <Compile Include="Diagnostics\DiagnosticsProbeManager.cs" />
     <Compile Include="Event\DataEventArgs.cs" />
+    <Compile Include="Event\DataMergeEventArgs.cs" />
     <Compile Include="Event\SecureAccessEventArgs.cs" />
     <Compile Include="Exceptions\DomainStateException.cs" />
     <Compile Include="Exceptions\PolicyViolationException.cs" />
@@ -68,6 +71,8 @@
     <Compile Include="Configuration\SanteDBConfiguration.cs" />
     <Compile Include="Exceptions\ConfigurationException.cs" />
     <Compile Include="Interop\IApiEndpointProvider.cs" />
+    <Compile Include="Jobs\IJob.cs" />
+    <Compile Include="Jobs\JobStateType.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
     <Compile Include="Mail\MailMessageFlags.cs" />
@@ -161,6 +166,7 @@
     <Compile Include="Services\IAliasProvider.cs" />
     <Compile Include="Security\IPasswordHashingService.cs" />
     <Compile Include="Security\IPasswordValidatorService.cs" />
+    <Compile Include="Services\Impl\SimResourceMergeService.cs" />
     <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPatchService.cs" />
     <Compile Include="Security\IPolicyDecisionService.cs" />

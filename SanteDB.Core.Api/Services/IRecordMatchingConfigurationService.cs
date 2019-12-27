@@ -34,6 +34,10 @@ namespace SanteDB.Core.Services
         /// </summary>
         IRecordMatchingConfiguration GetConfiguration(String name);
 
+        /// <summary>
+        /// Saves the specified configuration to the configuration service
+        /// </summary>
+        IRecordMatchingConfiguration SaveConfiguration(IRecordMatchingConfiguration configuration);
 
         /// <summary>
         /// Gets the names of configurations in this provider

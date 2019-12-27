@@ -91,6 +91,6 @@ namespace SanteDB.Core.BusinessRules
         /// <seealso cref="DetectedIssueKeys"/>
         [XmlAttribute("type"), JsonProperty("type")]
         public Guid TypeKey { get; set; }
-
+        
     }
 }
