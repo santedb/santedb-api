@@ -17,57 +17,48 @@
  * User: JustinFyfe
  * Date: 2019-1-22
  */
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// Represents a timer job
+    /// Job manager service
     /// </summary>
-    public interface IJob
+    public interface IJobManagerService : IDaemonService
     {
 
         /// <summary>
-        /// The name of the job
+        /// Add a job
         /// </summary>
-        String Name { get; }
+        void AddJob(IJob jobType, TimeSpan elapseTime);
 
         /// <summary>
-        /// True if the job can be cancelled
+        /// Returns true if the job is registered
         /// </summary>
-        bool CanCancel { get;  }
+        bool IsJobRegistered(Type jobType);
 
         /// <summary>
-        /// Execute the job
+        /// Gets the status of all jobs
         /// </summary>
-        void Run(object sender, EventArgs e, object[] parameters);
+        IEnumerable<IJob> Jobs { get; }
 
         /// <summary>
-        /// Cancel the job
+        /// Start a job
         /// </summary>
-        void Cancel();
+        /// <param name="job">The job to start</param>
+        /// <param name="parameters">The parameters to pass to the job</param>
+        /// <returns>True if the job started successfully</returns>
+        void StartJob(IJob job, object[] parameters);
 
         /// <summary>
-        /// Gets the current status of the job
+        /// Get this manager's instance of a job
         /// </summary>
-        JobStateType CurrentState { get; }
-
-        /// <summary>
-        /// Get the parameter definitions
-        /// </summary>
-        IDictionary<String, Type> Parameters { get; }
-
-        /// <summary>
-        /// Gets the time the job last started
-        /// </summary>
-        DateTime? LastStarted { get; }
-
-        /// <summary>
-        /// Gets the time the job last finished
-        /// </summary>
-        DateTime? LastFinished { get; }
+        /// <param name="jobType">The job type to fetch</param>
+        IJob GetJobInstance(String jobTypeName);
     }
 }

@@ -72,6 +72,7 @@
     <Compile Include="Exceptions\ConfigurationException.cs" />
     <Compile Include="Interop\IApiEndpointProvider.cs" />
     <Compile Include="Jobs\IJob.cs" />
+    <Compile Include="Jobs\IJobManagerService.cs" />
     <Compile Include="Jobs\JobStateType.cs" />
     <Compile Include="Mail\MailMessageEventArgs.cs" />
     <Compile Include="Mail\MailMessage.cs" />
