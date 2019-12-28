@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -32,19 +33,9 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// Performs a full index scan
-        /// </summary>
-        bool Index();
-
-        /// <summary>
-        /// Performs a freetext search 
-        /// </summary>
-        IEnumerable<TEntity> Search<TEntity>(String term, int offset, int? count, out int totalResults) where TEntity : IdentifiedData;
-        
-        /// <summary>
         /// Search based on tokens
         /// </summary>
-        IEnumerable<TEntity> Search<TEntity>(String[] term, int offset, int? count, out int totalResults) where TEntity : IdentifiedData;
+        IEnumerable<TEntity> Search<TEntity>(String[] term, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData;
 
     }
 }

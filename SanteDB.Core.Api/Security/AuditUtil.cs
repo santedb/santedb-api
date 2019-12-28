@@ -171,7 +171,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo($"ACS: {principal} - {policy} - {action}");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
 
             // User actors
             AddLocalDeviceActor(audit);
