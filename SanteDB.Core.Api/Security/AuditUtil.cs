@@ -233,6 +233,14 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditQuery<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] results)
         {
+            AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Execute, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, results);
+        }
+
+        /// <summary>
+        /// Audit the update of an object
+        /// </summary>
+        public static void AuditRead<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] results)
+        {
             AuditUtil.AuditDataAction(EventTypeCodes.Query, ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, results);
         }
 
