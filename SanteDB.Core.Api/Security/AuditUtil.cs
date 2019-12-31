@@ -435,14 +435,15 @@ namespace SanteDB.Core.Security.Audit
                         audit.AddMetadata(itm.Key, itm.Value?.ToString());
 
                 // Filter apply?
-                var filters = s_configuration?.AuditFilters.Where(f => f.OutcomeSpecified && f.Outcome.HasFlag(audit.Outcome) ||
-                    f.ActionSpecified && f.Action.HasFlag(audit.ActionCode) ||
-                    f.EventSpecified && f.Event.HasFlag(audit.EventIdentifier));
+                var filters = s_configuration?.AuditFilters.Where(f => 
+                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(audit.Outcome)) &&
+                    (!f.ActionSpecified ^ f.Action.HasFlag(audit.ActionCode)) &&
+                    (!f.EventSpecified ^ f.Event.HasFlag(audit.EventIdentifier)));
 
                 AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                if (filters == null || filters.Any(f => f.InsertLocal))
+                if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
                     ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
-                if(filters == null || filters.Any(f=>f.SendRemote))
+                if(filters == null || filters.Count() == 0 || filters.Any(f=>f.SendRemote))
                     ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
 
             };
