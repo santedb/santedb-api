@@ -429,28 +429,34 @@ namespace SanteDB.Core.Security.Audit
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
-                // Get audit metadata
-                foreach (var itm in ApplicationServiceContext.Current.GetService<IAuditMetadataProvider>()?.GetMetadata())
-                    if (itm.Value != null && !audit.Metadata.Any(m => m.Key == itm.Key))
-                        audit.AddMetadata(itm.Key, itm.Value?.ToString());
+                try
+                {
+                    // Get audit metadata
+                    foreach (var itm in ApplicationServiceContext.Current.GetService<IAuditMetadataProvider>()?.GetMetadata())
+                        if (itm.Value != null && !audit.Metadata.Any(m => m.Key == itm.Key))
+                            audit.AddMetadata(itm.Key, itm.Value?.ToString());
 
-                // Filter apply?
-                var filters = s_configuration?.AuditFilters.Where(f => 
-                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(audit.Outcome)) &&
-                    (!f.ActionSpecified ^ f.Action.HasFlag(audit.ActionCode)) &&
-                    (!f.EventSpecified ^ f.Event.HasFlag(audit.EventIdentifier)));
+                    // Filter apply?
+                    var filters = s_configuration?.AuditFilters.Where(f =>
+                    (!f.OutcomeSpecified ^ f.Outcome.HasFlag(audit.Outcome)) &&
+                        (!f.ActionSpecified ^ f.Action.HasFlag(audit.ActionCode)) &&
+                        (!f.EventSpecified ^ f.Event.HasFlag(audit.EventIdentifier)));
 
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
-                if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                    ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
-                if(filters == null || filters.Count() == 0 || filters.Any(f=>f.SendRemote))
-                    ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
-
+                    AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+                    if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
+                        ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
+                    if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
+                        ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
+                }
+                catch(Exception e)
+                {
+                    traceSource.TraceError("Error dispatching / saving audit: {0}", e);
+                }
             };
 
             // Action
             if (ApplicationServiceContext.Current.IsRunning)
-                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem(workitem); // background
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem); // background
             else
                 workitem(null); // service is stopped
 
@@ -577,7 +583,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
         {
-            traceSource.TraceVerbose("Create RestrictedFunction audit");
+            traceSource.TraceVerbose("Create Network Request Failure audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkEntry, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
             AddUserActor(audit);
