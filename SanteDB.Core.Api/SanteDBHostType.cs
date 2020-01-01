@@ -39,6 +39,10 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is a test environment (like unit test)
         /// </summary>
-        Test
+        Test,
+        /// <summary>
+        /// Environment is a gateway environment (allow external connections)
+        /// </summary>
+        Gateway
     }
 }
