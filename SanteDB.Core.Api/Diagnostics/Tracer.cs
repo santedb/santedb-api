@@ -76,7 +76,7 @@ namespace SanteDB.Core.Diagnostics
         {
             foreach (var w in m_writers.ToArray())
             {
-                if (level <= w.Value || w.Value == EventLevel.LogAlways)
+             //    if (level <= w.Value || w.Value == EventLevel.LogAlways)
                     w.Key.TraceEvent(level, this.m_source, format, args);
             }
         }
