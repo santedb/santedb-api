@@ -27,22 +27,22 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is a server
         /// </summary>
-        Server,
+        Server = 1,
         /// <summary>
         /// Environment is using client side API
         /// </summary>
-        Client,
+        Client = 2,
         /// <summary>
         /// Environment is not in either client or server
         /// </summary>
-        Other,
+        Other = 3,
         /// <summary>
         /// Environment is a test environment (like unit test)
         /// </summary>
-        Test,
+        Test = 4,
         /// <summary>
         /// Environment is a gateway environment (allow external connections)
         /// </summary>
-        Gateway
+        Gateway = 5
     }
 }

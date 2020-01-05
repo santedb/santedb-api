@@ -44,24 +44,38 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Represents the match result
+    /// Represents a general purpose match result interface
     /// </summary>
-    public interface IRecordMatchResult<T>
+    public interface IRecordMatchResult
     {
+        /// <summary>
+        /// Gets or sets the record which match was performe don 
+        /// </summary>
+        IdentifiedData Record { get; }
+
         /// <summary>
         /// Gets or sets the score of the result
         /// </summary>
         double Score { get; }
 
         /// <summary>
+        /// Gets the classification from the matcher
+        /// </summary>
+        RecordMatchClassification Classification { get; }
+    }
+
+
+    /// <summary>
+    /// Represents the match result
+    /// </summary>
+    public interface IRecordMatchResult<T> : IRecordMatchResult
+        where T : IdentifiedData
+    {
+        /// <summary>
         /// The record that was matched
         /// </summary>
         T Record { get; }
 
-        /// <summary>
-        /// Gets the classification from the matcher
-        /// </summary>
-        RecordMatchClassification Classification { get; }
     }
 
     /// <summary>

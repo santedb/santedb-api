@@ -585,7 +585,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceVerbose("Create Network Request Failure audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkEntry, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkActivity, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
             AddUserActor(audit);
             AddLocalDeviceActor(audit);
             audit.AuditableObjects.Add(new AuditableObject()
