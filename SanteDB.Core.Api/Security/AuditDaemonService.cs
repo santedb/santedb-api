@@ -93,11 +93,13 @@ namespace SanteDB.Core.Security.Audit
                 {
                     this.m_tracer.TraceInfo("Binding to service events...");
 
-                    ApplicationServiceContext.Current.GetService<IIdentityProviderService>().Authenticated += (so, se) =>
-                    {
-                        AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
-                    };
-                    ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) => AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
+                    if(ApplicationServiceContext.Current.GetService<IIdentityProviderService>() != null)
+                        ApplicationServiceContext.Current.GetService<IIdentityProviderService>().Authenticated += (so, se) =>
+                        {
+                            AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
+                        };
+                    if(ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
+                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) => AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
                     
                     // Audit that Audits are now being recorded
                     var audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));

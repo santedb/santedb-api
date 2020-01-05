@@ -132,7 +132,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="remoteAddress">The remote address</param>
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
-            traceSource.TraceVerbose("Create AuditLogUsed audit");
+            traceSource.TraceInfo("Create AuditLogUsed audit");
             AuditData audit = new AuditData(DateTime.Now, action, outcome, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AuditLogUsed));
 
             // User actors
@@ -249,7 +249,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditSecurityCreationAction(IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties)
         {
-            traceSource.TraceVerbose("Create SecurityCreationAction audit");
+            traceSource.TraceInfo("Create SecurityCreationAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Create, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
@@ -273,7 +273,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditDataAction<TData>(EventTypeCodes typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, params TData[] data)
         {
 
-            traceSource.TraceVerbose("Create AuditDataAction audit");
+            traceSource.TraceInfo("Create AuditDataAction audit");
 
             AuditCode eventTypeId = CreateAuditActionCode(typeCode);
             AuditData audit = new AuditData(DateTime.Now, action, outcome, eventType, eventTypeId);
@@ -372,7 +372,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditSecurityDeletionAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
         {
-            traceSource.TraceVerbose("Create SecurityDeletionAction audit");
+            traceSource.TraceInfo("Create SecurityDeletionAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Delete, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
@@ -395,7 +395,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
         {
-            traceSource.TraceVerbose("Create SecurityAttributeAction audit");
+            traceSource.TraceInfo("Create SecurityAttributeAction audit");
 
             var audit = new AuditData(DateTime.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
             AddLocalDeviceActor(audit);
@@ -431,6 +431,8 @@ namespace SanteDB.Core.Security.Audit
             {
                 try
                 {
+                    traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
+
                     // Get audit metadata
                     foreach (var itm in ApplicationServiceContext.Current.GetService<IAuditMetadataProvider>()?.GetMetadata())
                         if (itm.Value != null && !audit.Metadata.Any(m => m.Key == itm.Key))
@@ -489,6 +491,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AddLocalDeviceActor(AuditData audit)
         {
 
+            traceSource.TraceInfo("Adding local device actor to audit {0}", audit.EventIdentifier);
             // For the current device name
             audit.Actors.Add(new AuditActorData()
             {
@@ -508,7 +511,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditOverride(IPrincipal principal, string purposeOfUse, string[] policies, bool success)
         {
 
-            traceSource.TraceVerbose("Create Override audit");
+            traceSource.TraceInfo("Create Override audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.EmergencyOverrideStarted, new AuditCode(purposeOfUse, SanteDBClaimTypes.XspaPurposeOfUseClaim));
             AddUserActor(audit, principal);
@@ -539,7 +542,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditApplicationStartStop(EventTypeCodes eventType)
         {
-            traceSource.TraceVerbose("Create ApplicationStart audit");
+            traceSource.TraceInfo("Create ApplicationStart audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, CreateAuditActionCode(eventType));
             AddLocalDeviceActor(audit);
@@ -553,7 +556,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin = true)
         {
 
-            traceSource.TraceVerbose("Create Login audit");
+            traceSource.TraceInfo("Create Login audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
             AddLocalDeviceActor(audit);
@@ -569,7 +572,7 @@ namespace SanteDB.Core.Security.Audit
             if (principal == null)
                 throw new ArgumentNullException(nameof(principal));
 
-            traceSource.TraceVerbose("Create Logout audit");
+            traceSource.TraceInfo("Create Logout audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Logout));
             AddLocalDeviceActor(audit);
@@ -583,7 +586,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
         {
-            traceSource.TraceVerbose("Create Network Request Failure audit");
+            traceSource.TraceInfo("Create Network Request Failure audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkActivity, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
             AddUserActor(audit);
@@ -642,7 +645,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditSessionStart(ISession session, IPrincipal principal, bool success)
         {
-            traceSource.TraceVerbose("Create session audit");
+            traceSource.TraceInfo("Create session audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStarted));
             AddLocalDeviceActor(audit);
@@ -692,7 +695,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditSessionStop(ISession session, IPrincipal principal, bool success)
         {
-            traceSource.TraceVerbose("End session audit");
+            traceSource.TraceInfo("End session audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStopped));
 
