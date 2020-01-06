@@ -17,6 +17,7 @@
  * User: Justin Fyfe
  * Date: 2019-8-8
  */
+using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
@@ -45,11 +46,10 @@ namespace SanteDB.Core.Services
         public TModel Data { get; private set; }
 
     }
-
-    /// <summary>
-    /// Represents a repository service base
-    /// </summary>
-    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
+/// <summary>
+/// Represents a repository service base
+/// </summary>
+public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
 
        
@@ -115,22 +115,47 @@ namespace SanteDB.Core.Services
         where TModel : IdentifiedData
     {
         /// <summary>
+        /// Data is inserting
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<TModel>> Inserting;
+        /// <summary>
         /// Fired after data was inserted 
         /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Inserted;
+        event EventHandler<DataPersistedEventArgs<TModel>> Inserted;
+        /// <summary>
+        /// Fired before saving
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<TModel>> Saving;
         /// <summary>
         /// Fired after data was saved
         /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Saved;
+        event EventHandler<DataPersistedEventArgs<TModel>> Saved;
+        /// <summary>
+        /// Fired before obsoleting
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<TModel>> Obsoleting;
+        /// <summary>
+        /// Fired after data was obsoleted
+        /// </summary>
+        event EventHandler<DataPersistedEventArgs<TModel>> Obsoleted;
+        /// <summary>
+        /// Retrieving the data
+        /// </summary>
+        event EventHandler<DataRetrievingEventArgs<TModel>> Retrieving;
         /// <summary>
         /// Fired after data was retrieved
         /// </summary>
-        event EventHandler<RepositoryEventArgs<TModel>> Retrieved;
+        event EventHandler<DataRetrievedEventArgs<TModel>> Retrieved;
         /// <summary>
         /// Fired after data was queried
         /// </summary>
-        event EventHandler<RepositoryEventArgs<IEnumerable<TModel>>> Queried;
+        event EventHandler<QueryRequestEventArgs<TModel>> Querying;
+        /// <summary>
+        /// Fired after data was queried
+        /// </summary>
+        event EventHandler<QueryResultEventArgs<TModel>> Queried;
     }
+
     /// <summary>
     /// Represents a repository which can nullify an object
     /// </summary>
