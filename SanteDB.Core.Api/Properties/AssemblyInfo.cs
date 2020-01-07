@@ -42,7 +42,7 @@ using System.Resources;
 //
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.114.0.*")][assembly: AssemblyInformationalVersion("Iqaluit")]
-[assembly: AssemblyVersion("1.114.0.*")]
+// [assembly: AssemblyVersion("1.115.0.*")][assembly: AssemblyInformationalVersion("Iqaluit")]
+[assembly: AssemblyVersion("1.115.0.*")]
 [assembly: AssemblyInformationalVersion("Iqaluit")]
-[assembly: AssemblyFileVersion("1.114.0.0")]
+[assembly: AssemblyFileVersion("1.115.0.0")]
