@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -64,11 +65,11 @@ namespace SanteDB.Core.Configuration
         public bool SendRemote { get; set; }
 
         #region Serialization Control
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool ActionSpecified { get; set; }
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool EventSpecified { get; set; }
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
         #endregion
 

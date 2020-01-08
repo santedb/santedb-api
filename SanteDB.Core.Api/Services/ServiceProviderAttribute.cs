@@ -50,12 +50,18 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Identifies a service provider
         /// </summary>
-        public ServiceProviderAttribute(String name, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null)
+        public ServiceProviderAttribute(String name, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null)
         {
             this.Name = name;
             this.Type = type;
             this.Configuration = configurationType;
+            this.Required = required;
         }
+
+        /// <summary>
+        /// Required services must be present when the service starts up
+        /// </summary>
+        public bool Required { get; set; }
 
         /// <summary>
         /// Gets the name of the service
@@ -77,4 +83,24 @@ namespace SanteDB.Core.Services
         /// </summary>
         public Type[] Dependencies { get; set; }
     }
+
+    /// <summary>
+    /// Represents a service provider which is for an API
+    /// </summary>
+    public class ApiServiceProviderAttribute : ServiceProviderAttribute
+    {
+        /// <summary>
+        /// Creates a new API service provider
+        /// </summary>
+        public ApiServiceProviderAttribute(string name, Type contractType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
+        {
+            this.ContractType = contractType;
+        }
+
+        /// <summary>
+        /// Gets or sets the contract type
+        /// </summary>
+        public Type ContractType { get; set; }
+    }
+
 }

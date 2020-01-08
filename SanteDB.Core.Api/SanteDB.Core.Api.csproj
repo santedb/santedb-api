@@ -48,6 +48,7 @@
     <Compile Include="Configuration\Data\DataConfigurationSection.cs" />
     <Compile Include="Configuration\Data\IDataFeature.cs" />
     <Compile Include="Configuration\DiagnosticsConfigurationSection.cs" />
+    <Compile Include="Configuration\Features\AuditAccountabilityFeature.cs" />
     <Compile Include="Configuration\Features\CoreServiceFeatures.cs" />
     <Compile Include="Configuration\Features\DiagnosticsFeature.cs" />
     <Compile Include="Configuration\Features\GenericFeatureConfiguration.cs" />
