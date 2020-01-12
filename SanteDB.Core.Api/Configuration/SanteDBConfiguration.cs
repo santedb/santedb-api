@@ -161,6 +161,8 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public void AddSection<T>(T section)
         {
+            if (!this.SectionTypes.Any(o => o.Type == typeof(T)))
+                this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(T)));
             this.Sections.Add(section);
         }
 

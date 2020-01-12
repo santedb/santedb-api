@@ -46,12 +46,12 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Gets the configuration options for this generic feature
         /// </summary>
-        public Dictionary<String, Func<Object>> Options { get;  }
+        public Dictionary<String, Func<Object>> Options { get; set; }
 
         /// <summary>
         /// Gets the current set configuration values
         /// </summary>
-        public Dictionary<String, Object> Values { get; }
+        public Dictionary<String, Object> Values { get; set; }
 
         /// <summary>
         /// If the configuration is broken into categories

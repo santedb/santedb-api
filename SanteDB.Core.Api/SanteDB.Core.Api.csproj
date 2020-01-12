@@ -142,6 +142,7 @@
     <Compile Include="Security\PolicyDecision.cs" />
     <Compile Include="Security\PolicyDecisionDetail.cs" />
     <Compile Include="BusinessRules\DetectedIssueKeys.cs" />
+    <Compile Include="Security\Privacy\DataPolicyFilterService.cs" />
     <Compile Include="Security\SecurityExtensions.cs" />
     <Compile Include="Services\IAuditDispatchService.cs" />
     <Compile Include="Services\IConfigurationManager.cs" />
