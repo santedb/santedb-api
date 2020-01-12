@@ -58,12 +58,14 @@ namespace SanteDB.Core.Diagnostics
         {
             try
             {
-                var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()
+                var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()?
                     .GetSection<DiagnosticsConfigurationSection>()?.Sources
                     .OrderByDescending(o => o.SourceName.Length)
                     .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
 
-                if (this.m_filter == EventLevel.LogAlways)
+                if (sourceConfig == null)
+                    return;
+                else if (this.m_filter == EventLevel.LogAlways)
                     this.WriteTrace(level, source, format, args);
                 else if (this.m_filter >= level &&
                     (sourceConfig.GetValueOrDefault() >= level ||

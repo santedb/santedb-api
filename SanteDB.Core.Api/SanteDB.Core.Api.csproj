@@ -144,6 +144,7 @@
     <Compile Include="BusinessRules\DetectedIssueKeys.cs" />
     <Compile Include="Security\Privacy\DataPolicyFilterService.cs" />
     <Compile Include="Security\SecurityExtensions.cs" />
+    <Compile Include="Services\IAdhocCacheService.cs" />
     <Compile Include="Services\IAuditDispatchService.cs" />
     <Compile Include="Services\IConfigurationManager.cs" />
     <Compile Include="Services\IDaemonService.cs" />
