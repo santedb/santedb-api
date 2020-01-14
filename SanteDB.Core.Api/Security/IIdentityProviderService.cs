@@ -231,7 +231,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Adds a claim to the specified user account
         /// </summary>
-        void AddClaim(String userName, IClaim claim, IPrincipal principal);
+        void AddClaim(String userName, IClaim claim, IPrincipal principal, TimeSpan? expiriy = null);
 
         /// <summary>
         /// Removes a claim from the specified user account

@@ -87,13 +87,8 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Secret claim
         /// </summary>
-        public const string SanteDBTfaSecretClaim = "tfa";
-
-        /// <summary>
-        /// TFA secret expiry
-        /// </summary>
-        public const string SanteDBTfaSecretExpiry = "tfa-exp";
-
+        public const string SanteDBOTAuthCode = "otac";
+        
         /// <summary>
         /// TFA secret expiry
         /// </summary>
@@ -133,7 +128,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Passwordless authentication (allow authentication without password)
         /// </summary>
-        public const string SanteDBPasswordlessAuth = "http://santedb.org/claims/auth-nopassword";
+        public const string SanteDBCodeAuth = "http://santedb.org/claims/code-auth";
 
         /// <summary>
         /// Session id claim
