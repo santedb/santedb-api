@@ -43,6 +43,13 @@ namespace SanteDB.Core.Configuration
         [XmlArray("sections"), XmlArrayItem("add")]
         public List<TypeReferenceConfiguration> SectionTypes { get; set; }
 
+        /// <summary>
+        /// Base configuration
+        /// </summary>
+        public SanteDBBaseConfiguration()
+        {
+            this.SectionTypes = new List<TypeReferenceConfiguration>();
+        }
     }
 
     /// <summary>
@@ -151,8 +158,6 @@ namespace SanteDB.Core.Configuration
         /// <param name="t">T.</param>
         public object GetSection(Type t)
         {
-            if (this.SectionTypes?.Any(o => o.Type != null && t.GetTypeInfo().IsAssignableFrom(o.Type.GetTypeInfo())) == false)
-                throw new InvalidOperationException($"Section type {t.FullName} is not registered");
             return this.Sections.Find(o => t.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
         }
 

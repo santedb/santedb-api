@@ -276,6 +276,7 @@ namespace SanteDB.Core.Services.Impl
                 String pathName = String.Empty;
                 PropertyInfo property = null;
                 object applyTo = retVal, applyParent = null;
+
                 foreach (var itm in propertyName)
                 {
                     // Get the properties
@@ -378,13 +379,25 @@ namespace SanteDB.Core.Services.Impl
         private object ExecuteLambda(string action, object source, PropertyInfo property, string pathName, PatchOperation op)
         {
             var mi = typeof(QueryExpressionParser).GetGenericMethod("BuildLinqExpression", new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(NameValueCollection) });
-            var lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });
+
+            // Does this have a selector?
+            var classAtt = source.GetType().StripNullable().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
+            object lambda = null;
+
+            if (classAtt != null && op.Value is IdentifiedData) // The value is complex
+            {
+                var classProp = op.GetType().GetRuntimeProperty(classAtt.ClassifierProperty);
+                var classAttValue = classProp.GetValue(op.Value);
+                lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}[{classAttValue}]") });
+            }
+            else
+                lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });
+
             lambda = lambda.GetType().GetRuntimeMethod("Compile", new Type[] { }).Invoke(lambda, new object[] { });
             var filterMethod = typeof(Enumerable).GetGenericMethod(action, new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(IEnumerable<>).MakeGenericType(property.PropertyType.StripGeneric()), lambda.GetType() });
             if (filterMethod == null)
                 throw new PatchException($"Cannot locate instance of {action}() method on collection type {source.GetType()} at {op}");
             return filterMethod.Invoke(null, new object[] { source, lambda });
-
         }
 
         /// <summary>
