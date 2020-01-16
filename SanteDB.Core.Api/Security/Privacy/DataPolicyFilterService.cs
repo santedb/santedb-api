@@ -173,7 +173,7 @@ namespace SanteDB.Core.Security.Privacy
 
             // Bind to AA events
             var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
-            this.m_protectedAuthorities = aaDp.Query(o => o.PolicyKey.HasValue, AuthenticationContext.SystemPrincipal).ToList();
+            this.m_protectedAuthorities = aaDp.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
             // If we have a datacache then use that as it will get pubsub changes
             var dataCache = ApplicationServiceContext.Current.GetService<IDataCachingService>();
             if (dataCache != null)
