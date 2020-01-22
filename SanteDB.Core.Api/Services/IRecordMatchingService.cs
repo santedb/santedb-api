@@ -90,6 +90,23 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
+    /// Represents a service that can construct a report from a match result
+    /// </summary>
+    public interface IMatchReportFactory
+    {
+
+        /// <summary>
+        /// Create a match report for the matches
+        /// </summary>
+        /// <typeparam name="T">The type of result to construct a match report for</typeparam>
+        /// <param name="input">The input record</param>
+        /// <param name="matches">The matches</param>
+        /// <returns>A serializable object representing the match reports</returns>
+        Object CreateMatchReport<T>(T input, IEnumerable<IRecordMatchResult<T>> matches)
+            where T: IdentifiedData;
+    }
+
+    /// <summary>
     /// Represents a service that performs record matching and classification
     /// </summary>
     public interface IRecordMatchingService : IServiceImplementation
