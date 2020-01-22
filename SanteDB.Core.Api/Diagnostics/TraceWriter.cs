@@ -64,8 +64,12 @@ namespace SanteDB.Core.Diagnostics
                     .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
 
                 if (sourceConfig == null)
+#if DEBUG
+                    sourceConfig = this.m_filter;
+#else
                     return;
-                else if (this.m_filter == EventLevel.LogAlways)
+#endif
+                if (this.m_filter == EventLevel.LogAlways)
                     this.WriteTrace(level, source, format, args);
                 else if (this.m_filter >= level &&
                     (sourceConfig.GetValueOrDefault() >= level ||
