@@ -203,6 +203,7 @@
     <Compile Include="Services\IStockManagementRepositoryService.cs" />
     <Compile Include="Services\ITagPersistenceService.cs" />
     <Compile Include="Services\IThreadPoolService.cs" />
+    <Compile Include="Services\IUnionQueryDataPersistenceService.cs" />
     <Compile Include="Services\IValidatingRepositoryService.cs" />
     <Compile Include="Data\PersistenceEntitySource.cs" />
     <Compile Include="Data\RepositoryEntitySource.cs" />
