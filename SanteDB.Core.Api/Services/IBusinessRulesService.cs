@@ -28,13 +28,66 @@ namespace SanteDB.Core.Services
 {
     
     /// <summary>
+    /// Represents a generic interface for business rules services
+    /// </summary>
+    public interface IBusinessRulesService
+    {
+        /// <summary>
+        /// Called after an insert occurs
+        /// </summary>
+        Object AfterInsert(Object data);
+
+        /// <summary>
+        /// Called after obsolete committed
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Object AfterObsolete(Object data);
+
+        /// <summary>
+        /// Called after query
+        /// </summary>
+        IEnumerable<Object> AfterQuery(IEnumerable<Object> results);
+
+        /// <summary>
+        /// Called after retrieve
+        /// </summary>
+        Object AfterRetrieve(Object result);
+
+        /// <summary>
+        /// Called after update committed
+        /// </summary>
+        Object AfterUpdate(Object data);
+
+        /// <summary>
+        /// Called before an insert occurs
+        /// </summary>
+        Object BeforeInsert(Object data);
+
+        /// <summary>
+        /// Called before obsolete
+        /// </summary>
+        Object BeforeObsolete(Object data);
+
+        /// <summary>
+        /// Called before an update occurs
+        /// </summary>
+        Object BeforeUpdate(Object data);
+
+        /// <summary>
+        /// Called to validate a specific object
+        /// </summary>
+        List<DetectedIssue> Validate(Object data);
+    }
+
+    /// <summary>
     /// Represents a service that executes business rules based on triggers which happen in the persistence layer
     /// </summary>
     /// <remarks>
     /// Note: This can be done, instead with events on the persistence layer on the SanteDB datalayer, however there
     /// may come a time when a rule is fired without persistence occurring
     /// </remarks>
-    public interface IBusinessRulesService<TModel> : IServiceImplementation where TModel : IdentifiedData
+    public interface IBusinessRulesService<TModel> : IBusinessRulesService, IServiceImplementation where TModel : IdentifiedData
     {
         /// <summary>
         /// Gets or sets the rule to be run after this rule (for chained rules)
