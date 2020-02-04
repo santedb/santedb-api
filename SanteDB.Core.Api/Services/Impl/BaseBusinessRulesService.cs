@@ -47,6 +47,15 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Add a business rule service to this instance of me or the next instance
+        /// </summary>
+        public static IBusinessRulesService GetBusinessRuleService(this IServiceProvider me, Type instanceType)
+        {
+            var ibt = typeof(IBusinessRulesService<>).MakeGenericType(instanceType);
+            return ApplicationServiceContext.Current.GetService(ibt) as IBusinessRulesService;
+        }
+
+        /// <summary>
         /// Adds a new business rule service for the specified model to the application service otherwise adds it to the chain
         /// </summary>
         /// <typeparam name="TModel">The type of model to bind to</typeparam>
@@ -97,12 +106,25 @@ namespace SanteDB.Core.Services.Impl
             return this.Next?.AfterInsert(data) ?? data;
         }
 
+        public object AfterInsert(object data)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// After obsolete
         /// </summary>
         public virtual TModel AfterObsolete(TModel data)
         {
             return this.Next?.AfterObsolete(data) ?? data;
+        }
+
+        /// <summary>
+        /// After obsoletion
+        /// </summary>
+        public object AfterObsolete(object data)
+        {
+            return this.AfterObsolete((TModel)data);
         }
 
         /// <summary>
@@ -116,11 +138,27 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// After query
+        /// </summary>
+        public IEnumerable<object> AfterQuery(IEnumerable<object> results)
+        {
+            return this.AfterQuery(results.OfType<TModel>());
+        }
+
+        /// <summary>
         /// Fired after retrieve
         /// </summary>
         public virtual TModel AfterRetrieve(TModel result)
         {
             return this.Next?.AfterRetrieve(result) ?? result;
+        }
+
+        /// <summary>
+        /// After the data has been retrieved
+        /// </summary>
+        public object AfterRetrieve(object result)
+        {
+            return this.AfterRetrieve((TModel)result);
         }
 
         /// <summary>
@@ -132,11 +170,27 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// After update
+        /// </summary>
+        public object AfterUpdate(object data)
+        {
+            return this.AfterUpdate((TModel)data);
+        }
+
+        /// <summary>
         /// Before insert complete
         /// </summary>
         public virtual TModel BeforeInsert(TModel data)
         {
             return this.Next?.BeforeInsert(data) ?? data;
+        }
+
+        /// <summary>
+        /// Before insert
+        /// </summary>
+        public object BeforeInsert(object data)
+        {
+            return this.BeforeInsert((TModel)data);
         }
 
         /// <summary>
@@ -148,6 +202,15 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Before obsoletion occurs
+        /// </summary>
+        public object BeforeObsolete(object data)
+        {
+            return this.BeforeObsolete((TModel)data);
+
+        }
+
+        /// <summary>
         /// Before update
         /// </summary>
         public virtual TModel BeforeUpdate(TModel data)
@@ -156,11 +219,27 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Before update occurs
+        /// </summary>
+        public object BeforeUpdate(object data)
+        {
+            return this.BeforeUpdate((TModel)data);
+        }
+
+        /// <summary>
         /// Validate the specified object
         /// </summary>
         public virtual List<DetectedIssue> Validate(TModel data)
         {
             return this.Next?.Validate(data) ?? new List<DetectedIssue>();
+        }
+
+        /// <summary>
+        /// Validate the specified object
+        /// </summary>
+        public List<DetectedIssue> Validate(object data)
+        {
+            return this.Validate((TModel)data);
         }
     }
 }
