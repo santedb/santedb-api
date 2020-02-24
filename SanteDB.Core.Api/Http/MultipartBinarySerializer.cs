@@ -71,6 +71,11 @@ namespace SanteDB.Core.Http
         private string m_contentType;
 
         /// <summary>
+        /// Gets the underlying serializer
+        /// </summary>
+        public object Serializer => null;
+
+        /// <summary>
         /// Gets the content type
         /// </summary>
         public MultipartBinarySerializer(string contentType)

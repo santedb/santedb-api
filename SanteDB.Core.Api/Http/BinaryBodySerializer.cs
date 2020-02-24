@@ -28,6 +28,11 @@ namespace SanteDB.Core.Http
     public class BinaryBodySerializer : IBodySerializer
     {
         /// <summary>
+        /// Gets the serializer for this body serializer
+        /// </summary>
+        public object Serializer => null;
+
+        /// <summary>
         /// De-serialize to the desired type
         /// </summary>
         public object DeSerialize(Stream s)

@@ -27,6 +27,12 @@ namespace SanteDB.Core.Http
     /// </summary>
     public interface IBodySerializer
     {
+
+        /// <summary>
+        /// Gets the serializer for this body serializer
+        /// </summary>
+        object Serializer { get; }
+
         /// <summary>
         /// Serialize the specified object
         /// </summary>

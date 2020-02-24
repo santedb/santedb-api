@@ -58,6 +58,11 @@ namespace SanteDB.Core.Http
     {
         private Tracer m_tracer = Tracer.GetTracer(typeof(FormBodySerializer));
 
+        /// <summary>
+        /// Gets the underlying serializer
+        /// </summary>
+        public object Serializer => null;
+
         #region IBodySerializer implementation
 
         /// <summary>

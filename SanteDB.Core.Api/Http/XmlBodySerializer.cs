@@ -56,12 +56,18 @@ namespace SanteDB.Core.Http
             this.m_type = type;
             if (!m_serializers.TryGetValue(type, out this.m_serializer))
             {
+
                 this.m_serializer = new XmlSerializer(type, extraTypes);
                 lock (m_serializers)
                     if (!m_serializers.ContainsKey(type))
                         m_serializers.Add(type, this.m_serializer);
             }
         }
+
+        /// <summary>
+        /// Gets the serializer
+        /// </summary>
+        public object Serializer => this.m_serializer;
 
         #region IBodySerializer implementation
 

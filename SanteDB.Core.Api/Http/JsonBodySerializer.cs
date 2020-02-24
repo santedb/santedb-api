@@ -37,6 +37,11 @@ namespace SanteDB.Core.Http
         private Type m_type;
 
         /// <summary>
+        /// Gets the underlying serializer
+        /// </summary>
+        public object Serializer => this.m_serializer;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SanteDB.Core.Http.JsonBodySerializer"/> class.
         /// </summary>
         public JsonBodySerializer(Type type)
