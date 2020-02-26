@@ -18,6 +18,7 @@
  * Date: 2019-8-8
  */
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -60,7 +61,7 @@ namespace SanteDB.Core.Configuration
     public sealed class SanteDBConfiguration : SanteDBBaseConfiguration
     {
         // Serializer
-        private static XmlSerializer s_baseSerializer = new XmlSerializer(typeof(SanteDBConfiguration));
+        private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
         private static XmlSerializer s_serializer;
 
         /// <summary>
@@ -109,7 +110,7 @@ namespace SanteDB.Core.Configuration
             configStream.Seek(0, SeekOrigin.Begin);
 
             if (s_serializer == null)
-                s_serializer = new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+                s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             return s_serializer.Deserialize(configStream) as SanteDBConfiguration;
         }
@@ -126,7 +127,7 @@ namespace SanteDB.Core.Configuration
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
             if (s_serializer == null)
-                s_serializer = new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+                s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             s_serializer.Serialize(dataStream, this, xmlns);
         }

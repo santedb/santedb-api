@@ -42,13 +42,13 @@ namespace SanteDB.Core.Api.Test
             Patch retVal = null;
             using (StringWriter sw = new StringWriter())
             {
-                var xsz = new XmlSerializer(typeof(Patch));
+                var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(Patch));
                 xsz.Serialize(sw, patch);
                 patchXml = sw.ToString();
             }
             using(StringReader sr = new StringReader(patchXml))
             {
-                var xsz = new XmlSerializer(typeof(Patch));
+                var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(Patch));
                 retVal = xsz.Deserialize(sr) as Patch;
             }
             

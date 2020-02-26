@@ -20,6 +20,7 @@
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,10 +35,8 @@ namespace SanteDB.Core.Http
     /// </summary>
     internal class XmlBodySerializer : IBodySerializer
     {
-        // Serializers
-        private static Dictionary<Type, XmlSerializer> m_serializers = new Dictionary<Type, XmlSerializer>();
         // Fault serializer
-        private static XmlSerializer m_faultSerializer = new XmlSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
+        private static XmlSerializer m_faultSerializer = XmlModelSerializerFactory.Current.CreateSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
 
         // Xml types
         private static List<Type> m_xmlTypes = null;
@@ -54,14 +53,7 @@ namespace SanteDB.Core.Http
         public XmlBodySerializer(Type type, params Type[] extraTypes)
         {
             this.m_type = type;
-            if (!m_serializers.TryGetValue(type, out this.m_serializer))
-            {
-
-                this.m_serializer = new XmlSerializer(type, extraTypes);
-                lock (m_serializers)
-                    if (!m_serializers.ContainsKey(type))
-                        m_serializers.Add(type, this.m_serializer);
-            }
+            this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(type, extraTypes);
         }
 
         /// <summary>
@@ -80,7 +72,7 @@ namespace SanteDB.Core.Http
                 this.m_serializer.Serialize(s, o);
             else // Slower
             {
-                XmlSerializer xsz = new XmlSerializer(o.GetType(), (o as Bundle)?.Item.Select(i => i.GetType()).Distinct().ToArray() ?? new Type[0]);
+                XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(o.GetType(), (o as Bundle)?.Item.Select(i => i.GetType()).Distinct().ToArray() ?? new Type[0]);
                 xsz.Serialize(s, o);
             }
         }
@@ -106,22 +98,9 @@ namespace SanteDB.Core.Http
                     serializer = m_faultSerializer;
                 else
                 {
-                    Type eType = m_serializers.FirstOrDefault(o => o.Value.CanDeserialize(bodyReader)).Key;
-
-                    if (m_xmlTypes == null)
-                        m_xmlTypes = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes().Where(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>() != null).ToList();
-                    if (eType == null)
-                        eType = m_xmlTypes.FirstOrDefault(o => o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName == bodyReader.LocalName &&
-                            o.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.Namespace == bodyReader.NamespaceURI);
-                    if (eType == null)
+                    serializer = XmlModelSerializerFactory.Current.GetSerializer(bodyReader);
+                    if (serializer == null)
                         throw new KeyNotFoundException($"Could not determine how to de-serialize {bodyReader.NamespaceURI}#{bodyReader.Name}");
-                    if (!m_serializers.TryGetValue(eType, out serializer))
-                    {
-                        serializer = new XmlSerializer(eType);
-                        lock (m_serializers)
-                            if (!m_serializers.ContainsKey(eType))
-                                m_serializers.Add(eType, serializer);
-                    }
                 }
                 return serializer.Deserialize(bodyReader);
             }
