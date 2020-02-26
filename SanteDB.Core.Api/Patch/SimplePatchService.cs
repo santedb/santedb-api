@@ -111,8 +111,11 @@ namespace SanteDB.Core.Services.Impl
                     var serializationName = pi.GetCustomAttribute<JsonPropertyAttribute>().PropertyName;
                     if (ignoreProperties?.Contains($"{path}{serializationName}") == true) continue;
 
-                    object existingValue = existing.LoadProperty(pi.Name),
+                    object existingValue = pi.GetValue(existing),
                         updatedValue = pi.GetValue(updated);
+
+                    if (existingValue == null && typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()))
+                        existingValue = existing.LoadProperty(pi.Name);
 
                     // Skip ignore properties
                     if (ignoreProperties.Contains(serializationName)) continue;
