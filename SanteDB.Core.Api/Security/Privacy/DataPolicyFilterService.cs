@@ -226,11 +226,13 @@ namespace SanteDB.Core.Security.Privacy
             var decisions = results.OfType<Object>()
                 .AsParallel()
                 .AsOrdered()
+                .WithDegreeOfParallelism(2)
                 .Select(o=>new { Securable = o, Decision = pdp.GetPolicyDecision(AuthenticationContext.Current.Principal, o) });
             
             return decisions
                 .AsParallel()
                 .AsOrdered()
+                .WithDegreeOfParallelism(2)
                 // We want to mask ELEVATE
                 .Where(o => o.Decision.Outcome != PolicyGrantType.Elevate && o.Securable is IdentifiedData).Select<dynamic, IdentifiedData>(
                     o => {
