@@ -66,12 +66,19 @@ namespace SanteDB.Core.BusinessRules
         /// <summary>
         /// Creates a new detected issue
         /// </summary>
-        public DetectedIssue(DetectedIssuePriorityType priority, String text, Guid type)
+        public DetectedIssue(DetectedIssuePriorityType priority, String id, String text, Guid type)
         {
+            this.Id = id;
             this.Priority = priority;
             this.Text = text;
             this.TypeKey = type;
         }
+
+        /// <summary>
+        /// Gets or sets the id
+        /// </summary>
+        [XmlAttribute("id"), JsonProperty("id")]
+        public String Id { get; set; }
 
         /// <summary>
         /// Represents a detected issue priority
