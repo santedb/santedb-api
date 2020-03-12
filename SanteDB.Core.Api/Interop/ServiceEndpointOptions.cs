@@ -81,7 +81,12 @@ namespace SanteDB.Core.Interop
         /// The service endpoint represents the BIS
         /// </summary>
         [XmlEnum("bis")]
-        BusinessIntelligenceService
+        BusinessIntelligenceService,
+        /// <summary>
+        /// The service is som other sort of service
+        /// </summary>
+        [XmlEnum("other")]
+        Other
     }
 
     /// <summary>
