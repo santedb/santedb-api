@@ -18,6 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
@@ -81,7 +82,9 @@ namespace SanteDB.Core.Services
         /// <param name="expiry">The time when the session is to expire</param>
         /// <param name="remoteEp">The remote endpoint</param>
         /// <returns>The session information that was established</returns>
-        ISession Establish(IPrincipal principal, DateTimeOffset expiry, String remoteEp);
+        /// <param name="purpose">The purpose of the session</param>
+        /// <param name="scope">The scope of the session (policies)</param>
+        ISession Establish(IPrincipal principal, DateTimeOffset expiry, String remoteEp, String purpose, String[] scope);
 
         /// <summary>
         /// Authenticates the session identifier as evidence of session

@@ -114,6 +114,11 @@ namespace SanteDB.Core.Security
         public const string LoginAsService = Login + ".0";
 
         /// <summary>
+        /// Login for the purposes of password change only
+        /// </summary>
+        public const string LoginPasswordOnly = LoginAsService + ".1";
+
+        /// <summary>
         /// Access clinical data permission 
         /// </summary>
         public const string UnrestrictedClinicalData = UnrestrictedAll + ".2";

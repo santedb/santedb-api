@@ -85,7 +85,7 @@ namespace SanteDB.Core.Security.Claims
         public const string SanteDBApplicationIdentifierClaim = "appid";
 
         /// <summary>
-        /// Secret claim
+        /// Claim for conveying the one time password / access code
         /// </summary>
         public const string SanteDBOTAuthCode = "otac";
         
@@ -159,6 +159,7 @@ namespace SanteDB.Core.Security.Claims
         /// Language claim
         /// </summary>
         public const string Language = "http://santedb.org/claims/language";
+        
 
     }
 }

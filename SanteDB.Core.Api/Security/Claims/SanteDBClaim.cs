@@ -49,5 +49,11 @@ namespace SanteDB.Core.Security.Claims
         /// Gets the value of the claim
         /// </summary>
         public string Value { get; }
+
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"{this.Type}={this.Value}";
     }
 }
