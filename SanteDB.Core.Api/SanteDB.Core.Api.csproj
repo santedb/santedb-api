@@ -137,6 +137,7 @@
     <Compile Include="Security\Claims\IClaimTypeHandler.cs" />
     <Compile Include="Security\IDataSigningService.cs" />
     <Compile Include="Security\IPolicyEnforcementService.cs" />
+    <Compile Include="Security\ISecurityChallengeIdentityService.cs" />
     <Compile Include="Security\ISecurityChallengeService.cs" />
     <Compile Include="Security\ISession.cs" />
     <Compile Include="Security\Principal\IApplicationIdentity.cs" />
