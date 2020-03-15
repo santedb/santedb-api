@@ -425,7 +425,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void SendAudit(AuditData audit)
         {
-           
+
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
@@ -444,14 +444,14 @@ namespace SanteDB.Core.Security.Audit
                         (!f.ActionSpecified ^ f.Action.HasFlag(audit.ActionCode)) &&
                         (!f.EventSpecified ^ f.Event.HasFlag(audit.EventIdentifier)));
 
-                    if(AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal)
+                    if (AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal)
                         AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
                         ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
                     if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
                         ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     traceSource.TraceError("Error dispatching / saving audit: {0}", e);
                 }
@@ -509,15 +509,16 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit an override operation
         /// </summary>
-        public static void AuditOverride(IPrincipal principal, string purposeOfUse, string[] policies, bool success)
+        public static void AuditOverride(ISession session, IPrincipal principal, string purposeOfUse, string[] policies, bool success)
         {
 
             traceSource.TraceInfo("Create Override audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.EmergencyOverrideStarted, new AuditCode(purposeOfUse, SanteDBClaimTypes.XspaPurposeOfUseClaim));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.EmergencyOverrideStarted, new AuditCode(purposeOfUse, SanteDBClaimTypes.PurposeOfUse));
             AddUserActor(audit, principal);
             AddLocalDeviceActor(audit);
 
+            // Add policies which were overridden
             audit.AuditableObjects.AddRange(policies.Select(o => new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Uri,
@@ -526,6 +527,15 @@ namespace SanteDB.Core.Security.Audit
                 Role = AuditableObjectRole.SecurityGranularityDefinition
             }));
 
+            if(session != null)
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    Role = AuditableObjectRole.SecurityResource,
+                    ObjectId = BitConverter.ToString(session.Id).Replace("-", ""),
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode("Session", "SanteDBTable"),
+                    LifecycleType = AuditableObjectLifecycle.Creation
+                });
             SendAudit(audit);
         }
 
@@ -652,8 +662,9 @@ namespace SanteDB.Core.Security.Audit
             AddLocalDeviceActor(audit);
             AddUserActor(audit, principal);
 
-            // Audit the actual session that is created
+            var policies = session?.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim).Select(o => o.Value);
 
+            // Audit the actual session that is created
             var cprincipal = principal as IClaimsPrincipal;
             var deviceIdentity = cprincipal?.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
             var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
@@ -671,7 +682,8 @@ namespace SanteDB.Core.Security.Audit
                         new ObjectDataExtension("method", principal.Identity?.AuthenticationType),
                         deviceIdentity != cprincipal.Identity && applicationIdentity != cprincipal.Identity ? new ObjectDataExtension("userIdentity", principal.Identity.Name) : null,
                         deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
-                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
+                        applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null,
+                        new ObjectDataExtension("scope", String.Join(" ", policies ?? new String[] { "*" }))
                     }.OfType<ObjectDataExtension>().ToList()
                 });
             else

@@ -97,21 +97,21 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Override claim
         /// </summary>
-        public const string SanteDBOverrideClaim = "http://santedb.org/claims/override";
+        public const string SanteDBOverrideClaim = "PolicyOverride";
         
         /// <summary>
         /// Patient identifier claim
         /// </summary>
-        public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
+        public const string ResourceId = "ResourceId";
 
         /// <summary>
         /// Purpose of use claim
         /// </summary>
-        public const string XspaPurposeOfUseClaim = "urn:oasis:names:tc:xacml:2.0:action:purpose";
+        public const string PurposeOfUse = "PurposeOfUse";
         /// <summary>
         /// Purpose of use claim
         /// </summary>
-        public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
+        public const string UserRoleClaim = "SubjectRole";
         /// <summary>
         /// Facility id claim
         /// </summary>
@@ -119,11 +119,11 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Organization name claim
         /// </summary>
-        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        public const string OrganizationId = "SubjectOrganizationID";
         /// <summary>
         /// User identifier claim
         /// </summary>
-        public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+        public const string SubjectId = "SubjectId";
 
         /// <summary>
         /// Passwordless authentication (allow authentication without password)

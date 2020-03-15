@@ -98,9 +98,16 @@ namespace SanteDB.Core.Security.Audit
                         {
                             AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
                         };
-                    if(ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
-                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) => AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
-                    
+                    if (ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
+                    {
+                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) =>
+                        {
+                            if (se.Elevated)
+                                AuditUtil.AuditOverride(se.Session, se.Principal, se.Purpose, se.Policies, se.Success);
+                            AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
+                        };
+                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Abandoned += (so, se) => AuditUtil.AuditSessionStop(se.Session, se.Principal, se.Success);
+                    }
                     // Audit that Audits are now being recorded
                     var audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
                     AuditUtil.AddLocalDeviceActor(audit);

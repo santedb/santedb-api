@@ -39,7 +39,6 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Policy identifier for allowance of changing passwords
         /// </summary>
-        /// TODO: Affix the mohawk college OID for this
         public const string ChangePassword = UnrestrictedAdministration + ".1";
 
         /// <summary>
@@ -76,6 +75,7 @@ namespace SanteDB.Core.Security
         /// Policy identifier for allowing of creating new identities
         /// </summary>
         public const string AlterIdentity = UnrestrictedAdministration + ".8";
+
 
         /// <summary>
         /// Allows an identity to alter a policy
@@ -227,6 +227,17 @@ namespace SanteDB.Core.Security
         /// Override policy permission
         /// </summary>
         public const string OverridePolicyPermission = UnrestrictedAll + ".999";
+
+        /// <summary>
+        /// Security elevations serve as a special block whereby a user must re-enter their password to perform something
+        /// </summary>
+        public const string SecurityElevations = UnrestrictedAll + ".600";
+
+        /// <summary>
+        /// Policy identifier for allowing for the editing of an identity's security  
+        /// </summary>
+        public const string AlterSecurityChallenge = SecurityElevations + ".1";
+
         #endregion
 
         #region SanteDB Client Functions
