@@ -15,16 +15,7 @@ namespace SanteDB.Core.Security
     /// </summary>
     public interface ISecurityChallengeService : IServiceImplementation
     {
-        /// <summary>
-        /// Fired prior to an authentication event
-        /// </summary>
-        event EventHandler<AuthenticatingEventArgs> Authenticating;
-
-        /// <summary>
-        /// Fired after an authentication decision being made
-        /// </summary>
-        event EventHandler<AuthenticatedEventArgs> Authenticated;
-
+       
         /// <summary>
         /// Gets the challenges current registered for the user (not the answers)
         /// </summary>
@@ -47,10 +38,6 @@ namespace SanteDB.Core.Security
         /// <param name="principal">The principal that is setting this response</param>
         void Remove(String userName, Guid challengeKey, IPrincipal principal);
 
-        /// <summary>
-        /// Authenticates the specified user with a challenge key and response
-        /// </summary>
-        IPrincipal Authenticate(String userName, Guid challengeKey, String response);
 
     }
 }
