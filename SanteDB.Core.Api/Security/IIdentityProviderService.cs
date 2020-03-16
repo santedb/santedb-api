@@ -254,11 +254,11 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Requests the currently established principal to be elevated
         /// </summary>
-        /// <param name="principal">The principal to be elevated</param>
+        /// <param name="userName">The principal to be elevated</param>
         /// <param name="password">The password for the principal</param>
         /// <param name="purpose">The reason for the elevation</param>
         /// <param name="policies">One or more policies which the principal is seeking override</param>
-        IPrincipal Elevate(IPrincipal principal, String password, String purpose, params String[] policies);
+        IPrincipal ElevatedAuthenticate(String userName, String password, String tfaSecret, String purpose, params String[] policies);
     }
    
 }

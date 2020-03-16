@@ -28,6 +28,6 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Authenticates the specified user with a challenge key and response
         /// </summary>
-        IPrincipal Authenticate(String userName, Guid challengeKey, String response);
+        IPrincipal Authenticate(String userName, Guid challengeKey, String response, String tfaSecret);
     }
 }
