@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,9 +14,10 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
+using SanteDB.Core.Security.Claims;
 using System;
 
 namespace SanteDB.Core.Security
@@ -26,7 +27,7 @@ namespace SanteDB.Core.Security
     /// </summary>
     public interface ISession 
     {
-
+        
         /// <summary>
         /// Gets the identifier of the session
         /// </summary>
@@ -47,6 +48,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         byte[] RefreshToken { get; }
 
+        /// <summary>
+        /// Gets the claims for the session
+        /// </summary>
+        IClaim[] Claims { get; }
+
     }
 
     /// <summary>
@@ -61,12 +67,13 @@ namespace SanteDB.Core.Security
         /// <param name="refreshToken">The token which can be used to extend the session</param>
         /// <param name="notBefore">Indicates a not-before time</param>
         /// <param name="notAfter">Indicates a not-after time</param>
-        public GenericSession(byte[] id, byte[] refreshToken, DateTimeOffset notBefore, DateTimeOffset notAfter)
+        public GenericSession(byte[] id, byte[] refreshToken, DateTimeOffset notBefore, DateTimeOffset notAfter, IClaim[] claims)
         {
             this.Id = id;
             this.RefreshToken = refreshToken;
             this.NotBefore = notBefore;
             this.NotAfter = notAfter;
+            this.Claims = claims;
         }
         /// <summary>
         /// Gets the unique token identifier for the session
@@ -88,5 +95,9 @@ namespace SanteDB.Core.Security
         /// </summary>
         public byte[] RefreshToken { get; private set; }
 
+        /// <summary>
+        /// Claims for this session
+        /// </summary>
+        public IClaim[] Claims { get; private set; }
     }
 }

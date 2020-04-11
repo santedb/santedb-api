@@ -60,6 +60,15 @@
     <Compile Include="Configuration\ResourceMergeConfigurationSection.cs" />
     <Compile Include="Configuration\TypeReferenceConfiguration.cs" />
     <Compile Include="Configuration\Data\IDataConfigurationProvider.cs" />
+    <Compile Include="Data\Quality\Configuration\DataQualityConfigurationSection.cs" />
+    <Compile Include="Data\Quality\Configuration\DataQualityResourceAssertion.cs" />
+    <Compile Include="Data\Quality\Configuration\DataQualityResourceConfiguration.cs" />
+    <Compile Include="Data\Quality\Configuration\DataQualityRulesetConfiguration.cs" />
+    <Compile Include="Data\Quality\DataQualityBundleRule.cs" />
+    <Compile Include="Data\Quality\DataQualityBusinessRule.cs" />
+    <Compile Include="Data\Quality\DataQualityExtensionCleanJob.cs" />
+    <Compile Include="Data\Quality\DataQualityService.cs" />
+    <Compile Include="Data\Quality\IDataQualityBusinessRuleService.cs" />
     <Compile Include="Diagnostics\IDiagnosticsProbe.cs" />
     <Compile Include="Diagnostics\DiagnosticsProbeBase.cs" />
     <Compile Include="Diagnostics\DiagnosticsProbeManager.cs" />
@@ -128,6 +137,8 @@
     <Compile Include="Security\Claims\IClaimTypeHandler.cs" />
     <Compile Include="Security\IDataSigningService.cs" />
     <Compile Include="Security\IPolicyEnforcementService.cs" />
+    <Compile Include="Security\ISecurityChallengeIdentityService.cs" />
+    <Compile Include="Security\ISecurityChallengeService.cs" />
     <Compile Include="Security\ISession.cs" />
     <Compile Include="Security\Principal\IApplicationIdentity.cs" />
     <Compile Include="Security\Principal\IDeviceIdentity.cs" />
@@ -170,7 +181,7 @@
     <Compile Include="Services\IAliasProvider.cs" />
     <Compile Include="Security\IPasswordHashingService.cs" />
     <Compile Include="Security\IPasswordValidatorService.cs" />
-    <Compile Include="Services\Impl\SimResourceMergeService.cs" />
+    <Compile Include="Data\SimDataManagementService.cs" />
     <Compile Include="Services\INetworkInformationService.cs" />
     <Compile Include="Services\IPatchService.cs" />
     <Compile Include="Security\IPolicyDecisionService.cs" />
@@ -224,7 +235,7 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-        <PackageReference Include="SanteDB.Core.Model" Version="1.123.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="1.129.0.0" />
         <PackageReference Include="SharpCompress" Version="0.24.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>

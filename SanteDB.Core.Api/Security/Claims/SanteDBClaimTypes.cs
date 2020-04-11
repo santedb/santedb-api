@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using System;
 using System.Collections.Generic;
@@ -85,7 +85,7 @@ namespace SanteDB.Core.Security.Claims
         public const string SanteDBApplicationIdentifierClaim = "appid";
 
         /// <summary>
-        /// Secret claim
+        /// Claim for conveying the one time password / access code
         /// </summary>
         public const string SanteDBOTAuthCode = "otac";
         
@@ -97,21 +97,21 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Override claim
         /// </summary>
-        public const string SanteDBOverrideClaim = "http://santedb.org/claims/override";
+        public const string SanteDBOverrideClaim = "PolicyOverride";
         
         /// <summary>
         /// Patient identifier claim
         /// </summary>
-        public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
+        public const string ResourceId = "ResourceId";
 
         /// <summary>
         /// Purpose of use claim
         /// </summary>
-        public const string XspaPurposeOfUseClaim = "urn:oasis:names:tc:xacml:2.0:action:purpose";
+        public const string PurposeOfUse = "PurposeOfUse";
         /// <summary>
         /// Purpose of use claim
         /// </summary>
-        public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
+        public const string UserRoleClaim = "SubjectRole";
         /// <summary>
         /// Facility id claim
         /// </summary>
@@ -119,11 +119,11 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Organization name claim
         /// </summary>
-        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        public const string OrganizationId = "SubjectOrganizationID";
         /// <summary>
         /// User identifier claim
         /// </summary>
-        public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+        public const string SubjectId = "SubjectId";
 
         /// <summary>
         /// Passwordless authentication (allow authentication without password)
@@ -159,6 +159,7 @@ namespace SanteDB.Core.Security.Claims
         /// Language claim
         /// </summary>
         public const string Language = "http://santedb.org/claims/language";
+        
 
     }
 }

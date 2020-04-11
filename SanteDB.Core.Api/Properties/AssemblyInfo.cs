@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using System.Reflection;
 using System.Resources;
@@ -42,7 +42,7 @@ using System.Resources;
 //
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.123.0.*")][assembly: AssemblyInformationalVersion("Iqaluit")]
-[assembly: AssemblyVersion("1.123.0.*")]
+// [assembly: AssemblyVersion("1.129.0.*")][assembly: AssemblyInformationalVersion("Iqaluit")]
+[assembly: AssemblyVersion("1.129.0.*")]
 [assembly: AssemblyInformationalVersion("Iqaluit")]
-[assembly: AssemblyFileVersion("1.123.0.0")]
+[assembly: AssemblyFileVersion("1.129.0.0")]

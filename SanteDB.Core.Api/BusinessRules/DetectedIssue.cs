@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using Newtonsoft.Json;
 using System;
@@ -66,12 +66,19 @@ namespace SanteDB.Core.BusinessRules
         /// <summary>
         /// Creates a new detected issue
         /// </summary>
-        public DetectedIssue(DetectedIssuePriorityType priority, String text, Guid type)
+        public DetectedIssue(DetectedIssuePriorityType priority, String id, String text, Guid type)
         {
+            this.Id = id;
             this.Priority = priority;
             this.Text = text;
             this.TypeKey = type;
         }
+
+        /// <summary>
+        /// Gets or sets the id
+        /// </summary>
+        [XmlAttribute("id"), JsonProperty("id")]
+        public String Id { get; set; }
 
         /// <summary>
         /// Represents a detected issue priority

@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-9-14
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Diagnostics;
@@ -98,9 +98,16 @@ namespace SanteDB.Core.Security.Audit
                         {
                             AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
                         };
-                    if(ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
-                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) => AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
-                    
+                    if (ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
+                    {
+                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) =>
+                        {
+                            if (se.Elevated)
+                                AuditUtil.AuditOverride(se.Session, se.Principal, se.Purpose, se.Policies, se.Success);
+                            AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
+                        };
+                        ApplicationServiceContext.Current.GetService<ISessionProviderService>().Abandoned += (so, se) => AuditUtil.AuditSessionStop(se.Session, se.Principal, se.Success);
+                    }
                     // Audit that Audits are now being recorded
                     var audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
                     AuditUtil.AddLocalDeviceActor(audit);

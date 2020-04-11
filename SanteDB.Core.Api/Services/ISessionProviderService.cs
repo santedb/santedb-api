@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,10 +14,11 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
@@ -47,23 +48,40 @@ namespace SanteDB.Core.Services
         public bool Success { get; private set; }
 
         /// <summary>
+        /// Elevated sesison
+        /// </summary>
+        public bool Elevated { get; private set; }
+
+        /// <summary>
+        /// Purpose of the session
+        /// </summary>
+        public String Purpose { get; private set; }
+
+        /// <summary>
+        /// Policies requested for the session
+        /// </summary>
+        public String[] Policies { get; private set; }
+
+        /// <summary>
         /// Creates a new session establishement args
         /// </summary>
-        public SessionEstablishedEventArgs(IPrincipal principal, ISession session, bool success)
+        public SessionEstablishedEventArgs(IPrincipal principal, ISession session, bool success, bool elevated, String purpose, String[] policies)
         {
             this.Success = success;
             this.Session = session;
             this.Principal = principal;
+            this.Elevated = elevated;
+            this.Purpose = purpose;
+            this.Policies = policies;
         }
     }
-
+    
     /// <summary>
     /// Represents a service which is responsible for the storage and retrieval of sessions
     /// </summary>
     public interface ISessionProviderService : IServiceImplementation
     {
-
-      
+        
         /// <summary>
         /// Fired when the session provider service has established
         /// </summary>
@@ -78,10 +96,12 @@ namespace SanteDB.Core.Services
         /// Establishes a session for the specified principal
         /// </summary>
         /// <param name="principal">The principal for which the session is to be established</param>
-        /// <param name="expiry">The time when the session is to expire</param>
         /// <param name="remoteEp">The remote endpoint</param>
         /// <returns>The session information that was established</returns>
-        ISession Establish(IPrincipal principal, DateTimeOffset expiry, String remoteEp);
+        /// <param name="purpose">The purpose of the session</param>
+        /// <param name="scope">The scope of the session (policies)</param>
+        /// <param name="isOverride">True if the session is an override session</param>
+        ISession Establish(IPrincipal principal, String remoteEp, bool isOverride, String purpose, String[] scope);
 
         /// <summary>
         /// Authenticates the session identifier as evidence of session

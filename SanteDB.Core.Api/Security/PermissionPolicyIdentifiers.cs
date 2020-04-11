@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 namespace SanteDB.Core.Security
 {
@@ -39,7 +39,6 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Policy identifier for allowance of changing passwords
         /// </summary>
-        /// TODO: Affix the mohawk college OID for this
         public const string ChangePassword = UnrestrictedAdministration + ".1";
 
         /// <summary>
@@ -77,6 +76,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string AlterIdentity = UnrestrictedAdministration + ".8";
 
+
         /// <summary>
         /// Allows an identity to alter a policy
         /// </summary>
@@ -112,6 +112,11 @@ namespace SanteDB.Core.Security
         /// Login to an interactive session (with user interaction)
         /// </summary>
         public const string LoginAsService = Login + ".0";
+
+        /// <summary>
+        /// Login for the purposes of password change only
+        /// </summary>
+        public const string LoginPasswordOnly = LoginAsService + ".1";
 
         /// <summary>
         /// Access clinical data permission 
@@ -222,6 +227,17 @@ namespace SanteDB.Core.Security
         /// Override policy permission
         /// </summary>
         public const string OverridePolicyPermission = UnrestrictedAll + ".999";
+
+        /// <summary>
+        /// Security elevations serve as a special block whereby a user must re-enter their password to perform something
+        /// </summary>
+        public const string SecurityElevations = UnrestrictedAll + ".600";
+
+        /// <summary>
+        /// Policy identifier for allowing for the editing of an identity's security  
+        /// </summary>
+        public const string AlterSecurityChallenge = SecurityElevations + ".1";
+
         #endregion
 
         #region SanteDB Client Functions

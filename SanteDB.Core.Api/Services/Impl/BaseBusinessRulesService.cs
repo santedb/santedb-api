@@ -1,6 +1,6 @@
 ﻿/*
- * Copyright 2015-2019 Mohawk College of Applied Arts and Technology
- * Copyright 2019-2019 SanteSuite Contributors (See NOTICE)
+ * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
+ * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,8 +14,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: Justin Fyfe
- * Date: 2019-8-8
+ * User: fyfej
+ * Date: 2019-11-27
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Interfaces;
@@ -37,13 +37,13 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Add a business rule service to this instance of me or the next instance
         /// </summary>
-        public static void AddBusinessRule(this IServiceProvider me, Type instance)
+        public static object AddBusinessRule(this IServiceProvider me, Type instance)
         {
             var ibre = instance.GetTypeInfo().ImplementedInterfaces.FirstOrDefault(i => i.IsConstructedGenericType && i.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>));
             if (ibre == null)
                 throw new InvalidOperationException($"{nameof(instance)} must implement IBusinessRulesService<T>");
             var meth = typeof(BusinessRulesExtensions).GetGenericMethod(nameof(AddBusinessRule), ibre.GenericTypeArguments, new Type[] { typeof(IServiceProvider), typeof(Type) });
-            meth.Invoke(null, new object[] { me, instance });
+            return meth.Invoke(null, new object[] { me, instance });
         }
 
         /// <summary>
@@ -61,19 +61,23 @@ namespace SanteDB.Core.Services.Impl
         /// <typeparam name="TModel">The type of model to bind to</typeparam>
         /// <param name="me">The application service to be added to</param>
         /// <param name="breType">The instance of the BRE</param>
-        public static void AddBusinessRule<TModel>(this IServiceProvider me, Type breType) where TModel : IdentifiedData
+        public static object AddBusinessRule<TModel>(this IServiceProvider me, Type breType) where TModel : IdentifiedData
         {
             var cbre = me.GetService<IBusinessRulesService<TModel>>();
             if (cbre == null)
+            {
                 (me as IServiceManager)?.AddServiceProvider(breType);
+                return me.GetService(breType);
+            }
             else
             {
                 while (cbre.Next != null)
                 {
-                    if (cbre.GetType() == breType) return; // duplicate
+                    if (cbre.GetType() == breType) return breType; // duplicate
                     cbre = cbre.Next;
                 }
                 cbre.Next = Activator.CreateInstance(breType) as IBusinessRulesService<TModel>;
+                return cbre.Next;
             }
 
 
