@@ -80,7 +80,10 @@ namespace SanteDB.Core.Security.Claims
         {
             get
             {
-                return this.m_identities.SelectMany(o => o.Claims);
+                var claims = this.m_identities.SelectMany(o => o.Claims).ToList();
+                while (claims.Count(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType) > 1)
+                    claims.Remove(claims.Last(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType));
+                return claims;
             }
         }
 
