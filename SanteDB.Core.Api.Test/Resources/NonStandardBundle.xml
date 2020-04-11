@@ -1,0 +1,111 @@
+﻿<?xml version="1.0"?>
+<Bundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://santedb.org/model">
+  <id>f835aca4-f98f-4c4f-828b-39d775889594</id>
+  <item xsi:type="Patient">
+    <id>10a89e43-965a-4a1b-b4d5-60f6da190abe</id>
+    <version xsi:nil="true" />
+    <sequence xsi:nil="true" />
+    <address>
+      <use>493c3e9d-4f65-4e4d-9582-c9008f4f2eb4</use>
+      <component>
+        <type>f69dcfa8-df18-403b-9217-c59680bad99e</type>
+        <value>King St.</value>
+      </component>
+      <component>
+        <type>05b85461-578b-4988-bca6-e3e94be9db76</type>
+        <value>Stoney Creek</value>
+      </component>
+      <component>
+        <type>8cf4b0b0-84e5-4122-85fe-6afa8240c218</type>
+        <value>SK</value>
+      </component>
+      <component>
+        <type>48b2ffb3-07db-47ba-ad73-fc8fb8502471</type>
+        <value>CA</value>
+      </component>
+      <component>
+        <type>78a47122-f9bf-450f-a93f-90a103c5f1e8</type>
+        <value>72960</value>
+      </component>
+    </address>
+    <classConcept>bacd9c6f-3fa9-481e-9636-37457962804d</classConcept>
+    <determinerConcept>f29f08de-78a7-4a5e-aeaf-7b545ba19a09</determinerConcept>
+    <identifier>
+      <value>a1685636</value>
+      <authority>
+        <id>e5e12aa4-3d68-11ea-80a5-00155d640b09</id>
+        <assigningApplication xsi:nil="true" />
+        <policy xsi:nil="true" />
+      </authority>
+    </identifier>
+    <name>
+      <component>
+        <type>29b98455-ed61-49f8-a161-2d73363e1df0</type>
+        <value>Green</value>
+      </component>
+      <component>
+        <type>2f64bde2-a696-4b0a-9690-b21ebd7e5092</type>
+        <value>Christopher</value>
+      </component>
+      <component>
+        <type>2f64bde2-a696-4b0a-9690-b21ebd7e5092</type>
+        <value>Noah</value>
+      </component>
+      <use>1ec9583a-b019-4baa-b856-b99caf368656</use>
+    </name>
+    <statusConcept xsi:nil="true" />
+    <tag>
+      <key>mdm.type</key>
+      <value>L</value>
+      <source xsi:nil="true" />
+    </tag>
+    <telecom>
+      <use>ec35ea7c-55d2-4619-a56b-f7a986412f7f</use>
+      <type xsi:nil="true" />
+      <value>Green.Noah2@test.com</value>
+    </telecom>
+    <telecom>
+      <use>eaa6f08e-bb8e-4457-9dc0-3a1555fadf5c</use>
+      <type xsi:nil="true" />
+      <value>030-304-2109</value>
+    </telecom>
+    <dateOfBirthPrecision>D</dateOfBirthPrecision>
+    <dateOfBirth>2016-02-27</dateOfBirth>
+    <language>
+      <isPreferred>true</isPreferred>
+      <languageCode>en</languageCode>
+    </language>
+    <genderConcept>f4e3a6bb-612e-46b2-9f77-ff844d971198</genderConcept>
+    <maritalStatus xsi:nil="true" />
+    <educationLevel xsi:nil="true" />
+    <livingArrangement xsi:nil="true" />
+    <religion xsi:nil="true" />
+    <ethnicity xsi:nil="true" />
+  </item>
+  <item xsi:type="EntityMasterOfPatient">
+    <id>49b177b6-d741-4dee-b299-8a0154098e04</id>
+    <createdBy>4c5b9f8d-49f4-4101-9662-4270895224b2</createdBy>
+    <version xsi:nil="true" />
+    <sequence xsi:nil="true" />
+    <classConcept>49328452-7e30-4dcd-94cd-fd532d111578</classConcept>
+    <determinerConcept>92837281-7e30-4dcd-94cd-fd532d111578</determinerConcept>
+    <statusConcept xsi:nil="true" />
+    <Type xmlns="">PatientMaster</Type>
+  </item>
+  <item xsi:type="EntityRelationship">
+    <id>fa1a2df8-00f3-4c39-b5a0-96f97d948c08</id>
+    <holder>10a89e43-965a-4a1b-b4d5-60f6da190abe</holder>
+    <relationshipType>97730a52-7e30-4dcd-94cd-fd532d111578</relationshipType>
+    <target>49b177b6-d741-4dee-b299-8a0154098e04</target>
+  </item>
+  <item xsi:type="EntityRelationship">
+    <id>ae27c5b1-c62d-452b-8928-27d9c8a22beb</id>
+    <holder>10a89e43-965a-4a1b-b4d5-60f6da190abe</holder>
+    <relationshipType>56cfb115-8207-4f89-b52e-d20dbad8f8cc</relationshipType>
+    <target>c7be104c-4e75-40cc-a662-2f104d80a1c4</target>
+  </item>
+  <entry xsi:nil="true" />
+  <offset>0</offset>
+  <count>1</count>
+  <totalResults>1</totalResults>
+</Bundle>
