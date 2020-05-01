@@ -352,6 +352,11 @@ namespace SanteDB.Core.Services.Impl
                         }
                     case PatchOperationType.Test:
                         if (force) continue;
+
+                        if (applyTo.GetType().StripNullable().IsEnum &&
+                            MapUtil.TryConvert(op.Value, applyTo.GetType().StripNullable(), out object res))
+                            op.Value = res;
+
                         // We test the value! Also pretty cool
                         if (applyTo is IdentifiedData && !(applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData))
                             throw new PatchAssertionException(op.Value, applyTo, op);
@@ -384,14 +389,20 @@ namespace SanteDB.Core.Services.Impl
             var mi = typeof(QueryExpressionParser).GetGenericMethod("BuildLinqExpression", new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(NameValueCollection) });
 
             // Does this have a selector?
-            var classAtt = source.GetType().StripNullable().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
+            var classAtt = source.GetType().StripGeneric().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
             object lambda = null;
 
-            if (classAtt != null && op.Value is IdentifiedData) // The value is complex
+            if (classAtt != null) // The value is complex
             {
-                var classProp = op.GetType().GetRuntimeProperty(classAtt.ClassifierProperty);
-                var classAttValue = classProp.GetValue(op.Value);
-                lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}[{classAttValue}]") });
+                if (op.Value is IdentifiedData)
+                {
+                    var classProp = op.GetType().GetRuntimeProperty(classAtt.ClassifierProperty);
+                    var classAttValue = classProp.GetValue(op.Value);
+                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}[{classAttValue}]") });
+                }
+                else
+                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}={op.Value}") });
+
             }
             else
                 lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });

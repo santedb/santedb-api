@@ -159,10 +159,10 @@ namespace SanteDB.Core.Api.Test
 
             // Assert that there is a patch
             Assert.IsNotNull(patch);
-            Assert.AreEqual(11, patch.Operation.Count);
-            Assert.AreEqual(PatchOperationType.Add, patch.Operation[7].OperationType);
-            Assert.AreEqual(b.Identifiers[1], patch.Operation[7].Value);
-            Assert.AreEqual("identifier", patch.Operation[7].Path);
+            Assert.AreEqual(10, patch.Operation.Count);
+            Assert.AreEqual(PatchOperationType.Add, patch.Operation[6].OperationType);
+            Assert.AreEqual(b.Identifiers[1], patch.Operation[6].Value);
+            Assert.AreEqual("identifier", patch.Operation[6].Path);
 
             this.SerializePatch(patch);            
         }
@@ -222,12 +222,21 @@ namespace SanteDB.Core.Api.Test
             var patch = patchService.Diff(a, b);
             var patchString = patch.ToString();
             Assert.IsNotNull(patch);
-            Assert.AreEqual(15, patch.Operation.Count);
+            Assert.AreEqual(11, patch.Operation.Count);
 
             // Assert there is a remove operation for a name
-            Assert.IsTrue(patch.Operation.Any(o => o.OperationType == PatchOperationType.Remove && o.Path.Contains(a.Names[0].Key.ToString())));
-            Assert.IsTrue(patch.Operation.Any(o => o.OperationType == PatchOperationType.Remove && o.Path.Contains("tag.key = KEY")));
+            Assert.IsTrue(patch.Operation.Any(o => o.OperationType == PatchOperationType.Remove && o.Value.ToString() == a.Names[0].Key.ToString()));
+            Assert.IsTrue(patch.Operation.Any(o => o.OperationType == PatchOperationType.Remove && o.Path.Contains("tag.key")));
             this.SerializePatch(patch);
+
+            var result = patchService.Patch(patch, a, true) as Patient;
+            Assert.AreEqual(b.Addresses.Count, result.Addresses.Count);
+            Assert.AreEqual(b.Names .Count, result.Names.Count);
+            Assert.AreEqual(b.Identifiers.Count, result.Identifiers.Count);
+            Assert.AreEqual(b.Tags.Count, result.Tags.Count);
+            Assert.AreEqual(b.Tags.First().Value, result.Tags.First().Value);
+            Assert.AreEqual("Joseph", result.Names.First().Component.Last().Value);
+
         }
 
         /// <summary>
@@ -316,7 +325,7 @@ namespace SanteDB.Core.Api.Test
             var patch = patchService.Diff(a, b);
             var patchString = patch.ToString();
             Assert.IsNotNull(patch);
-            Assert.AreEqual(15, patch.Operation.Count);
+            Assert.AreEqual(11, patch.Operation.Count);
             
             // Debug info
             this.SerializePatch(patch);

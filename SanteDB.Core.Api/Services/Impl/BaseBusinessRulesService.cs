@@ -69,7 +69,7 @@ namespace SanteDB.Core.Services.Impl
                 (me as IServiceManager)?.AddServiceProvider(breType);
                 return me.GetService(breType);
             }
-            else
+            else if (cbre.GetType() != breType) // Only add if different
             {
                 while (cbre.Next != null)
                 {
@@ -79,7 +79,8 @@ namespace SanteDB.Core.Services.Impl
                 cbre.Next = Activator.CreateInstance(breType) as IBusinessRulesService<TModel>;
                 return cbre.Next;
             }
-
+            else
+                return cbre;
 
         }
 

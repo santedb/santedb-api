@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <Bundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://santedb.org/model">
   <id>f835aca4-f98f-4c4f-828b-39d775889594</id>
-  <item xsi:type="Patient">
+  <resource xsi:type="Patient">
     <id>10a89e43-965a-4a1b-b4d5-60f6da190abe</id>
     <version xsi:nil="true" />
     <sequence xsi:nil="true" />
@@ -81,8 +81,8 @@
     <livingArrangement xsi:nil="true" />
     <religion xsi:nil="true" />
     <ethnicity xsi:nil="true" />
-  </item>
-  <item xsi:type="EntityMasterOfPatient">
+  </resource>
+  <resource xsi:type="EntityMasterOfPatient">
     <id>49b177b6-d741-4dee-b299-8a0154098e04</id>
     <createdBy>4c5b9f8d-49f4-4101-9662-4270895224b2</createdBy>
     <version xsi:nil="true" />
@@ -91,19 +91,19 @@
     <determinerConcept>92837281-7e30-4dcd-94cd-fd532d111578</determinerConcept>
     <statusConcept xsi:nil="true" />
     <Type xmlns="">PatientMaster</Type>
-  </item>
-  <item xsi:type="EntityRelationship">
+  </resource>
+  <resource xsi:type="EntityRelationship">
     <id>fa1a2df8-00f3-4c39-b5a0-96f97d948c08</id>
     <holder>10a89e43-965a-4a1b-b4d5-60f6da190abe</holder>
     <relationshipType>97730a52-7e30-4dcd-94cd-fd532d111578</relationshipType>
     <target>49b177b6-d741-4dee-b299-8a0154098e04</target>
-  </item>
-  <item xsi:type="EntityRelationship">
+  </resource>
+  <resource xsi:type="EntityRelationship">
     <id>ae27c5b1-c62d-452b-8928-27d9c8a22beb</id>
     <holder>10a89e43-965a-4a1b-b4d5-60f6da190abe</holder>
     <relationshipType>56cfb115-8207-4f89-b52e-d20dbad8f8cc</relationshipType>
     <target>c7be104c-4e75-40cc-a662-2f104d80a1c4</target>
-  </item>
+  </resource>
   <entry xsi:nil="true" />
   <offset>0</offset>
   <count>1</count>

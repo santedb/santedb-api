@@ -270,9 +270,6 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
-    <None Include="SanteDB.Core.Api.nuspec">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="Schema\AdHocDataWarehouse.xsd">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
