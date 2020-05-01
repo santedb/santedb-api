@@ -26,11 +26,17 @@ using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security
 {
+
     /// <summary>
     /// Represents a service which can sign arbitrary data 
     /// </summary>
     public interface IDataSigningService : IServiceImplementation
     {
+
+        /// <summary>
+        /// Get the siganture algorithm this service would use to sign w/the specified key
+        /// </summary>
+        string GetSignatureAlgorithm(String keyId = null);
 
         /// <summary>
         /// Signs the specified data using the service's configured signing key

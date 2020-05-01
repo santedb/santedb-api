@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SanteDB.Core.Api.Test</RootNamespace>
     <AssemblyName>SanteDB.Core.Api.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="SanteDB.Core.Model" Version="1.129.0.0" />
+    <PackageReference Include="SanteDB.Core.Model" Version="2.0.0.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -71,11 +71,11 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <ProjectReference Include=".\SanteDB.Core.Api\SanteDB.Core.Api.csproj">
+        <ProjectReference Include="..\SanteDB.Core.Api\SanteDB.Core.Api.csproj">
           <Project>{3a45f695-47a2-464c-ace6-bdabbfa39fbc}</Project>
           <Name>SanteDB.Core.Api</Name>
         </ProjectReference>
-        <ProjectReference Include=".\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
+        <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
           <Project>{f1a82a4f-4a57-47d7-ae76-444c8a4ff54a}</Project>
           <Name>SanteDB.Core.Model</Name>
         </ProjectReference>
@@ -83,8 +83,8 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="SanteDB.Core.Model" Version="1.129.0.0" />
-        <PackageReference Include="SanteDB.Core.Api" Version="1.129.0.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.0.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="2.0.0.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>
