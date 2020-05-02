@@ -129,29 +129,32 @@ namespace SanteDB.Core.Http
         /// Create the HTTP request
         /// </summary>
         /// <param name="query">The query which should be executed on the server</param>
-        /// <param name="resourceName">The name of the resource at the base URL to be executed</param>
-        protected virtual WebRequest CreateHttpRequest(String resourceName, NameValueCollection query)
+        /// <param name="resourceNameOrUrl">The name of the resource at the base URL to be executed</param>
+        protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
             if (this.Description.Endpoint.Count == 0)
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
-            Uri baseUrl = new Uri(this.Description.Endpoint[0].Address);
-            UriBuilder uriBuilder = new UriBuilder(baseUrl);
 
-            if (!String.IsNullOrEmpty(resourceName))
-                uriBuilder.Path += "/" + resourceName;
+            if(!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri))
+            {
+                var baseUrl = new Uri(this.Description.Endpoint[0].Address);
+                UriBuilder uriBuilder = new UriBuilder(baseUrl);
 
-            // HACK:
-            uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
+                if (!String.IsNullOrEmpty(resourceNameOrUrl))
+                    uriBuilder.Path += "/" + resourceNameOrUrl;
 
-            // Add query string
-            if (query != null)
-                uriBuilder.Query = CreateQueryString(query);
+                // HACK:
+                uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
+                // Add query string
+                if (query != null)
+                    uriBuilder.Query = CreateQueryString(query);
 
-            Uri uri = uriBuilder.Uri;
+                uri = uriBuilder.Uri;
+            }
 
             // Log
-            s_tracer.TraceVerbose("Constructing WebRequest to {0}", uriBuilder);
+            s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
 
             // Add headers
             HttpWebRequest retVal = (HttpWebRequest)HttpWebRequest.Create(uri.ToString());
