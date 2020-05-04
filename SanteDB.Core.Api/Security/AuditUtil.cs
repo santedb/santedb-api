@@ -436,9 +436,13 @@ namespace SanteDB.Core.Security.Audit
                     traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
 
                     // Get audit metadata
-                    foreach (var itm in ApplicationServiceContext.Current.GetService<IAuditMetadataProvider>()?.GetMetadata())
-                        if (itm.Value != null && !audit.Metadata.Any(m => m.Key == itm.Key))
-                            audit.AddMetadata(itm.Key, itm.Value?.ToString());
+                    audit.AddMetadata(AuditMetadataKey.PID, Process.GetCurrentProcess().Id.ToString());
+                    audit.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
+                    audit.AddMetadata(AuditMetadataKey.SessionId, (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
+                    audit.AddMetadata(AuditMetadataKey.CorrelationToken, RemoteEndpointUtil.Current.GetRemoteClient()?.CorrelationToken);
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "ApplicationServerProcess");
+                    audit.AddMetadata(AuditMetadataKey.LocalEndpoint, RemoteEndpointUtil.Current.GetRemoteClient()?.OriginalRequestUrl);
+                    audit.AddMetadata(AuditMetadataKey.RemoteHost, RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress);
 
                     // Filter apply?
                     var filters = s_configuration?.AuditFilters.Where(f =>
@@ -479,7 +483,7 @@ namespace SanteDB.Core.Security.Audit
             // For the user
             audit.Actors.Add(new AuditActorData()
             {
-                NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
+                NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.CorrelationToken,
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 UserName = principal.Identity.Name,
                 ActorRoleCode = new List<AuditCode>() {

@@ -11,6 +11,11 @@ namespace SanteDB.Core.Api.Security
     public class RemoteEndpointInfo
     {
         /// <summary>
+        /// Gets or sets the correlation token
+        /// </summary>
+        public String CorrelationToken { get; set; }
+
+        /// <summary>
         /// Gets or sets the remote address
         /// </summary>
         public String RemoteAddress { get; set; }
