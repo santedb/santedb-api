@@ -17,10 +17,12 @@
  * User: fyfej
  * Date: 2019-11-27
  */
+using SanteDB.Core.Api.Security;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
@@ -472,11 +474,12 @@ namespace SanteDB.Core.Security.Audit
         {
             var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
 
+            // Use all remote endpoint providers to find the current request 
             principal = principal ?? AuthenticationContext.Current.Principal;
             // For the user
             audit.Actors.Add(new AuditActorData()
             {
-                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<IRemoteEndpointResolver>()?.GetRemoteEndpoint(),
+                NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 UserName = principal.Identity.Name,
                 ActorRoleCode = new List<AuditCode>() {
