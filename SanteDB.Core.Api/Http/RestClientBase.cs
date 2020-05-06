@@ -136,8 +136,10 @@ namespace SanteDB.Core.Http
             if (this.Description.Endpoint.Count == 0)
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
 
-            if(!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri) || uri.Scheme.StartsWith("file"))
+            if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
+                || uri.Scheme == "file")
             {
+                s_tracer.TraceVerbose("Original resource {0} is not absolute or is wrong scheme - building service", resourceNameOrUrl);
                 var baseUrl = new Uri(this.Description.Endpoint[0].Address);
                 UriBuilder uriBuilder = new UriBuilder(baseUrl);
 
@@ -152,6 +154,8 @@ namespace SanteDB.Core.Http
 
                 uri = uriBuilder.Uri;
             }
+            else
+                s_tracer.TraceVerbose("Constructed URI : {0}", uri);
 
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
