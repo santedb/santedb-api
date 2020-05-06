@@ -236,9 +236,9 @@ namespace SanteDB.Core.Security.Privacy
                 // We want to mask ELEVATE
                 .Where(o => o.Decision.Outcome != PolicyGrantType.Elevate && o.Securable is IdentifiedData).Select<dynamic, IdentifiedData>(
                     o => {
-                        AuditUtil.AuditMasking(o.Securable as IdentifiedData, o.Decision == PolicyGrantType.Deny);
+                        AuditUtil.AuditMasking(o.Securable as IdentifiedData, o.Decision.Outcome == PolicyGrantType.Deny);
 
-                        if (o.Decision == PolicyGrantType.Elevate)
+                        if (o.Decision.Outcome == PolicyGrantType.Elevate)
                         {
                             if (o.Securable is Act)
                             {
