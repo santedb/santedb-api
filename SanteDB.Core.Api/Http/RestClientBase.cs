@@ -136,7 +136,7 @@ namespace SanteDB.Core.Http
             if (this.Description.Endpoint.Count == 0)
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
 
-            if(!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri))
+            if(!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri) || uri.Scheme.StartsWith("file"))
             {
                 var baseUrl = new Uri(this.Description.Endpoint[0].Address);
                 UriBuilder uriBuilder = new UriBuilder(baseUrl);
