@@ -101,7 +101,8 @@ namespace SanteDB.Core.Services
         /// <param name="purpose">The purpose of the session</param>
         /// <param name="scope">The scope of the session (policies)</param>
         /// <param name="isOverride">True if the session is an override session</param>
-        ISession Establish(IPrincipal principal, String remoteEp, bool isOverride, String purpose, String[] scope);
+        /// <param name="lang">The language for the session</param>
+        ISession Establish(IPrincipal principal, String remoteEp, bool isOverride, String purpose, String[] scope, String lang);
 
         /// <summary>
         /// Authenticates the session identifier as evidence of session
