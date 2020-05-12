@@ -19,6 +19,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
 namespace SanteDB.Core.Diagnostics
@@ -99,6 +100,16 @@ namespace SanteDB.Core.Diagnostics
         public void TraceWarning(String format, params Object[] args)
         {
             this.TraceEvent(EventLevel.Warning, format, args);
+        }
+
+        /// <summary>
+        /// Emits a warning to the trace log that an untested feature was used
+        /// </summary>
+        public void TraceUntestedWarning()
+        {
+
+            this.TraceEvent(EventLevel.Warning, "UNTESTED CODE WARNING ----> A PROCESS CALLED AN UNTESTED SECTION OF CODE SUBSEQUENT ERRORS MAY APPEAR IN THE LOG ----> {0}", new StackTrace(true));
+
         }
 
         /// <summary>
