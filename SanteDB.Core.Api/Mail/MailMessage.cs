@@ -19,9 +19,12 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Mail
@@ -105,7 +108,22 @@ namespace SanteDB.Core.Mail
         /// The recipient users used for query
         /// </summary>
         [JsonProperty("rcpt"), XmlElement("rcpt")]
-        public List<SecurityUser> RcptTo { get; set; }
+        public List<Guid> RcptToXml { get; set; }
+
+        /// <summary>
+        /// Receipt to
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(RcptToXml))]
+        public List<SecurityUser> RcptTo {
+            get
+            {
+                return this.RcptToXml?.Select(o => EntitySource.Current.Get<SecurityUser>(o) ?? new SecurityUser() { Key = o }).ToList();
+            }
+            set
+            {
+                this.RcptToXml = value?.Where(o => o.Key.HasValue).Select(o => o.Key.Value).ToList();
+            }
+        }
 
         /// <summary>
         /// Gets or sets the subject of the alert.
