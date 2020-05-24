@@ -187,6 +187,11 @@ namespace SanteDB.Core.Data.Quality
                     if (!result)
                         retVal.Add(new DetectedIssue(assert.Priority, $"{ruleSetId}.{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
                 }
+                catch(Exception e)
+                {
+                    this.m_tracer.TraceError("Error applying assertion {0}.{1} on {2} = {3} - {4}", ruleSetId, assert.Id, data, false, e);
+                    retVal.Add(new DetectedIssue(assert.Priority, $"{ruleSetId}.{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
+                }
                 finally
                 {
                     this.m_tracer.TraceVerbose("Assertion {0}.{1} on {2} = {3}", ruleSetId, assert.Id, data, result);

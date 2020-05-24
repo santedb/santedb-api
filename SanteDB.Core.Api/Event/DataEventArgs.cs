@@ -151,7 +151,11 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-
+        
+        /// <summary>
+        /// Instructs the query engine to use fuzzy totals
+        /// </summary>
+        public bool UseFuzzyTotals { get; set; }
     }
 
     /// <summary>
