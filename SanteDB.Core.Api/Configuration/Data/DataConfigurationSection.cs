@@ -66,7 +66,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         public ConnectionString()
         {
-
+            this.Value = String.Empty;
         }
 
         /// <summary>
