@@ -116,14 +116,14 @@ namespace SanteDB.Core.Data
                     if (this.m_configuration.PreserveOriginal)
                     {
                         this.m_tracer.TraceInfo("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL BE SET TO NULLIFIED ---", e.Data, match.Record, match.Score);
-                        var mergeResult = this.Merge(match.Record, new List<TModel>() { e.Data }); // Merge the data
+                        var mergeResult = this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
                         if (mergeResult != null)
                             (e.Data as IHasState).StatusConceptKey = StatusKeys.Nullified;
                     }
                     else
                     {
                         this.m_tracer.TraceWarning("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL NOT BE PERSISTED ---", e.Data, match.Record, match.Score);
-                        var mergeResult = this.Merge(match.Record, new List<TModel>() { e.Data }); // Merge the data
+                        var mergeResult = this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
                         if (mergeResult != null)
                         {
                             e.Cancel = true;
@@ -164,9 +164,9 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Merges the specified duplicates into the master
             /// </summary>
-            public virtual TModel Merge(TModel master, IEnumerable<TModel> linkedDuplicates)
+            public virtual TModel Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates)
             {
-                var mergeEventArgs = new DataMergingEventArgs<TModel>(master, linkedDuplicates);
+                var mergeEventArgs = new DataMergingEventArgs<TModel>(masterKey, linkedDuplicates);
                 this.Merging?.Invoke(this, mergeEventArgs);
                 if (mergeEventArgs.Cancel)
                 {
@@ -175,52 +175,62 @@ namespace SanteDB.Core.Data
                 }
 
                 // The invoke may have changed the master
-                master = mergeEventArgs.Master;
+                masterKey = mergeEventArgs.MasterKey;
 
+                var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, true, AuthenticationContext.Current.Principal);
                 // We'll update the parameters from the candidate to create a single master record
                 // TODO: Verify this in edge cases
-                Guid? masterKey = master.Key, masterVersionKey = master.VersionKey;
                 Bundle persistenceBundle = new Bundle();
 
                 foreach (var l in linkedDuplicates)
                 {
-                    master.CopyObjectData(l, false); // Copy data which is different
+                    var local = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(l, null, true, AuthenticationContext.Current.Principal);
+                    master.CopyObjectData(local, false); // Copy data which is different
 
                     // Add replaces and nullify
-                    if (l.Key.HasValue)
+                    if (l == Guid.Empty)
                     {
-                        if (master is Act)
-                            (master as Act).Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, l.Key));
-                        else if (l is Entity)
-                            (master as Entity).Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, l.Key));
-                        persistenceBundle.Add(l);
+                        if (master is Act actMaster)
+                            actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, l));
+                        else if (master is Entity entityMaster)
+                            entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, l));
+                        persistenceBundle.Add(local);
                     }
                     else // Not persisted yet
                     {
-                        if (l is Act)
-                            (l as Act).Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, masterKey) { TargetActKey = l.Key });
-                        else if (l is Entity)
-                            (l as Entity).Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, l.Key) { TargetEntityKey = l.Key });
+                        if (master is Act actMaster)
+                            actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, masterKey) { TargetActKey = l });
+                        else if (master is Entity entityMaster)
+                            entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, masterKey) { TargetEntityKey = l });
                     }
-                    (l as IHasState).StatusConceptKey = StatusKeys.Nullified;
+                    (local as IHasState).StatusConceptKey = StatusKeys.Nullified;
 
                 }
                 master.Key = masterKey;
-                master.VersionKey = masterVersionKey;
                 persistenceBundle.Add(master);
 
                 // Persist
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Update(persistenceBundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                this.Merged?.Invoke(this, new DataMergeEventArgs<TModel>(master, linkedDuplicates));
+                this.Merged?.Invoke(this, new DataMergeEventArgs<TModel>(masterKey, linkedDuplicates));
                 return master;
             }
 
             /// <summary>
             /// Unmerge - Not supported by SIM
             /// </summary>
-            public virtual TModel Unmerge(TModel master, TModel unmergeDuplicate)
+            public virtual TModel Unmerge(Guid master, Guid unmergeDuplicate)
             {
                 throw new NotSupportedException("Single Instance Mode cannot un-merge data");
+            }
+
+            public IEnumerable<TModel> GetDuplicates(Guid masterKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            public TModel Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
+            {
+                throw new NotImplementedException();
             }
         }
 

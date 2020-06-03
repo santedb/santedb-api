@@ -36,26 +36,42 @@ namespace SanteDB.Core.Services
         /// Fired prior to a merge occurring
         /// </summary>
         event EventHandler<DataMergingEventArgs<T>> Merging;
+
         /// <summary>
         /// Fired after a merge has occurred
         /// </summary>
         event EventHandler<DataMergeEventArgs<T>> Merged;
- 
+
+        /// <summary>
+        /// Gets the duplicates for the specified master record
+        /// </summary>
+        /// <param name="masterKey">The master record</param>
+        /// <returns>The duplicates currently identified/queried</returns>
+        IEnumerable<T> GetDuplicates(Guid masterKey);
+
+        /// <summary>
+        /// Indicates that the engine should ignore the specified false positives
+        /// </summary>
+        /// <param name="masterKey">The master record which has been identified</param>
+        /// <param name="falsePositives">The list of false positives to be flagged</param>
+        /// <returns>The updated master record</returns>
+        T Ignore(Guid masterKey, IEnumerable<Guid> falsePositives);
+
         /// <summary>
         /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="master"/>
         /// </summary>
-        /// <param name="master">The master record to which the linked duplicates are to be attached</param>
+        /// <param name="masterKey">The master record to which the linked duplicates are to be attached</param>
         /// <param name="linkedDuplicates">The linked records to be merged to master</param>
         /// <returns>The newly updated master record</returns>
-        T Merge(T master, IEnumerable<T> linkedDuplicates);
+        T Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates);
 
         /// <summary>
         /// Un-merges the specified <paramref name="unmergeDuplicate"/> from <paramref name="master"/>
         /// </summary>
-        /// <param name="master">The master record from which a duplicate is to be removed</param>
+        /// <param name="masterKey">The master record from which a duplicate is to be removed</param>
         /// <param name="unmergeDuplicate">The record which is to be unmerged</param>
         /// <returns>The newly created master record from which <paramref name="unmergeDuplicate"/> was created</returns>
-        T Unmerge(T master, T unmergeDuplicate);
+        T Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
 
     }
 }

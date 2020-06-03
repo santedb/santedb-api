@@ -36,20 +36,20 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Gets the master record
         /// </summary>
-        public TModel Master { get; }
+        public Guid MasterKey { get; }
 
         /// <summary>
         /// Gets the linked records
         /// </summary>
-        public IEnumerable<TModel> Linked { get; }
+        public IEnumerable<Guid> LinkedKeys { get; }
         
         /// <summary>
         /// Creates a new data merge event args structure
         /// </summary>
-        public DataMergeEventArgs(TModel master, IEnumerable<TModel> linked)
+        public DataMergeEventArgs(Guid master, IEnumerable<Guid> linked)
         {
-            this.Master = master;
-            this.Linked = linked;
+            this.MasterKey = master;
+            this.LinkedKeys = linked;
         }
     }
 
@@ -68,7 +68,7 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Creates a new data merge event args structure
         /// </summary>
-        public DataMergingEventArgs(TModel master, IEnumerable<TModel> linked) : base(master, linked)
+        public DataMergingEventArgs(Guid masterKey, IEnumerable<Guid> linkedKeys) : base(masterKey, linkedKeys)
         {
         }
     }
