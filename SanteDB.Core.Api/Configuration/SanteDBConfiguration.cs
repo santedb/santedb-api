@@ -122,7 +122,7 @@ namespace SanteDB.Core.Configuration
         public void Save(Stream dataStream)
         {
             this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
-            var namespaces = this.Sections.Select(o => o.GetType().GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
+            var namespaces = this.Sections.Select(o => o.GetType().GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
