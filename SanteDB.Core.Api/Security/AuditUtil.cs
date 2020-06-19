@@ -613,7 +613,8 @@ namespace SanteDB.Core.Security.Audit
             {
                 IDTypeCode = AuditableObjectIdType.Uri,
                 LifecycleType = AuditableObjectLifecycle.Access,
-                ObjectId = url.ToString(),
+                ObjectId = "urlQuery",
+                QueryData = url.ToString(),
                 Role = AuditableObjectRole.Resource,
                 Type = AuditableObjectType.SystemObject
             });
