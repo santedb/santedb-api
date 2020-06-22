@@ -27,6 +27,29 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
+    /// Type of job startup
+    /// </summary>
+    public enum JobStartType
+    {
+        /// <summary>
+        /// Start job as soon as it is added
+        /// </summary>
+        Immediate,
+        /// <summary>
+        /// Start job on a delay
+        /// </summary>
+        DelayStart,
+        /// <summary>
+        /// Start job on schedule only
+        /// </summary>
+        TimerOnly,
+        /// <summary>
+        /// Do not start job
+        /// </summary>
+        Never
+    }
+
+    /// <summary>
     /// Job manager service
     /// </summary>
     public interface IJobManagerService : IDaemonService
@@ -35,7 +58,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Add a job
         /// </summary>
-        void AddJob(IJob jobType, TimeSpan elapseTime);
+        void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
         /// Returns true if the job is registered

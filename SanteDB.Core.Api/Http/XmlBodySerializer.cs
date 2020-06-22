@@ -69,7 +69,12 @@ namespace SanteDB.Core.Http
         public void Serialize(System.IO.Stream s, object o)
         {
             if (o.GetType() == this.m_type)
+            {
+                if(this.m_serializer == null)
+                    this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(this.m_type);
+
                 this.m_serializer.Serialize(s, o);
+            }
             else // Slower
             {
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(o.GetType(), (o as Bundle)?.Item.Select(i => i.GetType()).Distinct().ToArray() ?? new Type[0]);
