@@ -25,6 +25,10 @@ namespace SanteDB.Core.Jobs
     public enum JobStateType
     {
         /// <summary>
+        /// Not yet run
+        /// </summary>
+        NotRun,
+        /// <summary>
         /// Job is stopped
         /// </summary>
         Stopped,
