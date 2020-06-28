@@ -110,7 +110,7 @@ public interface IRepositoryService<TModel> : IServiceImplementation where TMode
     /// <summary>
     /// Represents a repository service wrapping an extended persistence service
     /// </summary>
-    public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel>
+    public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel> 
         where TModel : IdentifiedData
     {
 
