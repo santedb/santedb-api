@@ -108,6 +108,24 @@ public interface IRepositoryService<TModel> : IServiceImplementation where TMode
     }
 
     /// <summary>
+    /// Represents a repository service wrapping an extended persistence service
+    /// </summary>
+    public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel> 
+        where TModel : IdentifiedData
+    {
+
+        /// <summary>
+        /// Touch the specified object
+        /// </summary>
+        void Touch(Guid key);
+
+        /// <summary>
+        /// Nullifies a specific instance
+        /// </summary>
+        TModel Nullify(Guid id);
+    }
+
+    /// <summary>
     /// Repreents a repository which notifies of changes
     /// </summary>
     /// <typeparam name="TModel"></typeparam>
@@ -154,18 +172,6 @@ public interface IRepositoryService<TModel> : IServiceImplementation where TMode
         /// Fired after data was queried
         /// </summary>
         event EventHandler<QueryResultEventArgs<TModel>> Queried;
-    }
-
-    /// <summary>
-    /// Represents a repository which can nullify an object
-    /// </summary>
-    public interface INullifyRepositoryService<TModel> : IRepositoryService<TModel>
-        where TModel : IdentifiedData
-    {
-        /// <summary>
-        /// Nullifies a specific instance
-        /// </summary>
-        TModel Nullify(Guid id);
     }
 
     /// <summary>

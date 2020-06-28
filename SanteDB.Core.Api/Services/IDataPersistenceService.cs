@@ -141,6 +141,7 @@ namespace SanteDB.Core.Services
         /// Performs a fast count
         /// </summary>
         long Count(Expression<Func<TData, bool>> p, IPrincipal authContext = null);
+
     }
 
     /// <summary>
