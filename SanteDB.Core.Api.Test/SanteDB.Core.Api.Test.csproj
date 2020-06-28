@@ -36,7 +36,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+<<<<<<< HEAD
     <PackageReference Include="SanteDB.Core.Model" Version="2.0.25.0" />
+=======
+    <PackageReference Include="SanteDB.Core.Model" Version="2.0.24.0" />
+>>>>>>> 3023a9b186aa68241d77cb435f26c78ef2d59c06
     <PackageReference Include="SharpCompress" Version="0.25.0" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -83,8 +87,13 @@
     </When>
     <Otherwise>
       <ItemGroup>
+<<<<<<< HEAD
         <PackageReference Include="SanteDB.Core.Model" Version="2.0.25.0" />
         <PackageReference Include="SanteDB.Core.Api" Version="2.0.25.0" />
+=======
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.24.0" />
+        <PackageReference Include="SanteDB.Core.Api" Version="2.0.24.0" />
+>>>>>>> 3023a9b186aa68241d77cb435f26c78ef2d59c06
       </ItemGroup>
     </Otherwise>
   </Choose>
