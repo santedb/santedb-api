@@ -28,6 +28,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -229,6 +230,31 @@ namespace SanteDB.Core.Data
             }
 
             public TModel Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Patch Diff(Guid masterKey, Guid linkedDuplicateKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IEnumerable<TModel> GetIgnored(Guid masterKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            public TModel UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void FlagDuplicates(string configurationName = null)
+            {
+                throw new NotImplementedException();
+            }
+
+            public TModel FlagDuplicates(Guid key, string configurationName = null)
             {
                 throw new NotImplementedException();
             }

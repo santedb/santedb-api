@@ -34,6 +34,12 @@ namespace SanteDB.Core.Interfaces
         void AddServiceProvider(Type serviceType);
 
         /// <summary>
+        /// Add the specified service provider
+        /// </summary>
+        /// <param name="serviceInstance">The service instance to be added.</param>
+        void AddServiceProvider(object serviceInstance);
+
+        /// <summary>
         /// Get all services
         /// </summary>
         IEnumerable<object> GetServices();
