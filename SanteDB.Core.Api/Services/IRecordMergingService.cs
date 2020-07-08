@@ -19,6 +19,7 @@
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Patch;
 using System;
 using System.Collections.Generic;
 
@@ -50,12 +51,27 @@ namespace SanteDB.Core.Services
         IEnumerable<T> GetDuplicates(Guid masterKey);
 
         /// <summary>
+        /// Gets the ignore list for the specified master record
+        /// </summary>
+        /// <param name="masterKey">The master record</param>
+        /// <returns>The records which will be ignored</returns>
+        IEnumerable<T> GetIgnored(Guid masterKey);
+
+        /// <summary>
         /// Indicates that the engine should ignore the specified false positives
         /// </summary>
         /// <param name="masterKey">The master record which has been identified</param>
         /// <param name="falsePositives">The list of false positives to be flagged</param>
         /// <returns>The updated master record</returns>
         T Ignore(Guid masterKey, IEnumerable<Guid> falsePositives);
+
+        /// <summary>
+        /// Indicates that an ignored record should be removed from the ignore list
+        /// </summary>
+        /// <param name="masterKey">The master record which has been identified</param>
+        /// <param name="ignoredKeys">The list of ignored keys to be re-considered</param>
+        /// <returns>The updated master record</returns>
+        T UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys);
 
         /// <summary>
         /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="master"/>
@@ -69,9 +85,29 @@ namespace SanteDB.Core.Services
         /// Un-merges the specified <paramref name="unmergeDuplicate"/> from <paramref name="master"/>
         /// </summary>
         /// <param name="masterKey">The master record from which a duplicate is to be removed</param>
-        /// <param name="unmergeDuplicate">The record which is to be unmerged</param>
-        /// <returns>The newly created master record from which <paramref name="unmergeDuplicate"/> was created</returns>
+        /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>
+        /// <returns>The newly created master record from which <paramref name="unmergeDuplicateKey"/> was created</returns>
         T Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
 
+        /// <summary>
+        /// Gets the differences between the master and the linked duplicate
+        /// </summary>
+        /// <param name="masterKey">The key of the master</param>
+        /// <param name="linkedDuplicateKey">The key of the linked duplicate</param>
+        /// <returns>The patch representing the difference</returns>
+        Patch Diff(Guid masterKey, Guid linkedDuplicateKey);
+
+        /// <summary>
+        /// Clears all candidates and re-runs the specified <paramref name="configurationName"/> for the entire database
+        /// </summary>
+        /// <param name="configurationName">The name of the configuration to run</param>
+        void FlagDuplicates(String configurationName = null);
+
+        /// <summary>
+        /// Clears the candidates and re-runs the specified <paramref name="configurationName"/> for the specified record
+        /// </summary>
+        /// <param name="key">The key of the record to flag duplicates for</param>
+        /// <param name="configurationName">The configuration name to use</param>
+        T FlagDuplicates(Guid key, String configurationName = null);
     }
 }

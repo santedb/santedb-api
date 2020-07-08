@@ -70,4 +70,16 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         DateTime? LastFinished { get; }
     }
+
+
+    /// <summary>
+    /// Job which reports progress
+    /// </summary>
+    public interface IReportProgressJob : IJob
+    {
+        /// <summary>
+        /// Gets the progress of the job
+        /// </summary>
+        float Progress { get; }
+    }
 }

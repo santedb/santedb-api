@@ -87,6 +87,11 @@ namespace SanteDB.Core.Services
         /// Gets the name of the record matching configuration for use in blocking
         /// </summary>
         String Name { get; }
+
+        /// <summary>
+        /// Gets the types that this applies to
+        /// </summary>
+        Type[] AppliesTo { get; }
     }
 
     /// <summary>
