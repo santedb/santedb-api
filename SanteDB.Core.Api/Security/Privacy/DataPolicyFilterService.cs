@@ -60,7 +60,7 @@ namespace SanteDB.Core.Security.Privacy
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
 
         // Subscribed listeners
-        private Dictionary<IDataPersistenceService, KeyValuePair<Delegate, Delegate>> m_subscribedListeners = new Dictionary<IDataPersistenceService, KeyValuePair<Delegate, Delegate>>();
+        private Dictionary<Object, KeyValuePair<Delegate, Delegate>> m_subscribedListeners = new Dictionary<Object, KeyValuePair<Delegate, Delegate>>();
 
         // Protected authorities
         private List<AssigningAuthority> m_protectedAuthorities;
@@ -135,7 +135,7 @@ namespace SanteDB.Core.Security.Privacy
 
             foreach (var t in typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) || typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo())))
             {
-                var svcType = typeof(IDataPersistenceService<>).MakeGenericType(t);
+                var svcType = typeof(INotifyRepositoryService<>).MakeGenericType(t);
                 var svcInstance = ApplicationServiceContext.Current.GetService(svcType);
 
                 // Now comes the tricky dicky part - We need to subscribe to a generic event
@@ -166,7 +166,7 @@ namespace SanteDB.Core.Security.Privacy
                     // Bind to events
                     svcType.GetRuntimeEvent("Retrieved").AddEventHandler(svcInstance, retrievedInstanceDelegate);
 
-                    this.m_subscribedListeners.Add(svcInstance as IDataPersistenceService, new KeyValuePair<Delegate, Delegate>(queriedInstanceDelegate, retrievedInstanceDelegate));
+                    this.m_subscribedListeners.Add(svcInstance, new KeyValuePair<Delegate, Delegate>(queriedInstanceDelegate, retrievedInstanceDelegate));
                 }
 
             }
@@ -219,22 +219,20 @@ namespace SanteDB.Core.Security.Privacy
 
             // shall we get distinct AA for which we don't have permission to see
             var blockAa = this.m_protectedAuthorities
-                .Where(aa => pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
+                .Where(aa => AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal && pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
                 .Select(aa => aa.Key)
                 .ToArray();
 
             var decisions = results.OfType<Object>()
-                .AsParallel()
-                .AsOrdered()
-                .WithDegreeOfParallelism(2)
-                .Select(o=>new { Securable = o, Decision = pdp.GetPolicyDecision(AuthenticationContext.Current.Principal, o) });
+                .Select(o=>new { Securable = o, Decision = pdp.GetPolicyDecision(AuthenticationContext.Current.Principal, o) })
+                .ToArray();
             
             return decisions
                 .AsParallel()
                 .AsOrdered()
                 .WithDegreeOfParallelism(2)
                 // We want to mask ELEVATE
-                .Where(o => o.Decision.Outcome != PolicyGrantType.Elevate && o.Securable is IdentifiedData).Select<dynamic, IdentifiedData>(
+                .Where(o => o.Decision.Outcome != PolicyGrantType.Grant && o.Securable is IdentifiedData).Select<dynamic, IdentifiedData>(
                     o => {
                         AuditUtil.AuditMasking(o.Securable as IdentifiedData, o.Decision.Outcome == PolicyGrantType.Deny);
 
@@ -261,8 +259,11 @@ namespace SanteDB.Core.Security.Privacy
                     decisions.Where(o => o.Decision.Outcome == PolicyGrantType.Grant).Select(o => {
                         if (blockAa.Any())
                         {
-                            (o.Securable as Act)?.Identifiers.RemoveAll(a => blockAa.Contains(a.AuthorityKey));
-                            (o.Securable as Entity)?.Identifiers.RemoveAll(a => blockAa.Contains(a.AuthorityKey));
+                            if (o.Securable is Act actData && actData.Identifiers.RemoveAll(a => blockAa.Contains(a.AuthorityKey)) > 0)
+                                actData.AddTag("$pep.masked", "true");
+                            else if (o.Securable is Entity entityData && entityData.Identifiers.RemoveAll(a => blockAa.Contains(a.AuthorityKey)) > 0)
+                                entityData.AddTag("$pep.masked", "true");
+                            
                         }
                         return o.Securable;
                     })
@@ -276,6 +277,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public virtual Object HandlePostRetrieveEvent(Object result)
         {
+            if (result == null) return null;
             // this is a very simple PEP which will enforce active policies in the result set.
             var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
 
