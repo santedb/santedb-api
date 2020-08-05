@@ -415,6 +415,7 @@ namespace SanteDB.Core.Security.Audit
                         kv.Contains("=") ? Encoding.UTF8.GetBytes(kv.Substring(kv.IndexOf("=") + 1)) : new byte[0]
                     )
                 ).ToList(),
+                NameData = (obj as IdentifiedData)?.ToDisplay(),
                 Role = AuditableObjectRole.SecurityResource,
                 Type = AuditableObjectType.SystemObject
             }).ToList();
