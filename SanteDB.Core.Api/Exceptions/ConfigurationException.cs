@@ -17,6 +17,7 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+using SanteDB.Core.Configuration;
 using System;
 
 namespace SanteDB.Core.Exceptions
@@ -26,11 +27,18 @@ namespace SanteDB.Core.Exceptions
     /// </summary>
     public class ConfigurationException : Exception
     {
+
+        /// <summary>
+        /// Gets the configuration that caused the exception
+        /// </summary>
+        public SanteDBConfiguration Configuration { get; private set; }
+        
         /// <summary>
         /// Configuration exception
         /// </summary>
-        public ConfigurationException(String message) : base(message)
+        public ConfigurationException(String message, SanteDBConfiguration configuration) : base(message)
         {
+            this.Configuration = configuration;
         }
     }
 }

@@ -87,7 +87,7 @@ namespace SanteDB.Core.Configuration
                 Version v = new Version(value),
                     myVersion = typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version;
                 if (v.Major > myVersion.Major)
-                    throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion));
+                    throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion), this);
             }
         }
 
@@ -112,7 +112,10 @@ namespace SanteDB.Core.Configuration
             if (s_serializer == null)
                 s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
-            return s_serializer.Deserialize(configStream) as SanteDBConfiguration;
+            var retVal = s_serializer.Deserialize(configStream) as SanteDBConfiguration;
+            if (retVal.Sections.Any(o => o is XmlNode[]))
+                throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))}", retVal);
+            return retVal;
         }
 
         /// <summary>
