@@ -30,5 +30,13 @@ namespace SanteDB.Core.Exceptions
     /// </summary>
     public class DomainStateException : Exception
     {
+
+        /// <summary>
+        /// Service has not yet started up
+        /// </summary>
+        public DomainStateException() : base("Service has not finished startup - Please wait for service startup to finish")
+        {
+
+        }
     }
 }
