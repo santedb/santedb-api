@@ -35,7 +35,8 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Search based on tokens
         /// </summary>
-        IEnumerable<TEntity> Search<TEntity>(String[] term, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData;
+        IEnumerable<TEntity> Search<TEntity>(String[] term, Guid queryId, int offset, int? count, out int totalResults, ModelSort<TEntity>[] orderBy) where TEntity : IdentifiedData, new();
 
     }
+
 }
