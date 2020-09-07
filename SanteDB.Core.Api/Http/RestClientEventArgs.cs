@@ -131,7 +131,7 @@ namespace SanteDB.Core.Http
             get
             {
                 string et = null;
-                this.Headers.TryGetValue("ETag", out et);
+                this.Headers?.TryGetValue("ETag", out et);
                 return et;
             }
         }
