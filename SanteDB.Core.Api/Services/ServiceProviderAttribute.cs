@@ -37,7 +37,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The service class is instantiated for each call of GetService()
         /// </summary>
-        Instance
+        PerCall
     }
 
     /// <summary>
