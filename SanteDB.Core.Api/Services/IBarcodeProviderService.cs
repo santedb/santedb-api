@@ -11,7 +11,7 @@ namespace SanteDB.Core.Api.Services
     /// <summary>
     /// Represents a barcode generator
     /// </summary>
-    public interface IBarcodeGeneratorService : IServiceImplementation
+    public interface IBarcodeProviderService : IServiceImplementation
     {
 
         /// <summary>
@@ -21,5 +21,9 @@ namespace SanteDB.Core.Api.Services
         Stream Generate<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifers)
             where TEntity : VersionedEntityData<TEntity>, new();
 
+        /// <summary>
+        /// Fetch the resource which the data for the specified barcode indicates
+        /// </summary>
+        IdentifiedData ResolveResource(String data);
     }
 }

@@ -34,6 +34,16 @@ namespace SanteDB.Core.Security
     {
 
         /// <summary>
+        /// True if the signature service is symmetric
+        /// </summary>
+        bool IsSymmetric { get; }
+
+        /// <summary>
+        /// Get the keys identifiers registered for the signature service
+        /// </summary>
+        IEnumerable<String> GetKeys();
+
+        /// <summary>
         /// Get the siganture algorithm this service would use to sign w/the specified key
         /// </summary>
         string GetSignatureAlgorithm(String keyId = null);
