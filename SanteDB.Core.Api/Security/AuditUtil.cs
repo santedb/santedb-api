@@ -25,6 +25,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
@@ -164,6 +165,45 @@ namespace SanteDB.Core.Security.Audit
 
             SendAudit(audit);
 
+        }
+
+        /// <summary>
+        /// Audit that a synchronization occurred
+        /// </summary>
+        public static void AuditSynchronization(AuditableObjectLifecycle lifecycle, String remoteTarget, OutcomeIndicator outcome, params IdentifiedData[] objects)
+        {
+            AuditCode eventTypeId = new AuditCode("Synchronization", "SecurityAuditCode");
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export , eventTypeId);
+
+            AddLocalDeviceActor(audit);
+            if (lifecycle == AuditableObjectLifecycle.Export) // me to remote 
+            {
+                // I am the source
+                audit.Actors.First().ActorRoleCode = new List<AuditCode>() { new AuditCode("110153", "DCM") { DisplayName = "Source" } };
+                // Remote is the destination
+                audit.Actors.Add(new AuditActorData()
+                {
+                    ActorRoleCode = new List<AuditCode>() { new AuditCode("110152", "DCM") { DisplayName = "Destination" } },
+                    NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                    NetworkAccessPointId = remoteTarget
+                });
+            }
+            else
+            {
+                // Remote is the destination
+                audit.Actors.Add(new AuditActorData()
+                {
+                    ActorRoleCode = new List<AuditCode>() { new AuditCode("110153", "DCM") { DisplayName = "Source" } },
+                    NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                    NetworkAccessPointId = remoteTarget
+                });
+            }
+
+            if (objects.All(o => o is Bundle))
+                objects = objects.OfType<Bundle>().SelectMany(o => o.Item).ToArray();
+            audit.AuditableObjects = objects.Select(o => CreateAuditableObject(o, lifecycle)).ToList();
+
+            SendAudit(audit);
         }
 
         /// <summary>
