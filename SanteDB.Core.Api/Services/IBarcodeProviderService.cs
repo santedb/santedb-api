@@ -24,6 +24,8 @@ namespace SanteDB.Core.Api.Services
         /// <summary>
         /// Fetch the resource which the data for the specified barcode indicates
         /// </summary>
-        IdentifiedData ResolveResource(String data);
+        /// <param name="data">The data to be resolved</param>
+        /// <param name="validate">True if validation should occur</param>
+        IdentifiedData ResolveResource(String data, bool validate = false);
     }
 }
