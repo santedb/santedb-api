@@ -90,7 +90,7 @@ namespace SanteDB.Core.Services.Impl
             var header = new
             {
                 alg = signatureService.GetSignatureAlgorithm(),
-                typ = $"x-santedb+{identifers.First().LoadProperty<TEntity>("SourceEntity")?.Type}",
+                typ = $"x-santedb+{typeof(TEntity).GetSerializationName()}",
                 key = keyId
             };
 
@@ -152,18 +152,17 @@ namespace SanteDB.Core.Services.Impl
                 var domainQuery = new NameValueCollection();
                 foreach (var id in body.id)
                     domainQuery.Add($"identifier[{id.ns.ToString()}].value", id.value.ToString());
+                var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
 
-                IdentifiedData result = null;
-                if (typeof(Entity).IsAssignableFrom(type))
-                {
-                    var query = QueryExpressionParser.BuildLinqExpression<Entity>(domainQuery);
-                    result = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Find(query, 0, 2, out int tr).SingleOrDefault();
-                }
-                else if (typeof(Act).IsAssignableFrom(type))
-                {
-                    var query = QueryExpressionParser.BuildLinqExpression<Entity>(domainQuery);
-                    result = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Find(query, 0, 2, out int tr).SingleOrDefault();
-                }
+                // Get query
+                var repoType = typeof(IRepositoryService<>).MakeGenericType(type);
+                var repoService = (ApplicationServiceContext.Current as IServiceProvider).GetService(repoType) as IRepositoryService;
+                if (repoService == null)
+                    throw new InvalidOperationException("Cannot find appropriate repository service");
+
+                // HACK: .NET is using late binding and getting confused
+                var results = repoService.Find(filterExpression, 0, 2,out int tr) as IEnumerable<IdentifiedData>;
+                var result = results.SingleOrDefault();
 
                 // Validate the signature if we have the key
                 if (validate)
