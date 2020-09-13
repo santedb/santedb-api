@@ -21,6 +21,7 @@ using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -46,13 +47,57 @@ namespace SanteDB.Core.Services
         public TModel Data { get; private set; }
 
     }
-/// <summary>
-/// Represents a repository service base
-/// </summary>
-public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
+
+    /// <summary>
+    /// Repository service
+    /// </summary>
+    public interface IRepositoryService : IServiceImplementation
     {
 
-       
+        /// <summary>
+        /// Get the specified object
+        /// </summary>
+        IdentifiedData Get(Guid key);
+
+        /// <summary>
+        /// Find the specified object
+        /// </summary>
+        IEnumerable<IdentifiedData> Find(Expression query);
+
+        /// <summary>
+        /// Find the specified object
+        /// </summary>
+        IEnumerable<IdentifiedData> Find(Expression query, int offset, int? count, out int totalResults);
+
+        /// <summary>
+        /// Inserts the specified data.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <returns>TModel.</returns>
+        IdentifiedData Insert(object data);
+
+        /// <summary>
+        /// Saves the specified data.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <returns>Returns the model.</returns>
+        IdentifiedData Save(object data);
+
+        /// <summary>
+        /// Obsoletes the specified data.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>Returns the model.</returns>
+        IdentifiedData Obsolete(Guid key);
+    }
+
+    /// <summary>
+    /// Represents a repository service base
+    /// </summary>
+    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
+    {
+
+
         /// <summary>
         /// Gets the specified model.
         /// </summary>
@@ -110,7 +155,7 @@ public interface IRepositoryService<TModel> : IServiceImplementation where TMode
     /// <summary>
     /// Represents a repository service wrapping an extended persistence service
     /// </summary>
-    public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel> 
+    public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
 
