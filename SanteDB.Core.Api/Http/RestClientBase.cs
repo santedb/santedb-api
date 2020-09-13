@@ -181,7 +181,6 @@ namespace SanteDB.Core.Http
             if (this.Description.Binding.Optimize)
                 retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
 
-
             // Return type?
             if (!String.IsNullOrEmpty(this.Accept))
             {
@@ -549,6 +548,8 @@ namespace SanteDB.Core.Http
                     case HttpStatusCode.Created:
                     case HttpStatusCode.Redirect:
                     case HttpStatusCode.Moved:
+                    case HttpStatusCode.RedirectKeepVerb:
+                    case HttpStatusCode.RedirectMethod:
                         return ServiceClientErrorType.Valid;
                     default:
                         return ServiceClientErrorType.GenericError;
