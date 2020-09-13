@@ -55,11 +55,19 @@ namespace SanteDB.Core.Api.Security
             {
                 int offset = 0;
                 if (Int32.TryParse(me.Value, out offset))
-                    value = new DateTime(1970, 1, 1).AddSeconds(offset).ToLocalTime();
+                    value = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(offset).ToLocalTime();
                 else
                     throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
             }
             return value;
+        }
+
+        /// <summary>
+        /// To Epoch time
+        /// </summary>
+        public static Int32 ToUnixEpoch(this DateTime me)
+        {
+            return (Int32)me.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
         }
     }
 }

@@ -21,11 +21,5 @@ namespace SanteDB.Core.Api.Services
         Stream Generate<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifers)
             where TEntity : VersionedEntityData<TEntity>, new();
 
-        /// <summary>
-        /// Fetch the resource which the data for the specified barcode indicates
-        /// </summary>
-        /// <param name="data">The data to be resolved</param>
-        /// <param name="validate">True if validation should occur</param>
-        IdentifiedData ResolveResource(String data, bool validate = false);
     }
 }

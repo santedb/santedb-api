@@ -119,6 +119,13 @@ namespace SanteDB.Core.Security
         public const string LoginPasswordOnly = LoginAsService + ".1";
 
         /// <summary>
+        /// Allow users to impersonate or use their device credentials
+        /// </summary>
+        public const string LoginImpersonateApplication = LoginAsService + ".2";
+
+
+
+        /// <summary>
         /// Access clinical data permission 
         /// </summary>
         public const string UnrestrictedClinicalData = UnrestrictedAll + ".2";
