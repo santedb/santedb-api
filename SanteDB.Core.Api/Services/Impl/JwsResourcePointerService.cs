@@ -52,16 +52,22 @@ namespace SanteDB.Core.Services.Impl
                 var appId = claimsPrincipal.FindFirst(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim)?.Value;
                 if (String.IsNullOrEmpty(appId))
                     throw new InvalidOperationException("Can only generate signed pointers when authenticated");
-
-                // Application identity
-                var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
                 var keyId = $"SA.{appId}";
-                var key = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetSecureKey(appIdentity.Name);
 
-                // Get the key 
-                signatureService.AddSigningKey(keyId, key, "HS256");
+                // Does the key provider have the key for this app?
+                if (signatureService.GetKeys().Any(k => k == keyId))
+                    return keyId;
+                else
+                {
+                    // Application identity
+                    var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
+                    var key = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetSecureKey(appIdentity.Name);
 
-                return keyId;
+                    // Get the key 
+                    signatureService.AddSigningKey(keyId, key, "HS256");
+
+                    return keyId;
+                }
             }
             else
                 throw new InvalidOperationException("Cannot generate a personal key without knowing application id");
@@ -176,7 +182,7 @@ namespace SanteDB.Core.Services.Impl
                             if (appInstance == null)
                                 throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.app", "Unknown source application", DetectedIssueKeys.SecurityIssue));
 
-                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetSecureKey(appInstance.Name);
+                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetSecureKey(appInstance.Name);
                             signatureService.AddSigningKey(keyId, secret, "HS256");
                         }
                         else
@@ -187,11 +193,8 @@ namespace SanteDB.Core.Services.Impl
                         throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm {algorithm} Not Supported (expected {signatureService.GetSignatureAlgorithm(keyId)})", DetectedIssueKeys.SecurityIssue));
 
                     var payload = Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}");
-                    var key = result.Key.ToString();
-                    if (!key.StartsWith(keyId, StringComparison.OrdinalIgnoreCase)) // Key was the UUID of the patient
-                        key = keyId;
 
-                    if (!signatureService.Verify(payload, signatureBytes, key))
+                    if (!signatureService.Verify(payload, signatureBytes, keyId))
                         throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                 }
                 // Return the result

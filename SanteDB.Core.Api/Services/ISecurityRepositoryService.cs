@@ -43,11 +43,6 @@ namespace SanteDB.Core.Services
         SecurityUser ChangePassword(Guid userId, String password);
 
         /// <summary>
-        /// Get security entity from the specified principal
-        /// </summary>
-        SecurityEntity GetSecurityEntity(IPrincipal principal);
-
-        /// <summary>
         /// Gets the specified provider entity from the specified identity
         /// </summary>
         /// <param name="identity">The identity to resolve to a provider</param>
