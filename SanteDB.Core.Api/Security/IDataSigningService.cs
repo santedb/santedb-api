@@ -34,11 +34,6 @@ namespace SanteDB.Core.Security
     {
 
         /// <summary>
-        /// True if the signature service is symmetric
-        /// </summary>
-        bool IsSymmetric { get; }
-
-        /// <summary>
         /// Get the keys identifiers registered for the signature service
         /// </summary>
         IEnumerable<String> GetKeys();
@@ -47,6 +42,14 @@ namespace SanteDB.Core.Security
         /// Get the siganture algorithm this service would use to sign w/the specified key
         /// </summary>
         string GetSignatureAlgorithm(String keyId = null);
+
+        /// <summary>
+        /// Register a key with the provider
+        /// </summary>
+        /// <param name="keyId">The key identifier to register</param>
+        /// <param name="keyData">The key data (passphrase, or any other structured key data)</param>
+        /// <param name="signatureAlgorithm">The signature algorithm</param>
+        void AddSigningKey(string keyId, byte[] keyData, String signatureAlgorithm);
 
         /// <summary>
         /// Signs the specified data using the service's configured signing key

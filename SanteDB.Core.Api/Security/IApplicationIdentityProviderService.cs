@@ -70,5 +70,10 @@ namespace SanteDB.Core.Security.Services
         /// <param name="secret">The new secret</param>
         /// <param name="principal">The principal that is changing the secret</param>
         void ChangeSecret(String name, String secret, IPrincipal principal);
+
+        /// <summary>
+        /// Get the secure key for the specified application (can be used for symmetric encryption)
+        /// </summary>
+        byte[] GetSecureKey(String name);
     }
 }

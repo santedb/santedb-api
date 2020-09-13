@@ -41,7 +41,12 @@ namespace SanteDB.Core.Services
         /// <param name="password">The new password of the user.</param>
         /// <returns>Returns the updated user.</returns>
         SecurityUser ChangePassword(Guid userId, String password);
-        
+
+        /// <summary>
+        /// Get security entity from the specified principal
+        /// </summary>
+        SecurityEntity GetSecurityEntity(IPrincipal principal);
+
         /// <summary>
         /// Gets the specified provider entity from the specified identity
         /// </summary>
