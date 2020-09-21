@@ -201,7 +201,7 @@ namespace SanteDB.Core.Security.Audit
 
             if (objects.All(o => o is Bundle))
                 objects = objects.OfType<Bundle>().SelectMany(o => o.Item).ToArray();
-            audit.AuditableObjects = objects.Select(o => CreateAuditableObject(o, lifecycle)).ToList();
+            audit.AuditableObjects = objects.OfType<IdentifiedData>().Select(o => CreateAuditableObject(o, lifecycle)).ToList();
 
             SendAudit(audit);
         }
@@ -324,7 +324,7 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            audit.AuditableObjects = data.Select(o =>
+            audit.AuditableObjects = data.OfType<TData>().Select(o =>
             {
                 var obj = CreateAuditableObject(o, lifecycle);
                 return obj;
@@ -353,6 +353,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="obj">The object to translate</param>
         private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
         {
+
             var idTypeCode = AuditableObjectIdType.Custom;
             var roleCode = AuditableObjectRole.Resource;
             var objType = AuditableObjectType.Other;
@@ -402,7 +403,7 @@ namespace SanteDB.Core.Security.Audit
                 IDTypeCode = idTypeCode,
                 CustomIdTypeCode = idTypeCode == AuditableObjectIdType.Custom ? new AuditCode(obj.GetType().Name, obj.GetType().Namespace) : null,
                 LifecycleType = lifecycle,
-                ObjectId = (obj as IIdentifiedEntity)?.Key?.ToString() ?? (obj as AuditData)?.Key.ToString() ?? (obj.GetType().GetRuntimeProperty("Id")?.GetValue(obj)?.ToString()) ?? obj.ToString(),
+                ObjectId = (obj as IIdentifiedEntity)?.Key?.ToString() ?? (obj as AuditData)?.Key?.ToString() ?? (obj.GetType().GetRuntimeProperty("Id")?.GetValue(obj)?.ToString()) ?? obj.ToString(),
                 Role = roleCode,
                 Type = objType
             };
@@ -813,7 +814,7 @@ namespace SanteDB.Core.Security.Audit
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
 
-            audit.AuditableObjects = exportedData.Select(o =>
+            audit.AuditableObjects = exportedData.Where(o=>o!=null).Select(o =>
             {
                 var obj = CreateAuditableObject(o, AuditableObjectLifecycle.Export);
                 return obj;
