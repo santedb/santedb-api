@@ -17,6 +17,7 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+using Newtonsoft.Json;
 using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -53,7 +54,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Gets or sets the key name
         /// </summary>
-        [XmlAttribute("id")]
+        [XmlAttribute("id"), JsonProperty("id")]
         [DisplayName("Key ID")]
         [Description("The identifier for the signature key")]
         public string KeyName { get; set; }
@@ -61,7 +62,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// The unique name for the signer
         /// </summary>
-        [XmlAttribute("name")]
+        [XmlAttribute("name"), JsonProperty("name")]
         [DisplayName("Issuer")]
         [Description("The name of the signature authority this represents")]
         public string IssuerName { get; set; }
@@ -69,7 +70,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Signature mode
         /// </summary>
-        [XmlAttribute("alg")]
+        [XmlAttribute("alg"), JsonProperty("alg")]
         [DisplayName("Signing Algorithm")]
         [Description("The type of signature algorithm to use")]
         public SignatureAlgorithm Algorithm {
@@ -91,7 +92,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// When using HMAC256 signing this represents the server's secret
         /// </summary>
-        [XmlAttribute("hmacKey")]
+        [XmlAttribute("hmacKey"), JsonProperty("hmacKey")]
         [DisplayName("HMAC256 Key")]
         [ReadOnly(true)]
         public byte[] Secret { get; set; }
@@ -99,7 +100,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Plaintext editor for secret
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         [Description("When using HS256 signing the secret to use")]
         [DisplayName("HMAC256 Secret")]
         [PasswordPropertyText(true)]

@@ -17,6 +17,7 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Security;
 using System;
 using System.ComponentModel;
@@ -38,7 +39,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// The find type
         /// </summary>
-        [XmlAttribute("findType")]
+        [XmlAttribute("findType"), JsonProperty("findType")]
         [DisplayName("Certificate Search")]
         [Description("Identifies the algorithm to use to locate the security certificate")]
         public X509FindType FindType { get; set; }
@@ -46,7 +47,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// The store name
         /// </summary>
-        [XmlAttribute("storeName")]
+        [XmlAttribute("storeName"), JsonProperty("storeName")]
         [DisplayName("X509 Store")]
         [Description("Identifies the secure X.509 certificate store to search")]
         public StoreName StoreName { get; set; }
@@ -54,7 +55,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// The store location
         /// </summary>
-        [XmlAttribute("storeLocation")]
+        [XmlAttribute("storeLocation"), JsonProperty("storeLocation")]
         [DisplayName("X509 Location")]
         [Description("Identifies the location of the X.509 certificate store to load from")]
         public StoreLocation StoreLocation { get; set; }
@@ -62,28 +63,28 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Whether the find type was provided
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         [Browsable(false)]
         public bool FindTypeSpecified { get; set; }
 
         /// <summary>
         /// Whether the store name was provided
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         [Browsable(false)]
         public bool StoreNameSpecified { get; set; }
 
         /// <summary>
         /// Whether the store location was provided
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         [Browsable(false)]
         public bool StoreLocationSpecified { get; set; }
 
         /// <summary>
         /// The find value
         /// </summary>
-        [XmlAttribute("findValue")]
+        [XmlAttribute("findValue"), JsonProperty("findValue")]
         [DisplayName("Certificate Identification")]
         [Description("The certificate value to look for in the secure store")]
         [ReadOnly(true)]
@@ -92,7 +93,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Get the certificate
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         [Description("The X509 certificate to use")]
         [DisplayName("Certificate")]
         [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration, Version=1.0.0.0", "System.Drawing.Design.UITypeEditor, System.Windows.Forms")]
