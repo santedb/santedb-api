@@ -56,6 +56,7 @@ namespace SanteDB.Core.Security.Configuration
         // HMAC key
         private string m_plainTextSecret = null;
         private byte[] m_secret = null;
+        private byte[] m_decrypedSecret = null;
 
         /// <summary>
         /// Gets or sets the key name
@@ -142,6 +143,9 @@ namespace SanteDB.Core.Security.Configuration
         public byte[] GetSecret()
         {
 
+            if (this.m_decrypedSecret != null)
+                return this.m_decrypedSecret;
+
             if (this.Secret == null)
             {
                 // Perhaps the plain text secret is set?
@@ -158,7 +162,8 @@ namespace SanteDB.Core.Security.Configuration
             var ivLength = this.Secret[0];
             var iv = this.Secret.Skip(1).Take(ivLength).ToArray();
             var data = this.Secret.Skip(1 + ivLength).ToArray();
-            return cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+            this.m_decrypedSecret = cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+            return this.m_decrypedSecret;
         }
 
         /// <summary>
@@ -166,6 +171,8 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         public bool SetSecret(byte[] secret)
         {
+            this.m_decrypedSecret = secret;
+
             var cryptoService = ApplicationServiceContext.Current?.GetService<ISymmetricCryptographicProvider>();
             if (cryptoService == null)
                 return false;
