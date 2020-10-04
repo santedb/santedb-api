@@ -18,7 +18,9 @@
  * Date: 2019-11-27
  */
 using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -51,6 +53,10 @@ namespace SanteDB.Core.Security.Configuration
         // Algorithm
         private SignatureAlgorithm m_algorithm = SignatureAlgorithm.HS256;
 
+        // HMAC key
+        private string m_plainTextSecret = null;
+        private byte[] m_secret = null;
+
         /// <summary>
         /// Gets or sets the key name
         /// </summary>
@@ -62,7 +68,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// The unique name for the signer
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlAttribute("iss"), JsonProperty("iss")]
         [DisplayName("Issuer")]
         [Description("The name of the signature authority this represents")]
         public string IssuerName { get; set; }
@@ -95,16 +101,85 @@ namespace SanteDB.Core.Security.Configuration
         [XmlAttribute("hmacKey"), JsonProperty("hmacKey")]
         [DisplayName("HMAC256 Key")]
         [ReadOnly(true)]
-        public byte[] Secret { get; set; }
+        public byte[] Secret
+        {
+            get {
+                if (this.m_secret == null && !String.IsNullOrEmpty(this.m_plainTextSecret))
+                    this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
+                return this.m_secret;
+            }
+            set => this.m_secret = value;
+        }
 
         /// <summary>
         /// Plaintext editor for secret
         /// </summary>
-        [XmlIgnore, JsonIgnore]
+        [XmlAttribute("hmacSecret"), JsonProperty("hmacSecret")]
         [Description("When using HS256 signing the secret to use")]
         [DisplayName("HMAC256 Secret")]
         [PasswordPropertyText(true)]
-        public string HmacSecret { get => "none"; set => this.Secret = value == null ? null : SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(value)); }
+        public string HmacSecret
+        {
+            get => "none";
+            set
+            {
+                if (value == null)
+                    this.Secret = null;
+                else if(!this.SetSecret(Encoding.UTF8.GetBytes(value)))
+                    this.m_plainTextSecret = value;
 
+            }
+        }
+
+        /// <summary>
+        /// Should never serialize the secret (even though it is just NONE)
+        /// </summary>
+        public bool ShouldSerializeHmacSecret() => false;
+
+        /// <summary>
+        /// Get the HMAC secret
+        /// </summary>
+        public byte[] GetSecret()
+        {
+
+            if (this.Secret == null)
+            {
+                // Perhaps the plain text secret is set?
+                if (!String.IsNullOrEmpty(this.m_plainTextSecret))
+                {
+                    this.m_plainTextSecret = String.Empty;
+                    this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
+                }
+                else
+                    return null;
+            }
+
+            var cryptoService = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
+            var ivLength = this.Secret[0];
+            var iv = this.Secret.Skip(1).Take(ivLength).ToArray();
+            var data = this.Secret.Skip(1 + ivLength).ToArray();
+            return cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+        }
+
+        /// <summary>
+        /// Set the secret
+        /// </summary>
+        public bool SetSecret(byte[] secret)
+        {
+            var cryptoService = ApplicationServiceContext.Current?.GetService<ISymmetricCryptographicProvider>();
+            if (cryptoService == null)
+                return false;
+
+            var iv = cryptoService.GenerateIV();
+            var key = cryptoService.GetContextKey();
+
+            var data = cryptoService.Encrypt(secret, key, iv);
+            this.m_secret = new byte[data.Length + iv.Length + 1];
+            this.m_secret[0] = (byte)iv.Length;
+            Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
+            Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
+            this.m_plainTextSecret = String.Empty;
+            return true;
+        }
     }
 }

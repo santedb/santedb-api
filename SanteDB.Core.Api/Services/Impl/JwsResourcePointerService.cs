@@ -40,12 +40,17 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get the key identifier for the signature
         /// </summary>
-        private String GetAppKey()
+        private String GetAppKeyId()
         {
             var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
             if (signatureService == null)
                 throw new InvalidOperationException("Cannot find data signing service");
-            
+
+            // Is there a key called jwsdefault? If so, use it as the default signature key
+            if (signatureService.GetKeys().Contains("jwsdefault"))
+                return "jwsdefault";
+
+            // Otherwise use the configured secure application HMAC key as the default
             if (AuthenticationContext.Current.Principal is IClaimsPrincipal claimsPrincipal)
             {
                 // Is there a tag for their application
@@ -83,7 +88,7 @@ namespace SanteDB.Core.Services.Impl
             if (signatureService == null)
                 throw new InvalidOperationException("Cannot find data signing service");
 
-            var keyId = this.GetAppKey();
+            var keyId = this.GetAppKeyId();
 
             // Append the header to the token
             // Append authorities to identifiers
