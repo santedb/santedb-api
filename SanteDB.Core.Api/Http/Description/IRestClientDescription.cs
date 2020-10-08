@@ -17,28 +17,29 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Http.Description
 {
-    /// <summary>
-    /// Represents a description of a service
-    /// </summary>
-    public interface IRestClientDescription
+	/// <summary>
+	/// Represents a description of a service
+	/// </summary>
+	public interface IRestClientDescription
     {
-
-        /// <summary>
-        /// Gets whether a tracing is enabled.
+	    /// <summary>
+        /// Gets or sets the binding for the service client.
         /// </summary>
-        bool Trace { get; }
-        /// <summary>
+        IRestClientBindingDescription Binding { get; }
+
+	    /// <summary>
         /// Gets or sets the endpoints for the client
         /// </summary>
         List<IRestClientEndpointDescription> Endpoint { get; }
 
-        /// <summary>
-        /// Gets or sets the binding for the service client.
+	    /// <summary>
+        /// Gets whether a tracing is enabled.
         /// </summary>
-        IRestClientBindingDescription Binding { get; }
+        bool Trace { get; }
     }
 }

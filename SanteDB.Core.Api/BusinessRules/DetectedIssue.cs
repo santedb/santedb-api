@@ -19,18 +19,14 @@
  */
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.BusinessRules
 {
-    /// <summary>
-    /// Detected issue priority
-    /// </summary>
-    public enum DetectedIssuePriorityType : int
+	/// <summary>
+	/// Detected issue priority
+	/// </summary>
+	public enum DetectedIssuePriorityType : int
     {
         /// <summary>
         /// The issue is an error, processing cannot continue until the issue is corrected

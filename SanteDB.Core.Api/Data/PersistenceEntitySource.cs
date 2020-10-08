@@ -31,10 +31,10 @@ using System.Reflection;
 
 namespace SanteDB.Core.Data
 {
-    /// <summary>
-    /// Entity source which loads local objects
-    /// </summary>
-    public class PersistenceEntitySource : IEntitySourceProvider
+	/// <summary>
+	/// Entity source which loads local objects
+	/// </summary>
+	public class PersistenceEntitySource : IEntitySourceProvider
     {
 
 

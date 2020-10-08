@@ -17,11 +17,9 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Configuration
 {
@@ -31,39 +29,45 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public static class FeatureGroup
     {
-        /// <summary>
-        /// Feature is a system feature
-        /// </summary>
-        public const string System = "System";
-        /// <summary>
-        /// Feature is related to messaging
-        /// </summary>
-        public const string Messaging = "Messaging";
-        /// <summary>
+	    /// <summary>
         /// Feature is related to development
         /// </summary>
         public const string Development = "Development";
-        /// <summary>
-        /// Feature is related to persistence
-        /// </summary>
-        public const string Persistence = "Persistence";
-        /// <summary>
+
+	    /// <summary>
         /// Feature is related to diagnostics
         /// </summary>
         public const string Diagnostics = "Diagnostics";
-        /// <summary>
+
+	    /// <summary>
+        /// Feature is related to messaging
+        /// </summary>
+        public const string Messaging = "Messaging";
+
+	    /// <summary>
         /// Feature is an operating system / runtime feature
         /// </summary>
         public const string OperatingSystem = "Operating System";
-        /// <summary>
+
+	    /// <summary>
         /// Performance
         /// </summary>
         public const string Performance = "Performance";
-        /// <summary>
+
+	    /// <summary>
+        /// Feature is related to persistence
+        /// </summary>
+        public const string Persistence = "Persistence";
+
+	    /// <summary>
         /// Feature is a security feature
         /// </summary>
         public const string Security = "Security";
 
+	    /// <summary>
+        /// Feature is a system feature
+        /// </summary>
+        public const string System = "System";
     }
 
     /// <summary>
@@ -153,48 +157,47 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public interface IFeature
     {
-
-        /// <summary>
-        /// Gets the name of the feature
+	    /// <summary>
+        /// Gets or sets the configuration object
         /// </summary>
-        String Name { get; }
+        object Configuration { get; set; }
 
-        /// <summary>
-        /// Get the description of the feature
-        /// </summary>
-        String Description { get; }
-
-        /// <summary>
-        /// Get the grouping in the configuration
-        /// </summary>
-        String Group { get; } 
-
-        /// <summary>
+	    /// <summary>
         /// Gets the configuration type
         /// </summary>
         Type ConfigurationType { get; }
 
-        /// <summary>
-        /// Gets or sets the configuration object
+	    /// <summary>
+        /// Get the description of the feature
         /// </summary>
-        Object Configuration { get; set; }
+        string Description { get; }
 
-        /// <summary>
+	    /// <summary>
         /// Gets the flags for this feature
         /// </summary>
         FeatureFlags Flags { get; }
 
-        /// <summary>
+	    /// <summary>
+        /// Get the grouping in the configuration
+        /// </summary>
+        string Group { get; }
+
+	    /// <summary>
+        /// Gets the name of the feature
+        /// </summary>
+        string Name { get; }
+
+	    /// <summary>
         /// Create the necessary tasks to configure the feature
         /// </summary>
         IEnumerable<IConfigurationTask> CreateInstallTasks();
 
-        /// <summary>
+	    /// <summary>
         /// Create uninstallation tasks
         /// </summary>
         IEnumerable<IConfigurationTask> CreateUninstallTasks();
 
-        /// <summary>
+	    /// <summary>
         /// Returns true if the configuration supplied is configured for this feature
         /// </summary>
         FeatureInstallState QueryState(SanteDBConfiguration configuration);

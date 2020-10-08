@@ -19,17 +19,17 @@
  */
 namespace SanteDB.Core.Http.Description
 {
-    /// <summary>
-    /// REST based client endpoint description
-    /// </summary>
-    public interface IRestClientEndpointDescription
+	/// <summary>
+	/// REST based client endpoint description
+	/// </summary>
+	public interface IRestClientEndpointDescription
     {
-        /// <summary>
+	    /// <summary>
         /// Gets the address of the endpoint
         /// </summary>
         string Address { get; }
 
-        /// <summary>
+	    /// <summary>
         /// Gets or sets the timeouts
         /// </summary>
         int Timeout { get; set; }

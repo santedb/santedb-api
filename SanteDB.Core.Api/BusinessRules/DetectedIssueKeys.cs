@@ -18,17 +18,13 @@
  * Date: 2019-11-27
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.BusinessRules
 {
-    /// <summary>
-    /// Detected issue type keys
-    /// </summary>
-    public static class DetectedIssueKeys
+	/// <summary>
+	/// Detected issue type keys
+	/// </summary>
+	public static class DetectedIssueKeys
     {
 
         /// <summary>

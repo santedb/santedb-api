@@ -25,7 +25,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
@@ -34,15 +33,13 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Data
 {
-    /// <summary>
-    /// Represents a daemon service that registers a series of merge services which can merge records together
-    /// </summary>
-    public class SimDataManagementService : IDaemonService
+	/// <summary>
+	/// Represents a daemon service that registers a series of merge services which can merge records together
+	/// </summary>
+	public class SimDataManagementService : IDaemonService
     {
 
         /// <summary>

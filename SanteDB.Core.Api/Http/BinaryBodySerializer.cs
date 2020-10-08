@@ -22,10 +22,10 @@ using System.IO;
 
 namespace SanteDB.Core.Http
 {
-    /// <summary>
-    /// Binary body serializer
-    /// </summary>
-    public class BinaryBodySerializer : IBodySerializer
+	/// <summary>
+	/// Binary body serializer
+	/// </summary>
+	public class BinaryBodySerializer : IBodySerializer
     {
         /// <summary>
         /// Gets the serializer for this body serializer

@@ -17,13 +17,9 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Services;
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration
 {
@@ -33,33 +29,32 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public interface IConfigurationTask : IReportProgressChanged
     {
-
-        /// <summary>
-        /// Get the name of the task
-        /// </summary>
-        String Name { get; }
-
-        /// <summary>
+	    /// <summary>
         /// Get description of the task
         /// </summary>
-        String Description { get;  }
+        string Description { get;  }
 
-        /// <summary>
+	    /// <summary>
         /// Gets the feature that is being configured
         /// </summary>
         IFeature Feature { get; }
 
-        /// <summary>
+	    /// <summary>
+        /// Get the name of the task
+        /// </summary>
+        string Name { get; }
+
+	    /// <summary>
         /// Execute the configuration task
         /// </summary>
         bool Execute(SanteDBConfiguration configuration);
 
-        /// <summary>
+	    /// <summary>
         /// Rollback changes in the specified configuration
         /// </summary>
         bool Rollback(SanteDBConfiguration configuration);
 
-        /// <summary>
+	    /// <summary>
         /// Verify the task prior to running
         /// </summary>
         bool VerifyState(SanteDBConfiguration configuration);
@@ -70,15 +65,14 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public interface IDescribedConfigurationTask : IConfigurationTask
     {
+	    /// <summary>
+        /// Gets the additional information
+        /// </summary>
+        string AdditionalInformation { get; }
 
-        /// <summary>
+	    /// <summary>
         /// Get information about the task
         /// </summary>
         Uri HelpUri { get; }
-
-        /// <summary>
-        /// Gets the additional information
-        /// </summary>
-        String AdditionalInformation { get; }
     }
 }

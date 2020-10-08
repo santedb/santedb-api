@@ -19,29 +19,29 @@
  */
 namespace SanteDB.Core.Http.Description
 {
-    /// <summary>
-    /// Certificate description
-    /// </summary>
-    public interface IRestClientCertificateDescription
+	/// <summary>
+	/// Certificate description
+	/// </summary>
+	public interface IRestClientCertificateDescription
     {
-        /// <summary>
+	    /// <summary>
         /// Gets the type of find algorithm of X509FindType
         /// </summary>
         string FindType { get; }
 
-        /// <summary>
-        /// Gets the name of the certificate store
+	    /// <summary>
+        /// Gets the find value
         /// </summary>
-        string StoreName { get; }
+        string FindValue { get; }
 
-        /// <summary>
+	    /// <summary>
         /// Gets the location of the certificate store
         /// </summary>
         string StoreLocation { get; }
 
-        /// <summary>
-        /// Gets the find value
+	    /// <summary>
+        /// Gets the name of the certificate store
         /// </summary>
-        string FindValue { get; }
+        string StoreName { get; }
     }
 }

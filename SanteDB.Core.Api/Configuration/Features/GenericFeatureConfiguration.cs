@@ -17,11 +17,9 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -32,30 +30,29 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     public class GenericFeatureConfiguration
     {
-
-        /// <summary>
+	    /// <summary>
         /// Generic feature configuration
         /// </summary>
         public GenericFeatureConfiguration()
         {
-            this.Options = new Dictionary<string, Func<Object>>();
+            this.Options = new Dictionary<string, Func<object>>();
             this.Values = new Dictionary<string, object>();
-            this.Categories = new Dictionary<String, String[]>();
+            this.Categories = new Dictionary<string, string[]>();
         }
 
-        /// <summary>
-        /// Gets the configuration options for this generic feature
-        /// </summary>
-        public Dictionary<String, Func<Object>> Options { get; set; }
-
-        /// <summary>
-        /// Gets the current set configuration values
-        /// </summary>
-        public Dictionary<String, Object> Values { get; set; }
-
-        /// <summary>
+	    /// <summary>
         /// If the configuration is broken into categories
         /// </summary>
-        public Dictionary<String, String[]> Categories { get; set; }
+        public Dictionary<string, string[]> Categories { get; set; }
+
+	    /// <summary>
+        /// Gets the configuration options for this generic feature
+        /// </summary>
+        public Dictionary<string, Func<object>> Options { get; set; }
+
+	    /// <summary>
+        /// Gets the current set configuration values
+        /// </summary>
+        public Dictionary<string, object> Values { get; set; }
     }
 }

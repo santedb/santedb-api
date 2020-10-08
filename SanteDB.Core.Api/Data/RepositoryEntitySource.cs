@@ -28,10 +28,10 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Data
 {
-    /// <summary>
-    /// Entity source which loads objects using the <see cref="IRepositoryService{TModel}"/> instead of <see cref="IDataPersistenceService{TData}"/>
-    /// </summary>
-    public class RepositoryEntitySource : IEntitySourceProvider
+	/// <summary>
+	/// Entity source which loads objects using the <see cref="IRepositoryService{TModel}"/> instead of <see cref="IDataPersistenceService{TData}"/>
+	/// </summary>
+	public class RepositoryEntitySource : IEntitySourceProvider
     {
 
 
