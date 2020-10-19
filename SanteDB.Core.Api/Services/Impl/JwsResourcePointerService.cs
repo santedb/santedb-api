@@ -169,8 +169,9 @@ namespace SanteDB.Core.Services.Impl
 
                 // HACK: .NET is using late binding and getting confused
                 var results = repoService.Find(filterExpression, 0, 2,out int tr) as IEnumerable<IdentifiedData>;
-                if (tr != 1)
+                if (tr > 1)
                     throw new InvalidOperationException("Resource is ambiguous (points to more than one resource)");
+                
                 var result = results.FirstOrDefault();
 
                 // Validate the signature if we have the key
