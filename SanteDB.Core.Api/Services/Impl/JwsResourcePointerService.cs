@@ -90,12 +90,14 @@ namespace SanteDB.Core.Services.Impl
 
             var keyId = this.GetAppKeyId();
 
+            var entityType = identifers.FirstOrDefault()?.LoadProperty<Entity>("SourceEntity")?.GetType() ??
+                typeof(TEntity);
             // Append the header to the token
             // Append authorities to identifiers
             var header = new
             {
                 alg = signatureService.GetSignatureAlgorithm(),
-                typ = $"x-santedb+{typeof(TEntity).GetSerializationName()}",
+                typ = $"x-santedb+{entityType.GetSerializationName()}",
                 key = keyId
             };
 
@@ -167,7 +169,9 @@ namespace SanteDB.Core.Services.Impl
 
                 // HACK: .NET is using late binding and getting confused
                 var results = repoService.Find(filterExpression, 0, 2,out int tr) as IEnumerable<IdentifiedData>;
-                var result = results.SingleOrDefault();
+                if (tr != 1)
+                    throw new InvalidOperationException("Resource is ambiguous (points to more than one resource)");
+                var result = results.FirstOrDefault();
 
                 // Validate the signature if we have the key
                 if (validate)
