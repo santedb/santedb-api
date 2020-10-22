@@ -133,6 +133,8 @@ namespace SanteDB.Core.Configuration
                 s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             s_serializer.Serialize(dataStream, this, xmlns);
+
+            s_serializer = null;
         }
 
         /// <summary>
