@@ -251,7 +251,27 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditCreate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
+            var id = ClassifyEventId<TData>(resourceData);
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Create, AuditableObjectLifecycle.Creation, id, outcome, queryPerformed, resourceData);
+        }
+
+        /// <summary>
+        /// Classify the event identifier type
+        /// </summary>
+        private static EventIdentifierType ClassifyEventId<TData>(TData[] resourceData)
+        {
+            if (resourceData.FirstOrDefault() is Bundle bundle)
+            {
+                return ClassifyEventId(bundle.Item.ToArray());
+            }
+            if (resourceData.OfType<Act>().Any(a => a.MoodConceptKey == ActMoodKeys.Request))
+                return EventIdentifierType.OrderRecord;
+            else if (resourceData.OfType<Act>().Any())
+                return EventIdentifierType.ProcedureRecord;
+            else if (resourceData.OfType<Patient>().Any())
+                return EventIdentifierType.PatientRecord;
+            else
+                return EventIdentifierType.ProvisioningEvent;
         }
 
         /// <summary>
@@ -259,7 +279,9 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditUpdate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
+            var id = ClassifyEventId<TData>(resourceData);
+
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Update, AuditableObjectLifecycle.Amendment, id, outcome, queryPerformed, resourceData);
         }
 
         /// <summary>
@@ -267,7 +289,9 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditDelete<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
-            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.Import, outcome, queryPerformed, resourceData);
+            var id = ClassifyEventId<TData>(resourceData);
+
+            AuditUtil.AuditDataAction(EventTypeCodes.Import, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, id, outcome, queryPerformed, resourceData);
         }
 
         /// <summary>
@@ -324,10 +348,11 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            audit.AuditableObjects = data.OfType<TData>().Select(o =>
+            audit.AuditableObjects = data.OfType<TData>().SelectMany(o =>
             {
-                var obj = CreateAuditableObject(o, lifecycle);
-                return obj;
+                if (o is Bundle bundle)
+                    return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
+                else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
             }).ToList();
 
             // Query performed
