@@ -1,5 +1,8 @@
 ﻿using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -31,13 +34,13 @@ namespace SanteDB.Core.Notifications.Email
         /// <summary>
         /// Send the specified e-mail
         /// </summary>
-        public Guid Send(string[] toAddress, string subject, string body, DateTimeOffset? scheduleDelivery = null, params NotificationAttachment[] attachments)
+        public Guid Send(string[] toAddress, string subject, string body,  DateTimeOffset? scheduleDelivery = null, params NotificationAttachment[] attachments)
         {
             try
             {
                 // Setup message
                 MailMessage mailMessage = new MailMessage();
-                mailMessage.From = new MailAddress(this.m_configuration.Smtp.From);
+                mailMessage.Sender = new MailAddress(this.m_configuration.Smtp.From);
                 toAddress.Select(o => o.Replace("mailto:", "")).ToList().ForEach(o => mailMessage.To.Add(o));
                 this.m_configuration.AdministrativeContacts
                     .Where(o=>!mailMessage.To.Contains(new MailAddress(o)))
@@ -45,6 +48,11 @@ namespace SanteDB.Core.Notifications.Email
                     .ForEach(o => mailMessage.CC.Add(o));
                 mailMessage.Subject = subject;
                 mailMessage.Body = body;
+
+                // Attempt to get the security e-mail settings
+                var obo = AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Email);
+                if (!String.IsNullOrEmpty(obo))
+                    mailMessage.ReplyTo = mailMessage.From = new MailAddress(obo, AuthenticationContext.Current.Principal.Identity.Name);
 
                 if (body.Contains("<html"))
                     mailMessage.IsBodyHtml = true;

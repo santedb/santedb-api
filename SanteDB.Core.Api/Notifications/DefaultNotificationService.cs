@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
