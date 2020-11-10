@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.Core.Security.Claims
@@ -30,6 +31,17 @@ namespace SanteDB.Core.Security.Claims
     /// </summary>
     public static class SanteDBClaimTypes
     {
+
+        /// <summary>
+        /// Get the specified claim
+        /// </summary>
+        public static String GetClaimValue(this IPrincipal me, String claim)
+        {
+            if (me is IClaimsPrincipal icp)
+                return icp.FindFirst(claim)?.Value;
+            else
+                return null;
+        }
 
         /// <summary>
         /// Authentication type
