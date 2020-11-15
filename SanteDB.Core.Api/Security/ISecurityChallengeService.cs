@@ -40,6 +40,12 @@ namespace SanteDB.Core.Security
         /// </summary>
         IEnumerable<SecurityChallenge> Get(String userName, IPrincipal principal);
 
+
+        /// <summary>
+        /// Gets the challenges current registered for the user (not the answers)
+        /// </summary>
+        IEnumerable<SecurityChallenge> Get(Guid userKey, IPrincipal principal);
+
         /// <summary>
         /// Add a challenge to the current registered user
         /// </summary>
