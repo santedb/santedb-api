@@ -109,7 +109,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Override claim
         /// </summary>
-        public const string SanteDBOverrideClaim = "PolicyOverride";
+        public const string SanteDBOverrideClaim = "urn:santedb:org:override";
         
         /// <summary>
         /// Patient identifier claim
@@ -119,7 +119,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Purpose of use claim
         /// </summary>
-        public const string PurposeOfUse = "PurposeOfUse";
+        public const string PurposeOfUse = "urn:oasis:names:tc:xacml:2.0:action:purpose";
         /// <summary>
         /// Purpose of use claim
         /// </summary>

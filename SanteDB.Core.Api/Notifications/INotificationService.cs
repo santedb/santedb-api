@@ -30,6 +30,6 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Send the message to the specified addresses
         /// </summary>
-        Guid[] Send(String[] to, String subject, String body, DateTimeOffset? scheduleDelivery = null, params NotificationAttachment[] attachments);
+        Guid[] Send(String[] to, String subject, String body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
     }
 }

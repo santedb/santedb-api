@@ -34,7 +34,7 @@ namespace SanteDB.Core.Notifications.Email
         /// <summary>
         /// Send the specified e-mail
         /// </summary>
-        public Guid Send(string[] toAddress, string subject, string body,  DateTimeOffset? scheduleDelivery = null, params NotificationAttachment[] attachments)
+        public Guid Send(string[] toAddress, string subject, string body,  DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
             try
             {
@@ -42,10 +42,12 @@ namespace SanteDB.Core.Notifications.Email
                 MailMessage mailMessage = new MailMessage();
                 mailMessage.Sender = new MailAddress(this.m_configuration.Smtp.From);
                 toAddress.Select(o => o.Replace("mailto:", "")).ToList().ForEach(o => mailMessage.To.Add(o));
-                this.m_configuration.AdministrativeContacts
-                    .Where(o=>!mailMessage.To.Contains(new MailAddress(o)))
-                    .ToList()
-                    .ForEach(o => mailMessage.CC.Add(o));
+
+                if(ccAdmins)
+                    this.m_configuration.AdministrativeContacts
+                        .Where(o=>!mailMessage.To.Contains(new MailAddress(o)))
+                        .ToList()
+                        .ForEach(o => mailMessage.CC.Add(o));
                 mailMessage.Subject = subject;
                 mailMessage.Body = body;
 

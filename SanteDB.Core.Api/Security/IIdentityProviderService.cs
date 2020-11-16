@@ -214,11 +214,6 @@ namespace SanteDB.Core.Security.Services
         void ChangePassword(String userName, String newPassword, IPrincipal principal);
 
         /// <summary>
-        /// Set the user's two factor authentication secret
-        /// </summary>
-        String GenerateTfaSecret(String userName);
-
-        /// <summary>
         /// Delete an identity
         /// </summary>
         void DeleteIdentity(String userName, IPrincipal principal);

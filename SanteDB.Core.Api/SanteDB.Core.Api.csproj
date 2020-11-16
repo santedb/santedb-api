@@ -24,7 +24,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.Core.Api</PackageId>
     <Title>SanteDB.Core.Api</Title>
-    <Version>2.0.47</Version>
+    <Version>2.0.48</Version>
     <Description>SanteDB Core API services and functions</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
@@ -262,7 +262,7 @@
     <Otherwise>
       <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-        <PackageReference Include="SanteDB.Core.Model" Version="2.0.47.0" />
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.48.0" />
         <PackageReference Include="SharpCompress" Version="0.25.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>
@@ -280,9 +280,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Security\Tfa\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="RazorTemplates" Version="1.2.1" />
   </ItemGroup>
   <!--<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />-->
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

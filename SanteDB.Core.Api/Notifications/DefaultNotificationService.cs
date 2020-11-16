@@ -59,7 +59,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Send the specified data to the specified addressers
         /// </summary>
-        public Guid[] Send(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, params NotificationAttachment[] attachments)
+        public Guid[] Send(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
 
             var sendRelays = to.Select(o => new Uri(o)).GroupBy(o => o.Scheme);
@@ -68,7 +68,7 @@ namespace SanteDB.Core.Notifications
             {
                 if (this.m_relays.TryGetValue(itm.Key, out INotificationRelay relay))
                 {
-                    retVal.Add(relay.Send(itm.Select(o => o.ToString()).ToArray(), subject, body, scheduleDelivery, attachments));
+                    retVal.Add(relay.Send(itm.Select(o => o.ToString()).ToArray(), subject, body, scheduleDelivery, ccAdmins, attachments));
                 }
                 else
                     this.m_tracer.TraceWarning("Cannot find relay on scheme {0}", itm.Key);
