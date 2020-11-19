@@ -18,6 +18,7 @@
  * Date: 2019-11-27
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
@@ -514,6 +515,7 @@ namespace SanteDB.Core.Http
                             else
                             {
                                 // Validate the realm
+                                // TODO: Refactor this to use REGEX
                                 string wwwAuth = response.Headers["WWW-Authenticate"];
                                 int realmStart = wwwAuth.IndexOf("realm=\"");
                                 if (realmStart < 0)
@@ -527,12 +529,33 @@ namespace SanteDB.Core.Http
                                     s_tracer.TraceWarning("Warning: REALM mismatch, authentication may fail. Server reports {0} but client configured for {1}", realm, this.Description.Binding.Security.AuthRealm);
                                 }
 
+                                int errorStart = wwwAuth.IndexOf("error=\"");
+                                if (errorStart > -1)
+                                { // Error is provided
+                                    errorStart += 7;// skip realm
+                                    string errorCode = wwwAuth.Substring(errorStart, wwwAuth.IndexOf('"', errorStart) - errorStart);
+                                    if (errorCode.Equals("insufficient_scope", StringComparison.OrdinalIgnoreCase)) // We have invalid scope, we need to challenge
+                                    {
+                                        var scopeStart = wwwAuth.IndexOf("scope=\"");
+                                        if (scopeStart > -1) // Scope is declared
+                                        {
+                                            scopeStart += 7;// skip realm
+                                            string scope = wwwAuth.Substring(scopeStart, wwwAuth.IndexOf('"', scopeStart) - scopeStart);
+                                            throw new PolicyViolationException(this.Credentials.Principal, scope, Model.Security.PolicyGrantType.Elevate);
+                                        }
+                                    }
+                                }
+
+
                                 // Credential provider
                                 if (this.Description.Binding.Security.CredentialProvider != null)
                                 {
                                     this.Credentials = this.Description.Binding.Security.CredentialProvider.Authenticate(this);
-                                    if (this.Credentials != null)
+                                    if (this.Credentials != null) // We have authentication, just needs elevation?
+                                    {
+                                        
                                         return ServiceClientErrorType.Valid;
+                                    }
                                     else
                                         return ServiceClientErrorType.SecurityError;
                                 }

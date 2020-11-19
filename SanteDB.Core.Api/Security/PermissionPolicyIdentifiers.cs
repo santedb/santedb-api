@@ -101,7 +101,7 @@ namespace SanteDB.Core.Security
         /// Allows identity to alter administrative object policy
         /// </summary>
         public const string AssignPolicy = UnrestrictedAdministration + ".13";
-
+        
 
         /// <summary>
         /// Policy identifier for allowance of login
