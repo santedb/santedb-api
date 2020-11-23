@@ -55,7 +55,8 @@ namespace SanteDB.Core.Notifications.Email
                 var obo = AuthenticationContext.Current.Principal.GetClaimValue(SanteDBClaimTypes.Email);
                 if (!String.IsNullOrEmpty(obo))
                     mailMessage.ReplyTo = mailMessage.From = new MailAddress(obo, AuthenticationContext.Current.Principal.Identity.Name);
-
+                else
+                    mailMessage.From = new MailAddress(this.m_configuration.Smtp.From, AuthenticationContext.Current.Principal.Identity.Name);
                 if (body.Contains("<html"))
                     mailMessage.IsBodyHtml = true;
                 // Add attachments
