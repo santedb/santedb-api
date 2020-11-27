@@ -1,5 +1,4 @@
 ﻿/*
- * Based on OpenIZ, Copyright (C) 2015 - 2019 Mohawk College of Applied Arts and Technology
  * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
@@ -14,8 +13,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej (Justin Fyfe)
- * Date: 2020-1-12
+ * User: fyfej
+ * Date: 2020-5-1
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
