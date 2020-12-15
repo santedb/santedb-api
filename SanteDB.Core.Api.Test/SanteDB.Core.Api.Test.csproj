@@ -61,6 +61,7 @@
     <Compile Include="NonStandardEntityInBundleTest.cs" />
     <Compile Include="SimplePatchServiceTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ExtendedQueryFilterTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
