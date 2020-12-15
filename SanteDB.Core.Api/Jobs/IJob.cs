@@ -80,5 +80,10 @@ namespace SanteDB.Core.Jobs
         /// Gets the progress of the job
         /// </summary>
         float Progress { get; }
+
+        /// <summary>
+        /// Get the status text of the job
+        /// </summary>
+        string StatusText { get; }
     }
 }

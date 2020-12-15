@@ -19,6 +19,7 @@
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Security.Principal;
 using System.Text;
 
@@ -27,14 +28,22 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Extended data persistence service
     /// </summary>
-    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceService<TModel>
-        where TModel : IdentifiedData
+    public interface IDataPersistenceServiceEx : IDataPersistenceService
     {
 
         /// <summary>
         /// Touch the specified data
         /// </summary>
         void Touch(Guid key, TransactionMode mode, IPrincipal principal);
+
+    }
+
+    /// <summary>
+    /// Generic interface implementation
+    /// </summary>
+     public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceServiceEx, IDataPersistenceService<TModel>
+        where TModel : IdentifiedData
+    {
 
     }
 }
