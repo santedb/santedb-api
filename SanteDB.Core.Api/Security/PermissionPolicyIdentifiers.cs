@@ -75,6 +75,16 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string AlterIdentity = UnrestrictedAdministration + ".8";
 
+        /// <summary>
+        /// Policy identifier for allowing of creating new identities
+        /// </summary>
+        public const string AlterLocalIdentity = AlterIdentity + ".1";
+
+        /// <summary>
+        /// Policy identifier for allowing of creating new identities
+        /// </summary>
+        public const string CreateLocalIdentity = CreateIdentity + ".1";
+
 
         /// <summary>
         /// Allows an identity to alter a policy
