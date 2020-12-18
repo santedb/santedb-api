@@ -20,7 +20,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Purge the specified data (erase it)
         /// </summary>
-        void Purge(TransactionMode transactionMode, params Guid[] keysToPurge);
+        void Purge(TransactionMode transactionMode, IPrincipal principal, params Guid[] keysToPurge);
 
         /// <summary>
         /// Query only for keys based on the expression (do not load objects from database)

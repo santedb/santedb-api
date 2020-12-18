@@ -130,7 +130,7 @@ namespace SanteDB.Core.Jobs
                             persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
                         case DataRetentionActionType.Purge:
-                            persistenceService.Purge(TransactionMode.Commit, keys.ToArray());
+                            persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
                         case DataRetentionActionType.Archive:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Obsolete:
@@ -142,9 +142,9 @@ namespace SanteDB.Core.Jobs
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {
-                                persistenceService.Purge(TransactionMode.Rollback, keys.ToArray());
+                                persistenceService.Purge(TransactionMode.Rollback, AuthenticationContext.SystemPrincipal, keys.ToArray());
                                 archiveService.Archive(rule.ResourceType, keys.ToArray());
-                                persistenceService.Purge(TransactionMode.Commit, keys.ToArray());
+                                persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else
                             {
