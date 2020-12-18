@@ -18,6 +18,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
@@ -60,5 +61,20 @@ namespace SanteDB.Core.Services
         /// Gets the known alias names and score for the alias 
         /// </summary>
         IEnumerable<ComponentAlias> GetAlias(String name);
+
+        /// <summary>
+        /// Add an alias to the alias provider
+        /// </summary>
+        void AddAlias(String name, String alias, double weight);
+
+        /// <summary>
+        /// Remove the specified alias 
+        /// </summary>
+        void RemoveAlias(String name, String alias);
+
+        /// <summary>
+        /// Get all aliases
+        /// </summary>
+        IDictionary<String, IEnumerable<ComponentAlias>> GetAllAliases(Expression<Func<String, bool>> filter, int offset, int? count, out int totalResults);
     }
 }
