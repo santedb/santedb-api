@@ -46,9 +46,13 @@ namespace SanteDB.Core
         /// </summary>
         Android = 0x8,
         /// <summary>
+        /// iOS Based devices
+        /// </summary>
+        iOS = 0x10,
+        /// <summary>
         /// Host is another operating system (don't use any native libraries)
         /// </summary>
-        Other = 0x10
+        Other = 0x20
     }
 
 }

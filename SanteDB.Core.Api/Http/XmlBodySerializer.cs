@@ -94,7 +94,7 @@ namespace SanteDB.Core.Http
 
                 // Service fault?
                 // Find candidate type
-                if (this.m_serializer.CanDeserialize(bodyReader))
+                if (this.m_serializer?.CanDeserialize(bodyReader) == true)
                     serializer = this.m_serializer;
 
                 else if (bodyReader.LocalName == "RestServiceFault" &&
