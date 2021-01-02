@@ -87,7 +87,7 @@ namespace SanteDB.Core.Jobs
                 this.LastStarted = DateTime.Now;
                 float ruleProgress = 1.0f / this.m_configuration.RetentionRules.Count;
 
-                for(var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count; ruleIdx++)
+                for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count; ruleIdx++)
                 {
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
@@ -102,13 +102,16 @@ namespace SanteDB.Core.Jobs
 
                     // Included keys for retention
                     IEnumerable<Guid> keys = new Guid[0];
-                    for(int inclIdx = 0; inclIdx < rule.IncludeExpressions.Count; inclIdx++)
+                    for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Count; inclIdx++)
                     {
                         var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]));
                         this.Progress = (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Count) * 0.3 * ruleProgress);
                         int offset = 0, totalCount = 1;
-                        while(offset < totalCount) // gather the included keys
-                            keys = keys.Union(persistenceService.QueryKeys(expr, offset, 100, out totalCount));
+                        while (offset < totalCount) // gather the included keys
+                        {
+                            keys = keys.Union(persistenceService.QueryKeys(expr, offset, 1000, out totalCount));
+                            offset += 1000;
+                        }
                     }
 
                     // Exclude keys from retention
@@ -117,20 +120,23 @@ namespace SanteDB.Core.Jobs
                         var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]));
                         this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Count) * 0.3) * ruleProgress);
                         int offset = 0, totalCount = 1;
-                        while (offset < totalCount) // gather the included keys
-                            keys = keys.Except(persistenceService.QueryKeys(expr, offset, 100, out totalCount));
+                        while (offset < totalCount) // gather the included keys 
+                        {
+                            keys = keys.Except(persistenceService.QueryKeys(expr, offset, 1000, out totalCount));
+                            offset += 1000;
+                        }
                     }
 
                     this.StatusText = $"Executing {rule.Action} {rule.ResourceTypeXml} ({rule.Name})";
 
                     // Now we want to execute the specified action
-                    switch(rule.Action)
+                    switch (rule.Action)
                     {
                         case DataRetentionActionType.Obsolete:
                             persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
                         case DataRetentionActionType.Purge:
-                            persistenceService.Purge(TransactionMode.Commit, keys.ToArray());
+                            persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
                         case DataRetentionActionType.Archive:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Obsolete:
@@ -142,9 +148,9 @@ namespace SanteDB.Core.Jobs
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {
-                                persistenceService.Purge(TransactionMode.Rollback, keys.ToArray());
+                                persistenceService.Purge(TransactionMode.Rollback, AuthenticationContext.SystemPrincipal, keys.ToArray());
                                 archiveService.Archive(rule.ResourceType, keys.ToArray());
-                                persistenceService.Purge(TransactionMode.Commit, keys.ToArray());
+                                persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else
                             {
@@ -159,7 +165,7 @@ namespace SanteDB.Core.Jobs
                 this.LastFinished = DateTime.Now;
 
             }
-            catch(Exception ex) // Absolute failure
+            catch (Exception ex) // Absolute failure
             {
                 this.m_tracer.TraceError("Failure running retention job: {0}", ex);
                 this.CurrentState = JobStateType.Aborted;

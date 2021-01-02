@@ -39,5 +39,11 @@ namespace SanteDB.Core.Api.Services
         Stream Generate<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifers)
             where TEntity : VersionedEntityData<TEntity>, new();
 
+        /// <summary>
+        /// Generate the barcode from raw data
+        /// </summary>
+        /// <param name="rawData"></param>
+        /// <returns></returns>
+        Stream Generate(String rawData);
     }
 }
