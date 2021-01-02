@@ -132,7 +132,7 @@ namespace SanteDB.Core.Configuration
         [XmlElement("writer")]
         public String TraceWriterClassXml
         {
-            get { return this.TraceWriter.AssemblyQualifiedName; }
+            get { return this.TraceWriter?.AssemblyQualifiedName; }
             set
             {
                 this.TraceWriter = Type.GetType(value);
