@@ -24,7 +24,7 @@
   <PropertyGroup>
     <PackageId>SanteDB.Core.Api</PackageId>
     <Title>SanteDB.Core.Api</Title>
-    <Version>2.0.59</Version>
+    <Version>2.0.60</Version>
     <Description>SanteDB Core API services and functions</Description>
     <Authors>SanteSuite Contributors</Authors>
     <PackageTags>SanteDB</PackageTags>
@@ -250,7 +250,7 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
         <PackageReference Include="SharpCompress" Version="0.26.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
@@ -261,8 +261,8 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-        <PackageReference Include="SanteDB.Core.Model" Version="2.0.59.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+        <PackageReference Include="SanteDB.Core.Model" Version="2.0.60.0" />
         <PackageReference Include="SharpCompress" Version="0.26.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>
