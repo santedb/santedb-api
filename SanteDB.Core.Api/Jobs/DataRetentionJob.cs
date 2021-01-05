@@ -148,15 +148,17 @@ namespace SanteDB.Core.Jobs
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {
-                                persistenceService.Purge(TransactionMode.Rollback, AuthenticationContext.SystemPrincipal, keys.ToArray());
                                 archiveService.Archive(rule.ResourceType, keys.ToArray());
                                 persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
-                            else
+                            else if (rule.Action.HasFlag(DataRetentionActionType.Obsolete))
                             {
-                                persistenceService.Obsolete(TransactionMode.Rollback, AuthenticationContext.SystemPrincipal, keys.ToArray());
                                 archiveService.Archive(rule.ResourceType, keys.ToArray());
                                 persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
+                            }
+                            else
+                            {
+                                archiveService.Archive(rule.ResourceType, keys.ToArray());
                             }
                             break;
                     }
