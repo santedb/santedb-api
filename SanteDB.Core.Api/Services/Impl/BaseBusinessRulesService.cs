@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace SanteDB.Core.Services.Impl
+namespace SanteDB.Core.Services
 {
 
     /// <summary>

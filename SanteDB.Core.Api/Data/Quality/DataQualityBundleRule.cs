@@ -19,6 +19,7 @@
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
