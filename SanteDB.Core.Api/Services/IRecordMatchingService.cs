@@ -153,6 +153,6 @@ namespace SanteDB.Core.Services
         /// some matching implementations may optimize database round-trips using a single pass.
         /// </remarks>
         IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationName) where T : IdentifiedData;
-
+        
     }
 }
