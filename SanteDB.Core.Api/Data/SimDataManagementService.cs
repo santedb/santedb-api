@@ -67,6 +67,14 @@ namespace SanteDB.Core.Data
             /// Fired after data has been merged
             /// </summary>
             public event EventHandler<DataMergeEventArgs<TModel>> Merged;
+            /// <summary>
+            /// Un-Merging data
+            /// </summary>
+            public event EventHandler<DataMergingEventArgs<TModel>> UnMerging;
+            /// <summary>
+            /// Merging data
+            /// </summary>
+            public event EventHandler<DataMergeEventArgs<TModel>> UnMerged;
 
             public string ServiceName => throw new NotImplementedException();
 

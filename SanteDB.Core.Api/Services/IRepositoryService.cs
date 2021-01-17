@@ -96,7 +96,6 @@ namespace SanteDB.Core.Services
     public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
 
-
         /// <summary>
         /// Gets the specified model.
         /// </summary>
@@ -172,7 +171,6 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Repreents a repository which notifies of changes
     /// </summary>
-    /// <typeparam name="TModel"></typeparam>
     public interface INotifyRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {

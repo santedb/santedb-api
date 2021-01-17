@@ -75,6 +75,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get all aliases
         /// </summary>
-        IDictionary<String, IEnumerable<ComponentAlias>> GetAllAliases(Expression<Func<String, bool>> filter, int offset, int? count, out int totalResults);
+        IDictionary<String, IEnumerable<ComponentAlias>> GetAllAliases(String filter, int offset, int? count, out int totalResults);
     }
 }
