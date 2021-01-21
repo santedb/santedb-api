@@ -37,5 +37,13 @@ namespace SanteDB.Core.Exceptions
         {
 
         }
+
+        /// <summary>
+        /// Service has not yet started up
+        /// </summary>
+        public DomainStateException(String message, Exception innerException) : base(message, innerException)
+        {
+
+        }
     }
 }
