@@ -331,12 +331,14 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            audit.AuditableObjects = data.OfType<TData>().SelectMany(o =>
-            {
-                if (o is Bundle bundle)
-                    return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
-                else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
-            }).ToList();
+            if(typeof(Person).IsAssignableFrom(typeof(TData)) ||
+                typeof(Act).IsAssignableFrom(typeof(TData)))
+                audit.AuditableObjects = data.OfType<TData>().SelectMany(o =>
+                {
+                    if (o is Bundle bundle)
+                        return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
+                    else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
+                }).ToList();
 
             // Query performed
             if (!String.IsNullOrEmpty(queryPerformed))
