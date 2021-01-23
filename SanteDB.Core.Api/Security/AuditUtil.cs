@@ -503,7 +503,7 @@ namespace SanteDB.Core.Security.Audit
                     if (AuthenticationContext.Current.Principal == AuthenticationContext.AnonymousPrincipal)
                         AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
                     if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                        ApplicationServiceContext.Current.GetService<IAuditRepositoryService>()?.Insert(audit); // insert into local AR 
+                        ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>()?.Insert(audit); // insert into local AR 
                     if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
                         ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(audit);
                 }

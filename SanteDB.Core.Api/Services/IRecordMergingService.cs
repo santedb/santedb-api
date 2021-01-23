@@ -43,6 +43,16 @@ namespace SanteDB.Core.Services
         event EventHandler<DataMergeEventArgs<T>> Merged;
 
         /// <summary>
+        /// Fired prior to a merge occurring
+        /// </summary>
+        event EventHandler<DataMergingEventArgs<T>> UnMerging;
+
+        /// <summary>
+        /// Fired after a merge has occurred
+        /// </summary>
+        event EventHandler<DataMergeEventArgs<T>> UnMerged;
+
+        /// <summary>
         /// Gets the duplicates for the specified master record
         /// </summary>
         /// <param name="masterKey">The master record</param>
