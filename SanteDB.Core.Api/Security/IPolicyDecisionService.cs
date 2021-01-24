@@ -38,6 +38,11 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
 
+        /// <summary>
+        /// Clear the policy cache for the specified principal
+        /// </summary>
+        void ClearCache(IPrincipal principal);
+
     }
 }
 
