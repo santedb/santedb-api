@@ -172,7 +172,7 @@ namespace SanteDB.Core.Security.Privacy
 
             // Bind to AA events
             var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
-            this.m_protectedAuthorities = aaDp.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
+            this.m_protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
             // If we have a datacache then use that as it will get pubsub changes
             var dataCache = ApplicationServiceContext.Current.GetService<IDataCachingService>();
             if (dataCache != null)
@@ -224,7 +224,7 @@ namespace SanteDB.Core.Security.Privacy
             var pdp = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
 
             // shall we get distinct AA for which we don't have permission to see
-            var blockAa = this.m_protectedAuthorities
+            var blockAa = this.m_protectedAuthorities?
                 .AsParallel()
                 .WithDegreeOfParallelism(2)
                 .Where(aa => AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal && pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
@@ -267,7 +267,7 @@ namespace SanteDB.Core.Security.Privacy
                 // We want to include all grant
                 .Concat(
                     decisions.Where(o => o.Decision.Outcome == PolicyGrantType.Grant).Select(o => {
-                        if (blockAa.Any())
+                        if (blockAa?.Any() == true)
                         {
                             if (o.Securable is Act actData && actData.Identifiers.RemoveAll(a => blockAa.Contains(a.AuthorityKey)) > 0)
                                 actData.AddTag("$pep.masked", "true");
