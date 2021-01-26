@@ -492,7 +492,7 @@ namespace SanteDB.Core.Security.Audit
                     audit.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
                     audit.AddMetadata(AuditMetadataKey.SessionId, (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
                     audit.AddMetadata(AuditMetadataKey.CorrelationToken, RemoteEndpointUtil.Current.GetRemoteClient()?.CorrelationToken);
-                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "ApplicationServerProcess");
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
                     audit.AddMetadata(AuditMetadataKey.LocalEndpoint, RemoteEndpointUtil.Current.GetRemoteClient()?.OriginalRequestUrl);
                     audit.AddMetadata(AuditMetadataKey.RemoteHost, RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress);
 
