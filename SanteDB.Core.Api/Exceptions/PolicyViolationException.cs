@@ -20,6 +20,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using System;
+using System.Linq;
 using System.Security;
 using System.Security.Principal;
 
@@ -48,16 +49,12 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
-        /// <param name="policy">The policy which was violated</param>
-        /// <param name="outcome">The outcome of the action (Deny or Elevate)</param>
         /// <param name="principal">The principal which attempted the action</param>
-        /// <param name="evidence">The policy decision structure from the PDP which outlines each of the policy decisions made to derive the <paramref name="outcome"/></param>
-        public PolicyViolationException(IPrincipal principal, IPolicy policy, PolicyGrantType outcome, PolicyDecision evidence)
+        public PolicyViolationException(IPrincipal principal, PolicyDecision decision)
         {
-            this.Policy = policy;
-            this.PolicyId = policy.Oid;
-            this.Detail = evidence;
-            this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : outcome;
+            this.PolicyId = decision.Details.First(p=>p.Outcome == decision.Outcome).PolicyId;
+            this.Detail = decision;
+            this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : decision.Outcome;
         }
 
         /// <summary>
