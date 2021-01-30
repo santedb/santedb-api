@@ -485,16 +485,19 @@ namespace SanteDB.Core.Security.Audit
             {
                 try
                 {
+                    dynamic metadata = o;
+                    var rc = metadata.rc as RemoteEndpointInfo;
+                    var principal = metadata.principal as IClaimsPrincipal;
                     traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
 
                     // Get audit metadata
                     audit.AddMetadata(AuditMetadataKey.PID, Process.GetCurrentProcess().Id.ToString());
                     audit.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
-                    audit.AddMetadata(AuditMetadataKey.SessionId, (AuthenticationContext.Current.Principal as IClaimsPrincipal)?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
-                    audit.AddMetadata(AuditMetadataKey.CorrelationToken, RemoteEndpointUtil.Current.GetRemoteClient()?.CorrelationToken);
-                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "ApplicationServerProcess");
-                    audit.AddMetadata(AuditMetadataKey.LocalEndpoint, RemoteEndpointUtil.Current.GetRemoteClient()?.OriginalRequestUrl);
-                    audit.AddMetadata(AuditMetadataKey.RemoteHost, RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress);
+                    audit.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
+                    audit.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
+                    audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
+                    audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
 
                     // Filter apply?
                     var filters = s_configuration?.AuditFilters.Where(f =>
@@ -516,10 +519,11 @@ namespace SanteDB.Core.Security.Audit
             };
 
             // Action
+            var parm = new { rc = RemoteEndpointUtil.Current.GetRemoteClient(), principal = AuthenticationContext.Current.Principal };
             if (ApplicationServiceContext.Current.IsRunning)
-                ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem); // background
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem, parm); // background
             else
-                workitem(null); // service is stopped
+                workitem(parm); // service is stopped
 
         }
 
@@ -535,7 +539,7 @@ namespace SanteDB.Core.Security.Audit
             // For the user
             audit.Actors.Add(new AuditActorData()
             {
-                NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.CorrelationToken,
+                NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 UserName = principal.Identity.Name,
                 ActorRoleCode = new List<AuditCode>() {
