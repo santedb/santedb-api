@@ -66,6 +66,12 @@ namespace SanteDB.Core.Security
                 return restrictive;
             }
         }
+
+        /// <summary>
+        /// Policy decision
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"PolicyDecision-{this.Securable}={this.Outcome}";
     }
 
 }

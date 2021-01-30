@@ -28,7 +28,7 @@ namespace SanteDB.Core.Configuration
     /// Represents configuration for one resource
     /// </summary>
     [XmlType(nameof(ResourceMergeConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class ResourceMergeConfiguration
+    public class ResourceMergeConfiguration : ResourceTypeReferenceConfiguration
     {
         /// <summary>
         /// Serialization ctor
@@ -47,18 +47,7 @@ namespace SanteDB.Core.Configuration
             this.MatchConfiguration = matchConfiguration;
             this.AutoMerge = autoMerge;
         }
-        /// <summary>
-        /// Gets or sets the resource type
-        /// </summary>
-        [XmlAttribute("type"), JsonProperty("type")]
-        public String ResourceTypeXml { get; set; }
-
-        /// <summary>
-        /// Gets the resource
-        /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public Type ResourceType => new ModelSerializationBinder().BindToType(null, this.ResourceTypeXml);
-
+      
         /// <summary>
         /// Gets or sets the match configuration
         /// </summary>

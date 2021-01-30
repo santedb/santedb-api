@@ -14,35 +14,33 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2020-5-1
  */
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Services;
+using Newtonsoft.Json;
+using SanteDB.Core.Model.Serialization;
 using System;
-using System.Security.Principal;
+using System.Xml.Serialization;
 
-namespace SanteDB.Core.Security.Services
+namespace SanteDB.Core.Configuration
 {
     /// <summary>
-    /// Represents a policy decision service
+    /// Represents a generic resource type reference by simple name
     /// </summary>
-    public interface IPolicyDecisionService : IServiceImplementation
+    [XmlType(nameof(ResourceTypeReferenceConfiguration), Namespace = "http://santedb.org/configuration")]
+    public class ResourceTypeReferenceConfiguration 
     {
-        /// <summary>
-        /// Make a simple policy decision for a specific securable
-        /// </summary>
-        PolicyDecision GetPolicyDecision(IPrincipal principal, Object securable);
 
         /// <summary>
-        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// Gets or sets the resource type
         /// </summary>
-        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
+        [XmlAttribute("type"), JsonProperty("type")]
+        public String ResourceTypeXml { get; set; }
 
         /// <summary>
-        /// Clear the policy cache for the specified principal
+        /// Gets the resource
         /// </summary>
-        void ClearCache(IPrincipal principal);
+        [XmlIgnore, JsonIgnore]
+        public Type ResourceType => new ModelSerializationBinder().BindToType(null, this.ResourceTypeXml);
 
     }
 }
-
