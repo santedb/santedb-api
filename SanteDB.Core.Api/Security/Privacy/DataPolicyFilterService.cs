@@ -204,6 +204,13 @@ namespace SanteDB.Core.Security.Privacy
                         this.m_protectedAuthorities.RemoveAll(i => i.Key == e.Data.Key);
                 };
             }
+
+            var subExec = ApplicationServiceContext.Current.GetService<ISubscriptionExecutor>();
+            if (subExec != null)
+                subExec.Executed += (o, e) =>
+                {
+                    e.Results = this.HandlePostQueryEvent(e.Results).OfType<IdentifiedData>();
+                };
         }
 
 
@@ -218,11 +225,15 @@ namespace SanteDB.Core.Security.Privacy
 
             // shall we get distinct AA for which we don't have permission to see
             var blockAa = this.m_protectedAuthorities?
+                .AsParallel()
+                .WithDegreeOfParallelism(2)
                 .Where(aa => AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal && pdp.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
                 .Select(aa => aa.Key)
                 .ToArray();
 
             var decisions = results.OfType<Object>()
+                .AsParallel()
+                .WithDegreeOfParallelism(2)
                 .Select(o=>new { Securable = o, Decision = pdp.GetPolicyDecision(AuthenticationContext.Current.Principal, o) })
                 .ToArray();
             
