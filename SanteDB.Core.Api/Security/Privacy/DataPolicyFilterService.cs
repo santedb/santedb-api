@@ -78,11 +78,20 @@ namespace SanteDB.Core.Security.Privacy
         private List<AssigningAuthority> m_protectedAuthorities;
         // PDP Service
         private IPolicyDecisionService m_pdpService;
-
         // Adhoc cache
         private IAdhocCacheService m_adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
+        // Password Hashing
         private IPasswordHashingService m_hasher = ApplicationServiceContext.Current.GetService<IPasswordHashingService>();
 
+        /// <summary>
+        /// Data policy filter service with DI
+        /// </summary>
+        public DataPolicyFilterService(IPasswordHashingService passwordService, IAdhocCacheService adhocCache, IPolicyDecisionService pdpService)
+        {
+            this.m_hasher = passwordService;
+            this.m_adhocCache = adhocCache;
+            this.m_pdpService = pdpService;
+        }
         /// <summary>
         /// Determines whether the service is running
         /// </summary>
