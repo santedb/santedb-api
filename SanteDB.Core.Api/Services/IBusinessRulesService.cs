@@ -31,6 +31,12 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IBusinessRulesService
     {
+
+        /// <summary>
+        /// Gets the next BRE
+        /// </summary>
+        IBusinessRulesService Next { get; }
+
         /// <summary>
         /// Called after an insert occurs
         /// </summary>

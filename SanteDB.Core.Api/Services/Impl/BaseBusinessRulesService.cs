@@ -65,7 +65,7 @@ namespace SanteDB.Core.Services
             var cbre = me.GetService<IBusinessRulesService<TModel>>();
             if (cbre == null)
             {
-                (me as IServiceManager)?.AddServiceProvider(breType);
+                me.GetService<IServiceManager>()?.AddServiceProvider(breType);
                 return me.GetService(breType);
             }
             else if (cbre.GetType() != breType) // Only add if different
@@ -101,6 +101,11 @@ namespace SanteDB.Core.Services
         /// Gets the next behavior
         /// </summary>
         public IBusinessRulesService<TModel> Next { get; set; }
+
+        /// <summary>
+        /// Next
+        /// </summary>
+        IBusinessRulesService IBusinessRulesService.Next => this.Next;
 
         /// <summary>
         /// After insert
