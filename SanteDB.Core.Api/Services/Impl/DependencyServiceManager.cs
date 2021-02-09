@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -86,8 +85,8 @@ namespace SanteDB.Core.Services.Impl
                             if (constructor == null)
                                 throw new MissingMemberException($"Cannot find default constructor on {this.ServiceImplementer}");
 
-                            var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue }).ToArray();
-                            var parameterValues = new object[parameterTypes.Length];
+                            var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue, Default = p.DefaultValue }).ToArray();
+                            var parameterValues = new Expression[parameterTypes.Length];
                             for (int i = 0; i < parameterValues.Length; i++)
                             {
                                 var dependencyInfo = parameterTypes[i];
@@ -95,11 +94,11 @@ namespace SanteDB.Core.Services.Impl
                                 if (candidateService == null && dependencyInfo.Required)
                                     throw new InvalidOperationException($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered!");
                                 else
-                                    parameterValues[i] = candidateService;
+                                    parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
                             }
 
                             // Now we can create our activator
-                            this.m_activator = Expression.Lambda<Func<Object>>(Expression.New(constructor, parameterValues.Select(parms => Expression.Constant(parms)).ToArray())).Compile();
+                            this.m_activator = Expression.Lambda<Func<Object>>(Expression.New(constructor, parameterValues.ToArray())).Compile();
                         }
 
                         if (this.InstantiationType == ServiceInstantiationType.Singleton)
@@ -165,6 +164,19 @@ namespace SanteDB.Core.Services.Impl
 
         // Services
         private ConcurrentDictionary<Type, ServiceInstanceInformation> m_cachedServices = new ConcurrentDictionary<Type, ServiceInstanceInformation>();
+
+        /// <summary>
+        /// Gets the configuration
+        /// </summary>
+        private ApplicationServiceContextConfigurationSection Configuration
+        {
+            get
+            {
+                if (this.m_configuration == null)
+                    this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+                return this.m_configuration;
+            }
+        }
 
         /// <summary>
         /// Application is starting
@@ -235,9 +247,20 @@ namespace SanteDB.Core.Services.Impl
             if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false)
             {
                 lock (this.m_lock)
+                {
                     candidateService = this.m_serviceRegistrations.FirstOrDefault(s => s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer));
-                if(candidateService != null) 
-                    this.m_cachedServices.TryAdd(serviceType, candidateService);
+                    if (candidateService == null) // Attempt a load from configuration
+                    {
+                        var cServiceType = this.Configuration.ServiceProviders.SingleOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
+                        if (cServiceType != null)
+                        {
+                            candidateService = new ServiceInstanceInformation(cServiceType.Type);
+                            this.m_serviceRegistrations.Add(candidateService);
+                        }
+                    }
+                    if (candidateService != null)
+                        this.m_cachedServices.TryAdd(serviceType, candidateService);
+                }
             }
             return candidateService?.GetInstance();
         }
@@ -316,12 +339,8 @@ namespace SanteDB.Core.Services.Impl
                     if (this.GetService<IConfigurationManager>() == null)
                         throw new InvalidOperationException("Cannot find configuration manager!");
 
-                    var configManager = this.GetService<IConfigurationManager>();
-                    this.m_configuration = configManager?.GetSection<ApplicationServiceContextConfigurationSection>();
-                    if (this.m_configuration == null)
-                        throw new ConfigurationException("Error fetching configuration - Ensure you have an IConfigurationManager registered", configManager.Configuration);
                     // Add configured services
-                    foreach (var svc in this.m_configuration.ServiceProviders)
+                    foreach (var svc in this.Configuration.ServiceProviders)
                         if (svc.Type == null)
                             this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
                         else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))

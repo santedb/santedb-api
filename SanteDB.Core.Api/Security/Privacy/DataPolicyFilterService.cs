@@ -90,8 +90,8 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IPasswordHashingService passwordService, IAdhocCacheService adhocCache, IPolicyDecisionService pdpService,
-            ISubscriptionExecutor subscriptionExecutor, IDataCachingService dataCachingService)
+        public DataPolicyFilterService(IPasswordHashingService passwordService, IPolicyDecisionService pdpService,
+            IDataCachingService dataCachingService, ISubscriptionExecutor subscriptionExecutor = null, IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
             this.m_adhocCache = adhocCache;
@@ -291,13 +291,13 @@ namespace SanteDB.Core.Security.Privacy
             else
                 key = this.m_hasher.ComputeHash($"$aa.filter.{accessor.Identity.Name}");
 
-            var domainsToFilter = this.m_adhocCache.Get<AssigningAuthority[]>(key);
+            var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
             if (domainsToFilter == null)
             {
                 domainsToFilter = this.m_protectedAuthorities
                         .Where(aa => this.m_pdpService.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
                         .ToArray();
-                this.m_adhocCache.Add(key, domainsToFilter);
+                this.m_adhocCache?.Add(key, domainsToFilter);
             }
 
             switch (action)
