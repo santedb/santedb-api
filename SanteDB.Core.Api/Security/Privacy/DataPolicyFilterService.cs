@@ -82,15 +82,22 @@ namespace SanteDB.Core.Security.Privacy
         private IAdhocCacheService m_adhocCache ;
         // Password Hashing
         private IPasswordHashingService m_hasher;
+        // Data caching service
+        private IDataCachingService m_dataCachingService;
+        // Subscription executor
+        private ISubscriptionExecutor m_subscriptionExecutor;
 
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IPasswordHashingService passwordService, IAdhocCacheService adhocCache, IPolicyDecisionService pdpService)
+        public DataPolicyFilterService(IPasswordHashingService passwordService, IAdhocCacheService adhocCache, IPolicyDecisionService pdpService,
+            ISubscriptionExecutor subscriptionExecutor, IDataCachingService dataCachingService)
         {
             this.m_hasher = passwordService;
             this.m_adhocCache = adhocCache;
             this.m_pdpService = pdpService;
+            this.m_subscriptionExecutor = subscriptionExecutor;
+            this.m_dataCachingService = dataCachingService;
         }
 
         /// <summary>
@@ -157,11 +164,6 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void BindEvents()
         {
-            var svcManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
-
-            this.m_adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
-            this.m_pdpService = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
-            this.m_hasher = ApplicationServiceContext.Current.GetService<IPasswordHashingService>();
             this.m_tracer.TraceInfo("Starting bind to persistence services...");
             var policyTypes = this.m_configuration?.Resources?.Select(o => o.ResourceType) ?? typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) || typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
             foreach (var t in policyTypes)
@@ -209,14 +211,13 @@ namespace SanteDB.Core.Security.Privacy
             var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
             this.m_protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
             // If we have a datacache then use that as it will get pubsub changes
-            var dataCache = ApplicationServiceContext.Current.GetService<IDataCachingService>();
-            if (dataCache != null)
+            if (this.m_dataCachingService != null)
             {
-                dataCache.Added += (o, e) =>
+                this.m_dataCachingService.Added += (o, e) =>
                 {
                     if ((e.Object as AssigningAuthority)?.PolicyKey.HasValue == true) this.m_protectedAuthorities.Add(e.Object as AssigningAuthority);
                 };
-                dataCache.Updated += (o, e) =>
+                this.m_dataCachingService.Updated += (o, e) =>
                 {
                     var data = e.Object as AssigningAuthority;
                     if (data?.PolicyKey.HasValue == true && !this.m_protectedAuthorities.Any(i => i.Key == data.Key))
@@ -240,9 +241,8 @@ namespace SanteDB.Core.Security.Privacy
                 };
             }
 
-            var subExec = ApplicationServiceContext.Current.GetService<ISubscriptionExecutor>();
-            if (subExec != null)
-                subExec.Executed += (o, e) =>
+            if (this.m_subscriptionExecutor != null)
+                this.m_subscriptionExecutor.Executed += (o, e) =>
                 {
                     e.Results = this.HandlePostQueryEvent(e.Results).OfType<IdentifiedData>();
                 };

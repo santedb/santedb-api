@@ -148,6 +148,9 @@ namespace SanteDB.Core.Services.Impl
             this.AddServiceProvider(this);
         }
 
+        // Disposed?
+        private bool m_isDisposed = false;
+
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
 
@@ -189,14 +192,18 @@ namespace SanteDB.Core.Services.Impl
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Dependency Injection Service Manager";
-
+        
         /// <summary>
         /// Adds a service provider
         /// </summary>
         public void AddServiceProvider(Type serviceType)
         {
+
             lock (this.m_lock)
-                this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType));
+                if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
+                    this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
+                else 
+                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType));
         }
 
         /// <summary>
@@ -213,7 +220,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<Type> GetAllTypes()
         {
-            // HACK: The wierd TRY/CATCH in select many is to prevent mono from throwning a fit
+            // HACK: The weird TRY/CATCH in select many is to prevent mono from throwning a fit
             return AppDomain.CurrentDomain.GetAssemblies()
                 .Where(a => !a.IsDynamic)
                 .SelectMany(a => { try { return a.ExportedTypes; } catch { return new List<Type>(); } });
@@ -270,7 +277,7 @@ namespace SanteDB.Core.Services.Impl
                 lock (this.m_lock)
                     this.m_serviceRegistrations.Remove(sp);
                 foreach (var i in sp.ImplementedServices)
-                    if (this.m_cachedServices[i]?.ServiceImplementer == sp.ServiceImplementer)
+                    if (this.m_cachedServices.TryGetValue(i, out ServiceInstanceInformation v) && v.ServiceImplementer == sp.ServiceImplementer)
                         this.m_cachedServices.TryRemove(i, out ServiceInstanceInformation _);
             }
 
@@ -281,9 +288,12 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
+            if (this.m_isDisposed == true) return;
+            this.m_isDisposed = true;
             if (this.m_serviceRegistrations != null)
                 foreach (var sp in this.m_serviceRegistrations)
-                    sp.Dispose();
+                    if(sp.ServiceImplementer != typeof(DependencyServiceManager))
+                        sp.Dispose();
         }
 
         /// <summary>
@@ -332,7 +342,7 @@ namespace SanteDB.Core.Services.Impl
                         svc.GetInstance();
                     }
 
-                    Trace.TraceInformation("Starting Daemon services");
+                    this.m_tracer.TraceInfo("Starting Daemon services");
                     foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
                     {
                         this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
@@ -340,7 +350,6 @@ namespace SanteDB.Core.Services.Impl
                             throw new Exception($"Service {dc} reported unsuccessful start");
                     }
 
-                    Trace.TraceInformation("STAGE3 START: Notify ApplicationContext has started");
                     if (this.Started != null)
                         this.Started(this, null);
 
@@ -365,17 +374,16 @@ namespace SanteDB.Core.Services.Impl
 
             this.IsRunning = false;
 
-            foreach (var svc in this.m_serviceRegistrations)
+            foreach (var svc in this.m_serviceRegistrations.ToArray())
             {
                 this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.GetType().Name);
-                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon)
+                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon &&
+                    daemon != this)
                     daemon.Stop();
-                svc.Dispose();
             }
 
-            this.Stopped?.Invoke(this, null);
-
             this.Dispose();
+            this.Stopped?.Invoke(this, null);
             return true;
         }
     }
