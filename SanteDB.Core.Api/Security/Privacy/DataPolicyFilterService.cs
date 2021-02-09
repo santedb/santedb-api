@@ -80,8 +80,8 @@ namespace SanteDB.Core.Security.Privacy
         private IPolicyDecisionService m_pdpService;
 
         // Adhoc cache
-        private IAdhocCacheService m_adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
-        private IPasswordHashingService m_hasher = ApplicationServiceContext.Current.GetService<IPasswordHashingService>();
+        private IAdhocCacheService m_adhocCache;
+        private IPasswordHashingService m_hasher;
 
         /// <summary>
         /// Determines whether the service is running
@@ -149,8 +149,10 @@ namespace SanteDB.Core.Security.Privacy
         {
             var svcManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
 
-            this.m_tracer.TraceInfo("Starting bind to persistence services...");
+            this.m_adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
             this.m_pdpService = ApplicationServiceContext.Current.GetService<IPolicyDecisionService>();
+            this.m_hasher = ApplicationServiceContext.Current.GetService<IPasswordHashingService>();
+            this.m_tracer.TraceInfo("Starting bind to persistence services...");
             var policyTypes = this.m_configuration?.Resources?.Select(o => o.ResourceType) ?? typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) || typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
             foreach (var t in policyTypes)
             {
@@ -209,7 +211,7 @@ namespace SanteDB.Core.Security.Privacy
                     var data = e.Object as AssigningAuthority;
                     if (data?.PolicyKey.HasValue == true && !this.m_protectedAuthorities.Any(i => i.Key == data.Key))
                         this.m_protectedAuthorities.Add(data);
-                    else if(data != null)
+                    else if (data != null)
                         this.m_protectedAuthorities.RemoveAll(i => i.Key == data.Key);
                 };
             }
@@ -269,18 +271,19 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Apply actions to hid identity
         /// </summary>
-        private void ApplyIdentifierFilter(IdentifiedData result)
+        private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
             this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
 
             String key = null;
-            if(AuthenticationContext.Current.Principal is IClaimsPrincipal cp && cp.HasClaim(c=>c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
+            if (accessor is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
                 key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
             else
-                key = this.m_hasher.ComputeHash($"$aa.filter.{AuthenticationContext.Current.Principal.Identity.Name}");
-            
+                key = this.m_hasher.ComputeHash($"$aa.filter.{accessor.Identity.Name}");
+
             var domainsToFilter = this.m_adhocCache.Get<AssigningAuthority[]>(key);
-            if (domainsToFilter == null) {
+            if (domainsToFilter == null)
+            {
                 domainsToFilter = this.m_protectedAuthorities
                         .Where(aa => this.m_pdpService.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
                         .ToArray();
@@ -292,11 +295,15 @@ namespace SanteDB.Core.Security.Privacy
                 case ResourceDataPolicyActionType.Hide:
                 case ResourceDataPolicyActionType.Nullify:
                     {
-                        var r = (result as Act)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f=>f.Key == a.AuthorityKey));
+                        var r = (result as Act)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey));
                         r += (result as Entity)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey));
                         if (r > 0)
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o=>new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
-                        break;
+                        {
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
+                            if (result is ITaggable tag)
+                                tag.AddTag("$pep.masked", "true");
+                        }
+                            break;
                     }
                 case ResourceDataPolicyActionType.Redact:
                     {
@@ -316,17 +323,19 @@ namespace SanteDB.Core.Security.Privacy
                                 r++;
                             }
                         if (r > 0)
+                        {
                             AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true);
+                            if (result is ITaggable tag)
+                                tag.AddTag("$pep.masked", "true");
+                        }
                         break;
                     }
                 case ResourceDataPolicyActionType.Audit:
                     // TODO:
                     break;
-                    
+
             }
 
-            if (result is ITaggable tag && domainsToFilter.Any())
-                tag.AddTag("$pep.masked", "true");
         }
 
         /// <summary>
@@ -338,10 +347,10 @@ namespace SanteDB.Core.Security.Privacy
             this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
 
             // First, apply identity security as that is independent
-            this.ApplyIdentifierFilter(result);
+            this.ApplyIdentifierFilter(result, accessor);
 
             // Next we base on decision
-            switch(decision.Outcome)
+            switch (decision.Outcome)
             {
                 case PolicyGrantType.Elevate:
                 case PolicyGrantType.Deny:
@@ -355,7 +364,7 @@ namespace SanteDB.Core.Security.Privacy
                             return null;
                         case ResourceDataPolicyActionType.Redact:
                             {
-                                
+
                                 AuditUtil.AuditMasking(result, decision, false);
                                 result = this.MaskObject(result);
                                 if (result is ITaggable tag)
@@ -389,7 +398,7 @@ namespace SanteDB.Core.Security.Privacy
                 default:
                     throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
             }
-            
+
         }
 
         /// <summary>
@@ -397,7 +406,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private IdentifiedData MaskObject(IdentifiedData result)
         {
-            if(result is Entity entity)
+            if (result is Entity entity)
             {
                 var retVal = Activator.CreateInstance(result.GetType()) as Entity;
                 retVal.Key = result.Key;
@@ -410,7 +419,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.Names = entity.Names.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList();
                 return retVal;
             }
-            else if(result is Act act)
+            else if (result is Act act)
             {
                 var retVal = Activator.CreateInstance(result.GetType()) as Act;
                 retVal.Key = result.Key;
@@ -431,7 +440,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void UnBindEvents()
         {
-            foreach(var i in this.m_subscribedListeners)
+            foreach (var i in this.m_subscribedListeners)
             {
                 i.Key.GetType().GetRuntimeEvent("Queried").RemoveEventHandler(i.Key, i.Value.Key);
                 i.Key.GetType().GetRuntimeEvent("Retrieved").RemoveEventHandler(i.Key, i.Value.Value);

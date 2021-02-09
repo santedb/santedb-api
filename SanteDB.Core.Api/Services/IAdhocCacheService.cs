@@ -45,6 +45,10 @@ namespace SanteDB.Core.Services
         /// <returns>The fetched value</returns>
         T Get<T>(String key);
 
+        /// <summary>
+        /// Removes the specified object from the adhoc
+        /// </summary>
+        bool Remove(string key);
 
     }
 }
