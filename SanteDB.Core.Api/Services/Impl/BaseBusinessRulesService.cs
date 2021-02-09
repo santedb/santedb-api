@@ -103,6 +103,11 @@ namespace SanteDB.Core.Services
         public IBusinessRulesService<TModel> Next { get; set; }
 
         /// <summary>
+        /// Next
+        /// </summary>
+        IBusinessRulesService IBusinessRulesService.Next => this.Next;
+
+        /// <summary>
         /// After insert
         /// </summary>
         public virtual TModel AfterInsert(TModel data)
