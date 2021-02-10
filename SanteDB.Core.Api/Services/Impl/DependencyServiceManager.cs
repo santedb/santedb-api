@@ -25,6 +25,9 @@ namespace SanteDB.Core.Services.Impl
         private class ServiceInstanceInformation : IDisposable
         {
 
+            // Tracer
+            private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
+
             // The delegate which can construct the object
             private Func<Object> m_activator = null;
 
@@ -96,7 +99,10 @@ namespace SanteDB.Core.Services.Impl
                                     if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Configuration)
                                         throw new InvalidOperationException($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered!");
                                     else
+                                    {
+                                        this.m_tracer.TraceWarning($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
                                         return null;
+                                    }
                                 }
                                 else
                                     parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
