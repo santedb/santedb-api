@@ -42,6 +42,10 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is a gateway environment (allow external connections)
         /// </summary>
-        Gateway = 5
+        Gateway = 5,
+        /// <summary>
+        /// Environment is configuration tooling (allows some validation to be skipped)
+        /// </summary>
+        Configuration = 6
     }
 }
