@@ -61,7 +61,6 @@ namespace SanteDB.Core.Configuration
     {
         // Serializer
         private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
-        private static XmlSerializer s_serializer;
 
         /// <summary>
         /// SanteDB configuration
@@ -107,13 +106,31 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
-            if (s_serializer == null)
-                s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
-
-            var retVal = s_serializer.Deserialize(configStream) as SanteDBConfiguration;
+            var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
             if (retVal.Sections.Any(o => o is XmlNode[]))
+            {
                 throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))}", retVal);
+            }
+
+            if(retVal.Includes != null)
+                foreach(var incl in retVal.Includes)
+                {
+                    string fileName = incl;
+                    if (!Path.IsPathRooted(fileName))
+                        fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
+
+                    if (File.Exists(fileName))
+                        using (var fs = File.OpenRead(fileName))
+                        {
+                            var inclData = SanteDBConfiguration.Load(fs);
+                            retVal.Sections.AddRange(inclData.Sections);
+                        }
+                    else
+                        throw new ConfigurationException($"Include {fileName} was not found", retVal);                }
+            
+
             return retVal;
         }
 
@@ -127,14 +144,15 @@ namespace SanteDB.Core.Configuration
             var namespaces = this.Sections.Select(o => o.GetType().GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-
-            if (s_serializer == null)
-                s_serializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
-
-            s_serializer.Serialize(dataStream, this, xmlns);
-
-            s_serializer = null;
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+            xsz.Serialize(dataStream, this, xmlns);
         }
+
+        /// <summary>
+        /// Includes
+        /// </summary>
+        [XmlElement("include")]
+        public List<String> Includes { get; set; }
 
         /// <summary>
         /// Configuration sections
@@ -174,7 +192,6 @@ namespace SanteDB.Core.Configuration
             if (!this.SectionTypes.Any(o => o.Type == typeof(T)))
             {
                 this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(T)));
-                s_serializer = null;
             }
             this.Sections.Add(section);
         }
