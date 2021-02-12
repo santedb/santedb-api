@@ -273,10 +273,6 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
-    <None Include="Schema\AdHocDataWarehouse.xsd">
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
