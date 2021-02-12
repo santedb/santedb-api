@@ -79,12 +79,14 @@ namespace SanteDB.Core.Security.Configuration
         [XmlAttribute("alg"), JsonProperty("alg")]
         [DisplayName("Signing Algorithm")]
         [Description("The type of signature algorithm to use")]
-        public SignatureAlgorithm Algorithm {
+        public SignatureAlgorithm Algorithm
+        {
             get => this.m_algorithm;
-            set {
+            set
+            {
                 this.m_algorithm = value;
                 this.FindTypeSpecified = this.StoreLocationSpecified = this.StoreNameSpecified = this.m_algorithm == SignatureAlgorithm.RS256;
-                if(value == SignatureAlgorithm.HS256)
+                if (value == SignatureAlgorithm.HS256)
                 {
                     this.FindValue = null;
                 }
@@ -103,7 +105,8 @@ namespace SanteDB.Core.Security.Configuration
         [ReadOnly(true)]
         public byte[] Secret
         {
-            get {
+            get
+            {
                 if (this.m_secret == null && !String.IsNullOrEmpty(this.m_plainTextSecret))
                     this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
                 return this.m_secret;
@@ -123,11 +126,8 @@ namespace SanteDB.Core.Security.Configuration
             get => "none";
             set
             {
-                if (value == null)
-                    this.Secret = null;
-                else if(!this.SetSecret(Encoding.UTF8.GetBytes(value)))
-                    this.m_plainTextSecret = value;
-
+                this.m_secret = null;
+                this.m_plainTextSecret = value;
             }
         }
 

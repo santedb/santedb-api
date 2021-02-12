@@ -25,6 +25,9 @@ namespace SanteDB.Core.Services.Impl
         private class ServiceInstanceInformation : IDisposable
         {
 
+            // Tracer
+            private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
+
             // The delegate which can construct the object
             private Func<Object> m_activator = null;
 
@@ -92,7 +95,10 @@ namespace SanteDB.Core.Services.Impl
                                 var dependencyInfo = parameterTypes[i];
                                 var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
                                 if (candidateService == null && dependencyInfo.Required)
-                                    throw new InvalidOperationException($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered!");
+                                {
+                                    this.m_tracer.TraceWarning($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
+                                    return null;
+                                }
                                 else
                                     parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
                             }
@@ -166,19 +172,6 @@ namespace SanteDB.Core.Services.Impl
         private ConcurrentDictionary<Type, ServiceInstanceInformation> m_cachedServices = new ConcurrentDictionary<Type, ServiceInstanceInformation>();
 
         /// <summary>
-        /// Gets the configuration
-        /// </summary>
-        private ApplicationServiceContextConfigurationSection Configuration
-        {
-            get
-            {
-                if (this.m_configuration == null)
-                    this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
-                return this.m_configuration;
-            }
-        }
-
-        /// <summary>
         /// Application is starting
         /// </summary>
         public event EventHandler Starting;
@@ -224,7 +217,11 @@ namespace SanteDB.Core.Services.Impl
         public void AddServiceProvider(object serviceInstance)
         {
             lock (this.m_lock)
+            {
+                if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
+                    this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
                 this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance));
+            }
         }
 
         /// <summary>
@@ -251,7 +248,7 @@ namespace SanteDB.Core.Services.Impl
                     candidateService = this.m_serviceRegistrations.FirstOrDefault(s => s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer));
                     if (candidateService == null) // Attempt a load from configuration
                     {
-                        var cServiceType = this.Configuration.ServiceProviders.SingleOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
+                        var cServiceType = this.m_configuration.ServiceProviders.SingleOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
                         if (cServiceType != null)
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type);
@@ -334,13 +331,13 @@ namespace SanteDB.Core.Services.Impl
 
                     startWatch.Start();
 
-                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(this));
-
                     if (this.GetService<IConfigurationManager>() == null)
                         throw new InvalidOperationException("Cannot find configuration manager!");
+                    if (this.m_configuration == null)
+                        this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
 
                     // Add configured services
-                    foreach (var svc in this.Configuration.ServiceProviders)
+                    foreach (var svc in this.m_configuration.ServiceProviders)
                         if (svc.Type == null)
                             this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
                         else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
@@ -364,6 +361,7 @@ namespace SanteDB.Core.Services.Impl
                     this.m_tracer.TraceInfo("Starting Daemon services");
                     foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
                     {
+                        if (dc == null) continue;
                         this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
                         if (dc != this && !dc.Start()) 
                             throw new Exception($"Service {dc} reported unsuccessful start");
@@ -391,14 +389,18 @@ namespace SanteDB.Core.Services.Impl
         {
             this.Stopping?.Invoke(this, null);
 
+            if (!this.IsRunning) return true ;
+
             this.IsRunning = false;
 
             foreach (var svc in this.m_serviceRegistrations.ToArray())
             {
-                this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.GetType().Name);
                 if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon &&
                     daemon != this)
+                {
+                    this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
+                }
             }
 
             this.Dispose();
