@@ -38,7 +38,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public static object AddBusinessRule(this IServiceProvider me, Type instance)
         {
-            var ibre = instance.GetTypeInfo().ImplementedInterfaces.FirstOrDefault(i => i.IsConstructedGenericType && i.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>));
+            var ibre = instance.FindInterfaces((t,p) => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>), null).FirstOrDefault();
             if (ibre == null)
                 throw new InvalidOperationException($"{nameof(instance)} must implement IBusinessRulesService<T>");
             var meth = typeof(BusinessRulesExtensions).GetGenericMethod(nameof(AddBusinessRule), ibre.GenericTypeArguments, new Type[] { typeof(IServiceProvider), typeof(Type) });

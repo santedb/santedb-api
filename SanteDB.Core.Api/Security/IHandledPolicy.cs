@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Portions Copyright 2019-2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -13,34 +13,21 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
+ * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
-using SanteDB.Core.Model.Security;
-
 namespace SanteDB.Core.Security
 {
     /// <summary>
-    /// Represents a policy instance which 
+    /// Represents an OpenImmunize policy
     /// </summary>
-    public interface IPolicyInstance
+    public interface IHandledPolicy : IPolicy
     {
 
         /// <summary>
-        /// Security policy instance
+        /// The handler
         /// </summary>
-		IPolicy Policy { get; }
-
-        /// <summary>
-        /// Gets the policy grant
-        /// </summary>
-        PolicyGrantType Rule { get; }
-
-        /// <summary>
-        /// Gets the securable
-        /// </summary>
-        object Securable { get; }
+        IPolicyHandler Handler { get; }
 
     }
 }
-

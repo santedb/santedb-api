@@ -43,7 +43,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public ResourceMergeConfiguration(Type type, String matchConfiguration, bool autoMerge)
         {
-            this.ResourceTypeXml = type.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName;
+            this.ResourceTypeXml = type.GetCustomAttribute<XmlRootAttribute>()?.ElementName;
             this.MatchConfiguration = matchConfiguration;
             this.AutoMerge = autoMerge;
         }

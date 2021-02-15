@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SanteDB.Core.Diagnostics.Performance
@@ -37,36 +38,9 @@ namespace SanteDB.Core.Diagnostics.Performance
         // Performance counters
         private IDiagnosticsProbe[] m_performanceCounters =
         {
-            new NonPooledWorkersProbe(),
             new PoolConcurrencyProbe(),
-            new ErroredWorkersProbe(),
             new PooledWorkersProbe()
         };
-
-        /// <summary>
-        /// Generic performance counter
-        /// </summary>
-        private class NonPooledWorkersProbe : DiagnosticsProbeBase<int>
-        {
-            /// <summary>
-            /// Non pooled workers counter
-            /// </summary>
-            public NonPooledWorkersProbe() : base("ThreadPool: Non-Pooled Workers", "Shows the number of active threads which are not in the thread pool")
-            {
-
-            }
-
-            /// <summary>
-            /// Gets the identifier for the pool
-            /// </summary>
-            public override Guid Uuid => PerformanceConstants.ThreadPoolNonQueuedWorkerCounter;
-
-            /// <summary>
-            /// Gets the value
-            /// </summary>
-            public override int Value => ApplicationServiceContext.Current.GetService<DefaultThreadPoolService>().NonQueueThreads;
-
-        }
 
         /// <summary>
         /// Generic performance counter
@@ -89,8 +63,15 @@ namespace SanteDB.Core.Diagnostics.Performance
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationServiceContext.Current.GetService<DefaultThreadPoolService>().ActiveThreads;
-
+            public override int Value
+            {
+                get
+                {
+                    ThreadPool.GetMaxThreads(out int workerCount, out int completionPort);
+                    ThreadPool.GetAvailableThreads(out int workerAvail, out int completionPortAvail);
+                    return workerCount - workerAvail;
+                }
+            }
         }
 
         /// <summary>
@@ -115,35 +96,18 @@ namespace SanteDB.Core.Diagnostics.Performance
             /// <summary>
             /// Gets the value
             /// </summary>
-            public override int Value => ApplicationServiceContext.Current.GetService<DefaultThreadPoolService>().Concurrency;
-
-        }
-
-        /// <summary>
-        /// Generic performance counter
-        /// </summary>
-        private class ErroredWorkersProbe : DiagnosticsProbeBase<long>
-        {
-            /// <summary>
-            /// Non pooled workers counter
-            /// </summary>
-            public ErroredWorkersProbe() : base("ThreadPool: Worker Errors", "Shows the total number of workers that didn't successfully complete due to an uncaught exception")
+            public override int Value
             {
-
+                get
+                {
+                    ThreadPool.GetMaxThreads(out int workerCount, out int completionPort);
+                    return workerCount;
+                }
             }
 
-            /// <summary>
-            /// Gets the identifier for the pool
-            /// </summary>
-            public override Guid Uuid => PerformanceConstants.ThreadPoolErrorWorkerCounter;
-
-            /// <summary>
-            /// Gets the value
-            /// </summary>
-            public override long Value => ApplicationServiceContext.Current.GetService<DefaultThreadPoolService>().ErroredWorkerCount;
-
         }
 
+        
         /// <summary>
         /// Get the UUID of the thread pool
         /// </summary>

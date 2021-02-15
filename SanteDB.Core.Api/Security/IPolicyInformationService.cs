@@ -31,10 +31,11 @@ namespace SanteDB.Core.Security.Services
     /// </summary>
     public interface IPolicyInformationService : IServiceImplementation
     {
+
         /// <summary>
-        /// Get active policies for the specified securable type
+        /// Get all active policies for the specified securable type
         /// </summary>
-        IEnumerable<IPolicyInstance> GetActivePolicies(object securable);
+        IEnumerable<IPolicyInstance> GetPolicies(object securable);
 
         /// <summary>
         /// Get all policies on the system
@@ -58,6 +59,7 @@ namespace SanteDB.Core.Security.Services
         /// Gets the policy instance for the specified object
         /// </summary>
         IPolicyInstance GetPolicyInstance(object securable, string policyOid);
+
 
         /// <summary>
         /// Removes the specified policies from the user account

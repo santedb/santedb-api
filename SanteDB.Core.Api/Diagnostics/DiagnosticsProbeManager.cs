@@ -51,7 +51,7 @@ namespace SanteDB.Core.Diagnostics
         private DiagnosticsProbeManager()
         {
             this.m_probes = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
-                .Where(t => typeof(IDiagnosticsProbe).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo()) && !t.GetTypeInfo().IsAbstract && !t.GetTypeInfo().IsInterface && t.GetTypeInfo().DeclaredConstructors.Any(o=>o.GetParameters().Length == 0))
+                .Where(t => typeof(IDiagnosticsProbe).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.GetConstructors().Any(o=>o.GetParameters().Length == 0))
                 .Select(t => Activator.CreateInstance(t) as IDiagnosticsProbe)
                 .ToArray();
         }

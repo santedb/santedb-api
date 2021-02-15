@@ -78,6 +78,11 @@ namespace SanteDB.Core.Security.Configuration
         /// Generate an error condition
         /// </summary>
         [XmlEnum("error")]
-        Error
+        Error,
+        /// <summary>
+        /// Hashes values so they can be compared with a normal value
+        /// </summary>
+        [XmlEnum("hash")]
+        Hash
     }
 }

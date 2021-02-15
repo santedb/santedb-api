@@ -68,7 +68,7 @@ namespace SanteDB.Core.Configuration
         public SanteDBConfiguration()
         {
             this.Sections = new List<Object>();
-            this.Version = typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version.ToString();
+            this.Version = typeof(SanteDBConfiguration).Assembly.GetName().Version.ToString();
         }
         
         /// <summary>
@@ -78,12 +78,12 @@ namespace SanteDB.Core.Configuration
         [XmlAttribute("version")]
         public String Version
         {
-            get { return typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version.ToString(); }
+            get { return typeof(SanteDBConfiguration).Assembly.GetName().Version.ToString(); }
             set
             {
 
                 Version v = new Version(value),
-                    myVersion = typeof(SanteDBConfiguration).GetTypeInfo().Assembly.GetName().Version;
+                    myVersion = typeof(SanteDBConfiguration).Assembly.GetName().Version;
                 if (v.Major > myVersion.Major)
                     throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion), this);
             }
@@ -141,7 +141,7 @@ namespace SanteDB.Core.Configuration
         public void Save(Stream dataStream)
         {
             this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
-            var namespaces = this.Sections.Select(o => o.GetType().GetTypeInfo().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
+            var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
             var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
@@ -181,7 +181,7 @@ namespace SanteDB.Core.Configuration
         /// <param name="t">T.</param>
         public object GetSection(Type t)
         {
-            return this.Sections.Find(o => t.GetTypeInfo().IsAssignableFrom(o.GetType().GetTypeInfo()));
+            return this.Sections.Find(o => t.IsAssignableFrom(o.GetType()));
         }
 
         /// <summary>
