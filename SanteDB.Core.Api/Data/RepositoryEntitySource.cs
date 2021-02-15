@@ -33,6 +33,13 @@ namespace SanteDB.Core.Data
 	public class RepositoryEntitySource : IEntitySourceProvider
     {
 
+        /// <summary>
+        /// Creates a new persistence entity source
+        /// </summary>
+        public RepositoryEntitySource()
+        {
+        }
+
 
         #region IEntitySourceProvider implementation
 
@@ -60,12 +67,21 @@ namespace SanteDB.Core.Data
             return default(TObject);
         }
 
-        /// <summary>
+       /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
         public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
         {
-            return this.Query<TObject>(o => o.SourceEntityKey == sourceKey).ToList();
+            // Is the collection already loaded?
+            var cacheKey = $"eld.{typeof(TObject).FullName}@{sourceKey}.{sourceVersionSequence}";
+            var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
+            var retVal = adhocCache?.Get<List<TObject>>(cacheKey);
+            if (retVal == null)
+            {
+                retVal = this.Query<TObject>(o => o.SourceEntityKey == sourceKey && o.ObsoleteVersionSequenceId != null).ToList();
+                adhocCache?.Add(cacheKey, retVal, new TimeSpan(0, 0, 30));
+            }
+            return retVal;
         }
 
         /// <summary>
@@ -73,8 +89,18 @@ namespace SanteDB.Core.Data
         /// </summary>
         public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
-            return this.Query<TObject>(o => o.SourceEntityKey == sourceKey).ToList();
+            // Is the collection already loaded?
+            var cacheKey = $"eld.{typeof(TObject).FullName}@{sourceKey}";
+            var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
+            var retVal = adhocCache?.Get<List<TObject>>(cacheKey);
+            if (retVal == null)
+            {
+                retVal = this.Query<TObject>(o => o.SourceEntityKey == sourceKey).ToList();
+                adhocCache?.Add(cacheKey, retVal, new TimeSpan(0, 0, 30));
+            }
+            return retVal;
         }
+
 
         /// <summary>
         /// Query the specified object

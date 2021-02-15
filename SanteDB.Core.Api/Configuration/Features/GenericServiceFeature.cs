@@ -36,7 +36,7 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public GenericServiceFeature()
         {
-            var instanceAtt = typeof(TService).GetTypeInfo().GetCustomAttribute<ServiceProviderAttribute>();
+            var instanceAtt = typeof(TService).GetCustomAttribute<ServiceProviderAttribute>();
             if (instanceAtt != null) {
                 this.Name = instanceAtt?.Name;
                 this.Description = instanceAtt?.Name;
@@ -51,7 +51,7 @@ namespace SanteDB.Core.Configuration.Features
                 this.Name = instance.ServiceName;
                 this.Description = instance.ServiceName;
             }
-            this.Group = typeof(TService).GetTypeInfo().Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
+            this.Group = typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
         }
 
 	    /// <summary>
@@ -88,7 +88,7 @@ namespace SanteDB.Core.Configuration.Features
 	    /// <summary>
         /// Get the flags for this feature
         /// </summary>
-        public virtual FeatureFlags Flags => typeof(TService).GetTypeInfo().Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
+        public virtual FeatureFlags Flags => typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
 
 	    /// <summary>
         /// Gets the group name
@@ -203,12 +203,12 @@ namespace SanteDB.Core.Configuration.Features
             private Type GetServiceType()
             {
                 var serviceType = this.Feature.GetType();
-                while (!serviceType.GetTypeInfo().IsGenericType)
+                while (!serviceType.IsGenericType)
                 {
-	                serviceType = serviceType.GetTypeInfo().BaseType;
+	                serviceType = serviceType.BaseType;
                 }
 
-                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                serviceType = serviceType.GenericTypeArguments[0];
                 return serviceType;
             }
         }
@@ -293,12 +293,12 @@ namespace SanteDB.Core.Configuration.Features
             private Type GetServiceType()
             {
                 var serviceType = this.Feature.GetType();
-                while (!serviceType.GetTypeInfo().IsGenericType)
+                while (!serviceType.IsGenericType)
                 {
-	                serviceType = serviceType.GetTypeInfo().BaseType;
+	                serviceType = serviceType.BaseType;
                 }
 
-                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                serviceType = serviceType.GenericTypeArguments[0];
                 return serviceType;
             }
         }

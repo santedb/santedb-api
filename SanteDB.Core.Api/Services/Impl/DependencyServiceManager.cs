@@ -312,8 +312,11 @@ namespace SanteDB.Core.Services.Impl
             this.m_isDisposed = true;
             if (this.m_serviceRegistrations != null)
                 foreach (var sp in this.m_serviceRegistrations)
-                    if(sp.ServiceImplementer != typeof(DependencyServiceManager))
+                    if (sp.ServiceImplementer != typeof(DependencyServiceManager))
+                    {
+                        this.m_tracer.TraceInfo("Disposing {0}...", sp.ServiceImplementer);
                         sp.Dispose();
+                    }
         }
 
         /// <summary>
@@ -393,17 +396,15 @@ namespace SanteDB.Core.Services.Impl
 
             this.IsRunning = false;
 
-            foreach (var svc in this.m_serviceRegistrations.ToArray())
+            foreach (var svc in this.m_serviceRegistrations.Where(o=>o.ServiceImplementer != typeof(DependencyServiceManager)).ToArray())
             {
-                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon &&
-                    daemon != this)
+                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon)
                 {
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
             }
 
-            this.Dispose();
             this.Stopped?.Invoke(this, null);
             return true;
         }

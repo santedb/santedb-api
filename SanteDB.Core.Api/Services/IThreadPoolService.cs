@@ -35,15 +35,5 @@ namespace SanteDB.Core.Services
         /// </summary>
         void QueueUserWorkItem(Action<Object> action, Object parm);
 
-        /// <summary>
-        /// Queue a user work item
-        /// </summary>
-        void QueueUserWorkItem(TimeSpan timeout, Action<Object> action, Object parm);
-
-        /// <summary>
-        /// Creates a normal thread which is not in the pool
-        /// </summary>
-        void QueueNonPooledWorkItem(Action<Object> action, Object parm);
-
     }
 }
