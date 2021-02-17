@@ -18,6 +18,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Api.Security;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
@@ -43,6 +44,7 @@ namespace SanteDB.Core.Security
         // Adhoc cache reference
         private IAdhocCacheService m_adhocCacheService;
         private IPasswordHashingService m_hasher;
+        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         /// <summary>
         /// Represents an effective policy instance from this PDP
@@ -90,6 +92,11 @@ namespace SanteDB.Core.Security
             /// </summary>
             [JsonIgnore, XmlIgnore]
             object IPolicyInstance.Securable => this.m_securable;
+
+            /// <summary>
+            /// Get the policy string
+            /// </summary>
+            public override string ToString() => $"{this.Policy?.Oid} ({this.Policy?.Name}) => {this.Rule}";
         }
 
         /// <summary>
@@ -100,9 +107,10 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Default policy decision service
         /// </summary>
-        public DefaultPolicyDecisionService(IAdhocCacheService adhocCache)
+        public DefaultPolicyDecisionService(IPasswordHashingService hashService, IAdhocCacheService adhocCache = null)
         {
             this.m_adhocCacheService = adhocCache;
+            this.m_hasher = hashService;
         }
 
 
@@ -122,10 +130,16 @@ namespace SanteDB.Core.Security
         {
             string cacheKey = this.ComputeCacheKey(principal);
             var result = this.m_adhocCacheService?.Get<EffectivePolicyInstance[]>(cacheKey);
+
             if (result == null)
             {
                 // First, just verbatim policy most restrictive
                 var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
+                if (pip == null)
+                {
+                    this.m_tracer.TraceWarning("No IPolicyInformationService is registered, default will be deny for all policies");
+                    return new List<IPolicyInstance>();
+                }
 
                 var allPolicies = pip.GetPolicies();
                 var activePoliciesForObject = pip.GetPolicies(principal).GroupBy(o => o.Policy.Oid).Select(o => o.OrderBy(p => p.Rule).FirstOrDefault());
@@ -160,7 +174,7 @@ namespace SanteDB.Core.Security
                 else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
                     return $"sid.{this.m_hasher.ComputeHash(nameId)}";
             }
-            return $"sid.{principal.Identity.Name}";
+            return $"sid.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
         }
 
         /// <summary>

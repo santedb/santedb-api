@@ -141,8 +141,9 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public bool TryGetClaimValue(string claimType, out string value)
         {
-            value = this.m_identities.SelectMany(o => o.Claims).FirstOrDefault(o => o.Type.Equals(claimType))?.Value;
-            return String.IsNullOrEmpty(value);
+            var claim = this.m_identities.SelectMany(o => o.Claims).FirstOrDefault(o => o.Type.Equals(claimType));
+            value = claim?.Value;
+            return claim != null;
         }
 
 
