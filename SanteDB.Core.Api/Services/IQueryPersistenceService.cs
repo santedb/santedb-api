@@ -73,7 +73,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="queryId">The query id to add results to</param>
         /// <param name="results">The result keys</param>
-        void AddResults(Guid queryId, IEnumerable<Guid> results);
+        void AddResults(Guid queryId, IEnumerable<Guid> results, int totalResults);
 
         /// <summary>
         /// Set or update the query tag of an existing query id

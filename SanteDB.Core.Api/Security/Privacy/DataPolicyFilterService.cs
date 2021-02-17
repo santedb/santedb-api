@@ -225,16 +225,18 @@ namespace SanteDB.Core.Security.Privacy
 
             var principal = AuthenticationContext.Current.Principal;
 
-            return results
-            .OfType<IdentifiedData>()
-                .AsParallel()
-                .AsOrdered()
-                .WithDegreeOfParallelism(2)
-            .Select(
-                o => this.Apply(o, principal)
-            )
-            .ToList();
+            if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
+                return results
+                .OfType<IdentifiedData>()
+                    .AsParallel()
+                    .AsOrdered()
+                    .WithDegreeOfParallelism(2)
+                .Select(
+                    o => this.Apply(o, principal)
+                )
+                .ToList();
 
+            return results;
         }
 
 
@@ -316,7 +318,7 @@ namespace SanteDB.Core.Security.Privacy
                                 tag.AddTag("$pep.method", "hash");
                             }
                         }
-                            break;
+                        break;
                     }
                 case ResourceDataPolicyActionType.Redact:
                     {
@@ -360,6 +362,11 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public IdentifiedData Apply(IdentifiedData result, IPrincipal accessor)
         {
+
+            // Is this SYSTEM?
+            if (accessor == AuthenticationContext.SystemPrincipal)
+                return result;
+
             var decision = this.m_pdpService.GetPolicyDecision(accessor, result);
             this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
 
