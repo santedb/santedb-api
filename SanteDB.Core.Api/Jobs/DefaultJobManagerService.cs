@@ -146,7 +146,8 @@ namespace SanteDB.Core.Jobs
                     lock (this.m_log)
                         this.m_log.Add(job, e.SignalTime);
 
-                job.Run(o, e, null);
+                if(job.CurrentState != JobStateType.Running)
+                    job.Run(o, e, null);
 
             });
         }
@@ -187,7 +188,7 @@ namespace SanteDB.Core.Jobs
                 this.m_log.Add(jobObject, DateTime.MinValue);
 
             // Resize the timer array
-            if (elapseTime != TimeSpan.MaxValue)
+            if (elapseTime != TimeSpan.MaxValue || startType == JobStartType.Never)
             {
                 lock (this.m_timers)
                 {
@@ -204,7 +205,7 @@ namespace SanteDB.Core.Jobs
 
                 if(startType == JobStartType.Immediate)
                     jobObject.Run(this, null, null);
-
+                
             }
 
         }
@@ -255,7 +256,8 @@ namespace SanteDB.Core.Jobs
                 lock (this.m_log)
                     this.m_log.Add(job, DateTime.Now);
 
-            ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((o)=> job.Run(this, EventArgs.Empty, parameters));
+            if(job.CurrentState != JobStateType.Running)
+                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((o)=> job.Run(this, EventArgs.Empty, parameters));
         }
 
         /// <summary>
