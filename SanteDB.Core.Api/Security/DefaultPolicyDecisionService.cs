@@ -16,7 +16,9 @@
  * User: fyfej (Justin Fyfe)
  * Date: 2019-11-27
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Api.Security;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
@@ -27,6 +29,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using System.Security.Principal;
+using System.Xml.Serialization;
 
 // TODO: Move this to the core API to increase reuse
 namespace SanteDB.Core.Security
@@ -38,37 +41,62 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyDecisionService : IPolicyDecisionService
     {
 
+        // Adhoc cache reference
+        private IAdhocCacheService m_adhocCacheService;
+        private IPasswordHashingService m_hasher;
+        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+
         /// <summary>
         /// Represents an effective policy instance from this PDP
         /// </summary>
         private class EffectivePolicyInstance : IPolicyInstance
         {
 
+            // Securable
+            private object m_securable;
 
             /// <summary>
             /// Effective policy instance
             /// </summary>
             public EffectivePolicyInstance(IPolicy policy, PolicyGrantType rule, IPrincipal forPrincipal)
             {
-                this.Policy = policy;
+                this.Policy = new GenericPolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride);
                 this.Rule = rule;
-                this.Securable = forPrincipal;
+                this.m_securable = forPrincipal;
             }
+
+            /// <summary>
+            /// Gets or sets the policy
+            /// </summary>
+            public GenericPolicy Policy { get; set; }
+
+            /// <summary>
+            /// Gets or sets the rule
+            /// </summary>
+            public PolicyGrantType Rule { get; set; }
 
             /// <summary>
             /// The policy instance
             /// </summary>
-            public IPolicy Policy { get; }
+            [JsonIgnore, XmlIgnore]
+            IPolicy IPolicyInstance.Policy => this.Policy;
 
             /// <summary>
             /// Represents the enforcement rule
             /// </summary>
-            public PolicyGrantType Rule { get; }
+            [JsonIgnore, XmlIgnore]
+            PolicyGrantType IPolicyInstance.Rule => this.Rule;
 
             /// <summary>
             /// Represents the securable
             /// </summary>
-            public object Securable { get; }
+            [JsonIgnore, XmlIgnore]
+            object IPolicyInstance.Securable => this.m_securable;
+
+            /// <summary>
+            /// Get the policy string
+            /// </summary>
+            public override string ToString() => $"{this.Policy?.Oid} ({this.Policy?.Name}) => {this.Rule}";
         }
 
         /// <summary>
@@ -77,11 +105,22 @@ namespace SanteDB.Core.Security
         public String ServiceName => "Default PDP Decision Service";
 
         /// <summary>
+        /// Default policy decision service
+        /// </summary>
+        public DefaultPolicyDecisionService(IPasswordHashingService hashService, IAdhocCacheService adhocCache = null)
+        {
+            this.m_adhocCacheService = adhocCache;
+            this.m_hasher = hashService;
+        }
+
+
+        /// <summary>
         /// This is not cached
         /// </summary>
-        /// <param name="principal"></param>
         public void ClearCache(IPrincipal principal)
         {
+            string cacheKey = this.ComputeCacheKey(principal);
+            this.m_adhocCacheService?.Remove($"sid.{cacheKey}");
         }
 
         /// <summary>
@@ -89,24 +128,53 @@ namespace SanteDB.Core.Security
         /// </summary>
         public IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal principal)
         {
-            // First, just verbatim policy most restrictive
-            var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
+            string cacheKey = this.ComputeCacheKey(principal);
+            var result = this.m_adhocCacheService?.Get<EffectivePolicyInstance[]>(cacheKey);
 
-            var allPolicies = pip.GetPolicies();
-            var activePoliciesForObject = pip.GetPolicies(principal).GroupBy(o => o.Policy.Oid).Select(o => o.OrderBy(p => p.Rule).FirstOrDefault());
-
-            // Create an effective policy list
-            return allPolicies.Select(masterPolicy =>
+            if (result == null)
             {
-                // Get all policies which are related to this policy 
-                var activePolicy = activePoliciesForObject.Where(p => masterPolicy.Oid.StartsWith(p.Policy.Oid)).OrderByDescending(o => o.Policy.Oid.Length).FirstOrDefault(); // The most specific policy grant for this policy
+                // First, just verbatim policy most restrictive
+                var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
+                if (pip == null)
+                {
+                    this.m_tracer.TraceWarning("No IPolicyInformationService is registered, default will be deny for all policies");
+                    return new List<IPolicyInstance>();
+                }
 
-                // What is the most specific policy in this tree?
-                if (activePolicy == null)
-                    return new EffectivePolicyInstance(masterPolicy, PolicyGrantType.Deny, principal);
-                else
-                    return new EffectivePolicyInstance(masterPolicy, activePolicy.Rule, principal);
-            });
+                var allPolicies = pip.GetPolicies();
+                var activePoliciesForObject = pip.GetPolicies(principal).GroupBy(o => o.Policy.Oid).Select(o => o.OrderBy(p => p.Rule).FirstOrDefault());
+
+                // Create an effective policy list
+                result = allPolicies.Select(masterPolicy =>
+                {
+                    // Get all policies which are related to this policy 
+                    var activePolicy = activePoliciesForObject.Where(p => masterPolicy.Oid.StartsWith(p.Policy.Oid)).OrderByDescending(o => o.Policy.Oid.Length).FirstOrDefault(); // The most specific policy grant for this policy
+
+                    // What is the most specific policy in this tree?
+                    if (activePolicy == null)
+                        return new EffectivePolicyInstance(masterPolicy, PolicyGrantType.Deny, principal);
+                    else
+                        return new EffectivePolicyInstance(masterPolicy, activePolicy.Rule, principal);
+                }).ToArray();
+
+                this.m_adhocCacheService?.Add(cacheKey, result, new TimeSpan(0, 60, 0));
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Compute cache key
+        /// </summary>
+        private string ComputeCacheKey(IPrincipal principal)
+        {
+            if (principal is IClaimsPrincipal cp)
+            {
+                if (cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
+                    return $"sid.{this.m_hasher.ComputeHash(sessionId)}";
+                else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
+                    return $"sid.{this.m_hasher.ComputeHash(nameId)}";
+            }
+            return $"sid.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
         }
 
         /// <summary>
@@ -176,7 +244,7 @@ namespace SanteDB.Core.Security
             }
             else
             {
-                
+
                 // Most restrictive
                 IPolicyInstance policyInstance = this.GetEffectivePolicySet(principal).FirstOrDefault(o => policyId == o.Policy.Oid);
                 var retVal = PolicyGrantType.Deny;

@@ -136,7 +136,17 @@ namespace SanteDB.Core.Security.Claims
             return this.m_identities.SelectMany(o => o.Claims).Where(o => o.Type == claimType);
         }
 
-       
+        /// <summary>
+        /// Try to get the claim value
+        /// </summary>
+        public bool TryGetClaimValue(string claimType, out string value)
+        {
+            var claim = this.m_identities.SelectMany(o => o.Claims).FirstOrDefault(o => o.Type.Equals(claimType));
+            value = claim?.Value;
+            return claim != null;
+        }
+
+
         /// <summary>
         /// Gets the primary identity
         /// </summary>

@@ -51,6 +51,11 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Find all claims
         /// </summary>
+        bool TryGetClaimValue(string claimType, out string value);
+
+        /// <summary>
+        /// Find all claims
+        /// </summary>
         IEnumerable<IClaim> FindAll(string santeDBDeviceIdentifierClaim);
 
         /// <summary>
