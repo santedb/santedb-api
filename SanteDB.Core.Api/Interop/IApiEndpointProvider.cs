@@ -18,6 +18,8 @@
  */
 using SanteDB.Core.Interop;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Interop
 {
@@ -46,4 +48,5 @@ namespace SanteDB.Core.Interop
         /// </summary>
         Type BehaviorType { get; }
     }
+
 }

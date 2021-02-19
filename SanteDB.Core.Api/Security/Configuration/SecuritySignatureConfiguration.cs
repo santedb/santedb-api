@@ -150,7 +150,6 @@ namespace SanteDB.Core.Security.Configuration
                 // Perhaps the plain text secret is set?
                 if (!String.IsNullOrEmpty(this.m_plainTextSecret))
                 {
-                    this.m_plainTextSecret = String.Empty;
                     this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
                 }
                 else
