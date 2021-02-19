@@ -53,5 +53,15 @@ namespace SanteDB.Core.Interfaces
         /// </summary>
         /// <returns></returns> 
         IEnumerable<Type> GetAllTypes();
+
+        /// <summary>
+        /// Create a new, injected <paramref name="type"/>
+        /// </summary>
+        Object CreateInjected(Type type);
+
+        /// <summary>
+        /// Create a new injected instance of <typeparamref name="TObject"/>
+        /// </summary>
+        TObject CreateInjected<TObject>();
     }
 }

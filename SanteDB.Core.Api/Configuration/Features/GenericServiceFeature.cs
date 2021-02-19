@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SanteDB.Core.Attributes;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration.Features
@@ -29,7 +30,7 @@ namespace SanteDB.Core.Configuration.Features
     /// Represents a feature which wraps a generic service
     /// </summary>
     public abstract class GenericServiceFeature<TService> : IFeature
-        where TService : IServiceImplementation, new()
+        where TService : IServiceImplementation
     {
 	    /// <summary>
         /// Create a generic service feature
@@ -47,7 +48,7 @@ namespace SanteDB.Core.Configuration.Features
                 }
             }
             else {
-                var instance = new TService();
+                var instance = ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected<TService>();
                 this.Name = instance.ServiceName;
                 this.Description = instance.ServiceName;
             }
