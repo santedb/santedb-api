@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using Newtonsoft.Json;
 using System;
@@ -32,6 +32,12 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(TypeReferenceConfiguration), Namespace = "http://santedb.org/configuration")]
     public class TypeReferenceConfiguration
     {
+
+        // The type
+        private Type m_type;
+
+        // Type
+        private string m_typeXml;
 
         /// <summary>
         /// Represents a type reference configuration
@@ -61,7 +67,16 @@ namespace SanteDB.Core.Configuration
         /// Gets the type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
-        public String TypeXml { get; set; }
+        public String TypeXml 
+        {
+            get => this.m_typeXml;
+            set
+            {
+                if (String.Equals(this.m_typeXml, value))
+                    this.m_type = null;
+                this.m_typeXml = value;
+            }
+        }
 
         /// <summary>
         /// Gets the type
@@ -69,8 +84,17 @@ namespace SanteDB.Core.Configuration
         [XmlIgnore, JsonIgnore]
         public Type Type
         {
-            get => Type.GetType(this.TypeXml);
-            set => this.TypeXml = value?.AssemblyQualifiedName;
+            get
+            {
+                if (this.m_type == null)
+                    this.m_type = Type.GetType(this.TypeXml);
+                return this.m_type;
+            }
+            set
+            {
+                this.m_type = value;
+                this.m_typeXml = value?.AssemblyQualifiedName;
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2020-5-1
+ * Date: 2021-2-9
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Interfaces;
@@ -38,7 +38,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public static object AddBusinessRule(this IServiceProvider me, Type instance)
         {
-            var ibre = instance.GetTypeInfo().ImplementedInterfaces.FirstOrDefault(i => i.IsConstructedGenericType && i.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>));
+            var ibre = instance.FindInterfaces((t,p) => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>), null).FirstOrDefault();
             if (ibre == null)
                 throw new InvalidOperationException($"{nameof(instance)} must implement IBusinessRulesService<T>");
             var meth = typeof(BusinessRulesExtensions).GetGenericMethod(nameof(AddBusinessRule), ibre.GenericTypeArguments, new Type[] { typeof(IServiceProvider), typeof(Type) });

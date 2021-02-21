@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2020-5-1
+ * Date: 2021-2-9
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Configuration;
@@ -34,6 +34,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -45,6 +46,7 @@ using System.Reflection;
 using System.Security;
 using System.Security.Authentication;
 using System.Security.Principal;
+using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security.Privacy
 {
@@ -74,23 +76,23 @@ namespace SanteDB.Core.Security.Privacy
         // Actions
         private ConcurrentDictionary<Type, ResourceDataPolicyActionType> m_actions = new ConcurrentDictionary<Type, ResourceDataPolicyActionType>();
 
-        // Protected authorities
-        private List<AssigningAuthority> m_protectedAuthorities;
         // PDP Service
         private IPolicyDecisionService m_pdpService;
         // Adhoc cache
-        private IAdhocCacheService m_adhocCache ;
+        private IAdhocCacheService m_adhocCache;
         // Password Hashing
         private IPasswordHashingService m_hasher;
         // Data caching service
         private IDataCachingService m_dataCachingService;
         // Subscription executor
         private ISubscriptionExecutor m_subscriptionExecutor;
+        // Threadpool service
+        private IThreadPoolService m_threadPool;
 
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IPasswordHashingService passwordService, IPolicyDecisionService pdpService,
+        public DataPolicyFilterService(IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
             IDataCachingService dataCachingService, ISubscriptionExecutor subscriptionExecutor = null, IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
@@ -98,6 +100,7 @@ namespace SanteDB.Core.Security.Privacy
             this.m_pdpService = pdpService;
             this.m_subscriptionExecutor = subscriptionExecutor;
             this.m_dataCachingService = dataCachingService;
+            this.m_threadPool = threadPoolService;
         }
 
         /// <summary>
@@ -165,7 +168,7 @@ namespace SanteDB.Core.Security.Privacy
         private void BindEvents()
         {
             this.m_tracer.TraceInfo("Starting bind to persistence services...");
-            var policyTypes = this.m_configuration?.Resources?.Select(o => o.ResourceType) ?? typeof(Act).GetTypeInfo().Assembly.ExportedTypes.Where(o => typeof(Act).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()) || typeof(Entity).GetTypeInfo().IsAssignableFrom(o.GetTypeInfo()));
+            var policyTypes = this.m_configuration?.Resources?.Select(o => o.ResourceType) ?? typeof(Act).Assembly.ExportedTypes.Where(o => typeof(Act).IsAssignableFrom(o) || typeof(Entity).IsAssignableFrom(o));
             foreach (var t in policyTypes)
             {
                 var svcType = typeof(INotifyRepositoryService<>).MakeGenericType(t);
@@ -207,47 +210,12 @@ namespace SanteDB.Core.Security.Privacy
 
             }
 
-            // Bind to AA events
-            var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
-            this.m_protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
-            // If we have a datacache then use that as it will get pubsub changes
-            if (this.m_dataCachingService != null)
-            {
-                this.m_dataCachingService.Added += (o, e) =>
-                {
-                    if ((e.Object as AssigningAuthority)?.PolicyKey.HasValue == true) this.m_protectedAuthorities.Add(e.Object as AssigningAuthority);
-                };
-                this.m_dataCachingService.Updated += (o, e) =>
-                {
-                    var data = e.Object as AssigningAuthority;
-                    if (data?.PolicyKey.HasValue == true && !this.m_protectedAuthorities.Any(i => i.Key == data.Key))
-                        this.m_protectedAuthorities.Add(data);
-                    else if (data != null)
-                        this.m_protectedAuthorities.RemoveAll(i => i.Key == data.Key);
-                };
-            }
-            else
-            {
-                aaDp.Inserted += (o, e) =>
-                {
-                    if (e.Data.PolicyKey.HasValue) this.m_protectedAuthorities.Add(e.Data);
-                };
-                aaDp.Updated += (o, e) =>
-                {
-                    if (e.Data.PolicyKey.HasValue && !this.m_protectedAuthorities.Any(i => i.Key == e.Data.Key))
-                        this.m_protectedAuthorities.Add(e.Data);
-                    else
-                        this.m_protectedAuthorities.RemoveAll(i => i.Key == e.Data.Key);
-                };
-            }
-
             if (this.m_subscriptionExecutor != null)
                 this.m_subscriptionExecutor.Executed += (o, e) =>
                 {
                     e.Results = this.HandlePostQueryEvent(e.Results).OfType<IdentifiedData>();
                 };
         }
-
 
         /// <summary>
         /// Handle post query event
@@ -256,15 +224,19 @@ namespace SanteDB.Core.Security.Privacy
         {
 
             var principal = AuthenticationContext.Current.Principal;
-            return results
+
+            if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
+                return results
                 .OfType<IdentifiedData>()
-                .AsParallel()
-                .AsOrdered()
-                .WithDegreeOfParallelism(2)
+                    .AsParallel()
+                    .AsOrdered()
+                    .WithDegreeOfParallelism(2)
                 .Select(
                     o => this.Apply(o, principal)
                 )
                 .ToList();
+
+            return results;
         }
 
 
@@ -283,21 +255,23 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
-            this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
+            if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out ResourceDataPolicyActionType action) && !this.m_actions.TryGetValue(result.GetType(), out action))
+                action = this.m_configuration.DefaultAction;
 
             String key = null;
             if (accessor is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
                 key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
             else
                 key = this.m_hasher.ComputeHash($"$aa.filter.{accessor.Identity.Name}");
-
             var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
             if (domainsToFilter == null)
             {
-                domainsToFilter = this.m_protectedAuthorities
-                        .Where(aa => this.m_pdpService.GetPolicyOutcome(AuthenticationContext.Current.Principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
+                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
+                var protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
+                domainsToFilter = protectedAuthorities
+                        .Where(aa => this.m_pdpService.GetPolicyOutcome(accessor, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
                         .ToArray();
-                this.m_adhocCache?.Add(key, domainsToFilter);
+                this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
             }
 
             switch (action)
@@ -311,9 +285,40 @@ namespace SanteDB.Core.Security.Privacy
                         {
                             AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
                             if (result is ITaggable tag)
+                            {
                                 tag.AddTag("$pep.masked", "true");
+                                tag.AddTag("$pep.method", "hide");
+                            }
                         }
-                            break;
+                        break;
+                    }
+                case ResourceDataPolicyActionType.Hash:
+                    {
+                        var r = 0;
+                        if (result is Act act)
+                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            {
+                                act.Identifiers.Add(new ActIdentifier(id.Authority, this.m_hasher.ComputeHash(id.Value)));
+                                act.Identifiers.Remove(id);
+                                r++;
+                            }
+                        else if (result is Entity entity)
+                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            {
+                                entity.Identifiers.Add(new EntityIdentifier(id.Authority, this.m_hasher.ComputeHash(id.Value)));
+                                entity.Identifiers.Remove(id);
+                                r++;
+                            }
+                        if (r > 0)
+                        {
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true);
+                            if (result is ITaggable tag)
+                            {
+                                tag.AddTag("$pep.masked", "true");
+                                tag.AddTag("$pep.method", "hash");
+                            }
+                        }
+                        break;
                     }
                 case ResourceDataPolicyActionType.Redact:
                     {
@@ -336,12 +341,16 @@ namespace SanteDB.Core.Security.Privacy
                         {
                             AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true);
                             if (result is ITaggable tag)
+                            {
                                 tag.AddTag("$pep.masked", "true");
+                                tag.AddTag("$pep.method", "redact");
+                            }
                         }
                         break;
                     }
                 case ResourceDataPolicyActionType.Audit:
-                    // TODO:
+
+                    AuditUtil.AuditSensitiveDisclosure(result, null, true);
                     break;
 
             }
@@ -353,6 +362,11 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public IdentifiedData Apply(IdentifiedData result, IPrincipal accessor)
         {
+
+            // Is this SYSTEM?
+            if (accessor == AuthenticationContext.SystemPrincipal)
+                return result;
+
             var decision = this.m_pdpService.GetPolicyDecision(accessor, result);
             this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
 

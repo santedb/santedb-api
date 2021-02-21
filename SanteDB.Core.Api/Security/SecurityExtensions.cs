@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,12 +14,15 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SanteDB.Core.Api.Security
 {
@@ -28,6 +31,38 @@ namespace SanteDB.Core.Api.Security
     /// </summary>
     public static class SecurityExtensions
     {
+
+        /// <summary>
+        /// Represents a generic policy instance from a claims principal
+        /// </summary>
+        private class ClaimsPolicyInstance : IPolicyInstance
+        {
+
+            /// <summary>
+            /// Create a new claims policy instance from claim
+            /// </summary>
+            public ClaimsPolicyInstance(IClaimsPrincipal securable, IPolicy policy)
+            {
+                this.Policy = policy;
+                this.Securable = securable;
+            }
+
+            /// <summary>
+            /// Gets the policy
+            /// </summary>
+            public IPolicy Policy { get; }
+
+            /// <summary>
+            /// Gets the rule
+            /// </summary>
+            public PolicyGrantType Rule => PolicyGrantType.Grant; // Only granted claims are in a claims principal
+
+            /// <summary>
+            /// The securable
+            /// </summary>
+            public object Securable { get; }
+        }
+
         /// <summary>
         /// Convert an IPolicy to a policy instance
         /// </summary>
@@ -42,6 +77,14 @@ namespace SanteDB.Core.Api.Security
                 },
                 (PolicyGrantType)(int)me.Rule
             );
+        }
+
+        /// <summary>
+        /// Gets the granted policies from the specified claims principal
+        /// </summary>
+        public static IEnumerable<IPolicyInstance> GetGrantedPolicies(this IClaimsPrincipal me, IPolicyInformationService pip)
+        {
+            return me.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => new ClaimsPolicyInstance(me, pip.GetPolicy(o.Value)));
         }
 
         /// <summary>

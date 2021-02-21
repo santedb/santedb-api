@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using System;
 using System.Collections;
@@ -105,15 +105,15 @@ namespace SanteDB.Core.Configuration.Features
                     var config = new GenericFeatureConfiguration();
 
                     // Map configuration over to the features section
-                    foreach (var pvd in types.Where(t =>t.GetTypeInfo().IsInterface && typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())).ToArray())
+                    foreach (var pvd in types.Where(t =>t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
                     {
                         if (pvd.Name == "IDaemonService")
                         {
 	                        continue;
                         }
 
-                        config.Options.Add(pvd.Name, () => types.Where(t => !t.GetTypeInfo().IsInterface && !t.GetTypeInfo().IsAbstract && !t.GetTypeInfo().ContainsGenericParameters && pvd.GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())));
-                        config.Values.Add(pvd.Name, sp.FirstOrDefault(o => pvd.GetTypeInfo().IsAssignableFrom(o.Type.GetTypeInfo()))?.Type);
+                        config.Options.Add(pvd.Name, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
+                        config.Values.Add(pvd.Name, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
                     }
 
                     var removeOptions = new List<string>();
@@ -182,7 +182,7 @@ namespace SanteDB.Core.Configuration.Features
                     var types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
                     var appConfig = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
                     // Map configuration over to the features section
-                    foreach (var pvd in types.Where(t => t.GetTypeInfo().IsInterface && typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(t.GetTypeInfo())).ToArray())
+                    foreach (var pvd in types.Where(t => t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
                     {
 
                         object value = null;
@@ -195,8 +195,8 @@ namespace SanteDB.Core.Configuration.Features
                     }
 
                     // Remove any sp which aren't configured for any service impl
-                    sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).GetTypeInfo().IsAssignableFrom(r.Type.GetTypeInfo()) &&
-                        typeof(IServiceImplementation).GetTypeInfo().IsAssignableFrom(r.Type.GetTypeInfo()));
+                    sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).IsAssignableFrom(r.Type) &&
+                        typeof(IServiceImplementation).IsAssignableFrom(r.Type));
                 }
 
                 return true;

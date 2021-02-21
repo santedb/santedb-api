@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using System;
 
@@ -34,16 +34,6 @@ namespace SanteDB.Core.Services
         /// Queues the specified action into the worker pool
         /// </summary>
         void QueueUserWorkItem(Action<Object> action, Object parm);
-
-        /// <summary>
-        /// Queue a user work item
-        /// </summary>
-        void QueueUserWorkItem(TimeSpan timeout, Action<Object> action, Object parm);
-
-        /// <summary>
-        /// Creates a normal thread which is not in the pool
-        /// </summary>
-        void QueueNonPooledWorkItem(Action<Object> action, Object parm);
 
     }
 }

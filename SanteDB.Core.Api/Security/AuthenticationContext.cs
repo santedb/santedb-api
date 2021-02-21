@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using SanteDB.Core.Security.Principal;
 using System;
@@ -25,8 +25,37 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Authentication context
     /// </summary>
-    public sealed class AuthenticationContext
+    public sealed class AuthenticationContext 
     {
+
+        /// <summary>
+        /// Represents a authentication context that sets the restore context on disposal
+        /// </summary>
+        private class WrappedSystemContext : IDisposable
+        {
+
+            /// <summary>
+            /// The previous context
+            /// </summary>
+            public AuthenticationContext RestoreContext { get; }
+
+            /// <summary>
+            /// Create new wrapped authentication context
+            /// </summary>
+            public WrappedSystemContext(AuthenticationContext restore)
+            {
+                this.RestoreContext = restore;
+                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+            }
+
+            /// <summary>
+            /// Restores the context
+            /// </summary>
+            public void Dispose()
+            {
+                AuthenticationContext.Current = this.RestoreContext;
+            }
+        }
 
         /// <summary>
         /// SYSTEM user's SID
@@ -92,6 +121,20 @@ namespace SanteDB.Core.Security
         private IPrincipal m_principal;
 
         /// <summary>
+        /// Previous context
+        /// </summary>
+        private AuthenticationContext m_previous;
+
+        /// <summary>
+        /// Creates a new context keeping track of previous
+        /// </summary>
+        private AuthenticationContext(IPrincipal principal, AuthenticationContext previous)
+        {
+            this.m_previous = previous;
+            this.m_principal = principal;
+        }
+
+        /// <summary>
         /// Creates a new instance of the authentication context
         /// </summary>
         public AuthenticationContext(IPrincipal principal)
@@ -99,6 +142,7 @@ namespace SanteDB.Core.Security
             this.m_principal = principal;
         }
 
+       
         /// <summary>
         /// Gets or sets the current context
         /// </summary>
@@ -124,5 +168,14 @@ namespace SanteDB.Core.Security
                 return this.m_principal;
             }
         }
+
+        /// <summary>
+        /// Enter the system context
+        /// </summary>
+        public static IDisposable EnterSystemContext()
+        {
+            return new WrappedSystemContext(AuthenticationContext.Current);
+        }
+
     }
 }

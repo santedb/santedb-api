@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,13 +14,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SanteDB.Core.Attributes;
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration.Features
@@ -29,14 +30,14 @@ namespace SanteDB.Core.Configuration.Features
     /// Represents a feature which wraps a generic service
     /// </summary>
     public abstract class GenericServiceFeature<TService> : IFeature
-        where TService : IServiceImplementation, new()
+        where TService : IServiceImplementation
     {
 	    /// <summary>
         /// Create a generic service feature
         /// </summary>
         public GenericServiceFeature()
         {
-            var instanceAtt = typeof(TService).GetTypeInfo().GetCustomAttribute<ServiceProviderAttribute>();
+            var instanceAtt = typeof(TService).GetCustomAttribute<ServiceProviderAttribute>();
             if (instanceAtt != null) {
                 this.Name = instanceAtt?.Name;
                 this.Description = instanceAtt?.Name;
@@ -47,11 +48,11 @@ namespace SanteDB.Core.Configuration.Features
                 }
             }
             else {
-                var instance = new TService();
+                var instance = ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected<TService>();
                 this.Name = instance.ServiceName;
                 this.Description = instance.ServiceName;
             }
-            this.Group = typeof(TService).GetTypeInfo().Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
+            this.Group = typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
         }
 
 	    /// <summary>
@@ -88,7 +89,7 @@ namespace SanteDB.Core.Configuration.Features
 	    /// <summary>
         /// Get the flags for this feature
         /// </summary>
-        public virtual FeatureFlags Flags => typeof(TService).GetTypeInfo().Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
+        public virtual FeatureFlags Flags => typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
 
 	    /// <summary>
         /// Gets the group name
@@ -203,12 +204,12 @@ namespace SanteDB.Core.Configuration.Features
             private Type GetServiceType()
             {
                 var serviceType = this.Feature.GetType();
-                while (!serviceType.GetTypeInfo().IsGenericType)
+                while (!serviceType.IsGenericType)
                 {
-	                serviceType = serviceType.GetTypeInfo().BaseType;
+	                serviceType = serviceType.BaseType;
                 }
 
-                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                serviceType = serviceType.GenericTypeArguments[0];
                 return serviceType;
             }
         }
@@ -293,12 +294,12 @@ namespace SanteDB.Core.Configuration.Features
             private Type GetServiceType()
             {
                 var serviceType = this.Feature.GetType();
-                while (!serviceType.GetTypeInfo().IsGenericType)
+                while (!serviceType.IsGenericType)
                 {
-	                serviceType = serviceType.GetTypeInfo().BaseType;
+	                serviceType = serviceType.BaseType;
                 }
 
-                serviceType = serviceType.GetTypeInfo().GenericTypeArguments[0];
+                serviceType = serviceType.GenericTypeArguments[0];
                 return serviceType;
             }
         }

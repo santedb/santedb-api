@@ -1,4 +1,22 @@
-﻿using SanteDB.Core.Configuration;
+﻿/*
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
+ * the License.
+ * 
+ * User: fyfej
+ * Date: 2021-2-9
+ */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
@@ -18,6 +36,8 @@ namespace SanteDB.Core.Services.Impl
     /// <remarks>You must have an IConfigurationManager instance registered in order to use this service</remarks>
     public class DependencyServiceManager : IServiceManager, IServiceProvider, IDaemonService, IDisposable
     {
+        // Activators
+        private ConcurrentDictionary<Type, Func<Object>> m_activators = new ConcurrentDictionary<Type, Func<object>>();
 
         /// <summary>
         /// Gets the service instance information
@@ -28,19 +48,27 @@ namespace SanteDB.Core.Services.Impl
             // Tracer
             private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
 
-            // The delegate which can construct the object
-            private Func<Object> m_activator = null;
-
             // Singleton instance
             private object m_singletonInstance = null;
 
             // Lock object
             private object m_lockBox = new object();
 
+            // Service manager
+            private DependencyServiceManager m_serviceManager;
+
+            /// <summary>
+            /// Create a new service instance
+            /// </summary>
+            private ServiceInstanceInformation(DependencyServiceManager serviceManager)
+            {
+                this.m_serviceManager = serviceManager;
+            }
+
             /// <summary>
             /// Gets the service instance information
             /// </summary>
-            public ServiceInstanceInformation(Type serviceImplementationClass)
+            public ServiceInstanceInformation(Type serviceImplementationClass, DependencyServiceManager serviceManager) : this(serviceManager)
             {
                 this.ServiceImplementer = serviceImplementationClass;
                 this.InstantiationType = serviceImplementationClass.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
@@ -50,7 +78,7 @@ namespace SanteDB.Core.Services.Impl
             /// <summary>
             /// Create from a singleton
             /// </summary>
-            public ServiceInstanceInformation(Object singleton)
+            public ServiceInstanceInformation(Object singleton, DependencyServiceManager serviceManager) : this(serviceManager)
             {
                 this.ServiceImplementer = singleton.GetType();
                 this.InstantiationType = this.ServiceImplementer.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
@@ -68,52 +96,14 @@ namespace SanteDB.Core.Services.Impl
                 lock (this.m_lockBox)
                     if (this.m_singletonInstance != null)
                         return this.m_singletonInstance;
-                    else if (this.m_activator != null)
+                    else if (this.InstantiationType == ServiceInstantiationType.Singleton)
                     {
-                        return this.m_activator();
+                        this.m_singletonInstance = this.m_serviceManager.CreateInjected(this.ServiceImplementer);
+                        return this.m_singletonInstance;
                     }
                     else
                     {
-                        // TODO: Check for circular dependencies
-                        var constructors = this.ServiceImplementer.GetConstructors();
-
-                        // Is it a parameterless constructor?
-                        var constructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 0);
-                        if (constructor != null)
-                            this.m_activator = Expression.Lambda<Func<Object>>(Expression.New(constructor)).Compile();
-                        else
-                        {
-                            // Get a constructor that we can fulfill
-                            constructor = constructors.SingleOrDefault();
-                            if (constructor == null)
-                                throw new MissingMemberException($"Cannot find default constructor on {this.ServiceImplementer}");
-
-                            var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue, Default = p.DefaultValue }).ToArray();
-                            var parameterValues = new Expression[parameterTypes.Length];
-                            for (int i = 0; i < parameterValues.Length; i++)
-                            {
-                                var dependencyInfo = parameterTypes[i];
-                                var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
-                                if (candidateService == null && dependencyInfo.Required)
-                                {
-                                    this.m_tracer.TraceWarning($"Service {this.ServiceImplementer} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
-                                    return null;
-                                }
-                                else
-                                    parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
-                            }
-
-                            // Now we can create our activator
-                            this.m_activator = Expression.Lambda<Func<Object>>(Expression.New(constructor, parameterValues.ToArray())).Compile();
-                        }
-
-                        if (this.InstantiationType == ServiceInstantiationType.Singleton)
-                        {
-                            this.m_singletonInstance = this.m_activator();
-                            return this.m_singletonInstance;
-                        }
-                        else
-                            return this.m_activator();
+                        return this.m_serviceManager.CreateInjected(this.ServiceImplementer);
 
                     }
             }
@@ -197,7 +187,7 @@ namespace SanteDB.Core.Services.Impl
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Dependency Injection Service Manager";
-        
+
         /// <summary>
         /// Adds a service provider
         /// </summary>
@@ -207,8 +197,8 @@ namespace SanteDB.Core.Services.Impl
             lock (this.m_lock)
                 if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
-                else 
-                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType));
+                else
+                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
         }
 
         /// <summary>
@@ -220,7 +210,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
                     this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
-                this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance));
+                this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
             }
         }
 
@@ -251,7 +241,7 @@ namespace SanteDB.Core.Services.Impl
                         var cServiceType = this.m_configuration.ServiceProviders.SingleOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
                         if (cServiceType != null)
                         {
-                            candidateService = new ServiceInstanceInformation(cServiceType.Type);
+                            candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
                             this.m_serviceRegistrations.Add(candidateService);
                         }
                     }
@@ -312,8 +302,11 @@ namespace SanteDB.Core.Services.Impl
             this.m_isDisposed = true;
             if (this.m_serviceRegistrations != null)
                 foreach (var sp in this.m_serviceRegistrations)
-                    if(sp.ServiceImplementer != typeof(DependencyServiceManager))
+                    if (sp.ServiceImplementer != typeof(DependencyServiceManager))
+                    {
+                        this.m_tracer.TraceInfo("Disposing {0}...", sp.ServiceImplementer);
                         sp.Dispose();
+                    }
         }
 
         /// <summary>
@@ -344,7 +337,7 @@ namespace SanteDB.Core.Services.Impl
                             this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                         else
                         {
-                            var svci = new ServiceInstanceInformation(svc.Type);
+                            var svci = new ServiceInstanceInformation(svc.Type, this);
 
                             this.m_serviceRegistrations.Add(svci);
                             foreach (var iface in svci.ImplementedServices)
@@ -363,7 +356,7 @@ namespace SanteDB.Core.Services.Impl
                     {
                         if (dc == null) continue;
                         this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
-                        if (dc != this && !dc.Start()) 
+                        if (dc != this && !dc.Start())
                             throw new Exception($"Service {dc} reported unsuccessful start");
                     }
 
@@ -389,23 +382,75 @@ namespace SanteDB.Core.Services.Impl
         {
             this.Stopping?.Invoke(this, null);
 
-            if (!this.IsRunning) return true ;
+            if (!this.IsRunning) return true;
 
             this.IsRunning = false;
 
-            foreach (var svc in this.m_serviceRegistrations.ToArray())
+            foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager)).ToArray())
             {
-                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon &&
-                    daemon != this)
+                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon)
                 {
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
             }
 
-            this.Dispose();
             this.Stopped?.Invoke(this, null);
             return true;
+        }
+
+        /// <summary>
+        /// Create injected type
+        /// </summary>
+        public object CreateInjected(Type type)
+        {
+            if(!this.m_activators.TryGetValue(type, out Func<Object> activator))
+            {
+                // TODO: Check for circular dependencies
+                var constructors = type.GetConstructors();
+
+                // Is it a parameterless constructor?
+                var constructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 0);
+                if (constructor != null)
+                    activator = Expression.Lambda<Func<Object>>(Expression.New(constructor)).Compile();
+                else
+                {
+                    // Get a constructor that we can fulfill
+                    constructor = constructors.SingleOrDefault();
+                    if (constructor == null)
+                        throw new MissingMemberException($"Cannot find default constructor on {type}");
+
+                    var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue, Default = p.DefaultValue }).ToArray();
+                    var parameterValues = new Expression[parameterTypes.Length];
+                    for (int i = 0; i < parameterValues.Length; i++)
+                    {
+                        var dependencyInfo = parameterTypes[i];
+                        var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
+                        if (candidateService == null && dependencyInfo.Required)
+                        {
+                            this.m_tracer.TraceWarning($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
+                            return null;
+                        }
+                        else
+                            parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
+                    }
+
+                    // Now we can create our activator
+                    activator = Expression.Lambda<Func<Object>>(Expression.New(constructor, parameterValues.ToArray())).Compile();
+                }
+
+                this.m_activators.TryAdd(type, activator);
+
+            }
+            return activator();
+        }
+
+        /// <summary>
+        /// Create injected instance
+        /// </summary>
+        public TObject CreateInjected<TObject>()
+        {
+            return (TObject)this.CreateInjected(typeof(TObject));
         }
     }
 }

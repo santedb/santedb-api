@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
@@ -113,7 +113,7 @@ namespace SanteDB.Core.Services.Impl
                     object existingValue = pi.GetValue(existing),
                         updatedValue = pi.GetValue(updated);
 
-                    if (existingValue == null && typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()))
+                    if (existingValue == null && typeof(IdentifiedData).IsAssignableFrom(pi.PropertyType))
                         existingValue = existing.LoadProperty(pi.Name);
 
                     // Skip ignore properties
@@ -127,7 +127,7 @@ namespace SanteDB.Core.Services.Impl
                         if (existingValue != null && updatedValue == null) // remove
                         {
                             // Generate tests
-                            if (typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(pi.PropertyType.GetTypeInfo()))
+                            if (typeof(IdentifiedData).IsAssignableFrom(pi.PropertyType))
                                 retVal.AddRange(this.GenerateTests(existingValue, $"{path}{serializationName}"));
                             retVal.Add(new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", null));
                         }
@@ -144,11 +144,11 @@ namespace SanteDB.Core.Services.Impl
                                 retVal.Add(new PatchOperation(PatchOperationType.Replace, $"{path}{serializationName}", updatedValue));
                             }
                         }
-                        else if (existingValue is IList && !existingValue.GetType().GetTypeInfo().IsArray)
+                        else if (existingValue is IList && !existingValue.GetType().IsArray)
                         {
 
                             // Simple or complex list?
-                            if (typeof(IIdentifiedEntity).GetTypeInfo().IsAssignableFrom(existingValue.GetType().StripGeneric().GetTypeInfo()))
+                            if (typeof(IIdentifiedEntity).IsAssignableFrom(existingValue.GetType().StripGeneric()))
                             {
                                 IEnumerable<IdentifiedData> updatedList = (updatedValue as IEnumerable).OfType<IdentifiedData>(),
                                     existingList = (existingValue as IEnumerable).OfType<IdentifiedData>();
@@ -194,7 +194,7 @@ namespace SanteDB.Core.Services.Impl
         {
             PatchOperation retval = new PatchOperation(PatchOperationType.Remove, path, null);
 
-            var simpleAtt = c.GetType().GetTypeInfo().GetCustomAttribute<SimpleValueAttribute>();
+            var simpleAtt = c.GetType().GetCustomAttribute<SimpleValueAttribute>();
 
             if (c.Key.HasValue && simpleAtt == null)
             {
@@ -203,7 +203,7 @@ namespace SanteDB.Core.Services.Impl
             }
             else
             {
-                var classAtt = c.GetType().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
+                var classAtt = c.GetType().GetCustomAttribute<ClassifierAttribute>();
                 Object cvalue = c;
                 // Build path
                 var serializationName = "";
@@ -219,7 +219,7 @@ namespace SanteDB.Core.Services.Impl
                     serializationName += "." + pi.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName;
 
                     cvalue = pi.GetValue(cvalue);
-                    classAtt = cvalue?.GetType().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
+                    classAtt = cvalue?.GetType().GetCustomAttribute<ClassifierAttribute>();
                 }
                 retval.Path += serializationName;
                 retval.Value = cvalue;
@@ -244,7 +244,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IIdentifiedEntity).Key)
                 };
-            else if (existingValue is IList && !existingValue.GetType().GetTypeInfo().IsArray)
+            else if (existingValue is IList && !existingValue.GetType().IsArray)
             {
                 var values = existingValue as IList;
                 var retVal = new List<PatchOperation>(values.Count);
@@ -362,7 +362,7 @@ namespace SanteDB.Core.Services.Impl
                         else if (applyTo is IList)
                         {
                             // Identified data
-                            if (typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(property.PropertyType.StripGeneric().GetTypeInfo()))
+                            if (typeof(IdentifiedData).IsAssignableFrom(property.PropertyType.StripGeneric()))
                             {
                                 var result = this.ExecuteLambda("Any", applyTo, property, pathName, op);
                                 if (!(bool)result)
@@ -388,7 +388,7 @@ namespace SanteDB.Core.Services.Impl
             var mi = typeof(QueryExpressionParser).GetGenericMethod("BuildLinqExpression", new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(NameValueCollection) });
 
             // Does this have a selector?
-            var classAtt = source.GetType().StripGeneric().GetTypeInfo().GetCustomAttribute<ClassifierAttribute>();
+            var classAtt = source.GetType().StripGeneric().GetCustomAttribute<ClassifierAttribute>();
             object lambda = null;
 
             if (classAtt != null) // The value is complex
@@ -478,7 +478,7 @@ namespace SanteDB.Core.Services.Impl
                         else if (applyTo is IList)
                         {
                             // Identified data
-                            if (typeof(IdentifiedData).GetTypeInfo().IsAssignableFrom(property.PropertyType.StripGeneric().GetTypeInfo()))
+                            if (typeof(IdentifiedData).IsAssignableFrom(property.PropertyType.StripGeneric()))
                             {
                                 var result = this.ExecuteLambda("Any", applyTo, property, pathName, op);
                                 if (!(bool)result)

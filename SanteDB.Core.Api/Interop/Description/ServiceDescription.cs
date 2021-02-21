@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,35 +14,32 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-19
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace SanteDB.Core.Attributes
+namespace SanteDB.Core.Interop.Description
 {
     /// <summary>
-    /// Allows a plugin to delcare a dependency
+    /// Represents the service descriptor
     /// </summary>
-    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-    public class PluginDependencyAttribute : Attribute
+    public class ServiceDescription
     {
 
         /// <summary>
-        /// Dependency AQN
+        /// Operations
         /// </summary>
-        public PluginDependencyAttribute(string dependencyAqn)
+        public ServiceDescription()
         {
-            this.Dependency = dependencyAqn;
+            this.Operations = new List<ServiceOperationDescription>();
         }
 
         /// <summary>
-        /// Gets or sets the assembly dependency 
+        /// Gets the operations supported by this service
         /// </summary>
-        public String Dependency { get; set; }
+        public IList<ServiceOperationDescription> Operations { get; }
 
     }
 }

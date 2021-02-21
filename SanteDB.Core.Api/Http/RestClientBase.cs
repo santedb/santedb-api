@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2020-5-1
+ * Date: 2021-2-9
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -326,9 +326,9 @@ namespace SanteDB.Core.Http
             }
             catch (WebException e)
             {
-                switch (this.ValidateResponse(e.Response))
+                switch (this.CategorizeResponse(e.Response))
                 {
-                    case ServiceClientErrorType.Valid:
+                    case ServiceClientErrorType.Ok:
                         return this.Get(url);
                     default:
                         throw new RestClientException<byte[]>(
@@ -498,9 +498,9 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Validate the response
         /// </summary>
-        /// <returns><c>true</c>, if response was validated, <c>false</c> otherwise.</returns>
+        /// <returns>The type of error that was categorized</returns>
         /// <param name="response">The WebResponse from the server</param>
-        protected virtual ServiceClientErrorType ValidateResponse(WebResponse response)
+        protected virtual ServiceClientErrorType CategorizeResponse(WebResponse response)
         {
             if (response is HttpWebResponse)
             {
@@ -549,14 +549,21 @@ namespace SanteDB.Core.Http
                                 // Credential provider
                                 if (this.Description.Binding.Security.CredentialProvider != null)
                                 {
-                                    this.Credentials = this.Description.Binding.Security.CredentialProvider.Authenticate(this);
-                                    if (this.Credentials != null) // We have authentication, just needs elevation?
+                                    try
                                     {
-                                        
-                                        return ServiceClientErrorType.Valid;
+                                        this.Credentials = this.Description.Binding.Security.CredentialProvider?.Authenticate(this);
+                                        if (this.Credentials != null) // We have authentication, just needs elevation?
+                                        {
+
+                                            return ServiceClientErrorType.Ok;
+                                        }
+                                        else
+                                            return ServiceClientErrorType.SecurityError;
                                     }
-                                    else
+                                    catch
+                                    {
                                         return ServiceClientErrorType.SecurityError;
+                                    }
                                 }
                                 else
                                     return ServiceClientErrorType.SecurityError;
@@ -572,7 +579,7 @@ namespace SanteDB.Core.Http
                     case HttpStatusCode.Moved:
                     case HttpStatusCode.RedirectKeepVerb:
                     case HttpStatusCode.RedirectMethod:
-                        return ServiceClientErrorType.Valid;
+                        return ServiceClientErrorType.Ok;
                     default:
                         return ServiceClientErrorType.GenericError;
                 }
@@ -724,7 +731,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// The service client response is valid
         /// </summary>
-        Valid,
+        Ok,
         /// <summary>
         /// The service client encountered a general error
         /// </summary>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,11 +14,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2020-5-1
+ * Date: 2021-2-9
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Serialization;
 
@@ -41,27 +42,26 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// MDM resource configuration
         /// </summary>
-        public ResourceMergeConfiguration(Type type, String matchConfiguration, bool autoMerge)
+        public ResourceMergeConfiguration(Type type, bool autoMerge, params String[] matchConfiguration)
         {
-            this.ResourceTypeXml = type.GetTypeInfo().GetCustomAttribute<XmlRootAttribute>()?.ElementName;
-            this.MatchConfiguration = matchConfiguration;
-            this.AutoMerge = autoMerge;
+            this.ResourceTypeXml = type.GetCustomAttribute<XmlRootAttribute>()?.ElementName;
+            this.MatchConfiguration = new List<string>(matchConfiguration);
         }
       
         /// <summary>
         /// Gets or sets the match configuration
         /// </summary>
-        [XmlAttribute("matchConfiguration"), JsonProperty("matchConfiguration")]
-        public String MatchConfiguration { get; set; }
+        [XmlElement("matchConfiguration"), JsonProperty("matchConfiguration")]
+        public List<String> MatchConfiguration { get; set; }
 
         /// <summary>
-        /// Gets the auto merge attribute
+        /// When true, automatically perform the merge 
         /// </summary>
         [XmlAttribute("autoMerge"), JsonProperty("autoMerge")]
         public bool AutoMerge { get; set; }
 
         /// <summary>
-        /// When true, preserves the original record 
+        /// When true, preserve the original record
         /// </summary>
         [XmlAttribute("preserveOriginal"), JsonProperty("preserveOriginal")]
         public bool PreserveOriginal { get; set; }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using SanteDB.Core.Model.DataTypes;
 using System;
@@ -41,7 +41,7 @@ namespace SanteDB.Core.Services
         /// <param name="code">The code of the reference term.</param>
         /// <param name="codeSystem">The code system OID of the reference term.</param>
         /// <returns>Returns a list of concepts.</returns>
-        IEnumerable<Concept> FindConceptsByReferenceTerm(string code, Uri codeSystem);
+        IEnumerable<ConceptReferenceTerm> FindConceptsByReferenceTerm(string code, Uri codeSystem);
 
         /// <summary>
         /// Get concept set members
@@ -49,12 +49,20 @@ namespace SanteDB.Core.Services
         IEnumerable<Concept> GetConceptSetMembers(string mnemonic);
 
         /// <summary>
+        /// Finds a concept by reference term only where the concept is equivalent
+        /// </summary>
+        /// <param name="code">The code of the reference term.</param>
+        /// <param name="codeSystemDomain">The code system OID of the reference term.</param>
+        /// <returns>Returns a list of concepts.</returns>
+        Concept GetConceptByReferenceTerm(string code, String codeSystemDomain);
+
+        /// <summary>
         /// Finds a concept by reference term.
         /// </summary>
         /// <param name="code">The code of the reference term.</param>
         /// <param name="codeSystemDomain">The code system OID of the reference term.</param>
         /// <returns>Returns a list of concepts.</returns>
-        IEnumerable<Concept> FindConceptsByReferenceTerm(string code, String codeSystemDomain);
+        IEnumerable<ConceptReferenceTerm> FindConceptsByReferenceTerm(string code, String codeSystemDomain);
 
         /// <summary>
         /// Gets a concept by mnemonic.
@@ -86,5 +94,11 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <returns></returns>
         ReferenceTerm GetConceptReferenceTerm(Guid conceptId, String codeSystem);
+
+        /// <summary>
+        /// Gets the concept reference term for the specified code system 
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<ConceptReferenceTerm> FindReferenceTermsByConcept(Guid conceptId, String codeSystem);
     }
 }

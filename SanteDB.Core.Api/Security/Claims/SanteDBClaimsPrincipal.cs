@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using System;
 using System.Collections.Generic;
@@ -136,7 +136,17 @@ namespace SanteDB.Core.Security.Claims
             return this.m_identities.SelectMany(o => o.Claims).Where(o => o.Type == claimType);
         }
 
-       
+        /// <summary>
+        /// Try to get the claim value
+        /// </summary>
+        public bool TryGetClaimValue(string claimType, out string value)
+        {
+            var claim = this.m_identities.SelectMany(o => o.Claims).FirstOrDefault(o => o.Type.Equals(claimType));
+            value = claim?.Value;
+            return claim != null;
+        }
+
+
         /// <summary>
         /// Gets the primary identity
         /// </summary>

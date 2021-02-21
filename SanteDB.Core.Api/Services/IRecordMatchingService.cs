@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2019 - 2020, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +14,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2019-11-27
+ * Date: 2021-2-9
  */
 using SanteDB.Core.Model;
 using System;
@@ -39,7 +39,30 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The is a non-match
         /// </summary>
-        NonMatch
+        NonMatch,
+        /// <summary>
+        /// This is an identity match
+        /// </summary>
+        Identity
+    }
+
+    /// <summary>
+    /// Identifies the method used to calculate the match score
+    /// </summary>
+    public enum RecordMatchMethod
+    {
+        /// <summary>
+        /// The match was recommended based on an known good identifier
+        /// </summary>
+        Identifier,
+        /// <summary>
+        /// Exact matching/deterministic
+        /// </summary>
+        Deterministic,
+        /// <summary>
+        /// The match was determined using a probability / weighted algorithm
+        /// </summary>
+        Weighted
     }
 
     /// <summary>
@@ -61,6 +84,12 @@ namespace SanteDB.Core.Services
         /// Gets the classification from the matcher
         /// </summary>
         RecordMatchClassification Classification { get; }
+        
+        /// <summary>
+        /// Indicates the method used to match
+        /// </summary>
+        RecordMatchMethod Method { get; }
+
     }
 
 
