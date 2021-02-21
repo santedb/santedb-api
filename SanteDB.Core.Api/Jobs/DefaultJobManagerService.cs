@@ -188,7 +188,7 @@ namespace SanteDB.Core.Jobs
                 this.m_log.Add(jobObject, DateTime.MinValue);
 
             // Resize the timer array
-            if (elapseTime != TimeSpan.MaxValue || startType == JobStartType.Never)
+            if (elapseTime != TimeSpan.MaxValue && startType != JobStartType.Never)
             {
                 lock (this.m_timers)
                 {

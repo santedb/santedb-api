@@ -39,7 +39,30 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The is a non-match
         /// </summary>
-        NonMatch
+        NonMatch,
+        /// <summary>
+        /// This is an identity match
+        /// </summary>
+        Identity
+    }
+
+    /// <summary>
+    /// Identifies the method used to calculate the match score
+    /// </summary>
+    public enum RecordMatchMethod
+    {
+        /// <summary>
+        /// The match was recommended based on an known good identifier
+        /// </summary>
+        Identifier,
+        /// <summary>
+        /// Exact matching/deterministic
+        /// </summary>
+        Deterministic,
+        /// <summary>
+        /// The match was determined using a probability / weighted algorithm
+        /// </summary>
+        Weighted
     }
 
     /// <summary>
@@ -61,6 +84,12 @@ namespace SanteDB.Core.Services
         /// Gets the classification from the matcher
         /// </summary>
         RecordMatchClassification Classification { get; }
+        
+        /// <summary>
+        /// Indicates the method used to match
+        /// </summary>
+        RecordMatchMethod Method { get; }
+
     }
 
 

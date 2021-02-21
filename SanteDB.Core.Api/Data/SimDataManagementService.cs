@@ -99,7 +99,7 @@ namespace SanteDB.Core.Data
             private void DataUpdatingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_matchingService.Match<TModel>(e.Data, this.m_configuration.MatchConfiguration);
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o=>this.m_matchingService.Match<TModel>(e.Data, o));
 
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_matchingService.Match<TModel>(e.Data, this.m_configuration.MatchConfiguration);
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o=>this.m_matchingService.Match<TModel>(e.Data, o));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
                 if (this.m_configuration.AutoMerge && matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
