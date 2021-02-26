@@ -118,7 +118,7 @@ namespace SanteDB.Core.Configuration
             if(retVal.Includes != null)
                 foreach(var incl in retVal.Includes)
                 {
-                    string fileName = incl;
+                    string fileName = incl.Replace('\\', Path.DirectorySeparatorChar);
                     if (!Path.IsPathRooted(fileName))
                         fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
 
