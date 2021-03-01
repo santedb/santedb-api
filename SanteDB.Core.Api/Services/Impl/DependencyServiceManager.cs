@@ -20,6 +20,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -432,7 +433,14 @@ namespace SanteDB.Core.Services.Impl
                             return null;
                         }
                         else
-                            parameterValues[i] = Expression.Convert(Expression.Constant(candidateService ?? dependencyInfo.Default), dependencyInfo.Type);
+                        {
+                            var expr = Expression.Convert(Expression.Call(
+                                Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
+                                (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
+                                Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type); 
+                            ///Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
+                            parameterValues[i] = expr;
+                        }
                     }
 
                     // Now we can create our activator

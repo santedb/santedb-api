@@ -281,13 +281,14 @@ namespace SanteDB.Core.Security.Privacy
         public virtual TData Apply<TData>(TData result, IPrincipal principal) where TData : IdentifiedData
         {
             // Is the record a bundle?
-            if (result is Bundle bdl)
+            if (result == default(TData))
+                return default(TData);
+            else if (result is Bundle bdl)
             {
                 bdl.Item = this.Apply(bdl.Item, principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
                 return result;
             }
-
-            // Is this SYSTEM?
+            
             if (!this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action) || principal == AuthenticationContext.SystemPrincipal || action == ResourceDataPolicyActionType.None)
                 return result;
 
