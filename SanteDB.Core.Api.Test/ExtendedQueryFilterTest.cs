@@ -17,17 +17,17 @@
  * Date: 2021-2-9
  */
 using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Query.FilterExtension;
 using SanteDB.Core.Model.Roles;
 
-namespace SanteDB.Core.Api.Test
+namespace SanteDB.Core.Api.Tests
 {
-    [TestClass]
+    [TestFixture(Category = "Core API")]
     public class ExtendedQueryFilterTest
     {
-        [TestMethod]
+        [Test]
         public void TestAgeFilter()
         {
             QueryFilterExtensions.AddExtendedFilter(new AgeQueryFilterExtension());
@@ -36,7 +36,7 @@ namespace SanteDB.Core.Api.Test
             Assert.IsTrue(expr.ToString().Contains("Age"));
         }
 
-        [TestMethod]
+        [Test]
         public void TestAgeFilterEx()
         {
             QueryFilterExtensions.AddExtendedFilter(new AgeQueryFilterExtension());
