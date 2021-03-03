@@ -460,5 +460,17 @@ namespace SanteDB.Core.Services.Impl
         {
             return (TObject)this.CreateInjected(typeof(TObject));
         }
+
+        /// <summary>
+        /// Create injected instances of all implementers of the specified <typeparamref name="TInterface"/>
+        /// </summary>
+        /// <typeparam name="TInterface">The type of interface to construct</typeparam>
+        public IEnumerable<TInterface> CreateInjectedOfAll<TInterface>()
+        {
+            return this.GetAllTypes()
+                .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(t => this.CreateInjected(t))
+                .OfType<TInterface>();
+        }
     }
 }
