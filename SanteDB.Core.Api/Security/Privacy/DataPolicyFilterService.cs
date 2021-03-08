@@ -98,8 +98,11 @@ namespace SanteDB.Core.Security.Privacy
             this.m_threadPool = threadPoolService;
 
             // Configuration load
-            var policyTypes = configurationManager.GetSection<DataPolicyFilterConfigurationSection>()?.Resources;
-            foreach (var t in policyTypes)
+            var config = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();
+
+            if (config == null) throw new ConfigurationException("Data policy filter service has no configuration", configurationManager.Configuration);
+
+            foreach (var t in config.Resources)
             {
                 if(typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
                 {

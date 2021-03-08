@@ -51,7 +51,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Debug\SanteDB.Core.Api.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Debug\SanteDB.Core.xml</DocumentationFile>
     <NoWarn>CS0067</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -61,7 +61,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Release\SanteDB.Core.Api.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Release\SanteDB.Core.xml</DocumentationFile>
   </PropertyGroup>
   <!--<ItemGroup>
     <Compile Include="Attributes\PluginAttribute.cs" />
