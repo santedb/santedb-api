@@ -17,7 +17,6 @@
  * Date: 2021-2-9
  */
 using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services.Impl;
 using SanteDB.Core.Model.Patch;
@@ -30,20 +29,21 @@ using SanteDB.Core.Model.Serialization;
 using System.Linq;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Exceptions;
+using NUnit.Framework;
 
 namespace SanteDB.Core.Api.Test
 {
     /// <summary>
     /// Represents a unit test which tests the patching ability 
     /// </summary>
-    [TestClass]
+    [TestFixture(Category = "Core API")]
     public class SimplePatchServiceTest
     {
 
         /// <summary>
         /// Guid sanity methods
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestGuidSanity()
         {
             Guid g = Guid.Parse("880D2A08-8E94-402B-84B6-CB3BC0A576A9");
@@ -76,7 +76,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Tests that the diff method does not generate a patch for the same object
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DiffShouldNotGeneratePatchForIdentical()
         {
             SecurityUser a = new SecurityUser()
@@ -97,7 +97,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Tests whether the diff engine detects a simple assignment of a property
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DiffShouldDetectSimplePropertyAssignment()
         {
             SecurityUser a = new SecurityUser()
@@ -139,7 +139,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Tests that patch cascades to sub object
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DiffShouldGenerateForSubMembers()
         {
 
@@ -188,7 +188,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Tests that the Diff method removes items from a collection where the key is the same but the value is different
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DiffShouldRemoveNameWithSameValues()
         {
             Patient a = new Patient()
@@ -260,7 +260,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Tests that the diff function cascades to a nested single object
         /// </summary>
-        [TestMethod]
+        [Test]
         public void DiffShouldCascadeToNestedSingleObjectRef()
         {
             Act a = new QuantityObservation()
@@ -291,7 +291,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Detects that a patch fails an assertion
         /// </summary>
-        [TestMethod]
+        [Test]
         public void PatchShouldFailAssertion()
         {
             Patient a = new Patient()
@@ -369,7 +369,7 @@ namespace SanteDB.Core.Api.Test
         /// <summary>
         /// Test that the patch updates the target object
         /// </summary>
-        [TestMethod]
+        [Test]
         public void PatchShouldUpdateTargetObject()
         {
             Guid oguid = Guid.NewGuid(),

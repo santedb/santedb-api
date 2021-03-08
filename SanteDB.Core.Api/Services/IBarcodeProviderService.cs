@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SanteDB.Core.Api.Services
+namespace SanteDB.Core.Services
 {
     /// <summary>
     /// Represents a barcode generator

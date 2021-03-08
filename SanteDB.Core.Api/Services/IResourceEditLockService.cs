@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Core.Api.Services
+namespace SanteDB.Core.Services
 {
     /// <summary>
     /// A resource locking service 

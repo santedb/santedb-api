@@ -24,6 +24,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
@@ -54,24 +55,18 @@ namespace SanteDB.Core.Security.Privacy
     /// Local policy enforcement point service
     /// </summary>
     [ServiceProvider("Default Policy Enforcement Service")]
-    public class DataPolicyFilterService : IDaemonService, IPrivacyEnforcementService
+    public class DataPolicyFilterService : IPrivacyEnforcementService
     {
         /// <summary>
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Data Policy Enforcement Filter Service";
 
-        // Set to true when the application context has stopped
-        private bool m_safeToStop = false;
-
         // Security tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
 
-        // Subscribed listeners
-        private Dictionary<Object, KeyValuePair<Delegate, Delegate>> m_subscribedListeners = new Dictionary<Object, KeyValuePair<Delegate, Delegate>>();
-
         // Filter configuration
-        private DataPolicyFilterConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataPolicyFilterConfigurationSection>();
+        private DataPolicyFilterConfigurationSection m_configuration;
 
         // Actions
         private ConcurrentDictionary<Type, ResourceDataPolicyActionType> m_actions = new ConcurrentDictionary<Type, ResourceDataPolicyActionType>();
@@ -92,7 +87,7 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
+        public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
             IDataCachingService dataCachingService, ISubscriptionExecutor subscriptionExecutor = null, IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
@@ -101,153 +96,64 @@ namespace SanteDB.Core.Security.Privacy
             this.m_subscriptionExecutor = subscriptionExecutor;
             this.m_dataCachingService = dataCachingService;
             this.m_threadPool = threadPoolService;
-        }
 
-        /// <summary>
-        /// Determines whether the service is running
-        /// </summary>
-        public bool IsRunning
-        {
-            get
+            // Configuration load
+            var config = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();
+
+            if (config == null) throw new ConfigurationException("Data policy filter service has no configuration", configurationManager.Configuration);
+
+            foreach (var t in config.Resources)
             {
-                return this.m_subscribedListeners.Count > 0;
-            }
-        }
-
-        /// <summary>
-        /// The service is started
-        /// </summary>
-        public event EventHandler Started;
-        /// <summary>
-        /// The service is starting
-        /// </summary>
-        public event EventHandler Starting;
-        /// <summary>
-        /// The service is stopped
-        /// </summary>
-        public event EventHandler Stopped;
-        /// <summary>
-        /// The service is stopping
-        /// </summary>
-        public event EventHandler Stopping;
-
-        /// <summary>
-        /// Starts the service
-        /// </summary>
-        /// <returns></returns>
-        public bool Start()
-        {
-            this.Starting?.Invoke(this, EventArgs.Empty);
-
-            ApplicationServiceContext.Current.Started += (o, e) => this.BindEvents();
-
-            this.Started?.Invoke(this, EventArgs.Empty);
-
-            return true;
-        }
-
-        /// <summary>
-        /// Stop the policy enforcement service
-        /// </summary>
-        /// <returns></returns>
-        public bool Stop()
-        {
-            this.Stopping?.Invoke(this, EventArgs.Empty);
-
-            // Audit tool should never stop!!!!!
-            if (!this.m_safeToStop)
-                this.UnBindEvents();
-
-            this.Stopped?.Invoke(this, EventArgs.Empty);
-            return true;
-        }
-
-        /// <summary>
-        /// Binds the specified events
-        /// </summary>
-        private void BindEvents()
-        {
-            this.m_tracer.TraceInfo("Starting bind to persistence services...");
-            var policyTypes = this.m_configuration?.Resources?.Select(o => o.ResourceType) ?? typeof(Act).Assembly.ExportedTypes.Where(o => typeof(Act).IsAssignableFrom(o) || typeof(Entity).IsAssignableFrom(o));
-            foreach (var t in policyTypes)
-            {
-                var svcType = typeof(INotifyRepositoryService<>).MakeGenericType(t);
-                var svcInstance = ApplicationServiceContext.Current.GetService(svcType);
-                var action = this.m_configuration?.Resources.FirstOrDefault(o => o.ResourceType == t)?.Action ?? this.m_configuration?.DefaultAction ?? ResourceDataPolicyActionType.Hide;
-                this.m_actions.TryAdd(t, action);
-                if (action == ResourceDataPolicyActionType.None) continue; // no action
-
-                // Now comes the tricky dicky part - We need to subscribe to a generic event
-                if (svcInstance != null)
+                if(typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
                 {
-                    this.m_tracer.TraceInfo("Binding to {0}...", svcType);
-
-                    // Construct the delegate for query
-                    var pqeArgType = typeof(QueryResultEventArgs<>).MakeGenericType(t);
-                    var qevtHdlrType = typeof(EventHandler<>).MakeGenericType(pqeArgType);
-                    var senderParm = Expression.Parameter(typeof(Object), "o");
-                    var eventParm = Expression.Parameter(pqeArgType, "e");
-                    var delegateData = Expression.Convert(Expression.MakeMemberAccess(eventParm, pqeArgType.GetRuntimeProperty("Results")), typeof(IEnumerable));
-                    var ofTypeMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.OfType), new Type[] { t }, new Type[] { typeof(IEnumerable) }) as MethodInfo;
-                    var queriedInstanceDelegate = Expression.Lambda(qevtHdlrType, Expression.Assign(delegateData.Operand, Expression.Convert(Expression.Call(ofTypeMethod, Expression.Call(Expression.Constant(this), typeof(DataPolicyFilterService).GetRuntimeMethod(nameof(HandlePostQueryEvent), new Type[] { typeof(IEnumerable) }), delegateData)), delegateData.Operand.Type)), senderParm, eventParm).Compile();
-
-                    // Bind to events
-                    svcType.GetRuntimeEvent("Queried").AddEventHandler(svcInstance, queriedInstanceDelegate);
-
-                    // Construct delegate for retrieve
-                    pqeArgType = typeof(DataRetrievedEventArgs<>).MakeGenericType(t);
-                    qevtHdlrType = typeof(EventHandler<>).MakeGenericType(pqeArgType);
-                    senderParm = Expression.Parameter(typeof(Object), "o");
-                    eventParm = Expression.Parameter(pqeArgType, "e");
-                    delegateData = Expression.Convert(Expression.MakeMemberAccess(eventParm, pqeArgType.GetRuntimeProperty("Data")), t);
-                    var retrievedInstanceDelegate = Expression.Lambda(qevtHdlrType, Expression.Assign(delegateData.Operand, Expression.Convert(Expression.Call(Expression.Constant(this), typeof(DataPolicyFilterService).GetRuntimeMethod(nameof(HandlePostRetrieveEvent), new Type[] { t }), delegateData), t)), senderParm, eventParm).Compile();
-
-                    // Bind to events
-                    svcType.GetRuntimeEvent("Retrieved").AddEventHandler(svcInstance, retrievedInstanceDelegate);
-
-                    this.m_subscribedListeners.Add(svcInstance, new KeyValuePair<Delegate, Delegate>(queriedInstanceDelegate, retrievedInstanceDelegate));
+                    this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType);
+                    this.m_actions.TryAdd(t.ResourceType, t.Action);
                 }
-
             }
-
-            if (this.m_subscriptionExecutor != null)
-                this.m_subscriptionExecutor.Executed += (o, e) =>
-                {
-                    e.Results = this.HandlePostQueryEvent(e.Results).OfType<IdentifiedData>();
-                };
         }
 
         /// <summary>
         /// Handle post query event
         /// </summary>
-        public virtual IEnumerable HandlePostQueryEvent(IEnumerable results)
+        public virtual IEnumerable<TData> Apply<TData>(IEnumerable<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
-
-            var principal = AuthenticationContext.Current.Principal;
 
             if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
                 return results
-                .OfType<IdentifiedData>()
                     .AsParallel()
                     .AsOrdered()
                     .WithDegreeOfParallelism(2)
-                .Select(
-                    o => this.Apply(o, principal)
-                )
-                .ToList();
+                    .Select(
+                        o => this.Apply(o, principal)
+                    )
+                    .ToList();
 
             return results;
         }
 
-
         /// <summary>
-        /// Handle post query event
+        /// Gets the domains that <paramref name="principal"/> should be filtered
         /// </summary>
-        public virtual Object HandlePostRetrieveEvent(Object result)
+        private IEnumerable<AssigningAuthority> GetFilterDomains(IPrincipal principal)
         {
-            if (result == null) return null;
-            // Get rid of identifiers
-            return this.Apply(result as IdentifiedData, AuthenticationContext.Current.Principal);
+            String key = null;
+            if (principal is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
+                key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
+            else
+                key = this.m_hasher.ComputeHash($"$aa.filter.{principal.Identity.Name}");
+
+
+            var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
+            if (domainsToFilter == null)
+            {
+                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
+                var protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
+                domainsToFilter = protectedAuthorities
+                        .Where(aa => this.m_pdpService.GetPolicyOutcome(principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
+                        .ToArray();
+                this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
+            }
+            return domainsToFilter;
         }
 
         /// <summary>
@@ -257,23 +163,8 @@ namespace SanteDB.Core.Security.Privacy
         {
             if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out ResourceDataPolicyActionType action) && !this.m_actions.TryGetValue(result.GetType(), out action))
                 action = this.m_configuration.DefaultAction;
-
-            String key = null;
-            if (accessor is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
-                key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
-            else
-                key = this.m_hasher.ComputeHash($"$aa.filter.{accessor.Identity.Name}");
-            var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
-            if (domainsToFilter == null)
-            {
-                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
-                var protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
-                domainsToFilter = protectedAuthorities
-                        .Where(aa => this.m_pdpService.GetPolicyOutcome(accessor, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
-                        .ToArray();
-                this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
-            }
-
+            var domainsToFilter = this.GetFilterDomains(accessor);
+           
             switch (action)
             {
                 case ResourceDataPolicyActionType.Hide:
@@ -358,21 +249,57 @@ namespace SanteDB.Core.Security.Privacy
         }
 
         /// <summary>
-        /// Apply the specified action
+        /// Returns true if updates to the record 
         /// </summary>
-        public IdentifiedData Apply(IdentifiedData result, IPrincipal accessor)
+        public bool ValidateWrite<TData>(TData record, IPrincipal accessor) where TData : IdentifiedData
         {
 
+            // Is the record a bundle?
+            if (record is Bundle bdl)
+                return !bdl.Item.Any(o => !this.ValidateWrite(o, accessor)); // We do ! since we want the first FALSE to stop searching the bundle
+
             // Is this SYSTEM?
-            if (accessor == AuthenticationContext.SystemPrincipal)
+            if (!this.m_actions.TryGetValue(record.GetType(), out ResourceDataPolicyActionType action) || accessor == AuthenticationContext.SystemPrincipal || action == ResourceDataPolicyActionType.None)
+                return true;
+
+            var decision = this.m_pdpService.GetPolicyDecision(accessor, record);
+            if (decision.Outcome != PolicyGrantType.Grant)
+                return false;
+            else
+            {
+                var domainsToFilter = this.GetFilterDomains(accessor);
+                if (record is Entity entity)
+                    return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.Authority.SemanticEquals(dtf)));
+                else if (record is Act act)
+                    return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.Authority.SemanticEquals(dtf)));
+                else
+                    return true;
+            }
+
+        }
+
+        /// <summary>
+        /// Apply the specified action
+        /// </summary>
+        public virtual TData Apply<TData>(TData result, IPrincipal principal) where TData : IdentifiedData
+        {
+            // Is the record a bundle?
+            if (result == default(TData))
+                return default(TData);
+            else if (result is Bundle bdl)
+            {
+                bdl.Item = this.Apply(bdl.Item, principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
+                return result;
+            }
+            
+            if (!this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action) || principal == AuthenticationContext.SystemPrincipal || action == ResourceDataPolicyActionType.None)
                 return result;
 
-            var decision = this.m_pdpService.GetPolicyDecision(accessor, result);
-            this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action);
-
+            var decision = this.m_pdpService.GetPolicyDecision(principal, result);
+            
             // First, apply identity security as that is independent
-            this.ApplyIdentifierFilter(result, accessor);
-
+            this.ApplyIdentifierFilter(result, principal);
+            
             // Next we base on decision
             switch (decision.Outcome)
             {
@@ -390,7 +317,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
 
                                 AuditUtil.AuditMasking(result, decision, false);
-                                result = this.MaskObject(result);
+                                result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
                                     tag.AddTag("$pep.masked", "true");
                                 return result;
@@ -404,7 +331,7 @@ namespace SanteDB.Core.Security.Privacy
                                 (nResult as IHasState).StatusConceptKey = StatusKeys.Nullified;
                                 if (nResult is ITaggable tag)
                                     tag.AddTag("$pep.masked", "true");
-                                return nResult;
+                                return (TData)nResult;
                             }
                         case ResourceDataPolicyActionType.Error:
                             AuditUtil.AuditSensitiveDisclosure(result, decision, false);
@@ -414,7 +341,6 @@ namespace SanteDB.Core.Security.Privacy
                         default:
                             throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
                     }
-                    break;
                 case PolicyGrantType.Grant:
                     if (result is ISecurable sec && sec.Policies.Any())
                         AuditUtil.AuditSensitiveDisclosure(result, decision, true);
@@ -457,18 +383,6 @@ namespace SanteDB.Core.Security.Privacy
                 return retVal;
             }
             return result;
-        }
-
-        /// <summary>
-        /// Removes bindings for the specified events
-        /// </summary>
-        private void UnBindEvents()
-        {
-            foreach (var i in this.m_subscribedListeners)
-            {
-                i.Key.GetType().GetRuntimeEvent("Queried").RemoveEventHandler(i.Key, i.Value.Key);
-                i.Key.GetType().GetRuntimeEvent("Retrieved").RemoveEventHandler(i.Key, i.Value.Value);
-            }
         }
 
     }

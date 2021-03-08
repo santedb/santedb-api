@@ -22,7 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
