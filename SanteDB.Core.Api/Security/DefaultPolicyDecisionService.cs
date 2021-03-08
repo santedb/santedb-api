@@ -17,7 +17,7 @@
  * Date: 2021-2-15
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;

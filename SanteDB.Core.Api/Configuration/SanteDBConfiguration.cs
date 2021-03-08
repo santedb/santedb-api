@@ -111,13 +111,14 @@ namespace SanteDB.Core.Configuration
             var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
             if (retVal.Sections.Any(o => o is XmlNode[]))
             {
-                throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))}", retVal);
+                string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>().TypeName} (in {o.TypeXml})"));
+                throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))} allowed sections {allowedSections}", retVal);
             }
 
             if(retVal.Includes != null)
                 foreach(var incl in retVal.Includes)
                 {
-                    string fileName = incl;
+                    string fileName = incl.Replace('\\', Path.DirectorySeparatorChar);
                     if (!Path.IsPathRooted(fileName))
                         fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
 

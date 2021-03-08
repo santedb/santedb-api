@@ -16,7 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Api.Security;
+using SanteDB.Core.Security;
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -37,6 +37,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -702,8 +703,16 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
-        public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
+        public static void AuditNetworkRequestFailure(Exception ex, Uri url, NameValueCollection requestHeaders, NameValueCollection responseHeaders)
         {
+            AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
+        }
+
+        /// <summary>
+        /// Audit a network request failure
+        /// </summary>
+        public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
+        { 
             traceSource.TraceInfo("Create Network Request Failure audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkActivity, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
@@ -739,6 +748,7 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject,
                     NameData = ex.ToString()
                 });
+
 
             audit.AuditableObjects.Add(new AuditableObject()
             {

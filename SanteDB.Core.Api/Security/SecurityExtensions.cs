@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SanteDB.Core.Api.Security
+namespace SanteDB.Core.Security
 {
     /// <summary>
     /// Security extensions used for 

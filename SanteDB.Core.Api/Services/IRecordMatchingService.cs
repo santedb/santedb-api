@@ -39,11 +39,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The is a non-match
         /// </summary>
-        NonMatch,
-        /// <summary>
-        /// This is an identity match
-        /// </summary>
-        Identity
+        NonMatch
     }
 
     /// <summary>
@@ -76,9 +72,14 @@ namespace SanteDB.Core.Services
         IdentifiedData Record { get; }
 
         /// <summary>
-        /// Gets or sets the score of the result
+        /// Gets or sets the score of the result, usually an absolute score
         /// </summary>
         double Score { get; }
+
+        /// <summary>
+        /// Gets or sets the relative strength of the result
+        /// </summary>
+        double Strength { get;  }
 
         /// <summary>
         /// Gets the classification from the matcher
@@ -182,6 +183,13 @@ namespace SanteDB.Core.Services
         /// some matching implementations may optimize database round-trips using a single pass.
         /// </remarks>
         IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationName) where T : IdentifiedData;
-        
+
+        /// <summary>
+        /// A non-generic method which uses the type of <paramref name="input"/> to call Match&lt;T>
+        /// </summary>
+        /// <param name="input">The record being compared</param>
+        /// <param name="configurationName">The configuration to use</param>
+        /// <returns>The candidate match results</returns>
+        IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName);
     }
 }

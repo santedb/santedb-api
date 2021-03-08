@@ -16,7 +16,6 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
@@ -28,8 +27,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using NUnit.Framework;
 
-namespace SanteDB.Core.PCL.Test
+namespace SanteDB.Core.PCL.Tests
 {
 
     /// <summary>
@@ -45,14 +45,14 @@ namespace SanteDB.Core.PCL.Test
     /// <summary>
     /// Tests the serialization of a bundle when custom elements are in the bundle
     /// </summary>
-    [TestClass]
+    [TestFixture(Category = "Core API")]
     public class NonStandardEntityInBundleTest
     {
 
         /// <summary>
         /// Tests that a non standard bundle can be parsed
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestCanParseNonStandardBundle()
         {
             ModelSerializationBinder.RegisterModelType(typeof(EntityMaster<Patient>));

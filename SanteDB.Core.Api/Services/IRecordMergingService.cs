@@ -118,5 +118,6 @@ namespace SanteDB.Core.Services
         /// <param name="key">The key of the record to flag duplicates for</param>
         /// <param name="configurationName">The configuration name to use</param>
         T FlagDuplicates(Guid key, String configurationName = null);
+
     }
 }

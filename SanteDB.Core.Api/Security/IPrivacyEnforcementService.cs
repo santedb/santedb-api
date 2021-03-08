@@ -19,6 +19,7 @@
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security.Principal;
 using System.Text;
@@ -34,7 +35,20 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Apply all privacy policies
         /// </summary>
-        IdentifiedData Apply(IdentifiedData data, IPrincipal principal);
+        TData Apply<TData>(TData data, IPrincipal principal) where TData : IdentifiedData;
 
+        /// <summary>
+        /// Apply the 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="principal"></param>
+        /// <returns></returns>
+        IEnumerable<TData> Apply<TData>(IEnumerable<TData> data, IPrincipal principal) where TData : IdentifiedData;
+
+        /// <summary>
+        /// Determine if the record provided contains data that the <paramref name="principal"/>
+        /// shouldn't be sending such as masked identifiers or the record itself (due to access permission)
+        /// </summary>
+        bool ValidateWrite<TData>(TData data, IPrincipal principal) where TData : IdentifiedData;
     }
 }

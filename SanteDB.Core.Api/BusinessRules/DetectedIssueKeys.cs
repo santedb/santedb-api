@@ -66,5 +66,10 @@ namespace SanteDB.Core.BusinessRules
         /// </summary>
         public static readonly Guid SafetyConcernIssue = Guid.Parse("1a4fff6c-f54f-11e8-8eb2-f2801f1b9fd1");
 
+        /// <summary>
+        /// Privacy Issue
+        /// </summary>
+        public static readonly Guid PrivacyIssue = Guid.Parse("a799d33d-2326-4beb-aa27-6ff82bd0e217");
+
     }
 }
