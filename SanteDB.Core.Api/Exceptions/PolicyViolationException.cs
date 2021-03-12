@@ -76,7 +76,7 @@ namespace SanteDB.Core.Exceptions
             get
             {
 
-                return String.Format("Policy '{0}' {3} was violated by '{1}' with outcome '{2}'", this.PolicyId, this.Principal?.Identity?.Name ?? "UNKNOWN", this.PolicyDecision, this.m_policyName);
+                return String.Format("Policy {3} ({0}) was violated by '{1}' with outcome '{2}'", this.PolicyId, this.Principal?.Identity?.Name ?? "UNKNOWN", this.PolicyDecision, this.m_policyName);
             }
         }
 

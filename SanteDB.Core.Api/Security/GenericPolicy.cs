@@ -27,6 +27,15 @@ namespace SanteDB.Core.Security
     /// </summary>
     public class GenericPolicy : IPolicy
     {
+
+        /// <summary>
+        /// Generic policy
+        /// </summary>
+        public GenericPolicy()
+        {
+
+        }
+
         /// <summary>
         /// Constructs a simple policy 
         /// </summary>
