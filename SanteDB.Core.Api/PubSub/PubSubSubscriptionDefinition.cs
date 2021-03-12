@@ -123,5 +123,16 @@ namespace SanteDB.Core.PubSub
         [XmlElement("channel"), JsonProperty("channel")]
         public Guid ChannelKey { get; set; }
 
+        /// <summary>
+        /// Gets the description of the subscription
+        /// </summary>
+        [XmlElement("description"), JsonProperty("description")]
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Gets the support contact
+        /// </summary>
+        [XmlElement("support"), JsonProperty("support")]
+        public string SupportContact { get; set; }
     }
 }
