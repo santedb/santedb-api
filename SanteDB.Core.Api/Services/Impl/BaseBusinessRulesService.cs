@@ -115,9 +115,12 @@ namespace SanteDB.Core.Services
             return this.Next?.AfterInsert(data) ?? data;
         }
 
+        /// <summary>
+        /// After object is inserted
+        /// </summary>
         public object AfterInsert(object data)
         {
-            throw new NotImplementedException();
+            return this.AfterInsert((TModel)data);
         }
 
         /// <summary>
