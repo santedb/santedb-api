@@ -110,7 +110,31 @@ namespace SanteDB.Core.Security
         /// Allows identity to alter administrative object policy
         /// </summary>
         public const string AssignPolicy = UnrestrictedAdministration + ".13";
+
+        /// <summary>
+        /// Unresitrected pub/sub
+        /// </summary>
+        public const string UnrestrictedPubSub = UnrestrictedAdministration + ".14";
+
+        /// <summary>
+        /// Allow principals to create new subscriptions
+        /// </summary>
+        public const string CreatePubSubSubscription = UnrestrictedPubSub + ".1";
+
+        /// <summary>
+        /// Allow principals to enable pubsub
+        /// </summary>
+        public const string EnablePubSubSubscription = UnrestrictedPubSub + ".2";
         
+        /// <summary>
+        /// Allow principals to delete pubsub subs
+        /// </summary>
+        public const string DeletePubSubSubscription = UnrestrictedPubSub + ".3";
+
+        /// <summary>
+        /// Allow principals to read pubsub subs
+        /// </summary>
+        public const string ReadPubSubSubscription = UnrestrictedPubSub + ".4";
 
         /// <summary>
         /// Policy identifier for allowance of login

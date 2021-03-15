@@ -47,6 +47,72 @@ namespace SanteDB.Core.Security
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         /// <summary>
+        /// Policy for the grant
+        /// </summary>
+        private class EffectivePolicy : IPolicy
+        {
+            /// <summary>
+            /// Generic policy
+            /// </summary>
+            public EffectivePolicy()
+            {
+
+            }
+
+            /// <summary>
+            /// Constructs a simple policy 
+            /// </summary>
+            public EffectivePolicy(Guid key, String oid, String name, bool canOverride)
+            {
+                this.Key = key;
+                this.Oid = oid;
+                this.Name = name;
+                this.CanOverride = canOverride;
+                this.IsActive = true;
+            }
+
+            /// <summary>
+            /// Gets the key
+            /// </summary>
+            public Guid Key
+            {
+                get; set;
+            }
+
+            /// <summary>
+            /// True if the policy can be overridden
+            /// </summary>
+            public bool CanOverride
+            {
+                get; set;
+            }
+
+            /// <summary>
+            /// Returns true if the policy is active
+            /// </summary>
+            public bool IsActive
+            {
+                get; set;
+            }
+
+            /// <summary>
+            /// Gets the name of the policy
+            /// </summary>
+            public string Name
+            {
+                get; set;
+            }
+
+            /// <summary>
+            /// Gets the oid of the policy
+            /// </summary>
+            public string Oid
+            {
+                get; set;
+            }
+        }
+
+        /// <summary>
         /// Represents an effective policy instance from this PDP
         /// </summary>
         private class EffectivePolicyInstance : IPolicyInstance
@@ -56,11 +122,19 @@ namespace SanteDB.Core.Security
             private object m_securable;
 
             /// <summary>
+            /// Serialization ctor
+            /// </summary>
+            public EffectivePolicyInstance()
+            {
+
+            }
+
+            /// <summary>
             /// Effective policy instance
             /// </summary>
             public EffectivePolicyInstance(IPolicy policy, PolicyGrantType rule, IPrincipal forPrincipal)
             {
-                this.Policy = new GenericPolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride);
+                this.Policy = new EffectivePolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride);
                 this.Rule = rule;
                 this.m_securable = forPrincipal;
             }
@@ -68,7 +142,7 @@ namespace SanteDB.Core.Security
             /// <summary>
             /// Gets or sets the policy
             /// </summary>
-            public GenericPolicy Policy { get; set; }
+            public EffectivePolicy Policy { get; set; }
 
             /// <summary>
             /// Gets or sets the rule
