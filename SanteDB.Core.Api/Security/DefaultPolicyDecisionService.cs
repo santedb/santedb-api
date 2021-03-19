@@ -244,11 +244,11 @@ namespace SanteDB.Core.Security
             if (principal is IClaimsPrincipal cp)
             {
                 if (cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
-                    return $"sid.{this.m_hasher.ComputeHash(sessionId)}";
+                    return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
                 else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
-                    return $"sid.{this.m_hasher.ComputeHash(nameId)}";
+                    return $"pdp.{this.m_hasher.ComputeHash(nameId)}";
             }
-            return $"sid.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+            return $"pdp.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
         }
 
         /// <summary>
