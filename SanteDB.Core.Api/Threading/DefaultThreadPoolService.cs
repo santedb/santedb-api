@@ -186,6 +186,10 @@ namespace SanteDB.Core.Services.Impl
                     }
                     this.m_resetEvent.Reset();
                 }
+                catch(ThreadAbortException)
+                {
+                    return;
+                }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Error in dispatchloop {0}", e);
