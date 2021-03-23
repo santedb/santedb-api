@@ -30,7 +30,11 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Other issue
         /// </summary>
-        Other
+        Other,
+        /// <summary>
+        /// Token is of invalid type
+        /// </summary>
+        TokenType
     }
 
     /// <summary>
