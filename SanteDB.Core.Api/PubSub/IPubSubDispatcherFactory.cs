@@ -29,6 +29,11 @@ namespace SanteDB.Core.PubSub
     {
 
         /// <summary>
+        /// Gets the scheme of the pub-sub factory
+        /// </summary>
+        IEnumerable<String> Schemes { get; }
+
+        /// <summary>
         /// Creates a new dispatcher 
         /// </summary>
         IPubSubDispatcher CreateDispatcher(Guid channelKey, Uri endpoint, IDictionary<String, String> settings);

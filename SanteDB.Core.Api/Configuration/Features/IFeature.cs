@@ -121,6 +121,10 @@ namespace SanteDB.Core.Configuration
     public enum ConfigurationOptionType
     {
         /// <summary>
+        /// Option is a user token
+        /// </summary>
+        User,
+        /// <summary>
         /// Option is a string
         /// </summary>
         String,

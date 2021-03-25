@@ -145,12 +145,15 @@ namespace SanteDB.Core.Services.Impl
         private void EnsureStarted()
         {
             // Load configuration
-            this.m_concurrencyLevel = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<ApplicationServiceContextConfigurationSection>()?.ThreadPoolSize ?? this.m_concurrencyLevel;
-            m_threadPool = new Thread[m_concurrencyLevel];
-            for (int i = 0; i < m_threadPool.Length; i++)
+            if (this.m_threadPool == null)
             {
-                m_threadPool[i] = this.CreateThreadPoolThread();
-                m_threadPool[i].Start();
+                this.m_concurrencyLevel = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<ApplicationServiceContextConfigurationSection>()?.ThreadPoolSize ?? this.m_concurrencyLevel;
+                m_threadPool = new Thread[m_concurrencyLevel];
+                for (int i = 0; i < m_threadPool.Length; i++)
+                {
+                    m_threadPool[i] = this.CreateThreadPoolThread();
+                    m_threadPool[i].Start();
+                }
             }
         }
 
@@ -182,6 +185,10 @@ namespace SanteDB.Core.Services.Impl
                         wi.Callback(wi.State);
                     }
                     this.m_resetEvent.Reset();
+                }
+                catch(ThreadAbortException)
+                {
+                    return;
                 }
                 catch (Exception e)
                 {

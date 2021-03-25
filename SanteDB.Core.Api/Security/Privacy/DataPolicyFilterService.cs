@@ -102,14 +102,15 @@ namespace SanteDB.Core.Security.Privacy
 
             if (config == null) throw new ConfigurationException("Data policy filter service has no configuration", configurationManager.Configuration);
 
-            foreach (var t in config.Resources)
-            {
-                if(typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
+            if(config.Resources!= null)
+                foreach (var t in config.Resources)
                 {
-                    this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType);
-                    this.m_actions.TryAdd(t.ResourceType, t.Action);
+                    if(typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
+                    {
+                        this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType);
+                        this.m_actions.TryAdd(t.ResourceType, t.Action);
+                    }
                 }
-            }
         }
 
         /// <summary>

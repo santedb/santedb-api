@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -29,8 +30,12 @@ namespace SanteDB.Core.PubSub.Broker
     /// A pub-sub broker which is responsible for actually facilitating the publish/subscribe
     /// logic
     /// </summary>
-    public class PubSubBroker : IDaemonService, IDisposable
+    public class PubSubBroker : IDaemonService, IDisposable, IPubSubBroker
     {
+
+
+        // Cached factories
+        private IDictionary<String, IPubSubDispatcherFactory> m_factories;
 
         // Lock
         private object m_lock = new object();
@@ -70,6 +75,18 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         public event EventHandler Stopped;
 
+        // Service manager
+        private IServiceManager m_serviceManager;
+
+        /// <summary>
+        /// Create a new pub-sub broker
+        /// </summary>
+        /// <param name="serviceManager"></param>
+        public PubSubBroker(IServiceManager serviceManager)
+        {
+            this.m_serviceManager = serviceManager;
+        }
+
         /// <summary>
         /// Dispose of the listeners
         /// </summary>
@@ -95,7 +112,7 @@ namespace SanteDB.Core.PubSub.Broker
                 throw new InvalidOperationException("Must have at least one IPubSubManagerService configured");
             this.m_pubSubManager.Subscribed += this.PubSubSubscribed;
             this.m_pubSubManager.UnSubscribed += this.PubSubUnSubscribed;
-
+            this.m_repositoryListeners = new List<IDisposable>();
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -143,6 +160,42 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_repositoryListeners = null;
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
+        }
+
+        /// <summary>
+        /// Get all factories
+        /// </summary>
+        private IDictionary<String, IPubSubDispatcherFactory> GetFactories()
+        {
+            if (this.m_factories == null)
+            {
+                this.m_factories = this.m_serviceManager.GetAllTypes()
+                    .Where(t => typeof(IPubSubDispatcherFactory).IsAssignableFrom(t) && !t.IsAbstract && !t.IsAbstract)
+                    .Select(t => this.m_serviceManager.CreateInjected(t))
+                    .OfType<IPubSubDispatcherFactory>()
+                    .SelectMany(f => f.Schemes.Select(s => new { Scheme = s, Factory = f }))
+                    .ToDictionary(k => k.Scheme, f => f.Factory);
+            }
+            return this.m_factories;
+        }
+
+        /// <summary>
+        /// Finds an implementation of the IDisptacherFactory which works for the specified URI
+        /// </summary>
+        public IPubSubDispatcherFactory FindDispatcherFactory(Uri targetUri)
+        {
+            this.GetFactories().TryGetValue(targetUri.Scheme, out IPubSubDispatcherFactory retVal);
+            return retVal;
+        }
+
+        /// <summary>
+        /// Get dispatcher factory by type
+        /// </summary>
+        public IPubSubDispatcherFactory GetDispatcherFactory(Type factoryType)
+        {
+            // TODO: Optimize this , basically this ensures that the factory type is not 
+            // initialized more than once.
+            return this.GetFactories().Values.FirstOrDefault(o => o.GetType() == factoryType);
         }
     }
 }
