@@ -41,6 +41,9 @@ namespace SanteDB.Core.PubSub.Broker
         // The repository this listener listens to
         private INotifyRepositoryService<TModel> m_repository;
 
+        // Queue service
+        private IPersistentQueueService m_queueService;
+
         // Merge service
         private IRecordMergingService<TModel> m_mergeService;
 
@@ -50,12 +53,14 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener()
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IPersistentQueueService queueService)
         {
-            this.m_pubSubManager = ApplicationServiceContext.Current.GetService<IPubSubManagerService>();
+            this.m_pubSubManager = pubSubManager;
             this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
+            this.m_queueService = queueService;
             if (this.m_repository == null)
                 throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
+
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
