@@ -122,8 +122,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.MasterKey)))
-                dsptchr.NotifyUnMerged(this.m_repository.Get(e.MasterKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
+                dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
         }
 
         /// <summary>
@@ -131,8 +131,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void OnMerged(object sender, Event.DataMergeEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.MasterKey)))
-                dsptchr.NotifyMerged(this.m_repository.Get(e.MasterKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
+                dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
         }
 
         /// <summary>

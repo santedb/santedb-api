@@ -180,7 +180,7 @@ namespace SanteDB.Core.Data
                 }
 
                 // The invoke may have changed the master
-                masterKey = mergeEventArgs.MasterKey;
+                masterKey = mergeEventArgs.SurvivorKey;
 
                 var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, true, AuthenticationContext.Current.Principal);
                 // We'll update the parameters from the candidate to create a single master record
