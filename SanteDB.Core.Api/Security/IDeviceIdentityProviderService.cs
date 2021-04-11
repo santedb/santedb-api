@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
@@ -37,6 +38,10 @@ namespace SanteDB.Core.Security.Services
         /// Perform only online authentication
         /// </summary>
         Online = 0x2,
+        /// <summary>
+        /// Authenticate using an x509 thumbprint algorithm
+        /// </summary>
+        X509 = 0x4,
         /// <summary>
         /// Use either method
         /// </summary>
@@ -69,11 +74,25 @@ namespace SanteDB.Core.Security.Services
 
 
         /// <summary>
+        /// Create a basic identity in the provider
+        /// </summary>
+        /// <param name="deviceId">The username of the identity</param>
+        /// <param name="secret">The intitial password of the identity</param>
+        /// <returns>The created identity</returns>
+        /// <param name="principal">The principal that was created</param>
+        IDeviceIdentity CreateIdentity(String deviceId, String secret, IPrincipal principal);
+
+        /// <summary>
+        /// Gets the SID for the specified identity
+        /// </summary>
+        Guid GetSid(string name);
+
+        /// <summary>
         /// Gets the specified identity for an device.
         /// </summary>
         /// <param name="name">The name of the application for which to retrieve the identity.</param>
         /// <returns>Returns the identity of the application.</returns>
-        IIdentity GetIdentity(string name);
+        IDeviceIdentity GetIdentity(string name);
 
         /// <summary>
         /// Set the lockout status 

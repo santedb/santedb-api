@@ -84,7 +84,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     // Application identity
                     var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
-                    var key = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetSecureKey(appIdentity.Name);
+                    var key = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetPublicKey(appIdentity.Name);
 
                     // Get the key 
                     signatureService.AddSigningKey(keyId, key, "HS256");
@@ -209,7 +209,7 @@ namespace SanteDB.Core.Services.Impl
                             if (appInstance == null)
                                 throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.app", "Unknown source application", DetectedIssueKeys.SecurityIssue));
 
-                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetSecureKey(appInstance.Name);
+                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetPublicKey(appInstance.Name);
                             signatureService.AddSigningKey(keyId, secret, "HS256");
                         }
                         else

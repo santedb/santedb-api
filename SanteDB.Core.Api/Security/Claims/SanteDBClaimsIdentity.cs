@@ -72,7 +72,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Add a claim
         /// </summary>
-        public void AddClaim(IClaim claim)
+        protected void AddClaim(IClaim claim)
         {
             this.m_claims.Add(claim);
         }
@@ -80,7 +80,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Add a claim
         /// </summary>
-        public void AddClaims(IEnumerable<IClaim> claims)
+        protected void AddClaims(IEnumerable<IClaim> claims)
         {
             this.m_claims.AddRange(claims);
         }
@@ -104,7 +104,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Remove the specified claim
         /// </summary>
-        public void RemoveClaim(IClaim claim)
+        protected void RemoveClaim(IClaim claim)
         {
             this.m_claims.Remove(claim);
         }

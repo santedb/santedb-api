@@ -232,6 +232,10 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         void RemoveClaim(String userName, String claimType, IPrincipal principal);
 
+        /// <summary>
+        /// Get the SID for the named user
+        /// </summary>
+        Guid GetSid(String name);
     }
 
     /// <summary>

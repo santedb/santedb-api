@@ -46,19 +46,5 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         IEnumerable<IClaim> FindAll(String claimType);
 
-        /// <summary>
-        /// Add a single claim
-        /// </summary>
-        void AddClaim(IClaim claim);
-
-        /// <summary>
-        /// Add multiple claims
-        /// </summary>
-        void AddClaims(IEnumerable<IClaim> claims);
-
-        /// <summary>
-        /// Remove a claim
-        /// </summary>
-        void RemoveClaim(IClaim claim);
     }
 }
