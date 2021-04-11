@@ -98,12 +98,16 @@ namespace SanteDB.Core.Security.Privacy
             this.m_threadPool = threadPoolService;
 
             // Configuration load
-            var config = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();
+            this.m_configuration = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();
 
-            if (config == null) throw new ConfigurationException("Data policy filter service has no configuration", configurationManager.Configuration);
+            if (this.m_configuration == null)
+            {
+                this.m_tracer.TraceWarning("No data policy configuration exists. Setting all to HIDE");
+                this.m_configuration = new DataPolicyFilterConfigurationSection() { DefaultAction = ResourceDataPolicyActionType.Hide, Resources = new List<ResourceDataPolicyFilter>() };
+            }
 
-            if(config.Resources!= null)
-                foreach (var t in config.Resources)
+            if(this.m_configuration.Resources!= null)
+                foreach (var t in this.m_configuration.Resources)
                 {
                     if(typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
                     {

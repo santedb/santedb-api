@@ -35,7 +35,7 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Gets the master record
         /// </summary>
-        public Guid MasterKey { get; }
+        public Guid SurvivorKey { get; }
 
         /// <summary>
         /// Gets the linked records
@@ -47,7 +47,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         public DataMergeEventArgs(Guid master, IEnumerable<Guid> linked)
         {
-            this.MasterKey = master;
+            this.SurvivorKey = master;
             this.LinkedKeys = linked;
         }
     }
