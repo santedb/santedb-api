@@ -34,7 +34,11 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Token is of invalid type
         /// </summary>
-        TokenType
+        TokenType,
+        /// <summary>
+        /// Token signature validation error
+        /// </summary>
+        SignatureFailure
     }
 
     /// <summary>

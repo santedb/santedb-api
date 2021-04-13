@@ -57,6 +57,19 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
+        /// <param name="policy">Policy identifier.</param>
+        /// <param name="outcome">Outcome.</param>
+        /// <param name="principal">The principal that the action was attempted as</param>
+        public PolicyViolationException(IPrincipal principal, IPolicy policy, PolicyGrantType outcome)
+        {
+            this.PolicyId = policy.Oid;
+            this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : outcome;
+            this.Principal = principal;
+            this.m_policyName = policy.Name;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
+        /// </summary>
         /// <param name="principal">The principal which attempted the action</param>
         public PolicyViolationException(IPrincipal principal, PolicyDecision decision)
         {

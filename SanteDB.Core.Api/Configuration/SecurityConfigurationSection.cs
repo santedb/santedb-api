@@ -114,7 +114,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Set the specified policy
         /// </summary>
-        internal void SetPolicy(SecurityPolicyIdentification policyId, object policyValue)
+        public void SetPolicy(SecurityPolicyIdentification policyId, object policyValue)
         {
             var pol = this.SecurityPolicy.Find(o => o.PolicyId == policyId);
             if (pol == null)

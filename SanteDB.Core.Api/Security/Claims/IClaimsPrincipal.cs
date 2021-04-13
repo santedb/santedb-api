@@ -46,7 +46,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Find all claims
         /// </summary>
-        IClaim FindFirst(string santeDBDeviceIdentifierClaim);
+        IClaim FindFirst(string claimType);
 
         /// <summary>
         /// Find all claims
@@ -56,7 +56,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Find all claims
         /// </summary>
-        IEnumerable<IClaim> FindAll(string santeDBDeviceIdentifierClaim);
+        IEnumerable<IClaim> FindAll(string claimType);
 
         /// <summary>
         /// Add an identity
