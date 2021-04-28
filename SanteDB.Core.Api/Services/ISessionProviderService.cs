@@ -64,6 +64,13 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Creates a new session establishement args
         /// </summary>
+        public SessionEstablishedEventArgs(ISession session, bool success, bool elevated, String purpose, String[] policies) : this(null, session, success, elevated, purpose, policies)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new session establishement args
+        /// </summary>
         public SessionEstablishedEventArgs(IPrincipal principal, ISession session, bool success, bool elevated, String purpose, String[] policies)
         {
             this.Success = success;
@@ -90,6 +97,11 @@ namespace SanteDB.Core.Services
         /// Fired when the session provider service has ended by the user's decision
         /// </summary>
         event EventHandler<SessionEstablishedEventArgs> Abandoned;
+
+        /// <summary>
+        /// Fired when the session provider service has been extended
+        /// </summary>
+        event EventHandler<SessionEstablishedEventArgs> Extended;
 
         /// <summary>
         /// Establishes a session for the specified principal

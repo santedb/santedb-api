@@ -202,10 +202,6 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         IPrincipal Authenticate(String userName, String password, String tfaSecret);
 
-        /// <summary>
-        /// Perform a re-authentication of the principal
-        /// </summary>
-        IPrincipal ReAuthenticate(IPrincipal principal);
 
         /// <summary>
         /// Change user password
@@ -238,26 +234,5 @@ namespace SanteDB.Core.Security.Services
         Guid GetSid(String name);
     }
 
-    /// <summary>
-    /// Represents an identity provider that allows for elevation
-    /// </summary>
-    public interface IElevatableIdentityProviderService : IIdentityProviderService
-    {
-
-        /// <summary>
-        /// The caller has requested an override
-        /// </summary>
-        event EventHandler<SecurityOverrideEventArgs> OverrideRequested;
-
-        /// <summary>
-        /// Requests the currently established principal to be elevated
-        /// </summary>
-        /// <param name="userName">The principal to be elevated</param>
-        /// <param name="password">The password for the principal</param>
-        /// <param name="purpose">The reason for the elevation</param>
-        /// <param name="policies">One or more policies which the principal is seeking override</param>
-        IPrincipal ElevatedAuthenticate(String userName, String password, String tfaSecret, String purpose, params String[] policies);
-    }
-   
 }
 
