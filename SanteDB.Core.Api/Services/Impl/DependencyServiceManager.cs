@@ -429,8 +429,7 @@ namespace SanteDB.Core.Services.Impl
                         var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
                         if (candidateService == null && dependencyInfo.Required)
                         {
-                            this.m_tracer.TraceWarning($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
-                            return null;
+                            throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
                         }
                         else
                         {
