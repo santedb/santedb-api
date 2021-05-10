@@ -107,7 +107,7 @@ namespace SanteDB.Core.Diagnostics
         public void TraceUntestedWarning()
         {
 
-            this.TraceEvent(EventLevel.Warning, "UNTESTED CODE WARNING ----> A PROCESS CALLED AN UNTESTED SECTION OF CODE SUBSEQUENT ERRORS MAY APPEAR IN THE LOG ----> {0}", new StackTrace(true));
+            this.TraceEvent(EventLevel.Warning, "UNTESTED CODE WARNING ----> A PROCESS CALLED AN UNTESTED SECTION OF CODE SUBSEQUENT ERRORS MAY APPEAR IN THE LOG ----> TRACE: {0}", new StackTrace(true));
 
         }
 
