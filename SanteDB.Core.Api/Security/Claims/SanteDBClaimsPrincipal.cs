@@ -72,6 +72,14 @@ namespace SanteDB.Core.Security.Claims
         }
 
         /// <summary>
+        /// Identities
+        /// </summary>
+        public SanteDBClaimsPrincipal(IEnumerable<IIdentity> identities)
+        {
+            this.m_identities = identities.Select(o=>o is IClaimsIdentity ? o : new SanteDBClaimsIdentity(o)).OfType<IClaimsIdentity>().ToList();
+        }
+
+        /// <summary>
         /// Gets the claims in all the identities
         /// </summary>
         /// <value>The claims.</value>

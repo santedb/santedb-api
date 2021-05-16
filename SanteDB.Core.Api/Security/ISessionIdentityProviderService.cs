@@ -19,8 +19,9 @@
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System.Security.Principal;
+using SanteDB.Core.Services;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents a session identity service that can provide identities

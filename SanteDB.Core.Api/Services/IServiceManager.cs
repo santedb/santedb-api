@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-19
  */
+using SanteDB.Core.Model.Map;
 using System;
 using System.Collections.Generic;
 
@@ -42,6 +43,11 @@ namespace SanteDB.Core.Interfaces
         /// Get all services
         /// </summary>
         IEnumerable<object> GetServices();
+
+        /// <summary>
+        /// Creates all instances 
+        /// </summary>
+        IEnumerable<T> CreateAll<T>(params object[] parms);
 
         /// <summary>
         /// Removes a service provider

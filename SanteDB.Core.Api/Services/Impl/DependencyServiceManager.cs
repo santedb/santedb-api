@@ -471,5 +471,25 @@ namespace SanteDB.Core.Services.Impl
                 .Select(t => this.CreateInjected(t))
                 .OfType<TInterface>();
         }
+
+        /// <summary>
+        /// Create all instances of <typeparamref name="T"/>
+        /// </summary>
+        public IEnumerable<T> CreateAll<T>(params object[] parms)
+        {
+            return this.GetAllTypes().Where(t => typeof(T).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(t =>
+                {
+                    try
+                    {
+                        return Activator.CreateInstance(t, parms);
+                    }
+                    catch
+                    {
+                        return Activator.CreateInstance(t);
+                    }
+                })
+                .OfType<T>();
+        }
     }
 }

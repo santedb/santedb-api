@@ -19,10 +19,11 @@
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security.Services
 {
 
     /// <summary>

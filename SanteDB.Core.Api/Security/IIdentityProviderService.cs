@@ -48,6 +48,14 @@ namespace SanteDB.Core.Security.Services
             get;
             set;
         }
+
+        /// <summary>
+        /// Gets or sets whether the override was successful
+        /// </summary>
+        public new bool Success {
+            get => base.Success;
+            set => base.Success = value; 
+        }
     }
 
     /// <summary>
@@ -72,7 +80,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Indicates success
         /// </summary>
-        public bool Success { get; private set; }
+        public bool Success { get; protected set; }
 
         /// <summary>
         /// Gets or sets the name of the user.
