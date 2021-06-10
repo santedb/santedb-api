@@ -25,6 +25,43 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
 {
+
+    /// <summary>
+    /// Resource merge match configuration
+    /// </summary>
+    [XmlType(nameof(ResourceMergeMatchConfiguration), Namespace = "http://santedb.org/configuration")]
+    public class ResourceMergeMatchConfiguration
+    {
+
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public ResourceMergeMatchConfiguration()
+        {
+        }
+
+        /// <summary>
+        /// Create a new match configuration
+        /// </summary>
+        public ResourceMergeMatchConfiguration(String configurationName, bool autoMerge)
+        {
+            this.MatchConfiguration = configurationName;
+            this.AutoLink = autoMerge;
+        }
+
+        /// <summary>
+        /// Automerge
+        /// </summary>
+        [XmlAttribute("autoLink"), JsonProperty("autoLink")]
+        public bool AutoLink { get; set; }
+
+        /// <summary>
+        /// Match configuration
+        /// </summary>
+        [XmlText, JsonProperty("name")]
+        public String MatchConfiguration { get; set; }
+    }
+
     /// <summary>
     /// Represents configuration for one resource
     /// </summary>
@@ -42,17 +79,17 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// MDM resource configuration
         /// </summary>
-        public ResourceMergeConfiguration(Type type, bool autoMerge, params String[] matchConfiguration)
+        public ResourceMergeConfiguration(Type type)
         {
             this.ResourceTypeXml = type.GetCustomAttribute<XmlRootAttribute>()?.ElementName;
-            this.MatchConfiguration = new List<string>(matchConfiguration);
+            this.MatchConfiguration = new List<ResourceMergeMatchConfiguration>();
         }
       
         /// <summary>
         /// Gets or sets the match configuration
         /// </summary>
-        [XmlElement("matchConfiguration"), JsonProperty("matchConfiguration")]
-        public List<String> MatchConfiguration { get; set; }
+        [XmlArray("matching"), XmlArrayItem("config"), JsonProperty("matching")]
+        public List<ResourceMergeMatchConfiguration> MatchConfiguration { get; set; }
 
         /// <summary>
         /// When true, automatically perform the merge 
