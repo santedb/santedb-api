@@ -31,15 +31,15 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The records match
         /// </summary>
-        Match,
+        Match = 0x2,
         /// <summary>
         /// There is a probable match
         /// </summary>
-        Probable,
+        Probable = 0x1,
         /// <summary>
         /// The is a non-match
         /// </summary>
-        NonMatch
+        NonMatch = 0x0
     }
 
     /// <summary>
@@ -62,6 +62,24 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
+    /// Match attribute
+    /// </summary>
+    public interface IRecordMatchAttribute
+    {
+        /// <summary>
+        /// Gets the name of the attribute
+        /// </summary>
+        String Name { get; }
+
+        /// <summary>
+        /// Gets the score
+        /// </summary>
+        double Score { get; }
+    
+    }
+
+
+    /// <summary>
     /// Represents a general purpose match result interface
     /// </summary>
     public interface IRecordMatchResult
@@ -79,18 +97,22 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets or sets the relative strength of the result
         /// </summary>
-        double Strength { get;  }
+        double Strength { get; }
 
         /// <summary>
         /// Gets the classification from the matcher
         /// </summary>
         RecordMatchClassification Classification { get; }
-        
+
         /// <summary>
         /// Indicates the method used to match
         /// </summary>
         RecordMatchMethod Method { get; }
 
+        /// <summary>
+        /// Match record attributes
+        /// </summary>
+        IEnumerable<IRecordMatchAttribute> Attributes { get;}
     }
 
 
@@ -140,6 +162,7 @@ namespace SanteDB.Core.Services
             where T: IdentifiedData;
     }
 
+
     /// <summary>
     /// Represents a service that performs record matching and classification
     /// </summary>
@@ -158,8 +181,9 @@ namespace SanteDB.Core.Services
         /// <typeparam name="T">The type of records being matched</typeparam>
         /// <param name="input">The input record from which blocks should be returned</param>
         /// <param name="configurationName">The configuration that should be used for blocking</param>
+        /// <param name="ignoreList">The list of keys which should be ignored (in addition to the IRecordMergingService instructions)</param>
         /// <returns>The record which match the blocking configuration for type <typeparamref name="T"/></returns>
-        IEnumerable<T> Block<T>(T input, String configurationName) where T : IdentifiedData;
+        IEnumerable<T> Block<T>(T input, String configurationName, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
 
         /// <summary>
         /// Instructs the record matcher to run a detailed classification on the matching blocks in <paramref name="blocks"/>
@@ -177,12 +201,13 @@ namespace SanteDB.Core.Services
         /// <typeparam name="T">The type of records being matched</typeparam>
         /// <param name="input">The record being compared to</param>
         /// <param name="configurationName">The name of the configuration to be used</param>
+        /// <param name="ignoreList">A list of object to ignore for matching</param>
         /// <returns>True if classification was successful</returns>
         /// <remarks>
         /// The match method for some implementations of record matching may be equivalent to Block()/Classify() function calls, however
         /// some matching implementations may optimize database round-trips using a single pass.
         /// </remarks>
-        IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationName) where T : IdentifiedData;
+        IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationName, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
 
         /// <summary>
         /// A non-generic method which uses the type of <paramref name="input"/> to call Match&lt;T>
@@ -190,6 +215,6 @@ namespace SanteDB.Core.Services
         /// <param name="input">The record being compared</param>
         /// <param name="configurationName">The configuration to use</param>
         /// <returns>The candidate match results</returns>
-        IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName);
+        IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName, IEnumerable<Guid> ignoreList);
     }
 }
