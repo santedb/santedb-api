@@ -50,5 +50,9 @@ namespace SanteDB.Core.Services
         /// </summary>
         bool Remove(string key);
 
+        /// <summary>
+        /// True if the specified key exists
+        /// </summary>
+        bool Exists(string key);
     }
 }

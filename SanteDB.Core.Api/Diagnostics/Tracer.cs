@@ -82,6 +82,17 @@ namespace SanteDB.Core.Diagnostics
         }
 
         /// <summary>
+        /// Trace structured data into the log
+        /// </summary>
+        public void TraceData(EventLevel level, String message, params object[] data)
+        {
+            foreach (var w in m_writers.ToArray())
+            {
+                w.Key.TraceEventWithData(level, this.m_source, message, data);
+            }
+        }
+
+        /// <summary>
         /// Trace error
         /// </summary>
         /// <param name="format">Format.</param>

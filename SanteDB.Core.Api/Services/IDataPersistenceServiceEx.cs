@@ -17,6 +17,7 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;

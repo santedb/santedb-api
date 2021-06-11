@@ -89,5 +89,10 @@ namespace SanteDB.Core.Services
         /// Gets the current size of the cache
         /// </summary>
         long Size { get; }
+
+        /// <summary>
+        /// Returns true if the specified cache item exists
+        /// </summary>
+        bool Exists<T>(Guid id);
     }
 }

@@ -122,7 +122,8 @@ namespace SanteDB.Core.Services
         /// Get the specified key.
         /// </summary>
         /// <param name="key">Key.</param>
-        TData Get(Guid key, Guid? versionKey, bool loadFast, IPrincipal principal);
+        /// <param name="versionKey">The optional version to load</param>
+        TData Get(Guid key, Guid? versionKey, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
@@ -134,12 +135,14 @@ namespace SanteDB.Core.Services
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
+        [Obsolete("Use Query(query, principal) instead", false)]
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
         
+
         /// <summary>
         /// Performs a fast count
         /// </summary>
-        long Count(Expression<Func<TData, bool>> p, IPrincipal authContext = null);
+        long Count(Expression<Func<TData, bool>> query, IPrincipal authContext = null);
 
     }
 
@@ -171,7 +174,13 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Query based on the expression given
         /// </summary>
+        [Obsolete("Use Query(Expression query)", false)]
         IEnumerable Query(Expression query, int offset, int? count, out int totalResults);
+
+        /// <summary>
+        /// Query the specified expression
+        /// </summary>
+        IEnumerable Query(Expression query);
     }
 
 }

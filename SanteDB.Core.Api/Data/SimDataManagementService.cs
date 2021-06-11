@@ -182,14 +182,14 @@ namespace SanteDB.Core.Data
                 // The invoke may have changed the master
                 masterKey = mergeEventArgs.SurvivorKey;
 
-                var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, true, AuthenticationContext.Current.Principal);
+                var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, AuthenticationContext.Current.Principal);
                 // We'll update the parameters from the candidate to create a single master record
                 // TODO: Verify this in edge cases
                 Bundle persistenceBundle = new Bundle();
 
                 foreach (var l in linkedDuplicates)
                 {
-                    var local = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(l, null, true, AuthenticationContext.Current.Principal);
+                    var local = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(l, null, AuthenticationContext.Current.Principal);
                     master.CopyObjectData(local, false); // Copy data which is different
 
                     // Add replaces and nullify

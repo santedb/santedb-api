@@ -82,6 +82,11 @@ namespace SanteDB.Core.Diagnostics
         protected abstract void WriteTrace(EventLevel level, String source, String format, params Object[] args);
 
         /// <summary>
+        /// Trace an event with data to the log
+        /// </summary>
+        public abstract void TraceEventWithData(EventLevel level, string source, string message, object[] data);
+
+        /// <summary>
         /// Trace an error
         /// </summary>
         public void TraceError(String source, String format, params Object[] args)

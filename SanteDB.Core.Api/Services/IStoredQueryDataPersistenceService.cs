@@ -31,6 +31,7 @@ namespace SanteDB.Core.Services
     public interface IStoredQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
         where TEntity: IdentifiedData
     {
+
         /// <summary>
         /// Queries or continues a query 
         /// </summary>

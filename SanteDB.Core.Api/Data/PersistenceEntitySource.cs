@@ -20,6 +20,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -46,7 +47,7 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value, null, false, AuthenticationContext.Current.Principal);
+                return persistenceService.Get(key.Value, null, AuthenticationContext.Current.Principal);
             return default(TObject);
         }
 
@@ -57,28 +58,10 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue && versionKey.HasValue)
-                return persistenceService.Get(key.Value, versionKey, false, AuthenticationContext.Current.Principal);
+                return persistenceService.Get(key.Value, versionKey, AuthenticationContext.Current.Principal);
             else if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value, null, false, AuthenticationContext.SystemPrincipal);
+                return persistenceService.Get(key.Value, null, AuthenticationContext.SystemPrincipal);
             return default(TObject);
-        }
-
-        /// <summary>
-        /// Get versioned relationships for the object
-        /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
-        {
-            // Is the collection already loaded?
-            var cacheKey = $"eld.{typeof(TObject).FullName}@{sourceKey}.{sourceVersionSequence}";
-
-            var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
-            var retVal = adhocCache?.Get<List<TObject>>(cacheKey);
-            if (retVal == null)
-            {
-                retVal = this.Query<TObject>(o => o.SourceEntityKey == sourceKey && o.ObsoleteVersionSequenceId != null).ToList();
-                adhocCache?.Add(cacheKey, retVal, new TimeSpan(0, 0, 30));
-            }
-            return retVal;
         }
 
         /// <summary>
@@ -87,15 +70,8 @@ namespace SanteDB.Core.Data
         public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             // Is the collection already loaded?
-            var cacheKey = $"eld.{typeof(TObject).FullName}@{sourceKey}";
             var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
-            var retVal = adhocCache?.Get<List<TObject>>(cacheKey);
-            if (retVal == null)
-            {
-                retVal = this.Query<TObject>(o => o.SourceEntityKey == sourceKey).ToList();
-                adhocCache?.Add(cacheKey, retVal, new TimeSpan(0, 0, 30));
-            }
-            return retVal;
+            return this.Query<TObject>(o => o.SourceEntityKey == sourceKey);
         }
 
         /// <summary>
@@ -103,18 +79,17 @@ namespace SanteDB.Core.Data
         /// </summary>
         public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationServiceContext.Current.GetService<IFastQueryDataPersistenceService<TObject>>();
+            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null)
             {
-                var tr = 0;
                 if (typeof(Act).IsAssignableFrom(typeof(TObject)) ||
                     typeof(ActParticipation).IsAssignableFrom(typeof(TObject)))
-                    return persistenceService.QueryFast(query, Guid.Empty, 0, null, out tr, AuthenticationContext.Current.Principal);
+                    return persistenceService.Query(query, AuthenticationContext.Current.Principal);
                 else
-                    return persistenceService.Query(query, Guid.Empty, 0, null, out tr, AuthenticationContext.Current.Principal);
+                    return persistenceService.Query(query, AuthenticationContext.Current.Principal);
 
             }
-            return new List<TObject>();
+            return new MemoryQueryResultSet<TObject>();
         }
 
         #endregion
