@@ -40,6 +40,9 @@ namespace SanteDB.Core.Services.Impl
         // Activators
         private ConcurrentDictionary<Type, Func<Object>> m_activators = new ConcurrentDictionary<Type, Func<object>>();
 
+        // Not configured services
+        private HashSet<Type> m_notConfiguredServices = new HashSet<Type>();
+
         /// <summary>
         /// Gets the service instance information
         /// </summary>
@@ -196,10 +199,13 @@ namespace SanteDB.Core.Services.Impl
         {
 
             lock (this.m_lock)
+            {
                 if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
                 else
                     this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
+                this.m_notConfiguredServices.Clear();
+            }
         }
 
         /// <summary>
@@ -212,6 +218,7 @@ namespace SanteDB.Core.Services.Impl
                 if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
                     this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
                 this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
+                this.m_notConfiguredServices.Clear();
             }
         }
 
@@ -232,7 +239,7 @@ namespace SanteDB.Core.Services.Impl
         public object GetService(Type serviceType)
         {
             ServiceInstanceInformation candidateService = null;
-            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false)
+            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false && !this.m_notConfiguredServices.Contains(serviceType))
             {
                 lock (this.m_lock)
                 {
@@ -244,6 +251,10 @@ namespace SanteDB.Core.Services.Impl
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
                             this.m_serviceRegistrations.Add(candidateService);
+                        }
+                        else
+                        {
+                            this.m_notConfiguredServices.Add(serviceType);
                         }
                     }
                     if (candidateService != null)

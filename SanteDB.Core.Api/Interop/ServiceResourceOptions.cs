@@ -54,6 +54,36 @@ namespace SanteDB.Core.Interop
     }
 
     /// <summary>
+    /// Resource capability extensions
+    /// </summary>
+    public static class ResourceCapabilityTypeExtensions
+    {
+        public static IEnumerable<ServiceResourceCapability> ToResourceCapabilityStatement(this ResourceCapabilityType me, Func<ResourceCapabilityType, String[]> getDemandsFunc)
+        {
+            var caps = new List<ServiceResourceCapability>();
+            if (me.HasFlag(ResourceCapabilityType.Create))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Create, getDemandsFunc(ResourceCapabilityType.Create)));
+            if (me.HasFlag(ResourceCapabilityType.CreateOrUpdate))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.CreateOrUpdate, getDemandsFunc(ResourceCapabilityType.CreateOrUpdate)));
+            if (me.HasFlag(ResourceCapabilityType.Delete))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Delete, getDemandsFunc(ResourceCapabilityType.Delete)));
+            if (me.HasFlag(ResourceCapabilityType.Get))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Get, getDemandsFunc(ResourceCapabilityType.Get)));
+            if (me.HasFlag(ResourceCapabilityType.GetVersion))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.GetVersion, getDemandsFunc(ResourceCapabilityType.GetVersion)));
+            if (me.HasFlag(ResourceCapabilityType.History))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.History, getDemandsFunc(ResourceCapabilityType.History)));
+            if (me.HasFlag(ResourceCapabilityType.Search))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Search, getDemandsFunc(ResourceCapabilityType.Search)));
+            if (me.HasFlag(ResourceCapabilityType.Update))
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Update, getDemandsFunc(ResourceCapabilityType.Update)));
+
+
+            return caps;
+        }
+    }
+
+    /// <summary>
     /// Service resource options
     /// </summary>
     [XmlType(nameof(ServiceResourceCapability), Namespace = "http://santedb.org/model"), JsonObject(nameof(ServiceResourceCapability))]
@@ -114,11 +144,12 @@ namespace SanteDB.Core.Interop
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
         /// <param name="resourceType">The type of resource which options are being fetched for</param>
-        public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations)
+        public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, List<ServiceResourceOptions> subResources)
         {
             this.ResourceName = resourceName;
             this.Capabilities = operations;
             this.ResourceType = resourceType;
+            this.ChildResources = subResources;
         }
 
         /// <summary>
@@ -138,6 +169,11 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlIgnore, JsonIgnore]
         public Type ResourceType { get; set; }
+
+        /// <summary>
+        /// Gets the resources which are associated with this resource (sub-resources)
+        /// </summary>
+        public List<ServiceResourceOptions> ChildResources { get; set; }
     }
 }
 #pragma warning restore CS1591
