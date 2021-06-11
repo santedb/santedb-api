@@ -35,10 +35,10 @@ using System.Linq;
 
 namespace SanteDB.Core.Data
 {
-	/// <summary>
-	/// Represents a daemon service that registers a series of merge services which can merge records together
-	/// </summary>
-	public class SimDataManagementService : IDaemonService
+    /// <summary>
+    /// Represents a daemon service that registers a series of merge services which can merge records together
+    /// </summary>
+    public class SimDataManagementService : IDaemonService
     {
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace SanteDB.Core.Data
             private void DataUpdatingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o=>this.m_matchingService.Match<TModel>(e.Data, o));
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoreList(e.Data.Key.GetValueOrDefault())));
 
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o=>this.m_matchingService.Match<TModel>(e.Data, o));
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoreList(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
                 if (this.m_configuration.AutoMerge && matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
@@ -121,19 +121,14 @@ namespace SanteDB.Core.Data
                     if (this.m_configuration.PreserveOriginal)
                     {
                         this.m_tracer.TraceInfo("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL BE SET TO NULLIFIED ---", e.Data, match.Record, match.Score);
-                        var mergeResult = this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
-                        if (mergeResult != null)
-                            (e.Data as IHasState).StatusConceptKey = StatusKeys.Nullified;
+                        this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
+                        (e.Data as IHasState).StatusConceptKey = StatusKeys.Nullified;
                     }
                     else
                     {
                         this.m_tracer.TraceWarning("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL NOT BE PERSISTED ---", e.Data, match.Record, match.Score);
-                        var mergeResult = this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
-                        if (mergeResult != null)
-                        {
-                            e.Cancel = true;
-                            e.Data = mergeResult;
-                        }
+                        this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
+                        e.Cancel = true;
                     }
                 }
 
@@ -169,14 +164,14 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Merges the specified duplicates into the master
             /// </summary>
-            public virtual TModel Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates)
+            public virtual void Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates)
             {
                 var mergeEventArgs = new DataMergingEventArgs<TModel>(masterKey, linkedDuplicates);
                 this.Merging?.Invoke(this, mergeEventArgs);
                 if (mergeEventArgs.Cancel)
                 {
                     this.m_tracer.TraceInfo("Pre-Event trigger indicated cancel merge");
-                    return null;
+                    return;
                 }
 
                 // The invoke may have changed the master
@@ -217,48 +212,46 @@ namespace SanteDB.Core.Data
                 // Persist
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Update(persistenceBundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 this.Merged?.Invoke(this, new DataMergeEventArgs<TModel>(masterKey, linkedDuplicates));
-                return master;
             }
 
             /// <summary>
             /// Unmerge - Not supported by SIM
             /// </summary>
-            public virtual TModel Unmerge(Guid master, Guid unmergeDuplicate)
+            public virtual void Unmerge(Guid master, Guid unmergeDuplicate)
             {
                 throw new NotSupportedException("Single Instance Mode cannot un-merge data");
             }
 
-            public IEnumerable<TModel> GetDuplicates(Guid masterKey)
+            /// <summary>
+            /// Ignore the specified candidate matches
+            /// </summary>
+            public void Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
             {
                 throw new NotImplementedException();
             }
 
-            public TModel Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
+            /// <summary>
+            /// Perform an un-ignore operation
+            /// </summary>
+            public void UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys)
             {
                 throw new NotImplementedException();
             }
 
-            public Patch Diff(Guid masterKey, Guid linkedDuplicateKey)
+            /// <summary>
+            /// Get the merge candidates (those which might be a match)
+            /// </summary>
+            public IEnumerable<Guid> GetMergeCandidates(Guid masterKey)
             {
-                throw new NotImplementedException();
+                var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
+                var candidate = dataService.Get(masterKey, null, true, AuthenticationContext.SystemPrincipal);
+                return this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.MatchConfiguration, this.GetIgnoreList(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 
-            public IEnumerable<TModel> GetIgnored(Guid masterKey)
-            {
-                throw new NotImplementedException();
-            }
-
-            public TModel UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void FlagDuplicates(string configurationName = null)
-            {
-                throw new NotImplementedException();
-            }
-
-            public TModel FlagDuplicates(Guid key, string configurationName = null)
+            /// <summary>
+            /// Get the ignore list
+            /// </summary>
+            public IEnumerable<Guid> GetIgnoreList(Guid masterKey)
             {
                 throw new NotImplementedException();
             }

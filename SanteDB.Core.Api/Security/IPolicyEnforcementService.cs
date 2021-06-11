@@ -41,5 +41,10 @@ namespace SanteDB.Core.Security.Services
         /// Demand access to the policy on behalf of principal
         /// </summary>
         void Demand(String policyId, IPrincipal principal);
+
+        /// <summary>
+        /// Demand the specified policy and return the result
+        /// </summary>
+        bool SoftDemand(String policyId, IPrincipal principal);
     }
 }
