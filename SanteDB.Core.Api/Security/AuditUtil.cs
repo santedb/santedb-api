@@ -483,7 +483,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
-        public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
+        public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, params string[] changedProperties)
         {
             traceSource.TraceInfo("Create SecurityAttributeAction audit");
 

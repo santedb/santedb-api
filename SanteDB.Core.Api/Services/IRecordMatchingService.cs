@@ -62,9 +62,9 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Match attribute
+    /// A match vector which is an attribute with a measure of that attribute's weighted score
     /// </summary>
-    public interface IRecordMatchAttribute
+    public interface IRecordMatchVector
     {
         /// <summary>
         /// Gets the name of the attribute
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Match record attributes
         /// </summary>
-        IEnumerable<IRecordMatchAttribute> Attributes { get;}
+        IEnumerable<IRecordMatchVector> Vectors { get;}
     }
 
 
@@ -150,6 +150,14 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IMatchReportFactory
     {
+
+        /// <summary>
+        /// Create a match report for the matches
+        /// </summary>
+        /// <param name="input">The input record</param>
+        /// <param name="matches">The matches</param>
+        /// <returns>A serializable object representing the match reports</returns>
+        Object CreateMatchReport(Type inputType, object input, IEnumerable<IRecordMatchResult> matches);
 
         /// <summary>
         /// Create a match report for the matches
