@@ -244,7 +244,7 @@ namespace SanteDB.Core.Data
             public IEnumerable<Guid> GetMergeCandidates(Guid masterKey)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
-                var candidate = dataService.Get(masterKey, null, true, AuthenticationContext.SystemPrincipal);
+                var candidate = dataService.Get(masterKey, null, AuthenticationContext.SystemPrincipal);
                 return this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.MatchConfiguration, this.GetIgnoreList(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 

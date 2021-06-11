@@ -39,29 +39,13 @@ namespace SanteDB.Core.Event
         /// <summary>
         /// Data query event ctor
         /// </summary>
-        public QueryEventArgsBase(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal) : base(principal)
+        public QueryEventArgsBase(Expression<Func<TData, bool>> query, IPrincipal principal) : base(principal)
         {
-            this.Offset = offset;
-            this.Count = count;
-            this.QueryId = queryId;
+            
             this.Query = query;
         }
 
-        /// <summary>
-        /// Gets the offset requested
-        /// </summary>
-        public int Offset { get; set; }
-
-        /// <summary>
-        /// Gets the count requested
-        /// </summary>
-        public int? Count { get; set; }
-
-
-        /// <summary>
-        /// Gets the total amount of results
-        /// </summary>
-        public int TotalResults { get; set; }
+     
 
         /// <summary>
         /// Gets or sets the results.
@@ -105,10 +89,9 @@ namespace SanteDB.Core.Event
         /// <param name="principal">The principal under which the query was executed</param>
         /// <param name="queryId">The unique identifier for the query</param>
         /// <param name="totalResults">The total results in the result set</param>
-        public QueryResultEventArgs(Expression<Func<TData, bool>> query, IEnumerable<TData> results, int offset, int? count, int totalResults, Guid? queryId, IPrincipal principal) : base(query, offset, count, queryId, principal)
+        public QueryResultEventArgs(Expression<Func<TData, bool>> query, IEnumerable<TData> results, IPrincipal principal) : base(query, principal)
         {
             this.Results = results;
-            this.TotalResults = totalResults;
         }
 
 
@@ -124,12 +107,9 @@ namespace SanteDB.Core.Event
         /// Initializes a new instance of the <see cref="QueryRequestEventArgs{TData}"/> class.
         /// </summary>
         /// <param name="query">The query about to be executed</param>
-        /// <param name="queryId">The query identifier</param>
         /// <param name="principal">The principal which is executing the query</param>
-        /// <param name="offset">The requested offset in the result set</param>
-        /// <param name="count">The requested total results to be returned in this result set</param>
         /// <param name="tag">A query tag object</param>
-        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, dynamic tag = null) : base(query, offset, count, queryId, principal)
+        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal, dynamic tag = null) : base(query, principal)
         {
             this.QueryTag = tag;
         }

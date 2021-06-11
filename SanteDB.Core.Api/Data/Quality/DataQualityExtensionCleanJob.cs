@@ -100,7 +100,7 @@ namespace SanteDB.Core.Data.Quality
                 {
                     var results = entityService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
                     foreach (EntityExtension r in results)
-                        entityService.Obsolete(r, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        entityService.Obsolete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                     ofs += 100;
                 }
 
@@ -111,7 +111,7 @@ namespace SanteDB.Core.Data.Quality
                 {
                     var results = actService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
                     foreach (ActExtension r in results)
-                        actService.Obsolete(r, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        actService.Obsolete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                     ofs += 100;
                 }
 

@@ -116,7 +116,7 @@ namespace SanteDB.Core.Services
         /// Obsolete the specified identified data
         /// </summary>
         /// <param name="data">Data.</param>
-        TData Obsolete(TData data, TransactionMode mode, IPrincipal principal);
+        TData Obsolete(Guid key, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Get the specified key.
@@ -164,7 +164,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Obsoletes the specified data
         /// </summary>
-        Object Obsolete(Object data);
+        Object Obsolete(Guid id);
 
         /// <summary>
         /// Gets the specified data
