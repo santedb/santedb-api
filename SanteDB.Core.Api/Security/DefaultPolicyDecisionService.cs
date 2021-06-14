@@ -311,7 +311,7 @@ namespace SanteDB.Core.Security
                 {
                     // Can override?
                     var polInfo = pip.GetPolicy(policyId);
-                    if (polInfo.CanOverride && pip.GetPolicyInstance(pip, PermissionPolicyIdentifiers.OverridePolicyPermission).Rule != PolicyGrantType.Deny)
+                    if (polInfo.CanOverride && pip.GetPolicyInstance(principal, PermissionPolicyIdentifiers.OverridePolicyPermission).Rule != PolicyGrantType.Deny)
                         return PolicyGrantType.Elevate;
                     else return PolicyGrantType.Deny;
                 }

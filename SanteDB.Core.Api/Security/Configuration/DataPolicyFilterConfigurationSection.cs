@@ -64,43 +64,43 @@ namespace SanteDB.Core.Security.Configuration
     /// <summary>
     /// The resource data policy action
     /// </summary>
-    [XmlType(nameof(ResourceDataPolicyActionType), Namespace = "http://santedb.org/configuration")]
+    [XmlType(nameof(ResourceDataPolicyActionType), Namespace = "http://santedb.org/configuration"), Flags]
     public enum ResourceDataPolicyActionType
     {
         /// <summary>
         /// None - Take no action
         /// </summary>
         [XmlEnum("none")]
-        None,
+        None = 0x0,
         /// <summary>
         /// Only audit that the resource was disclosed and allow disclosure
         /// </summary>
         [XmlEnum("audit")]
-        Audit,
+        Audit = 0x1,
         /// <summary>
         /// Disclose the record but mask the populated properties
         /// </summary>
         [XmlEnum("redact")]
-        Redact,
+        Redact = 0x2,
         /// <summary>
         /// Disclose the record type and key, but clear all data
         /// </summary>
         [XmlEnum("nullify")]
-        Nullify,
+        Nullify = 0x4,
         /// <summary>
         /// Hide the record - return nothing
         /// </summary>
         [XmlEnum("hide")]
-        Hide,
+        Hide = 0x8,
         /// <summary>
         /// Generate an error condition
         /// </summary>
         [XmlEnum("error")]
-        Error,
+        Error = 0x10,
         /// <summary>
         /// Hashes values so they can be compared with a normal value
         /// </summary>
         [XmlEnum("hash")]
-        Hash
+        Hash = 0x20
     }
 }

@@ -25,17 +25,17 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// A resource locking service 
     /// </summary>
-    public interface IResourceEditLockService
+    public interface IResourceCheckoutService
     {
 
         /// <summary>
         /// Try to get a lock on the resource for editing
         /// </summary>
-        bool Lock<T>(Guid key);
+        bool Checkout<T>(Guid key);
 
         /// <summary>
         /// Release the lock on the specified key
         /// </summary>
-        bool Unlock<T>(Guid key);
+        bool Checkin<T>(Guid key);
     }
 }

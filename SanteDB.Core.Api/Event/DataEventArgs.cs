@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Security;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -168,7 +169,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data to be persisted</param>
         /// <param name="principal">The principal under which the persistence is taking place</param>
-        public DataPersistingEventArgs(TData data, IPrincipal principal) : base(data, principal)
+        public DataPersistingEventArgs(TData data, TransactionMode mode, IPrincipal principal) : base(data, mode, principal)
         {
         }
 
@@ -196,10 +197,16 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data that was persisted</param>
         /// <param name="principal">The principal which was responsible for the creation of the data</param>
-        public DataPersistedEventArgs(TData data, IPrincipal principal) : base(principal)
+        public DataPersistedEventArgs(TData data, TransactionMode transactionMode, IPrincipal principal) : base(principal)
         {
             this.Data = data;
+            this.Mode = transactionMode;
         }
+
+        /// <summary>
+        /// Gets the mode of transaction
+        /// </summary>
+        public TransactionMode Mode { get; }
 
         /// <summary>
         /// Gets or sets the data.
