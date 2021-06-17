@@ -36,12 +36,23 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="masterKey">The master record</param>
         /// <returns>The duplicates currently identified/queried</returns>
-        IEnumerable<Guid> GetMergeCandidates(Guid masterKey);
+        IEnumerable<Guid> GetMergeCandidateKeys(Guid masterKey);
+
+        /// <summary>
+        /// Get merge candidate keys
+        /// </summary>
+        /// <param name="masterKey">The key of the master</param>
+        IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
 
         /// <summary>
         /// Gets the ignore list for the specified master record
         /// </summary>
-        IEnumerable<Guid> GetIgnoreList(Guid masterKey);
+        IEnumerable<Guid> GetIgnoredKeys(Guid masterKey);
+
+        /// <summary>
+        /// Gets the ignore list for the specified master record
+        /// </summary>
+        IEnumerable<IdentifiedData> GetIgnored(Guid masterKey);
 
         /// <summary>
         /// Indicates that the engine should ignore the specified false positives
