@@ -535,6 +535,8 @@ namespace SanteDB.Core.Security.Audit
                     audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
                     audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
                     audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
+                    audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration.SourceInformation?.EnterpriseSite);
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration.SourceInformation?.EnterpriseDeviceKey ?? Guid.Empty).ToString());
 
                     // Filter apply?
                     var filters = s_configuration?.AuditFilters.Where(f =>
@@ -614,9 +616,19 @@ namespace SanteDB.Core.Security.Audit
 
             traceSource.TraceInfo("Create Override audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.EmergencyOverrideStarted, new AuditCode(purposeOfUse, SanteDBClaimTypes.PurposeOfUse));
+            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.EmergencyOverrideStarted));
             AddUserActor(audit, principal);
             AddLocalDeviceActor(audit);
+
+            audit.AuditableObjects.Add(new AuditableObject()
+            {
+                IDTypeCode = AuditableObjectIdType.NotSpecified,
+                ObjectId = SanteDBClaimTypes.PurposeOfUse,
+                LifecycleType = AuditableObjectLifecycle.NotSet,
+                Role = AuditableObjectRole.SecurityGranularityDefinition,
+                Type = AuditableObjectType.SystemObject,
+                NameData = purposeOfUse
+            });
 
             // Add policies which were overridden
             audit.AuditableObjects.AddRange(policies.Select(o => new AuditableObject()

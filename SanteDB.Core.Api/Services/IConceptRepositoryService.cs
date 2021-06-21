@@ -99,6 +99,12 @@ namespace SanteDB.Core.Services
         /// Gets the concept reference term for the specified code system 
         /// </summary>
         /// <returns></returns>
+        ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem);
+
+        /// <summary>
+        /// Gets the concept reference term for the specified code system 
+        /// </summary>
+        /// <returns></returns>
         IEnumerable<ConceptReferenceTerm> FindReferenceTermsByConcept(Guid conceptId, String codeSystem);
     }
 }
