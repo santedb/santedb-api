@@ -17,6 +17,7 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -87,7 +88,13 @@ namespace SanteDB.Core.Configuration
             get
             {
                 if (this.m_type == null)
+                {
                     this.m_type = Type.GetType(this.TypeXml);
+                    if(this.m_type == null)
+                    {
+                        throw new InvalidOperationException($"Type {this.TypeXml} not found");
+                    }
+                }
                 return this.m_type;
             }
             set

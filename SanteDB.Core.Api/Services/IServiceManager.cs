@@ -18,6 +18,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace SanteDB.Core.Interfaces
 {
@@ -57,7 +58,7 @@ namespace SanteDB.Core.Interfaces
         /// <summary>
         /// Creates injected instances of all <typeparamref name="TType"/>
         /// </summary>
-        IEnumerable<TType> CreateInjectedOfAll<TType>();
+        IEnumerable<TType> CreateInjectedOfAll<TType>(Assembly fromAssembly = null);
 
         /// <summary>
         /// Create a new, injected <paramref name="type"/>
