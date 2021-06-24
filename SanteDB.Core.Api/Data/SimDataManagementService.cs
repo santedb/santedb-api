@@ -99,7 +99,7 @@ namespace SanteDB.Core.Data
             private void DataUpdatingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoreList(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoreList(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
                 if (this.m_configuration.AutoMerge && matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
@@ -241,17 +241,33 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get the merge candidates (those which might be a match)
             /// </summary>
-            public IEnumerable<Guid> GetMergeCandidates(Guid masterKey)
+            public IEnumerable<Guid> GetMergeCandidateKeys(Guid masterKey)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
                 var candidate = dataService.Get(masterKey, null, AuthenticationContext.SystemPrincipal);
-                return this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.MatchConfiguration, this.GetIgnoreList(masterKey))).Select(o => o.Record.Key.Value).Distinct();
+                return this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.MatchConfiguration, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 
             /// <summary>
             /// Get the ignore list
             /// </summary>
-            public IEnumerable<Guid> GetIgnoreList(Guid masterKey)
+            public IEnumerable<Guid> GetIgnoredKeys(Guid masterKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Get merged candidates
+            /// </summary>
+            public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Get ignored list
+            /// </summary>
+            public IEnumerable<IdentifiedData> GetIgnored(Guid masterKey)
             {
                 throw new NotImplementedException();
             }

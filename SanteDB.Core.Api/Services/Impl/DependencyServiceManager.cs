@@ -416,6 +416,11 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public object CreateInjected(Type type)
         {
+
+            if(type == null)
+            {
+                throw new ArgumentNullException(nameof(type), "Cannot find type for dependency injection");
+            }
             if(!this.m_activators.TryGetValue(type, out Func<Object> activator))
             {
                 // TODO: Check for circular dependencies
@@ -475,12 +480,22 @@ namespace SanteDB.Core.Services.Impl
         /// Create injected instances of all implementers of the specified <typeparamref name="TInterface"/>
         /// </summary>
         /// <typeparam name="TInterface">The type of interface to construct</typeparam>
-        public IEnumerable<TInterface> CreateInjectedOfAll<TInterface>()
+        public IEnumerable<TInterface> CreateInjectedOfAll<TInterface>(Assembly fromAssembly = null)
         {
-            return this.GetAllTypes()
-                .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                .Select(t => this.CreateInjected(t))
-                .OfType<TInterface>();
+            if (fromAssembly == null)
+            {
+                return this.GetAllTypes()
+                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                    .Select(t => this.CreateInjected(t))
+                    .OfType<TInterface>();
+            }
+            else
+            {
+                return fromAssembly.ExportedTypes
+                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                    .Select(t => this.CreateInjected(t))
+                    .OfType<TInterface>();
+            }
         }
 
         /// <summary>

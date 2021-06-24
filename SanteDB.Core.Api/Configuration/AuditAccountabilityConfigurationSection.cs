@@ -44,5 +44,38 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlArray("filters"), XmlArrayItem("add"), JsonProperty("filters")]
         public List<AuditFilterConfiguration> AuditFilters { get; set; }
+
+        /// <summary>
+        /// Audit source identification
+        /// </summary>
+        [XmlElement("auditSource"), JsonProperty("sourceIdentification")]
+        public AuditSourceConfiguration SourceInformation { get; set; }
+    }
+
+    /// <summary>
+    /// Audit source configuration
+    /// </summary>
+    [XmlType(nameof(AuditSourceConfiguration), Namespace = "http://santedb.org/configuration")]
+    public class AuditSourceConfiguration
+    {
+
+        /// <summary>
+        /// Gets or sets the enterprise site
+        /// </summary>
+        [XmlElement("enterpriseSite"), JsonProperty("enterpriseSite")]
+        public string EnterpriseSite { get; set; }
+
+        /// <summary>
+        /// The key of the device
+        /// </summary>
+        [XmlElement("enterpriseSiteKey"), JsonProperty("enterpriseSiteKey")]
+        public Guid EnterpriseDeviceKey { get; set; }
+
+        /// <summary>
+        /// The location
+        /// </summary>
+        [XmlElement("siteName"), JsonProperty("siteName")]
+        public string SiteLocation { get; set; }
+
     }
 }
