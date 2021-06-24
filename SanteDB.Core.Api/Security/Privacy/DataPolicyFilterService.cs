@@ -77,10 +77,6 @@ namespace SanteDB.Core.Security.Privacy
         private IAdhocCacheService m_adhocCache;
         // Password Hashing
         private IPasswordHashingService m_hasher;
-        // Data caching service
-        private IDataCachingService m_dataCachingService;
-        // Subscription executor
-        private ISubscriptionExecutor m_subscriptionExecutor;
         // Threadpool service
         private IThreadPoolService m_threadPool;
 
@@ -88,13 +84,11 @@ namespace SanteDB.Core.Security.Privacy
         /// Data policy filter service with DI
         /// </summary>
         public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
-            IDataCachingService dataCachingService, ISubscriptionExecutor subscriptionExecutor = null, IAdhocCacheService adhocCache = null)
+             IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
             this.m_adhocCache = adhocCache;
             this.m_pdpService = pdpService;
-            this.m_subscriptionExecutor = subscriptionExecutor;
-            this.m_dataCachingService = dataCachingService;
             this.m_threadPool = threadPoolService;
 
             // Configuration load

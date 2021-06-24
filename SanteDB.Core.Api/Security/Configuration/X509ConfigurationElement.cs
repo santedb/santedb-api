@@ -95,7 +95,7 @@ namespace SanteDB.Core.Security.Configuration
         [XmlIgnore, JsonIgnore]
         [Description("The X509 certificate to use")]
         [DisplayName("Certificate")]
-        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration, Version=1.0.0.0", "System.Drawing.Design.UITypeEditor, System.Windows.Forms")]
+        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Windows.Forms")]
         public X509Certificate2 Certificate
         {
             get => this.GetCertificate();
