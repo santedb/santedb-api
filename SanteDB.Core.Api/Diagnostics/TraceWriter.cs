@@ -29,8 +29,19 @@ namespace SanteDB.Core.Diagnostics
     /// </summary>
     public abstract class TraceWriter
     {
+        // Configuration
+        private DiagnosticsConfigurationSection m_configuration;
+
         // Filter
         private EventLevel m_filter;
+
+        /// <summary>
+        /// The trace writer ctor with config manager
+        /// </summary>
+        public TraceWriter(IConfigurationManager configurationManager)
+        {
+            this.m_configuration = configurationManager.GetSection<DiagnosticsConfigurationSection>();
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TraceWriter"/> class.
@@ -57,8 +68,7 @@ namespace SanteDB.Core.Diagnostics
         {
             try
             {
-                var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()?
-                    .GetSection<DiagnosticsConfigurationSection>()?.Sources
+                var sourceConfig = this.m_configuration.Sources
                     .OrderByDescending(o => o.SourceName.Length)
                     .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
 
