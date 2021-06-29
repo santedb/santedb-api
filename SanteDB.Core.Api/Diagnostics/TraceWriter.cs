@@ -77,7 +77,7 @@ namespace SanteDB.Core.Diagnostics
                     {
                         sourceConfig = key.Value;
                     }
-                    this.m_sourceFilters.TryAdd(key.Key, sourceConfig);
+                    this.m_sourceFilters.TryAdd(source, sourceConfig);
                 }
 
                 if (this.m_filter == EventLevel.LogAlways)
