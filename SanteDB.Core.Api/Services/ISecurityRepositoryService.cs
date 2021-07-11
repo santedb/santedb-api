@@ -62,6 +62,16 @@ namespace SanteDB.Core.Services
         SecurityUser GetUser(String userName);
 
         /// <summary>
+        /// Get a device by name
+        /// </summary>
+        SecurityDevice GetDevice(String deviceName);
+
+        /// <summary>
+        /// Get a app by name
+        /// </summary>
+        SecurityApplication GetApplication(String applicationName);
+
+        /// <summary>
         /// Get the specified security policy by OID
         /// </summary>
         SecurityPolicy GetPolicy(String policyOid);
@@ -99,6 +109,16 @@ namespace SanteDB.Core.Services
         SecurityUser GetUser(IIdentity identity);
 
         /// <summary>
+        /// Gets the specified security device based on the principal
+        /// </summary>
+        SecurityDevice GetDevice(IIdentity identity);
+
+        /// <summary>
+        /// Gets the specified security application based on the principal
+        /// </summary>
+        SecurityApplication GetApplication(IIdentity identity);
+
+        /// <summary>
         /// Get the user entity
         /// </summary>
         UserEntity GetUserEntity(IIdentity identity);
@@ -119,6 +139,11 @@ namespace SanteDB.Core.Services
         /// Get the provenance object
         /// </summary>
         SecurityProvenance GetProvenance(Guid provenanceId);
+
+        /// <summary>
+        /// Get the data object for the provided <paramref name="principal"/>
+        /// </summary>
+        SecurityEntity GetSecurityEntity(IPrincipal principal);
 
         /// <summary>
         /// Find provenance objects matching the specified object

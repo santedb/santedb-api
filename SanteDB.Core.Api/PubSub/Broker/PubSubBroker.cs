@@ -16,7 +16,9 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -33,6 +35,8 @@ namespace SanteDB.Core.PubSub.Broker
     public class PubSubBroker : IDaemonService, IDisposable, IPubSubBroker
     {
 
+        // Tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
 
         // Cached factories
         private IDictionary<String, IPubSubDispatcherFactory> m_factories;
@@ -113,6 +117,25 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_pubSubManager.Subscribed += this.PubSubSubscribed;
             this.m_pubSubManager.UnSubscribed += this.PubSubUnSubscribed;
             this.m_repositoryListeners = new List<IDisposable>();
+
+            ApplicationServiceContext.Current.Started += (o,e) =>
+            {
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    try
+                    {
+                        // Hook up the listeners for existing 
+                        foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
+                        {
+                            this.PubSubSubscribed(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.m_tracer.TraceWarning("Cannot wire up subscription broker - {0}", ex);
+                    }
+                }
+            };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -144,7 +167,7 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
                 if (!this.m_repositoryListeners.Any(o => o.GetType().Equals(lt)))
-                    this.m_repositoryListeners.Add(Activator.CreateInstance(lt) as IDisposable);
+                    this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected(lt) as IDisposable);
             }
         }
 
