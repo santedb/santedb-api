@@ -26,6 +26,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using SanteDB.Core.Model.Query;
 using System.Collections.Concurrent;
+using SanteDB.Core.Interfaces;
 
 namespace SanteDB.Core.PubSub.Broker
 {
@@ -44,6 +45,9 @@ namespace SanteDB.Core.PubSub.Broker
         // Queue service
         private IPersistentQueueService m_queueService;
 
+        // Service manager
+        private IServiceManager m_serviceManager;
+
         // Merge service
         private IRecordMergingService<TModel> m_mergeService;
 
@@ -53,11 +57,13 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IPersistentQueueService queueService)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager)
         {
             this.m_pubSubManager = pubSubManager;
             this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
             this.m_queueService = queueService;
+            this.m_serviceManager = serviceManager;
+
             if (this.m_repository == null)
                 throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
 
@@ -85,6 +91,7 @@ namespace SanteDB.Core.PubSub.Broker
                     .Where(o => o.Event.HasFlag(eventType))
                     .Where(s =>
                     {
+                        // Attempt to compile the filter criteria into an executable function
                         if (!this.m_filterCriteria.TryGetValue(s.Key.Value, out Func<TModel, bool> fn))
                         {
                             Expression dynFn = null;
@@ -92,7 +99,7 @@ namespace SanteDB.Core.PubSub.Broker
 
                             foreach(var itm in s.Filter)
                             {
-                                var fFn = QueryExpressionParser.BuildLinqExpression<TModel>(itm);
+                                var fFn = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(itm), "p", variables: null, safeNullable: true, forceLoad:true, lazyExpandVariables: true);
                                 if (dynFn is LambdaExpression le)
                                     dynFn = Expression.Lambda(
                                         Expression.And(
@@ -103,6 +110,7 @@ namespace SanteDB.Core.PubSub.Broker
                                     dynFn = fFn;
 
                             }
+                            fn = (dynFn as LambdaExpression).Compile() as Func<TModel, bool>;
                             this.m_filterCriteria.Add(s.Key.Value, fn);
                         }
                         return fn(data);
@@ -112,7 +120,7 @@ namespace SanteDB.Core.PubSub.Broker
             foreach(var chnl in subscriptions.GroupBy(o=>o.ChannelKey))
             {
                 var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                var factory = Activator.CreateInstance(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
+                var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
                 yield return factory.CreateDispatcher(chnl.Key, channelDef.Endpoint, channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
             }
         }
