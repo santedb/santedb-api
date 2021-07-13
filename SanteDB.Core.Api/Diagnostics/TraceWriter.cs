@@ -19,6 +19,8 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 
@@ -29,6 +31,9 @@ namespace SanteDB.Core.Diagnostics
     /// </summary>
     public abstract class TraceWriter
     {
+        // Configuration
+        private ConcurrentDictionary<string, EventLevel> m_sourceFilters;
+
         // Filter
         private EventLevel m_filter;
 
@@ -37,9 +42,11 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         /// <param name="filter">The filter.</param>
         /// <param name="initializationData">The initialization data.</param>
-        public TraceWriter(EventLevel filter, String initializationData)
+        /// <param name="configuration">The configuration to set for this object</param>
+        public TraceWriter(EventLevel filter, String initializationData, IDictionary<String, EventLevel> configuration)
         {
             this.m_filter = filter;
+            this.m_sourceFilters = new ConcurrentDictionary<string, EventLevel>(configuration);
         }
 
         /// <summary>
@@ -57,19 +64,27 @@ namespace SanteDB.Core.Diagnostics
         {
             try
             {
-                var sourceConfig = ApplicationServiceContext.Current.GetService<IConfigurationManager>()?
-                    .GetSection<DiagnosticsConfigurationSection>()?.Sources
-                    .OrderByDescending(o => o.SourceName.Length)
-                    .FirstOrDefault(o => source.StartsWith(o.SourceName))?.Filter;
+                var sourceConfig = this.m_filter;
+                if(!this.m_sourceFilters.TryGetValue(source, out sourceConfig))
+                {
+                    var key = this.m_sourceFilters.FirstOrDefault(o => source.StartsWith(o.Key));
 
-                if (sourceConfig == null)
-                    sourceConfig = this.m_filter;
-                
+                    if(String.IsNullOrEmpty(key.Key ))
+                    {
+                        sourceConfig = this.m_filter;
+                    }
+                    else
+                    {
+                        sourceConfig = key.Value;
+                    }
+                    this.m_sourceFilters.TryAdd(source, sourceConfig);
+                }
+
                 if (this.m_filter == EventLevel.LogAlways)
                     this.WriteTrace(level, source, format, args);
                 else if (this.m_filter >= level &&
-                    (sourceConfig.GetValueOrDefault() >= level ||
-                    sourceConfig.GetValueOrDefault() == EventLevel.LogAlways))
+                    (sourceConfig >= level ||
+                    sourceConfig == EventLevel.LogAlways))
                     this.WriteTrace(level, source, format, args);
 
             }

@@ -90,5 +90,9 @@ namespace SanteDB.Core.Exceptions
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string Message => this.ToString();
     }
 }
