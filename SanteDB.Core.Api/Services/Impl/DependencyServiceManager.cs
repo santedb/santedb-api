@@ -246,7 +246,7 @@ namespace SanteDB.Core.Services.Impl
                     candidateService = this.m_serviceRegistrations.FirstOrDefault(s => s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer));
                     if (candidateService == null) // Attempt a load from configuration
                     {
-                        var cServiceType = this.m_configuration.ServiceProviders.SingleOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
+                        var cServiceType = this.m_configuration.ServiceProviders.FirstOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
                         if (cServiceType != null)
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
