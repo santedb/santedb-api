@@ -163,6 +163,12 @@ namespace SanteDB.Core.Event
             set;
         }
 
+        /// <summary>
+        /// Gets or sets a value which indicates whether the event was successfully handled and inserted
+        /// </summary>
+        /// <remarks>This is used to notify the caller that it should assume operation continued as normal</remarks>
+        public bool Success { get; set; }
+
     }
 
     /// <summary>

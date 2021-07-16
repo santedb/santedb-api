@@ -39,6 +39,11 @@ namespace SanteDB.Core.Services
         IRecordMatchingConfiguration SaveConfiguration(IRecordMatchingConfiguration configuration);
 
         /// <summary>
+        /// Delete the configuration
+        /// </summary>
+        IRecordMatchingConfiguration DeleteConfiguration(String name);
+
+        /// <summary>
         /// Gets the names of configurations in this provider
         /// </summary>
         IEnumerable<String> Configurations { get; }
