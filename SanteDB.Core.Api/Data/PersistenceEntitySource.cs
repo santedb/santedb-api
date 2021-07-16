@@ -31,13 +31,13 @@ using System.Reflection;
 
 namespace SanteDB.Core.Data
 {
-	/// <summary>
-	/// Entity source which loads local objects
-	/// </summary>
-	public class PersistenceEntitySource : IEntitySourceProvider
+    /// <summary>
+    /// Entity source which loads local objects
+    /// </summary>
+    public class PersistenceEntitySource : IEntitySourceProvider
     {
 
-        
+
         #region IEntitySourceProvider implementation
 
         /// <summary>
@@ -67,10 +67,18 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
+        public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
+        {
+            // Is the collection already loaded?
+            return this.Query<TObject>(o => o.SourceEntityKey == sourceKey && o.ObsoleteVersionSequenceId != null);
+        }
+
+        /// <summary>
+        /// Get versioned relationships for the object
+        /// </summary>
         public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             // Is the collection already loaded?
-            var adhocCache = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
             return this.Query<TObject>(o => o.SourceEntityKey == sourceKey);
         }
 
