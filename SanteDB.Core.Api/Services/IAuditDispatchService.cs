@@ -16,7 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
-using SanteDB.Core.Auditing;
+using SanteDB.Core.Model.Audit;
 
 namespace SanteDB.Core.Services
 {
@@ -28,6 +28,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Sends the audit to the central authority
         /// </summary>
-        void SendAudit(AuditData audit);
+        void SendAudit(AuditEventData audit);
     }
 }

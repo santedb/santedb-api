@@ -17,6 +17,7 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model.Audit;
 using System.ComponentModel;
 using System.Xml.Serialization;
 
@@ -40,7 +41,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Creates a new audit filter configuration object
         /// </summary>
-        public AuditFilterConfiguration(Auditing.ActionType? action, Auditing.EventIdentifierType? eventType, Auditing.OutcomeIndicator? outcomeType, bool insertLocal, bool sendRemote)
+        public AuditFilterConfiguration(ActionType? action, EventIdentifierType? eventType, OutcomeIndicator? outcomeType, bool insertLocal, bool sendRemote)
         {
             this.Action = action.GetValueOrDefault();
             this.Event = eventType.GetValueOrDefault();
@@ -56,19 +57,19 @@ namespace SanteDB.Core.Configuration
         /// Filter on action type
         /// </summary>
         [XmlAttribute("action"), JsonProperty("action")]
-        public Auditing.ActionType Action { get; set; }
+        public ActionType Action { get; set; }
 
         /// <summary>
         /// Filter on event
         /// </summary>
         [XmlAttribute("event"), JsonProperty("event")]
-        public Auditing.EventIdentifierType Event { get; set; }
+        public EventIdentifierType Event { get; set; }
 
         /// <summary>
         /// Filter on outcome
         /// </summary>
         [XmlAttribute("outcome"), JsonProperty("outcome")]
-        public Auditing.OutcomeIndicator Outcome { get; set; }
+        public OutcomeIndicator Outcome { get; set; }
 
         /// <summary>
         /// True if when a filter matches the audit you want to include locally

@@ -18,7 +18,7 @@
  */
 using System;
 using System.Collections.Generic;
-using SanteDB.Core.Auditing;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration.Features
