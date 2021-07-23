@@ -111,8 +111,12 @@ namespace SanteDB.Core.PubSub.Broker
 
                             }
 
+                            if (dynFn == null)
+                            {
+                                dynFn = Expression.Lambda(Expression.Constant(true), parameter);
+                            }
                             parameter = Expression.Parameter(typeof(object));
-                            fn = Expression.Lambda(Expression.Invoke(dynFn, Expression.Convert(parameter, data.GetType()), parameter)).Compile() as Func<Object, bool>;
+                            fn = Expression.Lambda(Expression.Invoke(dynFn, Expression.Convert(parameter, data.GetType())), parameter).Compile() as Func<Object, bool>;
                             this.m_filterCriteria.Add(s.Key.Value, fn);
                         }
                         return fn(data);

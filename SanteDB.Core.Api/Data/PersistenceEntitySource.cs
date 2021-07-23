@@ -53,7 +53,7 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get the specified version
         /// </summary>
-        public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, IVersionedEntity, new()
+        public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, new()
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue && versionKey.HasValue)
