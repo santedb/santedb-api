@@ -41,6 +41,11 @@ namespace SanteDB.Core.Services
         void Purge(TransactionMode transactionMode, IPrincipal principal, params Guid[] keysToPurge);
 
         /// <summary>
+        /// Purge specified data
+        /// </summary>
+        void Purge(TransactionMode transactionMode, IPrincipal principal, Expression query);
+
+        /// <summary>
         /// Query only for keys based on the expression (do not load objects from database)
         /// </summary>
         IEnumerable<Guid> QueryKeys(Expression query, int offset, int? count, out int totalResults);

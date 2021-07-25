@@ -62,10 +62,6 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         bool IsUserInRole(String userName, String roleName);
 
-        /// <summary>
-        /// Is user in the specified role
-        /// </summary>
-        bool IsUserInRole(IPrincipal principal, String roleName);
     }
 
 }
