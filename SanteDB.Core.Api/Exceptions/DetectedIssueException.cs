@@ -46,7 +46,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified <paramref name="issues"/> and <paramref name="message"/>
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues, String message) : this(issues, message, null)
+        public DetectedIssueException(List<DetectedIssue> issues, Exception cause) : this(issues, null, cause)
         {
 
         }
@@ -70,6 +70,14 @@ namespace SanteDB.Core.Exceptions
         /// Detected issue exception
         /// </summary>
         public DetectedIssueException(DetectedIssue issue) : this(new List<DetectedIssue>() {  issue })
+        {
+
+        }
+
+        /// <summary>
+        /// Detected issue exception
+        /// </summary>
+        public DetectedIssueException(DetectedIssue issue, Exception cause) : this(new List<DetectedIssue>() { issue }, cause)
         {
 
         }
