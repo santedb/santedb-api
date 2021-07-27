@@ -62,12 +62,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets the records which survived the merge operation
         /// </summary>
-        IEnumerable<Guid> Survivors { get; }
+        public IEnumerable<Guid> Survivors { get; }
 
         /// <summary>
         /// Gets the records which did not survive the merge operation
         /// </summary>
-        IEnumerable<Guid> Replaced { get; }
+        public IEnumerable<Guid> Replaced { get; }
 
         /// <summary>
         /// Creates a new record merge result
