@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
+
     /// <summary>
     /// Data has been merged event args
     /// </summary>

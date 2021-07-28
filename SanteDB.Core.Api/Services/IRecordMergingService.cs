@@ -26,6 +26,62 @@ namespace SanteDB.Core.Services
 {
 
     /// <summary>
+    /// Record merge statuys
+    /// </summary>
+    public enum RecordMergeStatus
+    {
+        /// <summary>
+        /// Merge was completed as instructed
+        /// </summary>
+        Success,
+        /// <summary>
+        /// Merge was submitted but is not complete
+        /// </summary>
+        Submitted,
+        /// <summary>
+        /// Merge was cancelled
+        /// </summary>
+        Cancelled,
+        /// <summary>
+        /// An alternate merging strategy was used
+        /// </summary>
+        Alternate
+    }
+
+    /// <summary>
+    /// Represents a record merging result
+    /// </summary>
+    public class RecordMergeResult
+    {
+
+        /// <summary>
+        /// Indicates if the operation was a success
+        /// </summary>
+        public RecordMergeStatus Status { get; }
+
+        /// <summary>
+        /// Gets the records which survived the merge operation
+        /// </summary>
+        public IEnumerable<Guid> Survivors { get; }
+
+        /// <summary>
+        /// Gets the records which did not survive the merge operation
+        /// </summary>
+        public IEnumerable<Guid> Replaced { get; }
+
+        /// <summary>
+        /// Creates a new record merge result
+        /// </summary>
+        public RecordMergeResult(RecordMergeStatus status, Guid[] survivors, Guid[] replaced)
+        {
+            this.Status = status;
+            this.Replaced = replaced;
+            this.Survivors = survivors;
+        }
+
+    }
+
+    /// <summary>
     /// Record merging service
     /// </summary>
     public interface IRecordMergingService : IServiceImplementation
@@ -76,7 +132,7 @@ namespace SanteDB.Core.Services
         /// <param name="masterKey">The master record to which the linked duplicates are to be attached</param>
         /// <param name="linkedDuplicates">The linked records to be merged to master</param>
         /// <returns>The newly updated master record</returns>
-        void Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates);
+        RecordMergeResult Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates);
 
         /// <summary>
         /// Un-merges the specified <paramref name="unmergeDuplicate"/> from <paramref name="master"/>
@@ -84,7 +140,7 @@ namespace SanteDB.Core.Services
         /// <param name="masterKey">The master record from which a duplicate is to be removed</param>
         /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>
         /// <returns>The newly created master record from which <paramref name="unmergeDuplicateKey"/> was created</returns>
-        void Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
+        RecordMergeResult Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
     }
 
     /// <summary>

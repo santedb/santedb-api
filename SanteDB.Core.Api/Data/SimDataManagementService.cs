@@ -164,14 +164,14 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Merges the specified duplicates into the master
             /// </summary>
-            public virtual void Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates)
+            public virtual RecordMergeResult Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates)
             {
                 var mergeEventArgs = new DataMergingEventArgs<TModel>(masterKey, linkedDuplicates);
                 this.Merging?.Invoke(this, mergeEventArgs);
                 if (mergeEventArgs.Cancel)
                 {
                     this.m_tracer.TraceInfo("Pre-Event trigger indicated cancel merge");
-                    return;
+                    return new RecordMergeResult(RecordMergeStatus.Cancelled, null, null);
                 }
 
                 // The invoke may have changed the master
@@ -212,12 +212,13 @@ namespace SanteDB.Core.Data
                 // Persist
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<Bundle>>().Update(persistenceBundle, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 this.Merged?.Invoke(this, new DataMergeEventArgs<TModel>(masterKey, linkedDuplicates));
+                return new RecordMergeResult(RecordMergeStatus.Success, new Guid[] { masterKey }, linkedDuplicates.ToArray());
             }
 
             /// <summary>
             /// Unmerge - Not supported by SIM
             /// </summary>
-            public virtual void Unmerge(Guid master, Guid unmergeDuplicate)
+            public virtual RecordMergeResult Unmerge(Guid master, Guid unmergeDuplicate)
             {
                 throw new NotSupportedException("Single Instance Mode cannot un-merge data");
             }
