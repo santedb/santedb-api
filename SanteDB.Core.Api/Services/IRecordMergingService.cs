@@ -86,7 +86,8 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IRecordMergingService : IServiceImplementation
     {
-	    /// <summary>
+
+        /// <summary>
         /// Gets the duplicates for the specified master record
         /// </summary>
         /// <param name="masterKey">The master record</param>
@@ -97,7 +98,7 @@ namespace SanteDB.Core.Services
         /// Get merge candidate keys
         /// </summary>
         /// <param name="masterKey">The key of the master</param>
-        IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey, int offset = 0, int? count = null);
+        IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
 
         /// <summary>
         /// Gets the ignore list for the specified master record
