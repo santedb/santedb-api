@@ -260,7 +260,7 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get merged candidates
             /// </summary>
-            public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
+            public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey, int offset = 0, int? count = null)
             {
                 throw new NotImplementedException();
             }
