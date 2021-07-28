@@ -81,7 +81,24 @@ namespace SanteDB.Core.Exceptions
         {
 
         }
+
         /// <summary>
+        /// Creates a new detected issue exception
+        /// </summary>
+        /// <param name="priority">The priority of the detected issue</param>
+        /// <param name="id">The unique identifier of the issue</param>
+        /// <param name="text">The textual information on the issue</param>
+        /// <param name="type">The type of issue</param>
+        /// <param name="cause">What caused this issue</param>
+        public DetectedIssueException(DetectedIssuePriorityType priority, String id, String text, Guid type, Exception cause) : base(text, cause)
+        {
+            this.Issues = new List<DetectedIssue>()
+            {
+                new DetectedIssue(priority, id, text, type)
+            };
+        }
+
+        /// <sumsmary>
         /// Write to string
         /// </summary>
         public override string ToString()

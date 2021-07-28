@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.Event;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -27,10 +28,13 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected override void OnInserted(object sender, DataPersistedEventArgs<Bundle> e)
         {
-            foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+            using (AuthenticationContext.EnterSystemContext())
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                    dsptchr.NotifyCreated(itm);
+                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                        dsptchr.NotifyCreated(itm);
+                }
             }
         }
 
@@ -39,10 +43,13 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected override void OnSaved(object sender, DataPersistedEventArgs<Bundle> e)
         {
-            foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+            using (AuthenticationContext.EnterSystemContext())
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                    dsptchr.NotifyUpdated(itm);
+                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                        dsptchr.NotifyUpdated(itm);
+                }
             }
         }
 
@@ -51,10 +58,13 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected override void OnObsoleted(object sender, DataPersistedEventArgs<Bundle> e)
         {
-            foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+            using (AuthenticationContext.EnterSystemContext())
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                    dsptchr.NotifyObsoleted(itm);
+                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                        dsptchr.NotifyObsoleted(itm);
+                }
             }
         }
     }
