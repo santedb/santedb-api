@@ -129,7 +129,7 @@ namespace SanteDB.Core.Services
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
-        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
+        IQueryResultSet<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data

@@ -535,8 +535,8 @@ namespace SanteDB.Core.Security.Audit
                     audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
                     audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
                     audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
-                    audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration.SourceInformation?.EnterpriseSite);
-                    audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration.SourceInformation?.EnterpriseDeviceKey ?? Guid.Empty).ToString());
+                    audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? Guid.Empty).ToString());
 
                     // Filter apply?
                     var filters = s_configuration?.AuditFilters.Where(f =>
