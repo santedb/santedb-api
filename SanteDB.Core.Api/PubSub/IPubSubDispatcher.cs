@@ -16,6 +16,7 @@
  * User: fyfej
  * Date: 2021-2-9
  */
+using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -42,14 +43,17 @@ namespace SanteDB.Core.PubSub
         /// </summary>
         IDictionary<String, String> Settings { get; }
 
-        void NotifyCreated<TModel>(TModel data);
+        /// <summary>
+        /// Notify created
+        /// </summary>
+        void NotifyCreated<TModel>(TModel data) where TModel : IdentifiedData;
 
-        void NotifyUpdated<TModel>(TModel data);
+        void NotifyUpdated<TModel>(TModel data) where TModel : IdentifiedData;
 
-        void NotifyObsoleted<TModel>(TModel data);
+        void NotifyObsoleted<TModel>(TModel data) where TModel : IdentifiedData;
 
-        void NotifyMerged<TModel>(TModel survivor, TModel[] subsumed);
+        void NotifyMerged<TModel>(TModel survivor, TModel[] subsumed) where TModel : IdentifiedData;
 
-        void NotifyUnMerged<TModel>(TModel primary, TModel[] unMerged);
+        void NotifyUnMerged<TModel>(TModel primary, TModel[] unMerged) where TModel : IdentifiedData;
     }
 }

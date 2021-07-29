@@ -136,6 +136,8 @@ namespace SanteDB.Core.PubSub.Broker
                     }
                 }
             };
+            this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected<BundleRepositoryListener>());
+
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }

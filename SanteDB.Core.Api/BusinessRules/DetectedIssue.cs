@@ -69,6 +69,8 @@ namespace SanteDB.Core.BusinessRules
             this.TypeKey = type;
         }
 
+
+
         /// <summary>
         /// Gets or sets the id
         /// </summary>

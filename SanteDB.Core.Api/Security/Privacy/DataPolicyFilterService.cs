@@ -119,14 +119,9 @@ namespace SanteDB.Core.Security.Privacy
 
             if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
                 return results
-                    .AsParallel()
-                    .AsOrdered()
-                    .WithDegreeOfParallelism(2)
                     .Select(
                         o => this.Apply(o, principal)
-                    )
-                    .ToList();
-
+                    );
             return results;
         }
 
@@ -291,6 +286,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public virtual TData Apply<TData>(TData result, IPrincipal principal) where TData : IdentifiedData
         {
+
             // Is the record a bundle?
             if (result == default(TData))
                 return default(TData);
