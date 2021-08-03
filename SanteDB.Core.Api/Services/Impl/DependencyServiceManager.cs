@@ -392,6 +392,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public bool Stop()
         {
+
+            this.m_tracer.TraceInfo("Stopping dependency injection service...");
+
             this.Stopping?.Invoke(this, null);
 
             if (!this.IsRunning) return true;
@@ -404,6 +407,12 @@ namespace SanteDB.Core.Services.Impl
                 {
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
+                }
+                if(svc is IDisposable dsp)
+                {
+                    this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
+                    dsp.Dispose();
+
                 }
             }
 

@@ -194,7 +194,7 @@ namespace SanteDB.Core.Security
         public void ClearCache(IPrincipal principal)
         {
             string cacheKey = this.ComputeCacheKey(principal);
-            this.m_adhocCacheService?.Remove($"sid.{cacheKey}");
+            this.m_adhocCacheService?.Remove(cacheKey);
         }
 
         /// <summary>
