@@ -213,7 +213,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo($"ACS: {principal} - {policy} - {action}");
 
-            if(!s_configuration.CompleteAuditTrail && action == PolicyGrantType.Grant)
+            if(s_configuration?.CompleteAuditTrail != true && action == PolicyGrantType.Grant)
             {
                 return; // don't audit successful ACS
             }
