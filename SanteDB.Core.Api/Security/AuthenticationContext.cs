@@ -17,6 +17,7 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
 
