@@ -95,7 +95,7 @@ namespace SanteDB.Core.Security.Configuration
         [XmlIgnore, JsonIgnore]
         [Description("The X509 certificate to use")]
         [DisplayName("Certificate")]
-        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration, Version=1.0.0.0", "System.Drawing.Design.UITypeEditor, System.Windows.Forms")]
+        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public X509Certificate2 Certificate
         {
             get => this.GetCertificate();
@@ -129,19 +129,21 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         private X509Certificate2 GetCertificate()
         {
-            if(this.m_certificate != null)
+            if(this.m_certificate == null)
             {
                 X509Store store = new X509Store(this.StoreName, this.StoreLocation);
                 try
                 {
                     store.Open(OpenFlags.ReadOnly);
-                    var matches = store.Certificates.Find(this.FindType, this.FindValue, true);
+                    var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
                     if (matches.Count == 0)
                         throw new InvalidOperationException("Certificate not found");
                     else if (matches.Count > 1)
                         throw new InvalidOperationException("Too many matches");
                     else
-                        return matches[0];
+                    {
+                        this.m_certificate = matches[0];
+                    }
                 }
                 catch (Exception ex)
                 {

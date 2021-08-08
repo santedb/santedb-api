@@ -58,7 +58,10 @@ namespace SanteDB.Core.Configuration.Features
 	    /// <summary>
         /// Gets or sets the configuration for this feature
         /// </summary>
-        public virtual object Configuration { get; set; }
+        public virtual object Configuration { 
+            get; 
+            set; 
+        }
 
 	    /// <summary>
         /// Gets the configuration type
@@ -112,8 +115,13 @@ namespace SanteDB.Core.Configuration.Features
             {
                 try
                 {
-                    this.Configuration = configuration.GetSection(this.ConfigurationType);
+                    var setConfiguration = configuration.GetSection(this.ConfigurationType);
+                    if(setConfiguration != null) // Set the configuration from the file
+                    {
+                        this.Configuration = setConfiguration;
+                    }
                     return isServiceInstalled && this.Configuration != null ? FeatureInstallState.Installed : isServiceInstalled || this.Configuration != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
+
                 }
                 catch
                 {
