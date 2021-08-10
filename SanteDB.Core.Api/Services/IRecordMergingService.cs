@@ -84,6 +84,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Record merging service
     /// </summary>
+    [System.ComponentModel.Description("Record Merging Provider")]
     public interface IRecordMergingService : IServiceImplementation
     {
 

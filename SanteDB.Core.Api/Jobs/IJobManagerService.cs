@@ -22,29 +22,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
     /// Type of job startup
     /// </summary>
+    [XmlType(nameof(JobStartType), Namespace = "http://santedb.org/configuration")]
     public enum JobStartType
     {
         /// <summary>
         /// Start job as soon as it is added
         /// </summary>
+        [XmlEnum("immediate")]
         Immediate,
         /// <summary>
         /// Start job on a delay
         /// </summary>
+        [XmlEnum("delay")]
         DelayStart,
         /// <summary>
         /// Start job on schedule only
         /// </summary>
+        [XmlEnum("schedule")]
         TimerOnly,
         /// <summary>
         /// Do not start job
         /// </summary>
+        [XmlEnum("never")]
         Never
     }
 

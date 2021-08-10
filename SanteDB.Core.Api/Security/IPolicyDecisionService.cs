@@ -28,6 +28,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a policy decision service
     /// </summary>
+    [System.ComponentModel.Description("Policy Decision Provider (PDP)")]
     public interface IPolicyDecisionService : IServiceImplementation
     {
 

@@ -29,6 +29,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Privacy enforcement service
     /// </summary>
+    [System.ComponentModel.Description("Data Privacy Provider")]
     public interface IPrivacyEnforcementService : IServiceImplementation
     {
 

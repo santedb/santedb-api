@@ -29,6 +29,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a PEP that receives demands
     /// </summary>
+    [System.ComponentModel.Description("Policy Enforcement Provider (PEP)")]
     public interface IPolicyEnforcementService : IServiceImplementation
     {
 

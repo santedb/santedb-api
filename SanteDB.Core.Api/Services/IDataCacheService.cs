@@ -45,6 +45,7 @@ namespace SanteDB.Core.Services
     /// Represents a data caching service which allows services to retrieve
     /// cached objects
     /// </summary>
+    [System.ComponentModel.Description("Primary Data Caching Provider")]
     public interface IDataCachingService : IServiceImplementation
     {
         /// <summary>

@@ -32,8 +32,19 @@ namespace SanteDB.Core.Security.Configuration
     public class X509ConfigurationElement
     {
 
+
         // Certificate
         private X509Certificate2 m_certificate;
+
+        /// <summary>
+        /// Initialize certificate settings
+        /// </summary>
+        public X509ConfigurationElement()
+        {
+            this.FindType = X509FindType.FindByThumbprint;
+            this.StoreLocation = StoreLocation.LocalMachine;
+            this.StoreName = StoreName.My;
+        }
 
         /// <summary>
         /// The find type
@@ -131,30 +142,41 @@ namespace SanteDB.Core.Security.Configuration
         {
             if(this.m_certificate == null)
             {
-                X509Store store = new X509Store(this.StoreName, this.StoreLocation);
                 try
                 {
-                    store.Open(OpenFlags.ReadOnly);
-                    var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
-                    if (matches.Count == 0)
-                        throw new InvalidOperationException("Certificate not found");
-                    else if (matches.Count > 1)
-                        throw new InvalidOperationException("Too many matches");
-                    else
+                    X509Store store = new X509Store(this.StoreName, this.StoreLocation);
+                    try
                     {
-                        this.m_certificate = matches[0];
+                        store.Open(OpenFlags.ReadOnly);
+                        var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
+                        if (matches.Count == 0)
+                            throw new InvalidOperationException("Certificate not found");
+                        else if (matches.Count > 1)
+                            throw new InvalidOperationException("Too many matches");
+                        else
+                        {
+                            this.m_certificate = matches[0];
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return null;
+                    }
+                    finally
+                    {
+                        store.Close();
                     }
                 }
-                catch (Exception ex)
-                {
+                catch {
                     return null;
-                }
-                finally
-                {
-                    store.Close();
                 }
             }
             return this.m_certificate;
         }
+
+        /// <summary>
+        /// Certificate binding
+        /// </summary>
+        public override string ToString() => this.Certificate?.ToString();
     }
 }

@@ -30,6 +30,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents a security challenge service which can provide identity
     /// </summary>
+    [System.ComponentModel.Description("Security Challenge Authentication Provider")]
     public interface ISecurityChallengeIdentityService : IServiceImplementation
     {
 

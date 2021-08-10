@@ -78,6 +78,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service which is responsible for the storage and retrieval of sessions
     /// </summary>
+    [System.ComponentModel.Description("Session Storage Provider")]
     public interface ISessionProviderService : IServiceImplementation
     {
         

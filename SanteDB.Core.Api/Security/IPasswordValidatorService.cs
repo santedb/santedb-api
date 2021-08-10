@@ -25,6 +25,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a password validation service
     /// </summary>
+    [System.ComponentModel.Description("Password Validation Service")]
     public interface IPasswordValidatorService : IServiceImplementation
     {
 

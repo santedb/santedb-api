@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a data persisetence service that can handle bulk operations
     /// </summary>
+    [System.ComponentModel.Description("Bulk Data Access Provider")]
     public interface IBulkDataPersistenceService
     {
 

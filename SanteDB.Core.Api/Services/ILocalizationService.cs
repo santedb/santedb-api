@@ -7,6 +7,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Interface which provides localization functions
     /// </summary>
+    [System.ComponentModel.Description("Localization Provider")]
     public interface ILocalizationService : IServiceImplementation
     {
 

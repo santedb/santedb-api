@@ -18,7 +18,10 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Model.Attributes;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
@@ -128,8 +131,27 @@ namespace SanteDB.Core.Interop
         /// Service can produce view model objects
         /// </summary>
         [XmlEnum("viewModel")]
-        ViewModel = 0x20
-
+        ViewModel = 0x20,
+        /// <summary>
+        /// Standards based API based on REST
+        /// </summary>
+        [XmlEnum("standardApi")]
+        StandardsBasedApi = ViewModel | BearerAuth | Compression,
+        /// <summary>
+        /// Standards based API with REST and CORS
+        /// </summary>
+        [XmlEnum("standardApiCors")]
+        StandardsBasedCorsApi = ViewModel | BearerAuth | Compression | Cors,
+        /// <summary>
+        /// Internal API
+        /// </summary>
+        [XmlEnum("internalApi")]
+        InternalApi = ViewModel | BearerAuth |Compression,
+        /// <summary>
+        /// IdP API
+        /// </summary>
+        [XmlEnum("idpApi")]
+        IdpApi = BasicAuth | Compression
     }
 
     /// <summary>
@@ -169,30 +191,42 @@ namespace SanteDB.Core.Interop
         /// Gets or sets the service endpoint type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
+        [DisplayName("Service Type"), Description("The classification of the service (such as HDSI, AMI, IDP, etc.) which this registration represents")]
         public ServiceEndpointType ServiceType { get; set; }
 
         /// <summary>
         /// Capabilities
         /// </summary>
         [XmlAttribute("cap"), JsonProperty("cap")]
+        [DisplayName("Capabilities"), Description("The capabilities of this service (compression, bearer authentication, etc.) which is used by clients to negotiate server capacity")]
         public ServiceEndpointCapabilities Capabilities { get; set; }
 
         /// <summary>
         /// Base URL type
         /// </summary>
         [XmlAttribute("url"), JsonProperty("url")]
+        [DisplayName("Service URL(S)"), Description("The URLs where the remote service described by the service type can be accessed")]
         public string[] BaseUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the contract
         /// </summary>
         [XmlElement("contract"), JsonProperty("contract")]
+        [Browsable(false)]
         public TypeReferenceConfiguration[] Contracts { get; set; }
 
         /// <summary>
         /// Gets or sets the behaviors
         /// </summary>
         [XmlElement("behavior"), JsonProperty("behavior")]
+        [DisplayName("Service Behavior"), Description("The service implementation which this remote service implements (which is used to drive metadata collection)")]
+        [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding("SanteDB.Rest.Common.IRestApiContractImplementation, SanteDB.Rest.Common")]
         public TypeReferenceConfiguration Behavior { get; set; }
+
+        /// <summary>
+        /// Remote service string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"Remote {this.ServiceType}";
     }
 }

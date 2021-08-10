@@ -29,6 +29,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents a service which can sign arbitrary data 
     /// </summary>
+    [System.ComponentModel.Description("Data Signing Service")]
     public interface IDataSigningService : IServiceImplementation
     {
 

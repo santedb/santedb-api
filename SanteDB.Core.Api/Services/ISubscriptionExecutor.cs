@@ -32,6 +32,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a subscription executor
     /// </summary>
+    [System.ComponentModel.Description("dCDR Subscription Execution Provider")]
     public interface ISubscriptionExecutor : IServiceImplementation
     {
 

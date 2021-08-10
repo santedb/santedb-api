@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// A caching service which permits the storage of any data regardless of type
     /// </summary>
+    [System.ComponentModel.Description("Ad-Hoc Cache Provider")]
     public interface IAdhocCacheService : IServiceImplementation
     {
 

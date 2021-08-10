@@ -19,9 +19,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
@@ -101,25 +103,35 @@ namespace SanteDB.Core.Configuration.Features
             {
                 case 2:
                     var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
-                    var types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
+                    var types = AppDomain.CurrentDomain.GetAllTypes();
                     var config = new GenericFeatureConfiguration();
-
                     // Map configuration over to the features section
                     foreach (var pvd in types.Where(t =>t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
                     {
                         if (pvd.Name == "IDaemonService")
                         {
-	                        continue;
+                            var daemons = types.Where(t => pvd.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && !t.ContainsGenericParameters);
+                            var daemonNames = daemons.Select(o => o.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? o.Name);
+                            config.Categories.Add("Daemons", daemonNames.ToArray());
+                            foreach(var itm in daemons)
+                            {
+                                config.Options.Add(itm.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? itm.Name, () => new String[] { "Active", "Disabled" });
+                                config.Values.Add(itm.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? itm.Name, sp.Any(t => t.Type == itm) ? "Active" : "Disabled");
+                            }
+                            continue;
                         }
-
-                        config.Options.Add(pvd.Name, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
-                        config.Values.Add(pvd.Name, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
+                        else
+                        {
+                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.Name;
+                            config.Options.Add(optionName, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
+                            config.Values.Add(optionName, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
+                        }
                     }
 
                     var removeOptions = new List<string>();
                     foreach (var o in config.Options)
                     {
-	                    if ((o.Value() as IEnumerable).OfType<object>().Count() == 0)
+	                    if ((o.Value() as IEnumerable)?.OfType<object>().Count() == 0)
 	                    {
 		                    removeOptions.Add(o.Key);
 	                    }
@@ -179,7 +191,7 @@ namespace SanteDB.Core.Configuration.Features
                 if (config != null)
                 {
                     var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
-                    var types = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes();
+                    var types = AppDomain.CurrentDomain.GetAllTypes();
                     var appConfig = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
                     // Map configuration over to the features section
                     foreach (var pvd in types.Where(t => t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
@@ -194,9 +206,9 @@ namespace SanteDB.Core.Configuration.Features
                         }
                     }
 
-                    // Remove any sp which aren't configured for any service impl
-                    sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).IsAssignableFrom(r.Type) &&
-                        typeof(IServiceImplementation).IsAssignableFrom(r.Type));
+                    //// Remove any sp which aren't configured for any service impl
+                    //sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).IsAssignableFrom(r.Type) &&
+                    //    typeof(IServiceImplementation).IsAssignableFrom(r.Type));
                 }
 
                 return true;
@@ -215,7 +227,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Fired when the progress has changed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Perform a rollback
@@ -266,7 +278,7 @@ namespace SanteDB.Core.Configuration.Features
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService)))
                 {
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, "Registering SimpleCarePlanService..."));
+                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, "Registering SimpleCarePlanService..."));
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
                     return true;
                 }
@@ -286,7 +298,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Progress has changed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration
@@ -333,7 +345,7 @@ namespace SanteDB.Core.Configuration.Features
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService)))
                 {
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, "Registering SimplePatchService..."));
+                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, "Registering SimplePatchService..."));
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimplePatchService)));
                     return true;
                 }
@@ -353,7 +365,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Progress has changed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration
@@ -415,7 +427,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Progress has changed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration
@@ -477,7 +489,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Progress has changed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration

@@ -26,7 +26,8 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Data Archive service
     /// </summary>
-    public interface IDataArchiveService
+    [System.ComponentModel.Description("Data Archiving Service")]
+    public interface IDataArchiveService : IServiceImplementation
     {
         /// <summary>
         /// Push the specified records to the archive

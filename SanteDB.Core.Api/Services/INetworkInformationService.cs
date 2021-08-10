@@ -74,6 +74,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents network information service 
     /// </summary>
+    [System.ComponentModel.Description("Network Metadata Provider")]
     public interface INetworkInformationService : IServiceImplementation
     {
 

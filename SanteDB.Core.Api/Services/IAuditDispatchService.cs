@@ -23,6 +23,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that dispatches audits to a central repository
     /// </summary>
+    [System.ComponentModel.Description("Audit Dispatch Provider")]
     public interface IAuditDispatchService : IServiceImplementation
     {
         /// <summary>
