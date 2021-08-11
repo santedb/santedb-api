@@ -79,9 +79,16 @@ namespace SanteDB.Core.Configuration.Features
 		            {
 			            new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, false, false),
 			            new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true)
-		            }
+		            },
+                    SourceInformation = new AuditSourceConfiguration() { 
+                        EnterpriseSite = Environment.MachineName,
+                        SiteLocation = "DEFAULT"
+                    }
+
 	            };
             }
+
+
 
             configuration.AddSection(this.Configuration);
             return true;

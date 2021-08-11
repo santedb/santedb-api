@@ -29,6 +29,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a generic interface for business rules services
     /// </summary>
+    [System.ComponentModel.Description("Business Rules Engine")]
     public interface IBusinessRulesService
     {
 

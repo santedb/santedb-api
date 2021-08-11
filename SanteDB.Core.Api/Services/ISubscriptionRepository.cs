@@ -29,6 +29,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents an implementation of a repository which loads subscription definitions
     /// </summary>
+    [System.ComponentModel.Description("dCDR Subscription Definition Provider")]
     public interface ISubscriptionRepository : IRepositoryService<SubscriptionDefinition>
     {
     }

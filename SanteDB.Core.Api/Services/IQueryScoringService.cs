@@ -41,6 +41,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that can score queries
     /// </summary>
+    [System.ComponentModel.Description("Query Result Scoring Provider")]
     public interface IQueryScoringService : IServiceImplementation
     {
         /// <summary>

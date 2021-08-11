@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a data persisetence service that can handle bulk operations
     /// </summary>
+    [System.ComponentModel.Description("Bulk Data Access Provider")]
     public interface IBulkDataPersistenceService
     {
 
@@ -39,6 +40,11 @@ namespace SanteDB.Core.Services
         /// Purge the specified data (erase it)
         /// </summary>
         void Purge(TransactionMode transactionMode, IPrincipal principal, params Guid[] keysToPurge);
+
+        /// <summary>
+        /// Purge specified data
+        /// </summary>
+        void Purge(TransactionMode transactionMode, IPrincipal principal, Expression query);
 
         /// <summary>
         /// Query only for keys based on the expression (do not load objects from database)

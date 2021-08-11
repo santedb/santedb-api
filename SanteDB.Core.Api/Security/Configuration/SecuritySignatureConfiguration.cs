@@ -123,7 +123,7 @@ namespace SanteDB.Core.Security.Configuration
         [PasswordPropertyText(true)]
         public string HmacSecret
         {
-            get => "none";
+            get => this.m_plainTextSecret;
             set
             {
                 this.m_secret = null;
@@ -134,7 +134,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Should never serialize the secret (even though it is just NONE)
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => false;
+        public bool ShouldSerializeHmacSecret() => !String.IsNullOrEmpty(this.m_plainTextSecret) && this.m_secret == null;
 
         /// <summary>
         /// Get the HMAC secret

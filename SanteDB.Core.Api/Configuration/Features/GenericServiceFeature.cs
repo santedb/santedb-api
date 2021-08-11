@@ -18,6 +18,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using SanteDB.Core.Attributes;
@@ -41,16 +42,11 @@ namespace SanteDB.Core.Configuration.Features
             if (instanceAtt != null) {
                 this.Name = instanceAtt?.Name;
                 this.Description = instanceAtt?.Name;
-                this.ConfigurationType = instanceAtt?.Configuration;
-                if (this.ConfigurationType != null)
-                {
-	                this.Configuration = Activator.CreateInstance(this.ConfigurationType);
-                }
+              
             }
             else {
-                var instance = ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected<TService>();
-                this.Name = instance.ServiceName;
-                this.Description = instance.ServiceName;
+                this.Name = typeof(TService).GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? typeof(TService).Name;
+                this.Description = typeof(TService).GetCustomAttribute<DescriptionAttribute>()?.Description ?? typeof(TService).Name;
             }
             this.Group = typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
         }
@@ -58,12 +54,15 @@ namespace SanteDB.Core.Configuration.Features
 	    /// <summary>
         /// Gets or sets the configuration for this feature
         /// </summary>
-        public virtual object Configuration { get; set; }
+        public virtual object Configuration { 
+            get; 
+            set; 
+        }
 
 	    /// <summary>
         /// Gets the configuration type
         /// </summary>
-        public virtual Type ConfigurationType { get; }
+        public abstract Type ConfigurationType { get; }
 
 	    /// <summary>
         /// Create the installation tasks
@@ -112,8 +111,13 @@ namespace SanteDB.Core.Configuration.Features
             {
                 try
                 {
-                    this.Configuration = configuration.GetSection(this.ConfigurationType);
+                    var setConfiguration = configuration.GetSection(this.ConfigurationType);
+                    if(setConfiguration != null) // Set the configuration from the file
+                    {
+                        this.Configuration = setConfiguration;
+                    }
                     return isServiceInstalled && this.Configuration != null ? FeatureInstallState.Installed : isServiceInstalled || this.Configuration != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
+
                 }
                 catch
                 {
@@ -147,13 +151,13 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, $"Installing Service {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, $"Installing Service {this.Feature.Name}..."));
                 var serviceType = this.GetServiceType();
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
 
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, $"Configuring Service {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.5f, $"Configuring Service {this.Feature.Name}..."));
                 // Now configure the object
                 configuration.Sections.RemoveAll(o => o.GetType() == this.Feature.ConfigurationType);
                 if (this.Feature.Configuration != null)
@@ -161,7 +165,7 @@ namespace SanteDB.Core.Configuration.Features
 	                configuration.AddSection(this.Feature.Configuration);
                 }
 
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(1.0f, null));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(1.0f, null));
                 return true;
             }
 
@@ -178,7 +182,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Fired when the feature is installed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration
@@ -243,15 +247,15 @@ namespace SanteDB.Core.Configuration.Features
             public bool Execute(SanteDBConfiguration configuration)
             {
                 var serviceType = this.GetServiceType();
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, $"Removing Service {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, $"Removing Service {this.Feature.Name}..."));
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
 
                 // Now configure the object
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, $"Removing configuration for  {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.5f, $"Removing configuration for  {this.Feature.Name}..."));
                 configuration.Sections.RemoveAll(o => o.GetType() == this.Feature.ConfigurationType);
 
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(1.0f, null));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(1.0f, null));
 
                 return true;
             }
@@ -269,7 +273,7 @@ namespace SanteDB.Core.Configuration.Features
 	        /// <summary>
             /// Fired when the feature is installed
             /// </summary>
-            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+            public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
 	        /// <summary>
             /// Rollback the configuration

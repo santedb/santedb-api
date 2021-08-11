@@ -27,6 +27,7 @@ using System.Linq.Expressions;
 using SanteDB.Core.Model.Query;
 using System.Collections.Concurrent;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Security;
 
 namespace SanteDB.Core.PubSub.Broker
 {
@@ -37,7 +38,7 @@ namespace SanteDB.Core.PubSub.Broker
     {
 
         // Cached filter criteria
-        private Dictionary<Guid, Func<TModel, bool>> m_filterCriteria = new Dictionary<Guid, Func<TModel, bool>>();
+        private Dictionary<Guid, Func<Object, bool>> m_filterCriteria = new Dictionary<Guid, Func<Object, bool>>();
 
         // The repository this listener listens to
         private INotifyRepositoryService<TModel> m_repository;
@@ -83,91 +84,115 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Get all dispatchers and subscriptions
         /// </summary>
-        private IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, TModel data)
+        protected IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, Object data)
         {
-            var resourceName = data.GetType().GetSerializationName();
-            var subscriptions = this.m_pubSubManager
-                    .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
-                    .Where(o => o.Event.HasFlag(eventType))
-                    .Where(s =>
-                    {
-                        // Attempt to compile the filter criteria into an executable function
-                        if (!this.m_filterCriteria.TryGetValue(s.Key.Value, out Func<TModel, bool> fn))
-                        {
-                            Expression dynFn = null;
-                            var parameter = Expression.Parameter(typeof(TModel));
-
-                            foreach(var itm in s.Filter)
-                            {
-                                var fFn = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(itm), "p", variables: null, safeNullable: true, forceLoad:true, lazyExpandVariables: true);
-                                if (dynFn is LambdaExpression le)
-                                    dynFn = Expression.Lambda(
-                                        Expression.And(
-                                            Expression.Invoke(le, parameter),
-                                            Expression.Invoke(fFn, parameter)
-                                           ), parameter);
-                                else
-                                    dynFn = fFn;
-
-                            }
-                            fn = (dynFn as LambdaExpression).Compile() as Func<TModel, bool>;
-                            this.m_filterCriteria.Add(s.Key.Value, fn);
-                        }
-                        return fn(data);
-                    });
-
-            // Now we want to filter by channel, since the channel is really what we're interested in
-            foreach(var chnl in subscriptions.GroupBy(o=>o.ChannelKey))
+            using (AuthenticationContext.EnterSystemContext())
             {
-                var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
-                yield return factory.CreateDispatcher(chnl.Key, channelDef.Endpoint, channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
+                var resourceName = data.GetType().GetSerializationName();
+                var subscriptions = this.m_pubSubManager
+                        .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .Where(o => o.Event.HasFlag(eventType))
+                        .Where(s =>
+                        {
+                        // Attempt to compile the filter criteria into an executable function
+                        if (!this.m_filterCriteria.TryGetValue(s.Key.Value, out Func<Object, bool> fn))
+                            {
+                                Expression dynFn = null;
+                                var parameter = Expression.Parameter(data.GetType());
+
+                                foreach (var itm in s.Filter)
+                                {
+                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), NameValueCollection.ParseQueryString(itm), "p", forceLoad: true, lazyExpandVariables: true);
+                                    if (dynFn is LambdaExpression le)
+                                        dynFn = Expression.Lambda(
+                                            Expression.And(
+                                                Expression.Invoke(le, parameter),
+                                                Expression.Invoke(fFn, parameter)
+                                               ), parameter);
+                                    else
+                                        dynFn = fFn;
+
+                                }
+
+                                if (dynFn == null)
+                                {
+                                    dynFn = Expression.Lambda(Expression.Constant(true), parameter);
+                                }
+                                parameter = Expression.Parameter(typeof(object));
+                                fn = Expression.Lambda(Expression.Invoke(dynFn, Expression.Convert(parameter, data.GetType())), parameter).Compile() as Func<Object, bool>;
+                                this.m_filterCriteria.Add(s.Key.Value, fn);
+                            }
+                            return fn(data);
+                        });
+
+                // Now we want to filter by channel, since the channel is really what we're interested in
+                foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
+                {
+                    var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
+                    var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
+                    yield return factory.CreateDispatcher(chnl.Key, channelDef.Endpoint, channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
+                }
             }
         }
 
         /// <summary>
         /// When unmerged
         /// </summary>
-        private void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> e)
+        protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
-                dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
+                    dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            }
         }
 
         /// <summary>
         /// When merged
         /// </summary>
-        private void OnMerged(object sender, Event.DataMergeEventArgs<TModel> e)
+        protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
-                dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
+                    dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+            }
         }
 
         /// <summary>
         /// When obsoleted
         /// </summary>
-        private void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Delete, e.Data))
-                dsptchr.NotifyObsoleted(e.Data);
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Delete, e.Data))
+                    dsptchr.NotifyObsoleted(e.Data);
+            }
         }
 
         /// <summary>
         /// When saved (updated)
         /// </summary>
-        private void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Update, e.Data))
-                dsptchr.NotifyUpdated(e.Data);
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Update, e.Data))
+                    dsptchr.NotifyUpdated(e.Data);
+            }
         }
 
         /// <summary>
         /// When inserted
         /// </summary>
-        private void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> e)
         {
-            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, e.Data))
-                dsptchr.NotifyCreated(e.Data);
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, e.Data))
+                    dsptchr.NotifyCreated(e.Data);
+            }
         }
 
         /// <summary>

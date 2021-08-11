@@ -42,5 +42,9 @@ namespace SanteDB.Core.Configuration
         [XmlIgnore, JsonIgnore]
         public Type ResourceType => new ModelSerializationBinder().BindToType(null, this.ResourceTypeXml);
 
+        /// <summary>
+        /// Gets as a string
+        /// </summary>
+        public override string ToString() => this.ResourceTypeXml;
     }
 }

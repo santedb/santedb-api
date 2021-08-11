@@ -111,7 +111,7 @@ namespace SanteDB.Core.Configuration
             var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
             if (retVal.Sections.Any(o => o is XmlNode[]))
             {
-                string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>().TypeName} (in {o.TypeXml})"));
+                string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>()?.TypeName} (in {o.TypeXml})"));
                 throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))} allowed sections {allowedSections}", retVal);
             }
 

@@ -25,6 +25,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a service which is capableof retrieving roles
     /// </summary>
+    [System.ComponentModel.Description("Role Provider")]
     public interface IRoleProviderService : IServiceImplementation
     {
         /// <summary>

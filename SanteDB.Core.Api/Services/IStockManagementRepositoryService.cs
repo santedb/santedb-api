@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a stock management repository service.
     /// </summary>
+    [System.ComponentModel.Description("Stock Management Provider")]
     public interface IStockManagementRepositoryService : IServiceImplementation
     {
         /// <summary>

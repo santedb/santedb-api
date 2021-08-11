@@ -174,6 +174,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that performs record matching and classification
     /// </summary>
+    [System.ComponentModel.Description("Record Matching Provider")]
     public interface IRecordMatchingService : IServiceImplementation
     {
 

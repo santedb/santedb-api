@@ -112,7 +112,11 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// The feature is a system feature
         /// </summary>
-        SystemFeature = 0x8 | NoRemove | AutoSetup | AlwaysConfigure
+        SystemFeature = 0x8 | NoRemove | AutoSetup | AlwaysConfigure,
+        /// <summary>
+        /// Non-public feature
+        /// </summary>
+        NonPublic = 0x10
     }
 
     /// <summary>

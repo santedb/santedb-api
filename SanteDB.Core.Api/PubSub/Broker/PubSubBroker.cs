@@ -19,6 +19,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -120,6 +121,8 @@ namespace SanteDB.Core.PubSub.Broker
 
             ApplicationServiceContext.Current.Started += (o,e) =>
             {
+                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>().ClearCache(AuthenticationContext.SystemPrincipal);
+
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     try
@@ -136,6 +139,8 @@ namespace SanteDB.Core.PubSub.Broker
                     }
                 }
             };
+            this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected<BundleRepositoryListener>());
+
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }

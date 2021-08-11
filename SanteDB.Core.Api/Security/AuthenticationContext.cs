@@ -17,6 +17,7 @@
  * Date: 2021-2-9
  */
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
 
@@ -31,7 +32,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Represents a authentication context that sets the restore context on disposal
         /// </summary>
-        private class WrappedSystemContext : IDisposable
+        private class WrappedContext : IDisposable
         {
 
             /// <summary>
@@ -42,10 +43,10 @@ namespace SanteDB.Core.Security
             /// <summary>
             /// Create new wrapped authentication context
             /// </summary>
-            public WrappedSystemContext(AuthenticationContext restore)
+            public WrappedContext(IPrincipal principal, AuthenticationContext restore)
             {
                 this.RestoreContext = restore;
-                AuthenticationContext.Current = new AuthenticationContext(AuthenticationContext.SystemPrincipal);
+                AuthenticationContext.Current = new AuthenticationContext(principal);
             }
 
             /// <summary>
@@ -155,7 +156,7 @@ namespace SanteDB.Core.Security
                         s_current = new AuthenticationContext(s_anonymous);
                 return s_current;
             }
-            set { s_current = value; }
+            internal set { s_current = value; }
         }
 
         /// <summary>
@@ -174,8 +175,15 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterSystemContext()
         {
-            return new WrappedSystemContext(AuthenticationContext.Current);
+            return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
 
+        /// <summary>
+        /// Enter a wrapped context
+        /// </summary>
+        public static IDisposable EnterContext(IPrincipal principal)
+        {
+            return new WrappedContext(principal, AuthenticationContext.Current);
+        }
     }
 }

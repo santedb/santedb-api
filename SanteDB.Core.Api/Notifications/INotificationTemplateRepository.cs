@@ -28,6 +28,7 @@ namespace SanteDB.Core.Notifications
     /// <summary>
     /// Represents a service which takes / provides structured templates into structured message objects
     /// </summary>
+    [System.ComponentModel.Description("User Notification Templatey Provider")]
     public interface INotificationTemplateRepository : IServiceImplementation
     {
 

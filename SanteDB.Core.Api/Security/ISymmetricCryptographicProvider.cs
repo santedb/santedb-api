@@ -23,6 +23,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents a crypto service provider that encrypts things using symmetric encryption
     /// </summary>
+    [System.ComponentModel.Description("Symmetric Encryption Provider")]
     public interface ISymmetricCryptographicProvider : IServiceImplementation
     {
 

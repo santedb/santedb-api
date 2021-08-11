@@ -24,6 +24,7 @@ using System.Reflection;
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration.Features
@@ -97,7 +98,7 @@ namespace SanteDB.Core.Configuration.Features
             var configFeature = new GenericFeatureConfiguration();
 
             // Configuration features
-            var asms = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
+            var asms = AppDomain.CurrentDomain.GetAllTypes()
                 .Select(t => t.Assembly)
                 .Distinct();
             foreach (var source in asms.SelectMany(a => a.GetCustomAttributes<PluginTraceSourceAttribute>()))
@@ -118,7 +119,7 @@ namespace SanteDB.Core.Configuration.Features
             configFeature.Categories.Add("Sources", configFeature.Options.Keys.ToArray());
 
             // Writers?
-            var tw = ApplicationServiceContext.Current.GetService<IServiceManager>().GetAllTypes()
+            var tw = AppDomain.CurrentDomain.GetAllTypes()
                 .Where(t => typeof(TraceWriter).IsAssignableFrom(t) && !t.IsAbstract)
                 .Distinct();
 
@@ -127,8 +128,6 @@ namespace SanteDB.Core.Configuration.Features
 
             configFeature.Options.Add("initializationData", () => ConfigurationOptionType.FileName);
             configFeature.Categories.Add("Writers", new[] { "writer", "initializationData", "filter" });
-
-
             configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter?.GetType() ?? tw.FirstOrDefault());
             configFeature.Values.Add("initializationData", config.TraceWriter.FirstOrDefault()?.InitializationData ?? "santedb.log");
             configFeature.Values.Add("filter", config.Mode);
