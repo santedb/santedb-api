@@ -531,7 +531,7 @@ namespace SanteDB.Core.Security.Audit
                     dynamic metadata = o;
                     var rc = metadata.rc as RemoteEndpointInfo;
                     var principal = metadata.principal as IClaimsPrincipal;
-                    var auditData = metadata.audit as AuditData;
+                    var auditData = metadata.audit as AuditEventData;
                     traceSource.TraceInfo("Dispatching audit {0} - {1}", auditData.ActionCode, auditData.EventIdentifier);
 
                     // Get audit metadata
@@ -554,7 +554,7 @@ namespace SanteDB.Core.Security.Audit
                     using (AuthenticationContext.EnterSystemContext())
                     {
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                            ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>()?.Insert(auditData); // insert into local AR 
+                            ApplicationServiceContext.Current.GetService<IRepositoryService<AuditEventData>>()?.Insert(auditData); // insert into local AR 
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
                             ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(auditData);
                     }
