@@ -160,14 +160,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
 
-        /// <summary>
-        /// Creates a new instance of the timer
-        /// </summary>
-        public DefaultJobManagerService()
-        {
-
-        }
-
         #region ITimerService Members
 
         /// <summary>

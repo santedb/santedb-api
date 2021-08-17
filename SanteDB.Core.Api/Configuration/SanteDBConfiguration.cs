@@ -176,6 +176,14 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Remove the specified section
+        /// </summary>
+        public void RemoveSection(Type type)
+        {
+            this.Sections.RemoveAll(o => o.GetType() == type);
+        }
+
+        /// <summary>
         /// Gets the section of specified type.
         /// </summary>
         /// <returns>The section.</returns>

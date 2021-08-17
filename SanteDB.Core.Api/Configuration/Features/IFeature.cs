@@ -84,7 +84,11 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// The feature is not installed
         /// </summary>
-        NotInstalled
+        NotInstalled,
+        /// <summary>
+        /// The feature cannot be installed 
+        /// </summary>
+        CantInstall
     }
 
     /// <summary>

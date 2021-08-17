@@ -108,7 +108,10 @@ namespace SanteDB.Core.Data.Quality
                 }
             }
 
-            ApplicationServiceContext.Current.Started += (o, e) => ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DataQualityExtensionCleanJob(), new TimeSpan(1, 0, 0));
+            ApplicationServiceContext.Current.Started += (o, e) =>
+            {
+                ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DataQualityExtensionCleanJob(), new TimeSpan(1, 0, 0));
+            };
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }
