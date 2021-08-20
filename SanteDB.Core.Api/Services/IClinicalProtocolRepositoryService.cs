@@ -25,6 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that can do clinical protocols
     /// </summary>
+    [System.ComponentModel.Description("CDSS Clinical Protocol Repository")]
     public interface IClinicalProtocolRepositoryService : IServiceImplementation
     {
         /// <summary>

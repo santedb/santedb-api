@@ -25,6 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// A resource locking service 
     /// </summary>
+    [System.ComponentModel.Description("Resource Checkout/Locking Provider")]
     public interface IResourceCheckoutService
     {
 

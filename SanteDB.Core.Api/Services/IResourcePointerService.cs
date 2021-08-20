@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service which is tasked with generating verified pointers to data
     /// </summary>
+    [System.ComponentModel.Description("Resource Pointer Service")]
     public interface IResourcePointerService : IServiceImplementation
     {
 

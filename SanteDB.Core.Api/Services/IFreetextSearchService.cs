@@ -28,6 +28,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Free text search service
     /// </summary>
+    [System.ComponentModel.Description("Freetext Search Provider")]
     public interface IFreetextSearchService : IServiceImplementation
     {
 

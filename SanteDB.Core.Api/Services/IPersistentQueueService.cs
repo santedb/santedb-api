@@ -25,6 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents event args related to a queue event
     /// </summary>
+    [System.ComponentModel.Description("Persistent Queue Provider")]
     public class PersistentQueueEventArgs : EventArgs
     {
         /// <summary>

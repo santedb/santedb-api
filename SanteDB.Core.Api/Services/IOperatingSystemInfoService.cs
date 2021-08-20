@@ -25,7 +25,8 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Operating system information service
     /// </summary>
-    public interface IOperatingSystemInfoService
+    [System.ComponentModel.Description("Operating System Information Provider")]
+    public interface IOperatingSystemInfoService 
     {
 
         /// <summary>

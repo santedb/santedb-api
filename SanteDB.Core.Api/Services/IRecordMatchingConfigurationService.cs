@@ -25,6 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service 
     /// </summary>
+    [System.ComponentModel.Description("Record Matching Configuration Provider")]
     public interface IRecordMatchingConfigurationService : IServiceImplementation
     {
 

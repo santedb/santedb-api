@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using System;
 using System.Collections.Generic;
@@ -84,6 +85,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Record merging service
     /// </summary>
+    [System.ComponentModel.Description("Record Merging Provider")]
     public interface IRecordMergingService : IServiceImplementation
     {
 
@@ -99,6 +101,11 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="masterKey">The key of the master</param>
         IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
+
+        /// <summary>
+        /// Get all merge candidates
+        /// </summary>
+        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates();
 
         /// <summary>
         /// Gets the ignore list for the specified master record

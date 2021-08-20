@@ -25,6 +25,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service which is responsible for the maintenance of concepts.
     /// </summary>
+    [System.ComponentModel.Description("Concept/Terminology Provider")]
     public interface IConceptRepositoryService : IRepositoryService<Concept>
     {
         /// <summary>

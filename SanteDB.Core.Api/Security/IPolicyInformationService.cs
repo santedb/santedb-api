@@ -29,6 +29,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a contract for a policy information service
     /// </summary>
+    [System.ComponentModel.Description("Policy Information Provider (PIP)")]
     public interface IPolicyInformationService : IServiceImplementation
     {
 

@@ -83,6 +83,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Identifies a structure for message persistence service implementations
     /// </summary>
+    [System.ComponentModel.Description("Exec-Once Message Persistence")]
     public interface IMessagePersistenceService : IServiceImplementation
     {
 

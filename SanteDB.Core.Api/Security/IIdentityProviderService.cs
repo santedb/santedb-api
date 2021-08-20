@@ -135,6 +135,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Identifies a class which can generate TFA secrets
     /// </summary>
+    [System.ComponentModel.Description("TFA/MFA Secret Generator")]
     public interface ITwoFactorSecretGenerator : IServiceImplementation
     {
         /// <summary>
@@ -156,6 +157,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Identity provider service
     /// </summary>
+    [System.ComponentModel.Description("User Identity Provider")]
     public interface IIdentityProviderService : IServiceImplementation
     {
 

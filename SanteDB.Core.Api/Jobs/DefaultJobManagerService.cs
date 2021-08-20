@@ -28,6 +28,9 @@ using System.ComponentModel;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
+using SanteDB.Core.Interfaces;
+using System.Collections.Concurrent;
+using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.Core.Jobs
 {
@@ -35,8 +38,91 @@ namespace SanteDB.Core.Jobs
     /// Represents the default implementation of the timer
     /// </summary>
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
-    public class DefaultJobManagerService  : IJobManagerService
+    public class DefaultJobManagerService : IJobManagerService
     {
+
+        // Tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
+
+        // Thread pool
+        private IThreadPoolService m_threadPool;
+
+        /// <summary>
+        /// Create a new job manager service
+        /// </summary>
+        public DefaultJobManagerService(IThreadPoolService threadPool)
+        {
+            this.m_threadPool = threadPool;
+        }
+
+        /// <summary>
+        /// Job execution
+        /// </summary>
+        private class JobExecutionInfo
+        {
+
+            /// <summary>
+            /// Start the job
+            /// </summary>
+            public JobExecutionInfo(IJob job, JobStartType startType, TimeSpan interval, Object[] parameters)
+            {
+                this.Job = job;
+                this.StartType = startType;
+                this.Schedule = new JobItemSchedule[]
+                {
+                    new JobItemSchedule()
+                    {
+                        Interval = interval.Milliseconds,
+                        IntervalSpecified = true,
+                        StartDate = DateTime.Now
+                    }
+                };
+                this.Parameters = parameters;
+            }
+
+            /// <summary>
+            /// Create a new job execution schedule
+            /// </summary>
+            /// <param name="configuration"></param>
+            public JobExecutionInfo(JobItemConfiguration configuration)
+            {
+                this.Job = ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected(configuration.Type) as IJob;
+                this.Schedule = configuration.Schedule?.ToArray();
+                this.StartType = configuration.StartType;
+                this.Parameters = configuration.Parameters;
+            }
+
+            /// <summary>
+            /// Gets the job
+            /// </summary>
+            public IJob Job { get; }
+
+            /// <summary>
+            /// The last time the job was run
+            /// </summary>
+            public DateTime? LastRun { get; set;  }
+
+            /// <summary>
+            /// The last time the job was run
+            /// </summary>
+            public DateTime? LastFinish { get; set; }
+
+            /// <summary>
+            /// Days that the job should be run
+            /// </summary>
+            public JobItemSchedule[] Schedule { get; }
+
+            /// <summary>
+            /// Parameters for this object
+            /// </summary>
+            public object[] Parameters { get; }
+
+            /// <summary>
+            /// The start type of the job
+            /// </summary>
+            public JobStartType StartType { get; }
+        }
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -50,7 +136,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Timer thread
         /// </summary>
-        private System.Timers.Timer[] m_timers;
+        private System.Timers.Timer m_systemTimer;
 
         /// <summary>
         /// Timer service is starting
@@ -72,15 +158,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Log of timers
         /// </summary>
-        private Dictionary<IJob, DateTime> m_log = new Dictionary<IJob, DateTime>();
-
-        /// <summary>
-        /// Creates a new instance of the timer
-        /// </summary>
-        public DefaultJobManagerService()
-        {
-            
-        }
+        private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
 
         #region ITimerService Members
 
@@ -95,35 +173,20 @@ namespace SanteDB.Core.Jobs
             // Invoke the starting event handler
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            // Setup timers based on the jobs
-            this.m_timers = new System.Timers.Timer[this.m_configuration.Jobs.Count];
-            int i = 0;
             foreach (var job in this.m_configuration.Jobs)
             {
-                var jobInstance = Activator.CreateInstance(job.Type) as IJob;
-                if (jobInstance == null)
-                    throw new InvalidOperationException($"{job.Type} does not implement IJob");
+                var ji = new JobExecutionInfo(job);
+                this.m_jobs.Add(ji);
 
-                lock (this.m_log)
-                    this.m_log.Add(jobInstance, DateTime.MinValue);
-
-                // Timer setup
-                if (job.Interval != -1) // Not a real job just run on demand
+                if(job.StartType == JobStartType.Immediate)
                 {
-                    var timer = new System.Timers.Timer(job.Interval)
-                    {
-                        AutoReset = true,
-                        Enabled = true
-                    };
-                    timer.Elapsed += this.CreateElapseHandler(jobInstance);
-                    timer.Start();
-                    this.m_timers[i++] = timer;
-
-                    // Fire the job at startup
-                    jobInstance.Run(timer, null, null);
+                    this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
                 }
-
             }
+
+            // Setup timers based on the jobs
+            this.m_systemTimer = new System.Timers.Timer(600000); // timer runs every 10 minutes
+            this.m_systemTimer.Elapsed += SystemJobTimer;
 
             this.Started?.Invoke(this, EventArgs.Empty);
 
@@ -131,25 +194,56 @@ namespace SanteDB.Core.Jobs
             return true;
         }
 
+
         /// <summary>
-        /// Create a time elapsed handler
+        /// Run the specified job
         /// </summary>
-        private ElapsedEventHandler CreateElapseHandler(IJob job)
+        /// <param name="jobMeta"></param>
+        private void RunJob(object jobMeta)
         {
-            return new System.Timers.ElapsedEventHandler((o, e) =>
+            var jinfo = jobMeta as JobExecutionInfo;
+            jinfo.LastRun = DateTime.Now;
+            try
             {
+                jinfo.Job.Run(this, EventArgs.Empty, new object[0]);
+            }
+            catch (Exception ex)
+            {
+                this.m_tracer.TraceError("Error running job: {0} - {1}", jinfo.Job.Name, ex);
+            }
+        }
 
-                // Log that the timer fired
-                if (this.m_log.ContainsKey(job))
-                    this.m_log[job] = e.SignalTime;
+        /// <summary>
+        /// Fired when the job timer expires
+        /// </summary>
+        private void SystemJobTimer(object sender, ElapsedEventArgs e)
+        {
+            
+            // Iterate through our jobs
+            foreach(var itm in this.m_jobs)
+            {
+                // Does the job have a schedule?
+                if(itm.Schedule == null || !itm.Schedule.Any() || itm.StartType == JobStartType.Never) 
+                {
+                    continue;
+                }
+
+                // Do any of the schedules fit with the current system time?
+                var scheduleHits = itm.Schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
+                if(scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
+                {
+                    this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", itm.Schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
+                    if(itm.Job.CurrentState != JobStateType.Running)
+                    {
+                        this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
+                        this.m_threadPool.QueueUserWorkItem(this.RunJob, itm);
+                    }
+                }
                 else
-                    lock (this.m_log)
-                        this.m_log.Add(job, e.SignalTime);
-
-                if(job.CurrentState != JobStateType.Running)
-                    job.Run(o, e, null);
-
-            });
+                {
+                    this.m_tracer.TraceVerbose("Job {0} scheduled {1} not applicable", itm.Job.Name, String.Join(";", itm.Schedule.Select(o => o.ToString())));
+                }
+            }
         }
 
         /// <summary>
@@ -161,13 +255,15 @@ namespace SanteDB.Core.Jobs
             Trace.TraceInformation("Stopping timer service...");
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
-            if(this.m_timers != null)
-                foreach (var timer in this.m_timers)
+            this.m_systemTimer.Dispose();
+            this.m_systemTimer = null;
+            foreach(var itm in this.m_jobs)
+            {
+                if(itm.Job is IDisposable disp)
                 {
-                    timer.Stop();
-                    timer.Dispose();
+                    disp.Dispose();
                 }
-            this.m_timers = null;
+            }
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
 
@@ -184,28 +280,11 @@ namespace SanteDB.Core.Jobs
             if (this.IsJobRegistered(jobObject.GetType()))
                 return; // Job is already added
 
-            lock (this.m_log)
-                this.m_log.Add(jobObject, DateTime.MinValue);
-
-            // Resize the timer array
-            if (elapseTime != TimeSpan.MaxValue && startType != JobStartType.Never)
+            var ji = new JobExecutionInfo(jobObject, startType, elapseTime, new object[0]);
+            this.m_jobs.Add(ji);
+            if(startType == JobStartType.Immediate)
             {
-                lock (this.m_timers)
-                {
-                    Array.Resize(ref this.m_timers, this.m_timers.Length + 1);
-                    var timer = new System.Timers.Timer(elapseTime.TotalMilliseconds)
-                    {
-                        AutoReset = true,
-                        Enabled = true
-                    };
-                    timer.Elapsed += this.CreateElapseHandler(jobObject);
-                    timer.Start();
-                    this.m_timers[this.m_timers.Length - 1] = timer;
-                }
-
-                if(startType == JobStartType.Immediate)
-                    jobObject.Run(this, null, null);
-                
+                this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
             }
 
         }
@@ -215,13 +294,13 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public bool IsJobRegistered(Type jobObject)
         {
-            return this.m_log.Keys.Any(o => o.GetType() == jobObject);
+            return this.m_jobs.Any(o => o.Job.GetType() == jobObject);
         }
 
         /// <summary>
         /// Returns true when the service is running
         /// </summary>
-        public bool IsRunning { get { return this.m_timers != null; } }
+        public bool IsRunning { get { return this.m_systemTimer != null; } }
 
         /// <summary>
         /// Get the jobs
@@ -230,7 +309,7 @@ namespace SanteDB.Core.Jobs
         {
             get
             {
-                return this.m_log.Keys;
+                return this.m_jobs.Select(o=>o.Job);
             }
         }
 
@@ -239,9 +318,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public DateTime? GetLastRuntime(IJob job)
         {
-            if (!this.m_log.TryGetValue(job, out DateTime retVal))
-                return null;
-            return retVal;
+            return this.m_jobs.FirstOrDefault(o => o.Job == job)?.LastRun;
         }
 
         /// <summary>
@@ -249,15 +326,8 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public void StartJob(IJob job, object[] parameters)
         {
-            // Log that the timer fired
-            if (this.m_log.ContainsKey(job))
-                this.m_log[job] = DateTime.Now;
-            else
-                lock (this.m_log)
-                    this.m_log.Add(job, DateTime.Now);
-
-            if(job.CurrentState != JobStateType.Running)
-                ApplicationServiceContext.Current.GetService<IThreadPoolService>().QueueUserWorkItem((o)=> job.Run(this, EventArgs.Empty, parameters));
+            this.m_threadPool.QueueUserWorkItem(this.RunJob,
+                new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters));
         }
 
         /// <summary>
@@ -265,7 +335,19 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public IJob GetJobInstance(String jobTypeName)
         {
-            return this.m_log.Keys.First(o => o.GetType().FullName == jobTypeName);
+            return this.m_jobs.FirstOrDefault(o => o.Job.GetType().FullName == jobTypeName)?.Job;
+        }
+
+        /// <summary>
+        /// Start a job
+        /// </summary>
+        public void StartJob(Type jobType, object[] parameters)
+        {
+            var job = this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType);
+            if (job == null)
+            {
+                this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
+            }
         }
         #endregion
     }
