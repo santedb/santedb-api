@@ -262,7 +262,14 @@ namespace SanteDB.Core.Data
             /// </summary>
             public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
             {
-                throw new NotImplementedException();
+                var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.SourceEntityKey == masterKey && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                return candidate.Select(o =>
+                {
+                    var rv = o.LoadProperty(p => p.TargetEntity);
+                    rv.AddTag("$match.score", o.Strength.ToString());
+                    return rv;
+                });
             }
 
             /// <summary>
@@ -271,6 +278,16 @@ namespace SanteDB.Core.Data
             public IEnumerable<IdentifiedData> GetIgnored(Guid masterKey)
             {
                 throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Get global merge candidates
+            /// </summary>
+            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates()
+            {
+                var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                var candidate = dataService.Query(o=>o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                return candidate;
             }
         }
 

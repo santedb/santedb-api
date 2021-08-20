@@ -337,6 +337,18 @@ namespace SanteDB.Core.Jobs
         {
             return this.m_jobs.FirstOrDefault(o => o.Job.GetType().FullName == jobTypeName)?.Job;
         }
+
+        /// <summary>
+        /// Start a job
+        /// </summary>
+        public void StartJob(Type jobType, object[] parameters)
+        {
+            var job = this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType);
+            if (job == null)
+            {
+                this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
+            }
+        }
         #endregion
     }
 }

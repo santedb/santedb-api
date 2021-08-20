@@ -84,6 +84,14 @@ namespace SanteDB.Core.Jobs
         void StartJob(IJob job, object[] parameters);
 
         /// <summary>
+        /// Start a job
+        /// </summary>
+        /// <param name="jobType">The job to start</param>
+        /// <param name="parameters">The parameters to pass to the job</param>
+        /// <returns>True if the job started successfully</returns>
+        void StartJob(Type jobType, object[] parameters);
+
+        /// <summary>
         /// Get this manager's instance of a job
         /// </summary>
         /// <param name="jobType">The job type to fetch</param>
