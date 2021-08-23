@@ -17,9 +17,12 @@
  * Date: 2021-2-9
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
 
@@ -44,20 +47,21 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Thread pool size
         /// </summary>
-        [XmlAttribute("threadPoolSize")]
+        [XmlAttribute("threadPoolSize"), DisplayName("Thread Pool"), Description("Sets the number of threads to allocate in the default thread pool")]
         public int ThreadPoolSize { get; set; }
 
         /// <summary>
         /// Gets the service providers from XML
         /// </summary>
-        [XmlArray("serviceProviders"), XmlArrayItem("add"), JsonProperty("service")]
+        [XmlArray("serviceProviders"), XmlArrayItem("add"), JsonProperty("service"), DisplayName("Service Providers"), Description("The service providers which are enabled on this host instance of SanteDB")]
+        [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(IServiceImplementation))]
         public List<TypeReferenceConfiguration> ServiceProviders { get; set; }
-
 
         /// <summary>
         /// General extended application settings
         /// </summary>
         [XmlArray("appSettings"), XmlArrayItem("add"), JsonProperty("setting")]
+        [DisplayName("App Settings"), Description("Custom, non-structured application settings")]
         public List<AppSettingKeyValuePair> AppSettings
         {
             get;

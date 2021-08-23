@@ -23,6 +23,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -32,6 +33,7 @@ namespace SanteDB.Core.Jobs
     /// A generic data retention job that reads from the IDataPersistence service and uses 
     /// the IDataArchive service to retain data
     /// </summary>
+    [DisplayName("Data Retention Job")]
     public class DataRetentionJob : IReportProgressJob
     {
 
@@ -105,25 +107,29 @@ namespace SanteDB.Core.Jobs
                 this.LastStarted = DateTime.Now;
                 float ruleProgress = 1.0f / this.m_configuration.RetentionRules.Count;
 
+                var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
+
+
                 for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count; ruleIdx++)
                 {
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
-                    this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceTypeXml);
-                    this.StatusText = $"Gathering {rule.Name} ({rule.ResourceTypeXml})";
+                    this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.ResourceTypeXml);
+                    this.StatusText = $"Gathering {rule.Name} ({rule.ResourceType.ResourceTypeXml})";
                     this.Progress = ruleIdx * ruleProgress;
 
-                    var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType);
+                    var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType.ResourceType);
                     var persistenceService = ApplicationServiceContext.Current.GetService(pserviceType) as IBulkDataPersistenceService;
                     if (persistenceService == null)
                         throw new InvalidOperationException("Cannot locate appropriate persistence service");
 
+
                     // Included keys for retention
                     IEnumerable<Guid> keys = new Guid[0];
-                    for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Count; inclIdx++)
+                    for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Length; inclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]));
-                        this.Progress = (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Count) * 0.3 * ruleProgress);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.ResourceType, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
+                        this.Progress = (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress);
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
                         {
@@ -133,10 +139,10 @@ namespace SanteDB.Core.Jobs
                     }
 
                     // Exclude keys from retention
-                    for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Count; exclIdx++)
+                    for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Length; exclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]));
-                        this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Count) * 0.3) * ruleProgress);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.ResourceType, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
+                        this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress);
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys 
                         {
@@ -145,7 +151,7 @@ namespace SanteDB.Core.Jobs
                         }
                     }
 
-                    this.StatusText = $"Executing {rule.Action} {rule.ResourceTypeXml} ({rule.Name})";
+                    this.StatusText = $"Executing {rule.Action} {rule.ResourceType.ResourceTypeXml} ({rule.Name})";
 
                     // Now we want to execute the specified action
                     switch (rule.Action)
@@ -166,17 +172,17 @@ namespace SanteDB.Core.Jobs
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {
-                                archiveService.Archive(rule.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
                                 persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else if (rule.Action.HasFlag(DataRetentionActionType.Obsolete))
                             {
-                                archiveService.Archive(rule.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
                                 persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else
                             {
-                                archiveService.Archive(rule.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
                             }
                             break;
                     }

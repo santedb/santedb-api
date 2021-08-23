@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,18 +38,22 @@ namespace SanteDB.Core.Configuration
         /// When set to true, enables complete audit trail
         /// </summary>
         [XmlAttribute("completeAuditTrail"), JsonProperty("completeAuditTrail")]
+        [DisplayName("Complete Audit Trail"), Description("When set to true, instructs the SanteDB service to process all audits (include verbose audits)")]
         public bool CompleteAuditTrail { get; set; }
 
         /// <summary>
         /// Gets or sets filters to apply to the audit trail (i.e. ignore)
         /// </summary>
         [XmlArray("filters"), XmlArrayItem("add"), JsonProperty("filters")]
+        [DisplayName("Event Filters"), Description("Sets one or more filters which control how the SanteDB audits are stored and/or shipped upstream")]
         public List<AuditFilterConfiguration> AuditFilters { get; set; }
 
         /// <summary>
         /// Audit source identification
         /// </summary>
         [XmlElement("auditSource"), JsonProperty("sourceIdentification")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        [DisplayName("Source Identification"), Description("Sets the audit source identification for this node")]
         public AuditSourceConfiguration SourceInformation { get; set; }
     }
 
@@ -63,18 +68,20 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the enterprise site
         /// </summary>
         [XmlElement("enterpriseSite"), JsonProperty("enterpriseSite")]
+        [DisplayName("Enterprise Site"), Description("The name of the site (for example: GOOD HEALTH HOSPITAL MPI)")]
         public string EnterpriseSite { get; set; }
 
         /// <summary>
         /// The key of the device
         /// </summary>
-        [XmlElement("enterpriseSiteKey"), JsonProperty("enterpriseSiteKey")]
+        [XmlElement("enterpriseSiteKey"), JsonProperty("enterpriseSiteKey"), Browsable(false)]
         public Guid EnterpriseDeviceKey { get; set; }
 
         /// <summary>
         /// The location
         /// </summary>
         [XmlElement("siteName"), JsonProperty("siteName")]
+        [DisplayName("Site Location"), Description("The location of the site (for example: WEST 4TH STREET FACILITY)")]
         public string SiteLocation { get; set; }
 
     }

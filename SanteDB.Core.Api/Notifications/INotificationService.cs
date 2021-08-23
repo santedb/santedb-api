@@ -27,6 +27,7 @@ namespace SanteDB.Core.Notifications
     /// <summary>
     /// Represents a notification service which manages the sending of a notification
     /// </summary>
+    [System.ComponentModel.Description("User Notification Relay Provider")]
     public interface INotificationService : IServiceImplementation
     {
 

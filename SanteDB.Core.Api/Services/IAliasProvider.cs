@@ -54,6 +54,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a provider for aliases
     /// </summary>
+    [System.ComponentModel.Description("Name Alias Provider")]
     public interface IAliasProvider : IServiceImplementation
     {
 

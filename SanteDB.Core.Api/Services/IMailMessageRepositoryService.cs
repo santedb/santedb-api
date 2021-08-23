@@ -27,6 +27,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents an alerting service.
     /// </summary>
+    [System.ComponentModel.Description("Mail Repository Provider")]
     public interface IMailMessageRepositoryService : IServiceImplementation
     {
         /// <summary>

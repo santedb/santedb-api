@@ -123,7 +123,7 @@ namespace SanteDB.Core.Security.Configuration
         [PasswordPropertyText(true)]
         public string HmacSecret
         {
-            get => "none";
+            get => this.m_plainTextSecret;
             set
             {
                 this.m_secret = null;
@@ -134,7 +134,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Should never serialize the secret (even though it is just NONE)
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => false;
+        public bool ShouldSerializeHmacSecret() => !String.IsNullOrEmpty(this.m_plainTextSecret) && this.m_secret == null;
 
         /// <summary>
         /// Get the HMAC secret
@@ -179,11 +179,12 @@ namespace SanteDB.Core.Security.Configuration
             var key = cryptoService.GetContextKey();
 
             var data = cryptoService.Encrypt(secret, key, iv);
+            
             this.m_secret = new byte[data.Length + iv.Length + 1];
             this.m_secret[0] = (byte)iv.Length;
             Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
             Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
-            this.m_plainTextSecret = String.Empty;
+            //this.m_plainTextSecret = String.Empty;
             return true;
         }
     }

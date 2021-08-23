@@ -32,8 +32,19 @@ namespace SanteDB.Core.Security.Configuration
     public class X509ConfigurationElement
     {
 
+
         // Certificate
         private X509Certificate2 m_certificate;
+
+        /// <summary>
+        /// Initialize certificate settings
+        /// </summary>
+        public X509ConfigurationElement()
+        {
+            this.FindType = X509FindType.FindByThumbprint;
+            this.StoreLocation = StoreLocation.LocalMachine;
+            this.StoreName = StoreName.My;
+        }
 
         /// <summary>
         /// The find type
@@ -95,7 +106,7 @@ namespace SanteDB.Core.Security.Configuration
         [XmlIgnore, JsonIgnore]
         [Description("The X509 certificate to use")]
         [DisplayName("Certificate")]
-        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Windows.Forms")]
+        [Editor("SanteDB.Configuration.Editors.X509Certificate2Editor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public X509Certificate2 Certificate
         {
             get => this.GetCertificate();
@@ -129,30 +140,43 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         private X509Certificate2 GetCertificate()
         {
-            if(this.m_certificate != null)
+            if(this.m_certificate == null)
             {
-                X509Store store = new X509Store(this.StoreName, this.StoreLocation);
                 try
                 {
-                    store.Open(OpenFlags.ReadOnly);
-                    var matches = store.Certificates.Find(this.FindType, this.FindValue, true);
-                    if (matches.Count == 0)
-                        throw new InvalidOperationException("Certificate not found");
-                    else if (matches.Count > 1)
-                        throw new InvalidOperationException("Too many matches");
-                    else
-                        return matches[0];
+                    X509Store store = new X509Store(this.StoreName, this.StoreLocation);
+                    try
+                    {
+                        store.Open(OpenFlags.ReadOnly);
+                        var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
+                        if (matches.Count == 0)
+                            throw new InvalidOperationException("Certificate not found");
+                        else if (matches.Count > 1)
+                            throw new InvalidOperationException("Too many matches");
+                        else
+                        {
+                            this.m_certificate = matches[0];
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return null;
+                    }
+                    finally
+                    {
+                        store.Close();
+                    }
                 }
-                catch (Exception ex)
-                {
+                catch {
                     return null;
-                }
-                finally
-                {
-                    store.Close();
                 }
             }
             return this.m_certificate;
         }
+
+        /// <summary>
+        /// Certificate binding
+        /// </summary>
+        public override string ToString() => this.Certificate?.ToString();
     }
 }

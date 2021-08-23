@@ -21,6 +21,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -225,13 +226,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get all types
         /// </summary>
-        public IEnumerable<Type> GetAllTypes()
-        {
-            // HACK: The weird TRY/CATCH in select many is to prevent mono from throwning a fit
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => !a.IsDynamic)
-                .SelectMany(a => { try { return a.ExportedTypes; } catch { return new List<Type>(); } });
-        }
+        public IEnumerable<Type> GetAllTypes() => AppDomain.CurrentDomain.GetAllTypes();
 
         /// <summary>
         /// Get the specified service
@@ -330,59 +325,62 @@ namespace SanteDB.Core.Services.Impl
             {
                 Stopwatch startWatch = new Stopwatch();
 
-                try
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    this.Starting?.Invoke(this, EventArgs.Empty);
+                    try
+                    {
+                        this.Starting?.Invoke(this, EventArgs.Empty);
 
-                    startWatch.Start();
+                        startWatch.Start();
 
-                    if (this.GetService<IConfigurationManager>() == null)
-                        throw new InvalidOperationException("Cannot find configuration manager!");
-                    if (this.m_configuration == null)
-                        this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+                        if (this.GetService<IConfigurationManager>() == null)
+                            throw new InvalidOperationException("Cannot find configuration manager!");
+                        if (this.m_configuration == null)
+                            this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
 
-                    // Add configured services
-                    foreach (var svc in this.m_configuration.ServiceProviders)
-                        if (svc.Type == null)
-                            this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
-                        else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
-                            this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                        else
+                        // Add configured services
+                        foreach (var svc in this.m_configuration.ServiceProviders)
+                            if (svc.Type == null)
+                                this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
+                            else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
+                                this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
+                            else
+                            {
+                                var svci = new ServiceInstanceInformation(svc.Type, this);
+
+                                this.m_serviceRegistrations.Add(svci);
+                                foreach (var iface in svci.ImplementedServices)
+                                    this.m_cachedServices.TryAdd(iface, svci);
+                            }
+
+                        this.m_tracer.TraceInfo("Loading singleton services");
+                        foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
                         {
-                            var svci = new ServiceInstanceInformation(svc.Type, this);
-
-                            this.m_serviceRegistrations.Add(svci);
-                            foreach (var iface in svci.ImplementedServices)
-                                this.m_cachedServices.TryAdd(iface, svci);
+                            this.m_tracer.TraceInfo("Instantiating {0}...", svc.ServiceImplementer.FullName);
+                            svc.GetInstance();
                         }
 
-                    this.m_tracer.TraceInfo("Loading singleton services");
-                    foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
-                    {
-                        this.m_tracer.TraceInfo("Instantiating {0}...", svc.ServiceImplementer.FullName);
-                        svc.GetInstance();
+                        this.m_tracer.TraceInfo("Starting Daemon services");
+                        foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
+                        {
+                            if (dc == null) continue;
+                            this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
+                            if (dc != this && !dc.Start())
+                                throw new Exception($"Service {dc} reported unsuccessful start");
+                        }
+
+                        if (this.Started != null)
+                            this.Started(this, null);
+
                     }
-
-                    this.m_tracer.TraceInfo("Starting Daemon services");
-                    foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
+                    finally
                     {
-                        if (dc == null) continue;
-                        this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
-                        if (dc != this && !dc.Start())
-                            throw new Exception($"Service {dc} reported unsuccessful start");
+                        startWatch.Stop();
                     }
-
-                    if (this.Started != null)
-                        this.Started(this, null);
-
+                    this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
+                    this.Started?.Invoke(this, EventArgs.Empty);
+                    this.IsRunning = true;
                 }
-                finally
-                {
-                    startWatch.Stop();
-                }
-                this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
-                this.Started?.Invoke(this, EventArgs.Empty);
-                this.IsRunning = true;
             }
             return this.IsRunning;
         }
@@ -392,6 +390,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public bool Stop()
         {
+
+            this.m_tracer.TraceInfo("Stopping dependency injection service...");
+
             this.Stopping?.Invoke(this, null);
 
             if (!this.IsRunning) return true;
@@ -404,6 +405,12 @@ namespace SanteDB.Core.Services.Impl
                 {
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
+                }
+                if(svc is IDisposable dsp)
+                {
+                    this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
+                    dsp.Dispose();
+
                 }
             }
 

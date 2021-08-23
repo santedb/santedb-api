@@ -31,6 +31,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents an interface that allows for the retrieval of pre-configured security challenges
     /// </summary>
+    [System.ComponentModel.Description("Security Challenge Storage Provider")]
     public interface ISecurityChallengeService : IServiceImplementation
     {
        

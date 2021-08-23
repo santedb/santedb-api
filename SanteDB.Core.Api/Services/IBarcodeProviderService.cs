@@ -29,6 +29,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a barcode generator
     /// </summary>
+    [System.ComponentModel.Description("Barcode Generator Provider")]
     public interface IBarcodeProviderService : IServiceImplementation
     {
 

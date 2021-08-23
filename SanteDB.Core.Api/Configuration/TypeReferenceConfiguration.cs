@@ -18,9 +18,12 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -87,7 +90,7 @@ namespace SanteDB.Core.Configuration
         {
             get
             {
-                if (this.m_type == null)
+                if (this.m_type == null && !String.IsNullOrEmpty(this.TypeXml))
                 {
                     this.m_type = Type.GetType(this.TypeXml);
                     if(this.m_type == null)
@@ -103,5 +106,10 @@ namespace SanteDB.Core.Configuration
                 this.m_typeXml = value?.AssemblyQualifiedName;
             }
         }
+
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string ToString() => this.Type?.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? this.Type?.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? this.Type.Name;
     }
 }

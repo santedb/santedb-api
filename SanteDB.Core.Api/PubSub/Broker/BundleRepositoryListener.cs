@@ -32,8 +32,23 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
                 {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                        dsptchr.NotifyCreated(itm);
+                    switch(itm.BatchOperation)
+                    {
+                        case Model.DataTypes.BatchOperationType.Auto:
+                        case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                        case Model.DataTypes.BatchOperationType.Insert:
+                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                dsptchr.NotifyCreated(itm);
+                            break;
+                        case Model.DataTypes.BatchOperationType.Update:
+                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                dsptchr.NotifyUpdated(itm);
+                            break;
+                        case Model.DataTypes.BatchOperationType.Obsolete:
+                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                dsptchr.NotifyObsoleted(itm);
+                            break;
+                    }
                 }
             }
         }

@@ -24,6 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Query persistence service
     /// </summary>
+    [System.ComponentModel.Description("Stateful Query Provider")]
     public interface IQueryPersistenceService : IServiceImplementation
     {
 

@@ -24,6 +24,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a patch service which can calculate and apply patches
     /// </summary>
+    [System.ComponentModel.Description("Resource Patching Provider")]
     public interface IPatchService : IServiceImplementation
     {
         /// <summary>

@@ -91,15 +91,15 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Creates a new API service provider
         /// </summary>
-        public ApiServiceProviderAttribute(string name, Type contractType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
+        public ApiServiceProviderAttribute(string name, Type behaviorType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
         {
-            this.ContractType = contractType;
+            this.BehaviorType = behaviorType;
         }
 
         /// <summary>
         /// Gets or sets the contract type
         /// </summary>
-        public Type ContractType { get; set; }
+        public Type BehaviorType { get; set; }
     }
 
 }

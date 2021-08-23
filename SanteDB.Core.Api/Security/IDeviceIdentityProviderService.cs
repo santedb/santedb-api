@@ -51,7 +51,8 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
 	/// Represents an identity service which authenticates devices.
 	/// </summary>
-	public interface IDeviceIdentityProviderService : IServiceImplementation
+    [System.ComponentModel.Description("Device Identity Provider")]
+    public interface IDeviceIdentityProviderService : IServiceImplementation
     {
         /// <summary>
         /// Fired after an authentication request has been made.

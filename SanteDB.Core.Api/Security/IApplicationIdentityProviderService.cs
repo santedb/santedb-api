@@ -20,6 +20,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.ComponentModel;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -27,6 +28,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a service which retrieves IPrincipal objects for applications.
     /// </summary>
+    [System.ComponentModel.Description("Application Identity Provider")]
     public interface IApplicationIdentityProviderService : IServiceImplementation
     {
 		/// <summary>

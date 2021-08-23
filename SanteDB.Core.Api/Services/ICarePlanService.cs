@@ -28,6 +28,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a class which can create care plans
     /// </summary>
+    [System.ComponentModel.Description("Care Plan/CDSS Engine")]
     public interface ICarePlanService : IServiceImplementation
     {
         /// <summary>

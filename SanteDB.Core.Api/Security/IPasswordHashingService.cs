@@ -24,6 +24,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Password hashing service.
     /// </summary>
+    [System.ComponentModel.Description("Password Hashing Service")]
     public interface IPasswordHashingService : IServiceImplementation
     {
 
