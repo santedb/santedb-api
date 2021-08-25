@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -262,7 +264,14 @@ namespace SanteDB.Core.Data
             /// </summary>
             public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
             {
-                throw new NotImplementedException();
+                var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.SourceEntityKey == masterKey && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                return candidate.Select(o =>
+                {
+                    var rv = o.LoadProperty(p => p.TargetEntity);
+                    rv.AddTag("$match.score", o.Strength.ToString());
+                    return rv;
+                });
             }
 
             /// <summary>
@@ -271,6 +280,16 @@ namespace SanteDB.Core.Data
             public IEnumerable<IdentifiedData> GetIgnored(Guid masterKey)
             {
                 throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Get global merge candidates
+            /// </summary>
+            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates()
+            {
+                var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                var candidate = dataService.Query(o=>o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                return candidate;
             }
         }
 

@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Services;
 using System;
@@ -82,6 +84,14 @@ namespace SanteDB.Core.Jobs
         /// <param name="parameters">The parameters to pass to the job</param>
         /// <returns>True if the job started successfully</returns>
         void StartJob(IJob job, object[] parameters);
+
+        /// <summary>
+        /// Start a job
+        /// </summary>
+        /// <param name="jobType">The job to start</param>
+        /// <param name="parameters">The parameters to pass to the job</param>
+        /// <returns>True if the job started successfully</returns>
+        void StartJob(Type jobType, object[] parameters);
 
         /// <summary>
         /// Get this manager's instance of a job

@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using System;
 using System.Collections.Generic;
@@ -100,6 +103,11 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="masterKey">The key of the master</param>
         IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
+
+        /// <summary>
+        /// Get all merge candidates
+        /// </summary>
+        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates();
 
         /// <summary>
         /// Gets the ignore list for the specified master record

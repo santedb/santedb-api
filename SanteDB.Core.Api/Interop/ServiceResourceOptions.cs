@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using System;
@@ -24,6 +26,42 @@ using System.Xml.Serialization;
 #pragma warning disable CS1591
 namespace SanteDB.Core.Interop
 {
+
+    /// <summary>
+    /// The type of binding that the child object makes
+    /// </summary>
+    [XmlType(nameof(ChildObjectScopeBinding), Namespace = "http://santedb.org/model"), Flags]
+    public enum ChildObjectScopeBinding
+    {
+        /// <summary>
+        /// The API child object is bound to an instance of the object
+        /// </summary>
+        [XmlEnum("instance")]
+        Instance = 0x1,
+        /// <summary>
+        /// The API child object is bound to the parent type
+        /// </summary>
+        [XmlEnum("class")]
+        Class = 0x2
+    }
+
+    /// <summary>
+    /// The classification of the object classification
+    /// </summary>
+    [XmlType(nameof(ChildObjectClassification), Namespace = "http://santedb.org/model"), Flags]
+    public enum ChildObjectClassification
+    {
+        /// <summary>
+        /// The object is a resource
+        /// </summary>
+        [XmlEnum("resource")]
+        Resource = 0x1,
+        /// <summary>
+        /// The object is an operation
+        /// </summary>
+        [XmlEnum("operation")]
+        RpcOperation =0x2 ,
+    }
 
     /// <summary>
     /// Service resource operations
@@ -144,7 +182,7 @@ namespace SanteDB.Core.Interop
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
         /// <param name="resourceType">The type of resource which options are being fetched for</param>
-        public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, List<ServiceResourceOptions> subResources)
+        public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, List<ChildServiceResourceOptions> subResources)
         {
             this.ResourceName = resourceName;
             this.Capabilities = operations;
@@ -173,7 +211,53 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Gets the resources which are associated with this resource (sub-resources)
         /// </summary>
-        public List<ServiceResourceOptions> ChildResources { get; set; }
+        [XmlElement("children"), JsonProperty("children")]
+        public List<ChildServiceResourceOptions> ChildResources { get; set; }
+         
+    }
+
+    /// <summary>
+    /// Child service resource options
+    /// </summary>
+    [XmlType(nameof(ChildServiceResourceOptions), Namespace = "http://santedb.org/model"), JsonObject(nameof(ChildServiceResourceOptions))]
+    public class ChildServiceResourceOptions : ServiceResourceOptions
+    {
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceOptions"/> class.
+        /// </summary>
+        public ChildServiceResourceOptions()
+        {
+
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ServiceResourceOptions"/> class
+        /// with a specific resource name, and verbs.
+        /// </summary>
+        /// <param name="resourceName">The name of the resource of the service resource options.</param>
+        /// <param name="operations">The list of HTTP verbs of the resource option.</param>
+        /// <param name="resourceType">The type of resource which options are being fetched for</param>
+        public ChildServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, ChildObjectScopeBinding scope, ChildObjectClassification classification)
+            : base(resourceName, resourceType, operations, null)
+        {
+            this.Scope = scope;
+            this.Classification = classification;
+        }
+
+        /// <summary>
+        /// Gets or sets the scope of this object.
+        /// </summary>
+        [XmlAttribute("scope"), JsonProperty("scope")]
+        public ChildObjectScopeBinding Scope { get; set; }
+
+        /// <summary>
+        /// Gets or sets the classification of this object
+        /// </summary>
+        [XmlAttribute("classification"), JsonProperty("classification")]
+        public ChildObjectClassification Classification { get; set; }
+
+
     }
 }
 #pragma warning restore CS1591

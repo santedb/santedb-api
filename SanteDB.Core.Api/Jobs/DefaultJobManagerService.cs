@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-19
+ * Date: 2021-8-5
  */
 using System;
 using System.Collections.Generic;
@@ -159,14 +161,6 @@ namespace SanteDB.Core.Jobs
         /// Log of timers
         /// </summary>
         private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
-
-        /// <summary>
-        /// Creates a new instance of the timer
-        /// </summary>
-        public DefaultJobManagerService()
-        {
-
-        }
 
         #region ITimerService Members
 
@@ -344,6 +338,18 @@ namespace SanteDB.Core.Jobs
         public IJob GetJobInstance(String jobTypeName)
         {
             return this.m_jobs.FirstOrDefault(o => o.Job.GetType().FullName == jobTypeName)?.Job;
+        }
+
+        /// <summary>
+        /// Start a job
+        /// </summary>
+        public void StartJob(Type jobType, object[] parameters)
+        {
+            var job = this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType);
+            if (job == null)
+            {
+                this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
+            }
         }
         #endregion
     }
