@@ -39,9 +39,6 @@ namespace SanteDB.Core.Http
         // Fault serializer
         private static XmlSerializer m_faultSerializer = XmlModelSerializerFactory.Current.CreateSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
 
-        // Xml types
-        private static List<Type> m_xmlTypes = null;
-
         // Serializer
         private XmlSerializer m_serializer;
 
@@ -60,7 +57,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the serializer
         /// </summary>
-        public object Serializer => this.m_serializer;
+        public object Serializer { get; }
 
         #region IBodySerializer implementation
 

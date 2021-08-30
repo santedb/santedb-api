@@ -134,7 +134,6 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="outcome">The outcome of the action</param>
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
-        /// <param name="remoteAddress">The remote address</param>
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
             traceSource.TraceInfo("Create AuditLogUsed audit");
@@ -245,6 +244,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <param name="targetOfMasking">The object which was masked</param>
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
+        /// <param name="decision">The decision which caused the masking to occur</param>
         public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved)
             where TModel : IdentifiedData
         {
@@ -371,6 +371,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <typeparam name="TData"></typeparam>
         /// <param name="obj">The object to translate</param>
+        /// <param name="lifecycle">The lifecycle of </param>
         private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
         {
 

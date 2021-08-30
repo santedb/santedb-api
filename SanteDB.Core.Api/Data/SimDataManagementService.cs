@@ -40,7 +40,7 @@ namespace SanteDB.Core.Data
     /// <summary>
     /// Represents a daemon service that registers a series of merge services which can merge records together
     /// </summary>
-    public class SimDataManagementService : IDaemonService
+    public class SimDataManagementService : IDaemonService, IDataManagementPattern
     {
 
         /// <summary>
@@ -310,7 +310,7 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Service name
         /// </summary>
-        public string ServiceName => "Single Instance Merge Service";
+        public string ServiceName => "Single Instance Data Management";
 
         /// <summary>
         /// Service is starting

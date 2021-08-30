@@ -160,7 +160,7 @@ namespace SanteDB.Core.Security.Configuration
                             this.m_certificate = matches[0];
                         }
                     }
-                    catch (Exception ex)
+                    catch 
                     {
                         return null;
                     }

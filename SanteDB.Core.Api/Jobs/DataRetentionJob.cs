@@ -112,8 +112,9 @@ namespace SanteDB.Core.Jobs
                 var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
 
 
-                for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count; ruleIdx++)
+                for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count && !this.m_cancelFlag; ruleIdx++)
                 {
+
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
                     this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.ResourceTypeXml);

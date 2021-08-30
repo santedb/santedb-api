@@ -38,6 +38,7 @@ namespace SanteDB.Core.Configuration.Features
 
         internal const string DATA_CACHE_SERVICE = "Data Object Cache";
         internal const string ADHOC_CACHE_SERVICE = "Ad-Hoc Cache";
+        internal const string QUERY_STATE_SERVICE = "Stateful Query Cache";
 
         // Configuration feature        
         private GenericFeatureConfiguration m_configuration;
@@ -73,7 +74,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Gets the flags for this feature
         /// </summary>
-        public FeatureFlags Flags => FeatureFlags.AutoSetup;
+        public FeatureFlags Flags => FeatureFlags.AutoSetup ;
 
         /// <summary>
         /// Gets the group of the feature
@@ -90,8 +91,9 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
-            yield return new InstallCacheServiceTask(this, this.m_configuration);
-            yield return new InstallAdHocCacheServiceTask(this, this.m_configuration);
+            yield return new InstallCacheServiceTask(this, this.m_configuration, QUERY_STATE_SERVICE);
+            yield return new InstallCacheServiceTask(this, this.m_configuration, DATA_CACHE_SERVICE);
+            yield return new InstallCacheServiceTask(this, this.m_configuration, ADHOC_CACHE_SERVICE);
         }
 
         /// <summary>
@@ -99,8 +101,9 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
-            yield return new UninstallCacheServiceTask(this, this.m_configuration);
-            yield return new UninstallAdHocCacheServiceTask(this, this.m_configuration);
+            yield return new UninstallCacheServiceTask(this, this.m_configuration, QUERY_STATE_SERVICE);
+            yield return new UninstallCacheServiceTask(this, this.m_configuration, DATA_CACHE_SERVICE);
+            yield return new UninstallCacheServiceTask(this, this.m_configuration, ADHOC_CACHE_SERVICE);
         }
 
         /// <summary>
@@ -109,15 +112,20 @@ namespace SanteDB.Core.Configuration.Features
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
             Type[] cacheProviders = AppDomain.CurrentDomain.GetAllTypes().Where(o => typeof(IDataCachingService).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface).ToArray(),
-                adhocProvider = AppDomain.CurrentDomain.GetAllTypes().Where(o => typeof(IAdhocCacheService).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface).ToArray();
+                adhocProvider = AppDomain.CurrentDomain.GetAllTypes().Where(o => typeof(IAdhocCacheService).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface).ToArray(),
+                queryProvider = AppDomain.CurrentDomain.GetAllTypes().Where(o => typeof(IQueryPersistenceService).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface).ToArray();
 
             this.m_configuration = new GenericFeatureConfiguration();
 
             var appServiceConfigurationSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>()?.ServiceProviders;
 
             // Add the provider handlers
-            var objCache = appServiceConfigurationSection.FirstOrDefault(t => typeof(IDataCachingService).IsAssignableFrom(t.Type));
-            var adCache = appServiceConfigurationSection.FirstOrDefault(t => typeof(IAdhocCacheService).IsAssignableFrom(t.Type));
+            TypeReferenceConfiguration objCache = appServiceConfigurationSection.FirstOrDefault(t => typeof(IDataCachingService).IsAssignableFrom(t.Type)),
+                adCache = appServiceConfigurationSection.FirstOrDefault(t => typeof(IAdhocCacheService).IsAssignableFrom(t.Type)),
+                qrCache = appServiceConfigurationSection.FirstOrDefault(t => typeof(IQueryPersistenceService).IsAssignableFrom(t.Type)),
+                originalCache = objCache,
+                originalAdCache = adCache,
+                originalQuery = qrCache;
 
             // What we want to do is to setup defaults if possible
             if (objCache == null)
@@ -128,15 +136,21 @@ namespace SanteDB.Core.Configuration.Features
             {
                 adCache = new TypeReferenceConfiguration(adhocProvider.FirstOrDefault(t => t.Name == "MemoryAdhocCacheService"));
             }
+            if (qrCache == null)
+            {
+                qrCache = new TypeReferenceConfiguration(queryProvider.FirstOrDefault(t => t.Name == "MemoryQueryPersistenceService"));
+            }
 
-            this.m_configuration.Categories.Add("Services", new string[] { DATA_CACHE_SERVICE, ADHOC_CACHE_SERVICE });
-            this.m_configuration.Values.Add(DATA_CACHE_SERVICE, objCache);
-            this.m_configuration.Values.Add(ADHOC_CACHE_SERVICE, adCache);
+            this.m_configuration.Categories.Add("Services", new string[] { DATA_CACHE_SERVICE, ADHOC_CACHE_SERVICE, QUERY_STATE_SERVICE });
+            this.m_configuration.Values.Add(DATA_CACHE_SERVICE, objCache.Type);
+            this.m_configuration.Values.Add(ADHOC_CACHE_SERVICE, adCache.Type);
+            this.m_configuration.Values.Add(QUERY_STATE_SERVICE, qrCache.Type);
             this.m_configuration.Options.Add(DATA_CACHE_SERVICE, () => cacheProviders);
             this.m_configuration.Options.Add(ADHOC_CACHE_SERVICE, () => adhocProvider);
+            this.m_configuration.Options.Add(QUERY_STATE_SERVICE, () => queryProvider);
 
             // Add the distinct configuration sections
-            foreach (var ct in cacheProviders.Union(adhocProvider).Select(o => o.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration).Distinct())
+            foreach (var ct in cacheProviders.Union(adhocProvider).Union(queryProvider).Select(o => o.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration).Distinct())
             {
                 if (ct == null) continue; // no configuration available
 
@@ -150,257 +164,8 @@ namespace SanteDB.Core.Configuration.Features
             }
 
            
-            return objCache != null && adCache != null ? FeatureInstallState.Installed : objCache != null || adCache != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
+            return originalCache != null && originalAdCache != null && originalQuery != null ? FeatureInstallState.Installed : originalQuery != null || originalCache != null || originalAdCache != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
         }
-    }
-
-    /// <summary>
-    /// Install the ad-hoc cache service
-    /// </summary>
-    internal class InstallAdHocCacheServiceTask : IConfigurationTask
-    {
-        // Configuration for the feature
-        private Type m_cacheType;
-        // Configuration
-        private object m_configuration;
-
-        /// <summary>
-        /// Install the ad-hoc cache service
-        /// </summary>
-        public InstallAdHocCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration)
-        {
-            this.Feature = cachingConfigurationFeature;
-            configuration.Values.TryGetValue(CachingConfigurationFeature.ADHOC_CACHE_SERVICE, out object cacheType);
-            m_cacheType = ((TypeReferenceConfiguration)cacheType).Type;
-            var configType = this.m_cacheType.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
-            this.m_configuration = configuration.Values.FirstOrDefault(t => t.Value.GetType() == configType);
-
-        }
-
-        /// <summary>
-        /// Gets a description of the feature
-        /// </summary>
-        public string Description => "Installs the selected ad-hoc cache service into the core service layer";
-
-        /// <summary>
-        /// Gets the feature on which this task is attached
-        /// </summary>
-        public IFeature Feature { get; }
-
-        /// <summary>
-        /// Gets the name of this task
-        /// </summary>
-        public string Name => "Install Ad-Hoc Cache";
-
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
-        /// <summary>
-        /// Execute the specified task configuration
-        /// </summary>
-        public bool Execute(SanteDBConfiguration configuration)
-        {
-            // First - remove the service instance
-            var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            var typeConfiguration = appService.ServiceProviders.Find(o => typeof(IAdhocCacheService).IsAssignableFrom(o.Type));
-
-            // Next we remove the existing configuration
-            if (typeConfiguration != null)
-            {
-                appService.ServiceProviders.Remove(typeConfiguration);
-            }
-
-            // Then we add our own service
-            appService.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_cacheType));
-
-            // Next remove the old configuration section
-            var configType = typeConfiguration.Type.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
-            if (configType != null)
-            {
-                configuration.RemoveSection(configType);
-            }
-            // Then we add our own configuration
-            configuration.AddSection(this.m_configuration);
-            return true;
-        }
-
-        /// <summary>
-        /// Rollback the confguration
-        /// </summary>
-        public bool Rollback(SanteDBConfiguration configuration)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Verify the state of this configuration file
-        /// </summary>
-        public bool VerifyState(SanteDBConfiguration configuration) => true;
-    }
-
-    /// <summary>
-    /// Install the data cache service task
-    /// </summary>
-    internal class InstallCacheServiceTask : IConfigurationTask
-    {
-        // Configuration for the feature
-        private Type m_cacheType;
-        // Configuration
-        private object m_configuration;
-
-        /// <summary>
-        /// Install the ad-hoc cache service
-        /// </summary>
-        public InstallCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration)
-        {
-            this.Feature = cachingConfigurationFeature;
-            configuration.Values.TryGetValue(CachingConfigurationFeature.DATA_CACHE_SERVICE, out object cacheType);
-            m_cacheType = ((TypeReferenceConfiguration)cacheType).Type;
-            var configType = this.m_cacheType.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
-            this.m_configuration = configuration.Values.FirstOrDefault(t => t.Value?.GetType() == configType);
-
-        }
-
-        /// <summary>
-        /// Gets a description of the feature
-        /// </summary>
-        public string Description => "Installs the selected data cache service into the core service layer";
-
-        /// <summary>
-        /// Gets the feature on which this task is attached
-        /// </summary>
-        public IFeature Feature { get; }
-
-        /// <summary>
-        /// Gets the name of this task
-        /// </summary>
-        public string Name => "Install Data Cache";
-
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
-        /// <summary>
-        /// Execute the specified task configuration
-        /// </summary>
-        public bool Execute(SanteDBConfiguration configuration)
-        {
-            // First - remove the service instance
-            var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            var typeConfiguration = appService.ServiceProviders.Find(o => typeof(IAdhocCacheService).IsAssignableFrom(o.Type));
-
-            // Next we remove the existing configuration
-            if (typeConfiguration != null)
-            {
-                appService.ServiceProviders.Remove(typeConfiguration);
-            }
-
-            // Then we add our own service
-            appService.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_cacheType));
-
-            // Next remove the old configuration section
-            var configType = typeConfiguration.Type.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
-            if (configType != null)
-            {
-                configuration.RemoveSection(configType);
-            }
-            // Then we add our own configuration
-            configuration.AddSection(this.m_configuration);
-            return true;
-        }
-
-        /// <summary>
-        /// Rollback the confguration
-        /// </summary>
-        public bool Rollback(SanteDBConfiguration configuration)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Verify the state of this configuration file
-        /// </summary>
-        public bool VerifyState(SanteDBConfiguration configuration) => true;
-    }
-
-    /// <summary>
-    /// Removes the ad-hoc cache service
-    /// </summary>
-    internal class UninstallAdHocCacheServiceTask : IConfigurationTask
-    {
-
-        // Configuration for the feature
-        private Type m_cacheType;
-
-        /// <summary>
-        /// Un-install the ad-hoc caching service
-        /// </summary>
-        public UninstallAdHocCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration)
-        {
-            this.Feature = cachingConfigurationFeature;
-            configuration.Values.TryGetValue(CachingConfigurationFeature.ADHOC_CACHE_SERVICE, out object cacheType);
-            m_cacheType = ((TypeReferenceConfiguration)cacheType).Type;
-
-        }
-
-        /// <summary>
-        /// Gets the description of the installation task
-        /// </summary>
-        public string Description => "Removes the ad-hoc caching service and the related configuration";
-
-        /// <summary>
-        /// Gets the feature to which this task is bound
-        /// </summary>
-        public IFeature Feature { get; }
-
-        /// <summary>
-        /// Get the name of this task
-        /// </summary>
-        public string Name => "Remove Ad-hoc Cache Service";
-
-        /// <summary>
-        /// Fired when the progress changes
-        /// </summary>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
-        /// <summary>
-        /// Execute the installation task
-        /// </summary>
-        public bool Execute(SanteDBConfiguration configuration)
-        {
-
-            // First - remove the service instance
-            var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            var typeConfiguration = appService.ServiceProviders.Find(o => o.Type == this.m_cacheType);
-            if (typeConfiguration != null)
-            {
-                appService.ServiceProviders.Remove(typeConfiguration);
-            }
-
-            // Next remove the configuration section
-            var configType = this.m_cacheType.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
-            if (configType != null)
-            {
-                configuration.RemoveSection(configType);
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Rollback the installation
-        /// </summary>
-        public bool Rollback(SanteDBConfiguration configuration)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Verify the state of the configuration
-        /// </summary>
-        public bool VerifyState(SanteDBConfiguration configuration) => this.m_cacheType != null;
     }
 
     /// <summary>
@@ -411,21 +176,24 @@ namespace SanteDB.Core.Configuration.Features
         // Configuration for the feature
         private Type m_cacheType;
 
+        // configuration name
+        private string m_configurationName;
+
         /// <summary>
         /// Removes the data cache service
         /// </summary>
-        public UninstallCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration)
+        public UninstallCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration, string configurationName)
         {
             this.Feature = cachingConfigurationFeature;
-            configuration.Values.TryGetValue(CachingConfigurationFeature.DATA_CACHE_SERVICE, out object cacheType);
-            m_cacheType = ((TypeReferenceConfiguration)cacheType).Type;
-
+            this.m_configurationName = configurationName;
+            configuration.Values.TryGetValue(this.m_configurationName, out object cacheType);
+            m_cacheType = (Type)cacheType;
         }
 
         /// <summary>
         /// Gets the description of the feature
         /// </summary>
-        public string Description => "Removes the Data Object Cache service from the server configuration";
+        public string Description => $"Remove {this.m_configurationName}";
 
         /// <summary>
         /// Gets the feature
@@ -435,7 +203,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Get the name of the task
         /// </summary>
-        public string Name => "Remove Data Object Cache";
+        public string Name => $"Remove {this.m_configurationName}";
 
         /// <summary>
         /// Fired when progress changes
@@ -449,11 +217,10 @@ namespace SanteDB.Core.Configuration.Features
         {
             // First - remove the service instance
             var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-            var typeConfiguration = appService.ServiceProviders.Find(o => o.Type == this.m_cacheType);
-            if (typeConfiguration != null)
-            {
-                appService.ServiceProviders.Remove(typeConfiguration);
-            }
+            var typeConfiguration = appService.ServiceProviders.Find(o => typeof(IDataCachingService).IsAssignableFrom(o.Type) && o.Type != this.m_cacheType);
+
+            // Next we remove the existing configuration
+            appService.ServiceProviders.RemoveAll(o => typeof(IDataCachingService).IsAssignableFrom(o.Type));
 
             // Next remove the configuration section
             var configType = this.m_cacheType.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
@@ -478,5 +245,96 @@ namespace SanteDB.Core.Configuration.Features
         public bool VerifyState(SanteDBConfiguration configuration) => this.m_cacheType != null;
     }
 
+
+    /// <summary>
+    /// Install the data cache service task
+    /// </summary>
+    internal class InstallCacheServiceTask : IConfigurationTask
+    {
+        // Configuration for the feature
+        private Type m_cacheType;
+        // Configuration
+        private object m_configuration;
+        // Configuration name
+        private String m_configurationName;
+        // Alternate options
+        private Type[] m_alternateOptions;
+
+        /// <summary>
+        /// Install the ad-hoc cache service
+        /// </summary>
+        public InstallCacheServiceTask(CachingConfigurationFeature cachingConfigurationFeature, GenericFeatureConfiguration configuration, String configurationName)
+        {
+            this.m_configurationName = configurationName;
+            this.Feature = cachingConfigurationFeature;
+            configuration.Values.TryGetValue(this.m_configurationName, out object cacheType);
+            m_cacheType = (Type)cacheType;
+            var configType = this.m_cacheType.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
+            this.m_configuration = configuration.Values.FirstOrDefault(t => t.Value?.GetType() == configType).Value;
+            this.m_alternateOptions = configuration.Options[this.m_configurationName]() as Type[];
+        }
+
+        /// <summary>
+        /// Gets a description of the feature
+        /// </summary>
+        public string Description => $"Install {this.m_configurationName}";
+
+        /// <summary>
+        /// Gets the feature on which this task is attached
+        /// </summary>
+        public IFeature Feature { get; }
+
+        /// <summary>
+        /// Gets the name of this task
+        /// </summary>
+        public string Name => $"Install {this.m_configurationName}";
+
+        /// <summary>
+        /// Progress has changed
+        /// </summary>
+        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+        /// <summary>
+        /// Execute the specified task configuration
+        /// </summary>
+        public bool Execute(SanteDBConfiguration configuration)
+        {
+            // First - remove the service instance
+            var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+            var typeConfiguration = appService.ServiceProviders.Find(o => this.m_alternateOptions.Contains(o.Type) && o.Type != this.m_cacheType);
+
+            // Next we remove the existing configuration
+            appService.ServiceProviders.RemoveAll(o => this.m_alternateOptions.Contains(o.Type));
+
+            // Then we add our own service
+            appService.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_cacheType));
+
+            // Next remove the old configuration section
+            var configType = typeConfiguration?.Type.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;
+            if (configType != null)
+            {
+                configuration.RemoveSection(configType);
+            }
+            // Then we add our own configuration
+            if (this.m_configuration != null)
+            {
+                configuration.AddSection(this.m_configuration);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Rollback the confguration
+        /// </summary>
+        public bool Rollback(SanteDBConfiguration configuration)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Verify the state of this configuration file
+        /// </summary>
+        public bool VerifyState(SanteDBConfiguration configuration) => true;
+    }
 
 }
