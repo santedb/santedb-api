@@ -268,9 +268,9 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="SanteDB.Core.Model" Version="$(VersionNumber)" />
-        <PackageReference Include="SharpCompress" Version="0.26.0" />
+        <PackageReference Include="SharpCompress" Version="0.28.3" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.0.1" />
       </ItemGroup>
     </Otherwise>
