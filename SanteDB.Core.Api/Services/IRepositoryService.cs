@@ -127,6 +127,7 @@ namespace SanteDB.Core.Services
         /// <param name="offset">The offset.</param>
         /// <param name="count">The count.</param>
         /// <param name="totalResults">The total results.</param>
+        /// <param name="orderBy">The ordering instructions that are to be appended to the query</param>
         /// <returns>Returns a list of identified data.</returns>
         IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
 

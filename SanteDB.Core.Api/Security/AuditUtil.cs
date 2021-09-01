@@ -445,7 +445,9 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that sensitve data was disclosed
         /// </summary>
-        /// <param name="result"></param>
+        /// <param name="result">The result record which was disclosed</param>
+        /// <param name="decision">The policy decision which resulted in the disclosure</param>
+        /// <param name="disclosed">True if the record was actually disclosed (false if the audit is merely the access is being audited)</param>
         public static void AuditSensitiveDisclosure(IdentifiedData result, PolicyDecision decision, bool disclosed)
         {
             traceSource.TraceInfo("Create AuditDataAction audit");

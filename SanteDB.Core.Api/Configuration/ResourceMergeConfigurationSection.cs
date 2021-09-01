@@ -35,7 +35,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public ResourceMergeConfigurationSection()
         {
-
+            this.ResourceTypes = new List<ResourceMergeConfiguration>();
         }
         
         /// <summary>

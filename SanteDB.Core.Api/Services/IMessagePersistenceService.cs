@@ -117,10 +117,11 @@ namespace SanteDB.Core.Services
         Stream GetMessage(string messageId);
 
         /// <summary>
-        /// Persist
+        /// Persist the result of a message request
         /// </summary>
-        /// <param name="guid"></param>
         /// <param name="response"></param>
+        /// <param name="messageId">The identifier of the result message to be stored</param>
+        /// <param name="respondsToId">The identifier of the message which this message responds to</param>
         void PersistResultMessage(string messageId, string respondsToId, Stream response);
 
         /// <summary>

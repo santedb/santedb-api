@@ -114,10 +114,10 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_configuration.MatchConfiguration.Where(r=>r.AutoLink).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
-                if (this.m_configuration.AutoMerge && matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
+                if (matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
                 {
                     var match = matches.SingleOrDefault();
                     if (this.m_configuration.PreserveOriginal)
@@ -342,8 +342,8 @@ namespace SanteDB.Core.Data
             // Register mergers for all types in configuration
             foreach (var i in this.m_configuration.ResourceTypes)
             {
-                this.m_tracer.TraceInfo("Creating record management service for {0}", i.ResourceType.Name);
-                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.ResourceType);
+                this.m_tracer.TraceInfo("Creating record management service for {0}", i.ResourceType.Type.Name);
+                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.ResourceType.Type);
                 this.m_mergeServices.Add(Activator.CreateInstance(idt, i) as IDisposable);
             }
 
