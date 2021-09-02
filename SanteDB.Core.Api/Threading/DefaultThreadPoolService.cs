@@ -39,7 +39,7 @@ namespace SanteDB.Core.Services.Impl
     /// didn't have a thread pool. Additionally it provided statistics on the thread pool load, etc. This has been 
     /// refactored.
     /// </remarks>
-    public class DefaultThreadPoolService : IThreadPoolService
+    public class DefaultThreadPoolService : IThreadPoolService, IDisposable
     {
 
         // Lock
@@ -166,7 +166,7 @@ namespace SanteDB.Core.Services.Impl
         {
             return new Thread(this.DispatchLoop)
             {
-                Name = String.Format("RSRVR-ThreadPoolThread"),
+                Name = String.Format("SanteDB-ThreadPoolThread"),
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
             };
