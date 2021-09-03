@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
 using System;
@@ -125,7 +127,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The record that was matched
         /// </summary>
-        T Record { get; }
+        new T Record { get; }
 
     }
 
@@ -156,6 +158,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="input">The input record</param>
         /// <param name="matches">The matches</param>
+        /// <param name="inputType">The type of input to create the report for</param>
         /// <returns>A serializable object representing the match reports</returns>
         Object CreateMatchReport(Type inputType, object input, IEnumerable<IRecordMatchResult> matches);
 
@@ -223,6 +226,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="input">The record being compared</param>
         /// <param name="configurationName">The configuration to use</param>
+        /// <param name="ignoreList">The list of data to ignore</param>
         /// <returns>The candidate match results</returns>
         IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName, IEnumerable<Guid> ignoreList);
     }

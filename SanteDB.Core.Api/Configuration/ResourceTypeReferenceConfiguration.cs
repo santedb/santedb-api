@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Serialization;
@@ -34,17 +36,17 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the resource type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
-        public String ResourceTypeXml { get; set; }
+        public String TypeXml { get; set; }
 
         /// <summary>
         /// Gets the resource
         /// </summary>
         [XmlIgnore, JsonIgnore]
-        public Type ResourceType => new ModelSerializationBinder().BindToType(null, this.ResourceTypeXml);
+        public Type Type => new ModelSerializationBinder().BindToType(null, this.TypeXml);
 
         /// <summary>
         /// Gets as a string
         /// </summary>
-        public override string ToString() => this.ResourceTypeXml;
+        public override string ToString() => this.TypeXml;
     }
 }

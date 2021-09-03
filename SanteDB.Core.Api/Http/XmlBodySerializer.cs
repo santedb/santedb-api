@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
@@ -37,9 +39,6 @@ namespace SanteDB.Core.Http
         // Fault serializer
         private static XmlSerializer m_faultSerializer = XmlModelSerializerFactory.Current.CreateSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
 
-        // Xml types
-        private static List<Type> m_xmlTypes = null;
-
         // Serializer
         private XmlSerializer m_serializer;
 
@@ -58,7 +57,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the serializer
         /// </summary>
-        public object Serializer => this.m_serializer;
+        public object Serializer { get; }
 
         #region IBodySerializer implementation
 

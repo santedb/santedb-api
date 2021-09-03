@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Security;
@@ -169,6 +171,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data to be persisted</param>
         /// <param name="principal">The principal under which the persistence is taking place</param>
+        /// <param name="mode">The mode of transaction (commit, rollback)</param>
         public DataPersistingEventArgs(TData data, TransactionMode mode, IPrincipal principal) : base(data, mode, principal)
         {
         }
@@ -203,6 +206,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data that was persisted</param>
         /// <param name="principal">The principal which was responsible for the creation of the data</param>
+        /// <param name="transactionMode">The mode of the transaction</param>
         public DataPersistedEventArgs(TData data, TransactionMode transactionMode, IPrincipal principal) : base(principal)
         {
             this.Data = data;

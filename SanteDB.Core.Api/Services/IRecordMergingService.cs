@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
@@ -134,7 +136,7 @@ namespace SanteDB.Core.Services
         void UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys);
 
         /// <summary>
-        /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="master"/>
+        /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="masterKey"/>
         /// </summary>
         /// <param name="masterKey">The master record to which the linked duplicates are to be attached</param>
         /// <param name="linkedDuplicates">The linked records to be merged to master</param>
@@ -142,7 +144,7 @@ namespace SanteDB.Core.Services
         RecordMergeResult Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates);
 
         /// <summary>
-        /// Un-merges the specified <paramref name="unmergeDuplicate"/> from <paramref name="master"/>
+        /// Un-merges the specified <paramref name="unmergeDuplicateKey"/> from <paramref name="masterKey"/>
         /// </summary>
         /// <param name="masterKey">The master record from which a duplicate is to be removed</param>
         /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>

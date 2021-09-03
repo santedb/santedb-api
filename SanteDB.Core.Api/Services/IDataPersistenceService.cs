@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
@@ -104,36 +106,51 @@ namespace SanteDB.Core.Services
         /// Insert the specified data.
         /// </summary>
         /// <param name="data">Data.</param>
+        /// <param name="principal">The principal which is executing the insert</param>
+        /// <param name="mode">The mode of insert (commit or rollback for testing)</param>
         TData Insert(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
+        /// <param name="mode">The mode of update (commit or rollback)</param>
+        /// <param name="principal">The principal which is executing the operation</param>
         TData Update(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Obsolete the specified identified data
         /// </summary>
         /// <param name="data">Data.</param>
+        /// <param name="principal">The security principal which is executing the obsolete</param>
+        /// <param name="mode">The transaction mode (commit or rollback)</param>
         TData Obsolete(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
-        /// Get the specified key.
+        /// Get the object specified <paramref name="key"/>.
         /// </summary>
         /// <param name="key">Key.</param>
+        /// <param name="principal">The security principal which is executing the retrieve</param>
+        /// <param name="loadFast">If true, the data should not be deep loaded</param>
+        /// <param name="versionKey">The version of the oject to fetch</param>
         TData Get(Guid key, Guid? versionKey, bool loadFast, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
+        /// <param name="principal">The principal under which the query is occurring</param>
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
+        /// <param name="orderBy">The ordering instrutions to send the query</param>
+        /// <param name="totalResults">The total number of results matching the query</param>
+        /// <param name="count">The count of results to include in the response set</param>
+        /// <param name="offset">The offset of the first result</param>
+        /// <param name="principal">The security principal under which the query is occurring</param>
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
         
         /// <summary>

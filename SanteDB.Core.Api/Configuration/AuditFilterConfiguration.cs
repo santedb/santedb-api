@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using System.ComponentModel;
@@ -84,14 +86,29 @@ namespace SanteDB.Core.Configuration
         public bool SendRemote { get; set; }
 
         #region Serialization Control
+
+        /// <summary>
+        /// True if the action is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool ActionSpecified { get; set; }
+
+        /// <summary>
+        /// True if the event is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool EventSpecified { get; set; }
+
+        /// <summary>
+        /// True if the outcome is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
         #endregion
 
+        /// <summary>
+        /// Represent the filter as a stirng
+        /// </summary>
         public override string ToString() => $"ACT={(this.ActionSpecified ? this.Action : 0)};EVT={(this.EventSpecified ? this.Event : 0)};OUTC={(this.OutcomeSpecified ? this.Outcome : 0)}";
     }
 }

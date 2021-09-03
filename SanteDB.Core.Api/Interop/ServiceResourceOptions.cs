@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,14 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-#pragma warning disable CS1591
 namespace SanteDB.Core.Interop
 {
 
@@ -67,24 +68,54 @@ namespace SanteDB.Core.Interop
     [XmlType(nameof(ResourceCapabilityType), Namespace = "http://santedb.org/model"), Flags]
     public enum ResourceCapabilityType
     {
+        /// <summary>
+        /// There is no capability on this resource
+        /// </summary>
         [XmlEnum("none")]
         None = 0x00,
+        /// <summary>
+        /// The resource can accept CREATE operations
+        /// </summary>
         [XmlEnum("create")]
         Create = 0x001,
+        /// <summary>
+        /// The resource can either CREATE or UPDATE data
+        /// </summary>
         [XmlEnum("create-update")]
         CreateOrUpdate = 0x002,
+        /// <summary>
+        /// The resource can be updated via PUT
+        /// </summary>
         [XmlEnum("update")]
         Update = 0x004,
+        /// <summary>
+        /// The resource can be deleted
+        /// </summary>
         [XmlEnum("delete")]
         Delete = 0x008,
+        /// <summary>
+        /// The resource can be patched
+        /// </summary>
         [XmlEnum("patch")]
         Patch = 0x010,
+        /// <summary>
+        /// The resource can be retrieved by ID
+        /// </summary>
         [XmlEnum("get")]
         Get = 0x020,
+        /// <summary>
+        /// The resource can be retrieved and supports versioning
+        /// </summary>
         [XmlEnum("get-version")]
         GetVersion = 0x040,
+        /// <summary>
+        /// The resource has the history function
+        /// </summary>
         [XmlEnum("history")]
         History = 0x080,
+        /// <summary>
+        /// The resource can be searched
+        /// </summary>
         [XmlEnum("search")]
         Search = 0x100
     }
@@ -94,6 +125,13 @@ namespace SanteDB.Core.Interop
     /// </summary>
     public static class ResourceCapabilityTypeExtensions
     {
+
+        /// <summary>
+        /// Conver the ResourceCapbility into a collection of service metadata capapbilities
+        /// </summary>
+        /// <param name="me">The resource capability type to convert</param>
+        /// <param name="getDemandsFunc">A callback which fetches the policies the resource requires.</param>
+        /// <returns>The collection of metadata capabilities to pass to the OPTIONS call</returns>
         public static IEnumerable<ServiceResourceCapability> ToResourceCapabilityStatement(this ResourceCapabilityType me, Func<ResourceCapabilityType, String[]> getDemandsFunc)
         {
             var caps = new List<ServiceResourceCapability>();
@@ -180,6 +218,7 @@ namespace SanteDB.Core.Interop
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
         /// <param name="resourceType">The type of resource which options are being fetched for</param>
+        /// <param name="subResources">Resources which are children of this resource</param>
         public ServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, List<ChildServiceResourceOptions> subResources)
         {
             this.ResourceName = resourceName;
@@ -236,6 +275,8 @@ namespace SanteDB.Core.Interop
         /// <param name="resourceName">The name of the resource of the service resource options.</param>
         /// <param name="operations">The list of HTTP verbs of the resource option.</param>
         /// <param name="resourceType">The type of resource which options are being fetched for</param>
+        /// <param name="classification">The scope of the child oject (if it applies to class or instance)</param>
+        /// <param name="scope">The scope of the child resource</param>
         public ChildServiceResourceOptions(string resourceName, Type resourceType, List<ServiceResourceCapability> operations, ChildObjectScopeBinding scope, ChildObjectClassification classification)
             : base(resourceName, resourceType, operations, null)
         {
@@ -258,4 +299,3 @@ namespace SanteDB.Core.Interop
 
     }
 }
-#pragma warning restore CS1591

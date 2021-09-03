@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
@@ -58,6 +60,7 @@ namespace SanteDB.Core.Exceptions
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
         /// <param name="principal">The principal which attempted the action</param>
+        /// <param name="decision">The decision of the policy which caused the exception</param>
         public PolicyViolationException(IPrincipal principal, PolicyDecision decision)
         {
             this.PolicyId = decision.Details.First(p=>p.Outcome == decision.Outcome).PolicyId;

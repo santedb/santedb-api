@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Configuration;
@@ -109,10 +111,10 @@ namespace SanteDB.Core.Security.Privacy
             if (this.m_configuration.Resources != null)
                 foreach (var t in this.m_configuration.Resources)
                 {
-                    if (typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
+                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type))
                     {
-                        this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType);
-                        this.m_actions.TryAdd(t.ResourceType, t.Action);
+                        this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
+                        this.m_actions.TryAdd(t.ResourceType.Type, t.Action);
                     }
                 }
         }

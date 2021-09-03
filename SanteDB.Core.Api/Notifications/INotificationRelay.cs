@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Model.Security;
 using System;
@@ -41,6 +43,7 @@ namespace SanteDB.Core.Notifications
         /// <param name="body">The body of the message</param>
         /// <param name="scheduleDelivery">The time when the message should be sent (for future delivery)</param>
         /// <param name="attachments">Attachment file and content</param>
+        /// <param name="ccAdmins">When true, administrators should be notified as well</param>
         Guid Send(String[] toAddress, String subject, String body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
 
     }

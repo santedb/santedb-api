@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,12 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -51,7 +54,7 @@ namespace SanteDB.Core.Security.Configuration
     /// </summary>
     [XmlType(nameof(ResourceDataPolicyFilter), Namespace = "http://santedb.org/configuration")]
 
-    public class ResourceDataPolicyFilter : ResourceTypeReferenceConfiguration
+    public class ResourceDataPolicyFilter 
     {
 
         /// <summary>
@@ -59,6 +62,14 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         [XmlAttribute("action")]
         public ResourceDataPolicyActionType Action { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource type
+        /// </summary>
+        [XmlElement("resourceType")]
+        [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
+        [TypeConverter("SanteDB.Configuration.Converters.StringCollectionRenderConverter, SanteDB.Configuration")]
+        public ResourceTypeReferenceConfiguration ResourceType { get; set; }
     }
 
     /// <summary>

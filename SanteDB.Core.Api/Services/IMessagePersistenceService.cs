@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using System;
 using System.Collections.Generic;
@@ -115,10 +117,11 @@ namespace SanteDB.Core.Services
         Stream GetMessage(string messageId);
 
         /// <summary>
-        /// Persist
+        /// Persist the result of a message request
         /// </summary>
-        /// <param name="guid"></param>
         /// <param name="response"></param>
+        /// <param name="messageId">The identifier of the result message to be stored</param>
+        /// <param name="respondsToId">The identifier of the message which this message responds to</param>
         void PersistResultMessage(string messageId, string respondsToId, Stream response);
 
         /// <summary>

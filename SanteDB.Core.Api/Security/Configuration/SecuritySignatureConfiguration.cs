@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using Newtonsoft.Json;
 using System;
@@ -34,10 +36,19 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SignatureAlgorithm), Namespace = "http://santedb.org/configuration")]
     public enum SignatureAlgorithm
     {
+        /// <summary>
+        /// The desired signature algorithm is RSA+SHA256 (i.e. an X.509 cert) 
+        /// </summary>
         [XmlEnum("rs256")]
         RS256,
+        /// <summary>
+        /// The desired signature algorithm is HMAC256
+        /// </summary>
         [XmlEnum("hmac")]
         HS256,
+        /// <summary>
+        /// The desired signature algorithm is RSA+SHA512
+        /// </summary>
         [XmlEnum("rs512")]
         RS512
     }

@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
 using System;
@@ -33,8 +35,8 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Performs a query which
         /// </summary>
-        /// <typeparam name="TEntity">The underlying entity type which is being queried</typeparam>
         /// <param name="query">The query to be executed</param>
+        /// <param name="orderBy">The order instructions to append to the query</param>
         /// <param name="offset">The offset</param>
         /// <param name="count">The number of results</param>
         /// <param name="totalResults">The total results in the query</param>

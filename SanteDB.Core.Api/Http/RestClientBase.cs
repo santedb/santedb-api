@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -220,6 +222,7 @@ namespace SanteDB.Core.Http
         /// Retrieves a raw byte array of data from the specified location
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
+        /// <param name="query">The query (as key=value) to send on the GET request</param>
         public byte[] Get(String url, params KeyValuePair<string, object>[] query)
         {
             NameValueCollection parameters = new NameValueCollection();

@@ -1,5 +1,7 @@
 ﻿/*
- * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors (See NOTICE.md)
+ * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you 
  * may not use this file except in compliance with the License. You may 
@@ -14,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-2-9
+ * Date: 2021-8-5
  */
 using SanteDB.Core.Security;
 using SanteDB.Core.Auditing;
@@ -132,7 +134,6 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="outcome">The outcome of the action</param>
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
-        /// <param name="remoteAddress">The remote address</param>
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
             traceSource.TraceInfo("Create AuditLogUsed audit");
@@ -243,6 +244,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <param name="targetOfMasking">The object which was masked</param>
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
+        /// <param name="decision">The decision which caused the masking to occur</param>
         public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved)
             where TModel : IdentifiedData
         {
@@ -369,6 +371,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <typeparam name="TData"></typeparam>
         /// <param name="obj">The object to translate</param>
+        /// <param name="lifecycle">The lifecycle of </param>
         private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
         {
 
@@ -442,7 +445,9 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that sensitve data was disclosed
         /// </summary>
-        /// <param name="result"></param>
+        /// <param name="result">The result record which was disclosed</param>
+        /// <param name="decision">The policy decision which resulted in the disclosure</param>
+        /// <param name="disclosed">True if the record was actually disclosed (false if the audit is merely the access is being audited)</param>
         public static void AuditSensitiveDisclosure(IdentifiedData result, PolicyDecision decision, bool disclosed)
         {
             traceSource.TraceInfo("Create AuditDataAction audit");
