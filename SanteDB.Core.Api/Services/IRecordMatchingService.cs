@@ -127,7 +127,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The record that was matched
         /// </summary>
-        T Record { get; }
+        new T Record { get; }
 
     }
 
@@ -158,6 +158,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="input">The input record</param>
         /// <param name="matches">The matches</param>
+        /// <param name="inputType">The type of input to create the report for</param>
         /// <returns>A serializable object representing the match reports</returns>
         Object CreateMatchReport(Type inputType, object input, IEnumerable<IRecordMatchResult> matches);
 
@@ -225,6 +226,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="input">The record being compared</param>
         /// <param name="configurationName">The configuration to use</param>
+        /// <param name="ignoreList">The list of data to ignore</param>
         /// <returns>The candidate match results</returns>
         IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName, IEnumerable<Guid> ignoreList);
     }

@@ -68,6 +68,7 @@ namespace SanteDB.Core.Security
         /// <param name="refreshToken">The token which can be used to extend the session</param>
         /// <param name="notBefore">Indicates a not-before time</param>
         /// <param name="notAfter">Indicates a not-after time</param>
+        /// <param name="claims">The claims to be added to the session</param>
         public GenericSession(byte[] id, byte[] refreshToken, DateTimeOffset notBefore, DateTimeOffset notAfter, IClaim[] claims)
         {
             this.Id = id;

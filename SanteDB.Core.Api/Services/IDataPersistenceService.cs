@@ -106,12 +106,16 @@ namespace SanteDB.Core.Services
         /// Insert the specified data.
         /// </summary>
         /// <param name="data">Data.</param>
+        /// <param name="principal">The principal which is executing the insert</param>
+        /// <param name="mode">The mode of insert (commit or rollback for testing)</param>
         TData Insert(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
+        /// <param name="mode">The mode of update (commit or rollback)</param>
+        /// <param name="principal">The principal which is executing the operation</param>
         TData Update(TData data, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
@@ -121,22 +125,29 @@ namespace SanteDB.Core.Services
         TData Obsolete(Guid key, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
-        /// Get the specified key.
+        /// Get the object specified <paramref name="key"/>.
         /// </summary>
         /// <param name="key">Key.</param>
-        /// <param name="versionKey">The optional version to load</param>
+        /// <param name="principal">The security principal which is executing the retrieve</param>
+        /// <param name="versionKey">The version of the oject to fetch</param>
         TData Get(Guid key, Guid? versionKey, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
+        /// <param name="principal">The principal under which the query is occurring</param>
         IQueryResultSet<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
         /// </summary>
         /// <param name="query">Query.</param>
+        /// <param name="orderBy">The ordering instrutions to send the query</param>
+        /// <param name="totalResults">The total number of results matching the query</param>
+        /// <param name="count">The count of results to include in the response set</param>
+        /// <param name="offset">The offset of the first result</param>
+        /// <param name="principal">The security principal under which the query is occurring</param>
         [Obsolete("Use Query(query, principal) instead", false)]
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
         

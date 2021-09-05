@@ -462,7 +462,7 @@ namespace SanteDB.Core.Services.Impl
                                 Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
                                 (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
                                 Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type); 
-                            ///Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
+                            //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
                             parameterValues[i] = expr;
                         }
                     }

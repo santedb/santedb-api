@@ -73,6 +73,7 @@ namespace SanteDB.Core.Exceptions
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>
         /// <param name="principal">The principal which attempted the action</param>
+        /// <param name="decision">The decision of the policy which caused the exception</param>
         public PolicyViolationException(IPrincipal principal, PolicyDecision decision)
         {
             this.PolicyId = decision.Details.First(p=>p.Outcome == decision.Outcome).PolicyId;

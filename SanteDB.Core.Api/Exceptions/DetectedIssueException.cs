@@ -46,7 +46,7 @@ namespace SanteDB.Core.Exceptions
         }
 
         /// <summary>
-        /// Creates a new detected issue exception with the specified <paramref name="issues"/> and <paramref name="message"/>
+        /// Creates a new detected issue exception with the specified <paramref name="issues"/> 
         /// </summary>
         public DetectedIssueException(List<DetectedIssue> issues, Exception cause) : this(issues, null, cause)
         {
@@ -100,7 +100,7 @@ namespace SanteDB.Core.Exceptions
             };
         }
 
-        /// <sumsmary>
+        /// <summary>
         /// Write to string
         /// </summary>
         public override string ToString()

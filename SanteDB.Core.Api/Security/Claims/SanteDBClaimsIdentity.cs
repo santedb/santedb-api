@@ -42,6 +42,7 @@ namespace SanteDB.Core.Security.Claims
         /// <param name="userName">User name.</param>
         /// <param name="isAuthenticated">If set to <c>true</c> is authenticated.</param>
         /// <param name="authenticationMethod">Identifies how the principal was authenticated</param>
+        /// <param name="claims">The claims which are to be attached to the identity</param>
         public SanteDBClaimsIdentity(String userName, bool isAuthenticated, string authenticationMethod, IEnumerable<IClaim> claims = null)
         {
             if (claims != null)

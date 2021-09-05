@@ -87,14 +87,29 @@ namespace SanteDB.Core.Configuration
         public bool SendRemote { get; set; }
 
         #region Serialization Control
+
+        /// <summary>
+        /// True if the action is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool ActionSpecified { get; set; }
+
+        /// <summary>
+        /// True if the event is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool EventSpecified { get; set; }
+
+        /// <summary>
+        /// True if the outcome is specified
+        /// </summary>
         [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
         #endregion
 
+        /// <summary>
+        /// Represent the filter as a stirng
+        /// </summary>
         public override string ToString() => $"ACT={(this.ActionSpecified ? this.Action : 0)};EVT={(this.EventSpecified ? this.Event : 0)};OUTC={(this.OutcomeSpecified ? this.Outcome : 0)}";
     }
 }

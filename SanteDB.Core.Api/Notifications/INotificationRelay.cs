@@ -43,6 +43,7 @@ namespace SanteDB.Core.Notifications
         /// <param name="body">The body of the message</param>
         /// <param name="scheduleDelivery">The time when the message should be sent (for future delivery)</param>
         /// <param name="attachments">Attachment file and content</param>
+        /// <param name="ccAdmins">When true, administrators should be notified as well</param>
         Guid Send(String[] toAddress, String subject, String body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
 
     }

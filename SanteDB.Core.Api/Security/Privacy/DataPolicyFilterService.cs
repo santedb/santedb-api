@@ -105,10 +105,10 @@ namespace SanteDB.Core.Security.Privacy
             if (this.m_configuration.Resources != null)
                 foreach (var t in this.m_configuration.Resources)
                 {
-                    if (typeof(Act).IsAssignableFrom(t.ResourceType) || typeof(Entity).IsAssignableFrom(t.ResourceType))
+                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type))
                     {
-                        this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType);
-                        this.m_actions.TryAdd(t.ResourceType, t.Action);
+                        this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
+                        this.m_actions.TryAdd(t.ResourceType.Type, t.Action);
                     }
                 }
         }

@@ -36,17 +36,17 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the resource type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
-        public String ResourceTypeXml { get; set; }
+        public String TypeXml { get; set; }
 
         /// <summary>
         /// Gets the resource
         /// </summary>
         [XmlIgnore, JsonIgnore]
-        public Type ResourceType => new ModelSerializationBinder().BindToType(null, this.ResourceTypeXml);
+        public Type Type => new ModelSerializationBinder().BindToType(null, this.TypeXml);
 
         /// <summary>
         /// Gets as a string
         /// </summary>
-        public override string ToString() => this.ResourceTypeXml;
+        public override string ToString() => this.TypeXml;
     }
 }

@@ -37,7 +37,9 @@ namespace SanteDB.Core.Security
         /// </summary>
         public String ServiceName => "Regular Expression Password Validator";
 
-        // Default password pattern
+        /// <summary>
+        /// The default password pattern
+        /// </summary>
         public const string DefaultPasswordPattern = @"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{4,}$";
 
         // Regex for password validation
@@ -58,5 +60,6 @@ namespace SanteDB.Core.Security
         {
             return this.m_passwordRegex.IsMatch(password);
         }
+
     }
 }

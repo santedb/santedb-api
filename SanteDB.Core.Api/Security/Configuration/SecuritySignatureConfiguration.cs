@@ -36,10 +36,19 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SignatureAlgorithm), Namespace = "http://santedb.org/configuration")]
     public enum SignatureAlgorithm
     {
+        /// <summary>
+        /// The desired signature algorithm is RSA+SHA256 (i.e. an X.509 cert) 
+        /// </summary>
         [XmlEnum("rs256")]
         RS256,
+        /// <summary>
+        /// The desired signature algorithm is HMAC256
+        /// </summary>
         [XmlEnum("hmac")]
         HS256,
+        /// <summary>
+        /// The desired signature algorithm is RSA+SHA512
+        /// </summary>
         [XmlEnum("rs512")]
         RS512
     }

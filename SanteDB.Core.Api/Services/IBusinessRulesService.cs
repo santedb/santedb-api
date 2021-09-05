@@ -100,7 +100,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets or sets the rule to be run after this rule (for chained rules)
         /// </summary>
-        IBusinessRulesService<TModel> Next { get; set; }
+        new IBusinessRulesService<TModel> Next { get; set; }
 
         /// <summary>
         /// Called after an insert occurs

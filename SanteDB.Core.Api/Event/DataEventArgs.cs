@@ -151,6 +151,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data to be persisted</param>
         /// <param name="principal">The principal under which the persistence is taking place</param>
+        /// <param name="mode">The mode of transaction (commit, rollback)</param>
         public DataPersistingEventArgs(TData data, TransactionMode mode, IPrincipal principal) : base(data, mode, principal)
         {
         }
@@ -185,6 +186,7 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="data">The data that was persisted</param>
         /// <param name="principal">The principal which was responsible for the creation of the data</param>
+        /// <param name="transactionMode">The mode of the transaction</param>
         public DataPersistedEventArgs(TData data, TransactionMode transactionMode, IPrincipal principal) : base(principal)
         {
             this.Data = data;
