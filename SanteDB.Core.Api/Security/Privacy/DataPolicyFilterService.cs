@@ -79,19 +79,19 @@ namespace SanteDB.Core.Security.Privacy
         private IAdhocCacheService m_adhocCache;
         // Password Hashing
         private IPasswordHashingService m_hasher;
-        // Threadpool service
-        private IThreadPoolService m_threadPool;
+        // Pip service
+        private IPolicyInformationService m_pipService;
 
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
+        public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IPolicyInformationService pipService,
              IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
             this.m_adhocCache = adhocCache;
             this.m_pdpService = pdpService;
-            this.m_threadPool = threadPoolService;
+            this.m_pipService = pipService;
 
             // Configuration load
             this.m_configuration = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();

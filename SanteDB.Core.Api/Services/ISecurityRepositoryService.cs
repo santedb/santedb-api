@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
@@ -145,7 +146,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the data object for the provided <paramref name="principal"/>
         /// </summary>
-        SecurityEntity GetSecurityEntity(IPrincipal principal);
+        IdentifiedData GetSecurityEntity(IPrincipal principal);
 
         /// <summary>
         /// Find provenance objects matching the specified object

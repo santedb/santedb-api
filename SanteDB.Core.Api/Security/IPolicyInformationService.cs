@@ -64,6 +64,13 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         IPolicyInstance GetPolicyInstance(object securable, string policyOid);
 
+        /// <summary>
+        /// Returns true if <paramref name="securable"/> has <paramref name="policyOid"/> assigned to it
+        /// </summary>
+        /// <param name="securable">The securable to check</param>
+        /// <param name="policyOid">The policy OID to check</param>
+        /// <returns>True if <paramref name="securable"/> has <paramref name="policyOid"/></returns>
+        bool HasPolicy(object securable, string policyOid);
 
         /// <summary>
         /// Removes the specified policies from the user account
