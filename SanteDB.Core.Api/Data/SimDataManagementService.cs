@@ -291,6 +291,49 @@ namespace SanteDB.Core.Data
                 var candidate = dataService.Query(o=>o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
                 return candidate;
             }
+
+            /// <summary>
+            /// Re-run a global merge candidate scoring
+            /// </summary>
+            public void DetectGlobalMergeCandidates()
+            {
+                throw new NotImplementedException();
+            }
+            /// <summary>
+            /// Clear the merge candidates
+            /// </summary>
+            public void ClearGlobalMergeCanadidates()
+            {
+                try
+                {
+                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                    // TODO: When the persistence refactor is done - change this to use the bulk method
+                    int offset = 0, totalResults = 1, batchSize = 10;
+                    while (offset < totalResults)
+                    {
+                        var results = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
+                        foreach(var itm in results)
+                        {
+                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        offset += batchSize;
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error clearing global merge candidates: {0}", e);
+                    throw new Exception("Error clearing global merge candidates", e);
+                }
+            }
+
+            /// <summary>
+            /// Reset the entire environment
+            /// </summary>
+            /// <remarks>Since SIM has no special capabilities - we just clear candidates</remarks>
+            public void Reset()
+            {
+                this.ClearGlobalMergeCanadidates();
+            }
         }
 
         // Tracer for SIM

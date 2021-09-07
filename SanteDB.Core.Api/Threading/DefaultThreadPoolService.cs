@@ -166,7 +166,7 @@ namespace SanteDB.Core.Services.Impl
         {
             return new Thread(this.DispatchLoop)
             {
-                Name = String.Format("RSRVR-ThreadPoolThread"),
+                Name = String.Format("SDB-ThreadPoolThread"),
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
             };

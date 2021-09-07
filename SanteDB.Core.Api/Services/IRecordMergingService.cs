@@ -150,6 +150,21 @@ namespace SanteDB.Core.Services
         /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>
         /// <returns>The newly created master record from which <paramref name="unmergeDuplicateKey"/> was created</returns>
         RecordMergeResult Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
+
+        /// <summary>
+        /// Reset the merge links in the data
+        /// </summary>
+        void DetectGlobalMergeCandidates();
+
+        /// <summary>
+        /// Clear global merge candidates
+        /// </summary>
+        void ClearGlobalMergeCanadidates();
+
+        /// <summary>
+        /// Removes all data related to matching and re-runs the matching
+        /// </summary>
+        void Reset();
     }
 
     /// <summary>
