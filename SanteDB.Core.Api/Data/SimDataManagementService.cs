@@ -40,7 +40,7 @@ namespace SanteDB.Core.Data
     /// <summary>
     /// Represents a daemon service that registers a series of merge services which can merge records together
     /// </summary>
-    public class SimDataManagementService : IDaemonService
+    public class SimDataManagementService : IDaemonService, IDataManagementPattern
     {
 
         /// <summary>
@@ -114,10 +114,10 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_configuration.MatchConfiguration.Where(r=>r.AutoLink).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
-                if (this.m_configuration.AutoMerge && matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
+                if (matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
                 {
                     var match = matches.SingleOrDefault();
                     if (this.m_configuration.PreserveOriginal)
@@ -291,6 +291,49 @@ namespace SanteDB.Core.Data
                 var candidate = dataService.Query(o=>o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
                 return candidate;
             }
+
+            /// <summary>
+            /// Re-run a global merge candidate scoring
+            /// </summary>
+            public void DetectGlobalMergeCandidates()
+            {
+                throw new NotImplementedException();
+            }
+            /// <summary>
+            /// Clear the merge candidates
+            /// </summary>
+            public void ClearGlobalMergeCanadidates()
+            {
+                try
+                {
+                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                    // TODO: When the persistence refactor is done - change this to use the bulk method
+                    int offset = 0, totalResults = 1, batchSize = 10;
+                    while (offset < totalResults)
+                    {
+                        var results = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
+                        foreach(var itm in results)
+                        {
+                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        offset += batchSize;
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error clearing global merge candidates: {0}", e);
+                    throw new Exception("Error clearing global merge candidates", e);
+                }
+            }
+
+            /// <summary>
+            /// Reset the entire environment
+            /// </summary>
+            /// <remarks>Since SIM has no special capabilities - we just clear candidates</remarks>
+            public void Reset()
+            {
+                this.ClearGlobalMergeCanadidates();
+            }
         }
 
         // Tracer for SIM
@@ -310,7 +353,7 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Service name
         /// </summary>
-        public string ServiceName => "Single Instance Merge Service";
+        public string ServiceName => "Single Instance Data Management";
 
         /// <summary>
         /// Service is starting
@@ -342,8 +385,8 @@ namespace SanteDB.Core.Data
             // Register mergers for all types in configuration
             foreach (var i in this.m_configuration.ResourceTypes)
             {
-                this.m_tracer.TraceInfo("Creating record management service for {0}", i.ResourceType.Name);
-                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.ResourceType);
+                this.m_tracer.TraceInfo("Creating record management service for {0}", i.ResourceType.Type.Name);
+                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.ResourceType.Type);
                 this.m_mergeServices.Add(Activator.CreateInstance(idt, i) as IDisposable);
             }
 

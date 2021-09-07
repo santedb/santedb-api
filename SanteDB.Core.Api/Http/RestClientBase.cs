@@ -222,6 +222,7 @@ namespace SanteDB.Core.Http
         /// Retrieves a raw byte array of data from the specified location
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
+        /// <param name="query">The query (as key=value) to send on the GET request</param>
         public byte[] Get(String url, params KeyValuePair<string, object>[] query)
         {
             NameValueCollection parameters = new NameValueCollection();

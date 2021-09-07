@@ -130,6 +130,7 @@ namespace SanteDB.Core.PubSub
         /// Activate a subscription
         /// </summary>
         /// <param name="isActive">True if the subscription should be activated false if not</param>
+        /// <param name="key">The key of the subscription which should be activated</param>
         /// <returns>The subscription</returns>
         PubSubSubscriptionDefinition ActivateSubscription(Guid key, bool isActive);
 

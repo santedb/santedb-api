@@ -96,7 +96,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Get this manager's instance of a job
         /// </summary>
-        /// <param name="jobType">The job type to fetch</param>
-        IJob GetJobInstance(String jobTypeName);
+        /// <param name="jobKey">The job type to fetch</param>
+        IJob GetJobInstance(Guid jobKey);
     }
 }

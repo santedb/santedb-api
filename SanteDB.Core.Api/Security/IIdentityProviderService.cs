@@ -241,6 +241,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents an identity provider that allows for elevation
     /// </summary>
+    [Obsolete("Use the ISessionProvider.Establish method")]
     public interface IElevatableIdentityProviderService : IIdentityProviderService
     {
 
@@ -256,6 +257,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="password">The password for the principal</param>
         /// <param name="purpose">The reason for the elevation</param>
         /// <param name="policies">One or more policies which the principal is seeking override</param>
+        /// <param name="tfaSecret">The TFA secret to include in elevation authentication request</param>
         IPrincipal ElevatedAuthenticate(String userName, String password, String tfaSecret, String purpose, params String[] policies);
     }
    

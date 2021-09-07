@@ -136,7 +136,7 @@ namespace SanteDB.Core.Services
         void UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys);
 
         /// <summary>
-        /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="master"/>
+        /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="masterKey"/>
         /// </summary>
         /// <param name="masterKey">The master record to which the linked duplicates are to be attached</param>
         /// <param name="linkedDuplicates">The linked records to be merged to master</param>
@@ -144,12 +144,27 @@ namespace SanteDB.Core.Services
         RecordMergeResult Merge(Guid masterKey, IEnumerable<Guid> linkedDuplicates);
 
         /// <summary>
-        /// Un-merges the specified <paramref name="unmergeDuplicate"/> from <paramref name="master"/>
+        /// Un-merges the specified <paramref name="unmergeDuplicateKey"/> from <paramref name="masterKey"/>
         /// </summary>
         /// <param name="masterKey">The master record from which a duplicate is to be removed</param>
         /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>
         /// <returns>The newly created master record from which <paramref name="unmergeDuplicateKey"/> was created</returns>
         RecordMergeResult Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
+
+        /// <summary>
+        /// Reset the merge links in the data
+        /// </summary>
+        void DetectGlobalMergeCandidates();
+
+        /// <summary>
+        /// Clear global merge candidates
+        /// </summary>
+        void ClearGlobalMergeCanadidates();
+
+        /// <summary>
+        /// Removes all data related to matching and re-runs the matching
+        /// </summary>
+        void Reset();
     }
 
     /// <summary>

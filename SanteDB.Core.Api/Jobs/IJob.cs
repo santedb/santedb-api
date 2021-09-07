@@ -32,6 +32,11 @@ namespace SanteDB.Core.Jobs
     {
 
         /// <summary>
+        /// A unique identifier for this job
+        /// </summary>
+        Guid Id { get; }
+
+        /// <summary>
         /// The name of the job
         /// </summary>
         String Name { get; }

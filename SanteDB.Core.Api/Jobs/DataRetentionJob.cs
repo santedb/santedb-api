@@ -49,6 +49,11 @@ namespace SanteDB.Core.Jobs
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
 
         /// <summary>
+        /// Gets the identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("71F82F18-992D-4A71-9D0C-ECCE92490D8C");
+
+        /// <summary>
         /// Gets the name of the service
         /// </summary>
         public string Name => "Data Retention Policy Job";
@@ -112,15 +117,16 @@ namespace SanteDB.Core.Jobs
                 var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
 
 
-                for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count; ruleIdx++)
+                for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count && !this.m_cancelFlag; ruleIdx++)
                 {
+
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
-                    this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.ResourceTypeXml);
-                    this.StatusText = $"Gathering {rule.Name} ({rule.ResourceType.ResourceTypeXml})";
+                    this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.TypeXml);
+                    this.StatusText = $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})";
                     this.Progress = ruleIdx * ruleProgress;
 
-                    var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType.ResourceType);
+                    var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType.Type);
                     var persistenceService = ApplicationServiceContext.Current.GetService(pserviceType) as IBulkDataPersistenceService;
                     if (persistenceService == null)
                         throw new InvalidOperationException("Cannot locate appropriate persistence service");
@@ -130,7 +136,7 @@ namespace SanteDB.Core.Jobs
                     IEnumerable<Guid> keys = new Guid[0];
                     for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Length; inclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.ResourceType, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
                         this.Progress = (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress);
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
@@ -143,7 +149,7 @@ namespace SanteDB.Core.Jobs
                     // Exclude keys from retention
                     for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Length; exclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.ResourceType, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
                         this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress);
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys 
@@ -153,7 +159,7 @@ namespace SanteDB.Core.Jobs
                         }
                     }
 
-                    this.StatusText = $"Executing {rule.Action} {rule.ResourceType.ResourceTypeXml} ({rule.Name})";
+                    this.StatusText = $"Executing {rule.Action} {rule.ResourceType.TypeXml} ({rule.Name})";
 
                     // Now we want to execute the specified action
                     switch (rule.Action)
@@ -174,17 +180,17 @@ namespace SanteDB.Core.Jobs
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {
-                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.Type, keys.ToArray());
                                 persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else if (rule.Action.HasFlag(DataRetentionActionType.Obsolete))
                             {
-                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.Type, keys.ToArray());
                                 persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             }
                             else
                             {
-                                archiveService.Archive(rule.ResourceType.ResourceType, keys.ToArray());
+                                archiveService.Archive(rule.ResourceType.Type, keys.ToArray());
                             }
                             break;
                     }

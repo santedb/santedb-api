@@ -35,8 +35,8 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Performs a query which
         /// </summary>
-        /// <typeparam name="TEntity">The underlying entity type which is being queried</typeparam>
         /// <param name="query">The query to be executed</param>
+        /// <param name="orderBy">The order instructions to append to the query</param>
         /// <param name="offset">The offset</param>
         /// <param name="count">The number of results</param>
         /// <param name="totalResults">The total results in the query</param>

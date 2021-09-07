@@ -76,6 +76,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="queryId">The query id to add results to</param>
         /// <param name="results">The result keys</param>
+        /// <param name="totalResults">The total number of results</param>
         void AddResults(Guid queryId, IEnumerable<Guid> results, int totalResults);
 
         /// <summary>

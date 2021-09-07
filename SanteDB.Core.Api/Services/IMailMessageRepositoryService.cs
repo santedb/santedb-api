@@ -55,6 +55,7 @@ namespace SanteDB.Core.Services
         /// <param name="offset">The offset of the search.</param>
         /// <param name="count">The count of the search results.</param>
         /// <param name="totalCount">The total count of the alerts.</param>
+        /// <param name="orderBy">The ordering instructions</param>
         /// <returns>Returns a list of alerts.</returns>
         IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy);
 
