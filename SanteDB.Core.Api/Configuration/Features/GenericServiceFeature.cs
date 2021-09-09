@@ -118,7 +118,11 @@ namespace SanteDB.Core.Configuration.Features
                     {
                         this.Configuration = setConfiguration;
                     }
-                    return isServiceInstalled && this.Configuration != null ? FeatureInstallState.Installed : isServiceInstalled || this.Configuration != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
+                    else
+                    {
+                        this.Configuration = this.GetDefaultConfiguration();
+                    }
+                    return isServiceInstalled && setConfiguration != null ? FeatureInstallState.Installed : isServiceInstalled || this.Configuration != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
 
                 }
                 catch
@@ -130,7 +134,12 @@ namespace SanteDB.Core.Configuration.Features
             return isServiceInstalled ? FeatureInstallState.Installed : FeatureInstallState.NotInstalled;
         }
 
-	    /// <summary>
+        /// <summary>
+        /// Get default configuration
+        /// </summary>
+        protected abstract object GetDefaultConfiguration();
+
+        /// <summary>
         /// Installation task
         /// </summary>
         public class InstallTask : IConfigurationTask
