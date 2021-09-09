@@ -115,6 +115,11 @@ namespace SanteDB.Core.Services
         /// Match record attributes
         /// </summary>
         IEnumerable<IRecordMatchVector> Vectors { get;}
+
+        /// <summary>
+        /// Gets the configuration name
+        /// </summary>
+        string ConfigurationName { get; }
     }
 
 
@@ -229,5 +234,14 @@ namespace SanteDB.Core.Services
         /// <param name="ignoreList">The list of data to ignore</param>
         /// <returns>The candidate match results</returns>
         IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationName, IEnumerable<Guid> ignoreList);
+
+        /// <summary>
+        /// A non-generic method which uses the type of <paramref name="input"/> to call Classify&lt;T>
+        /// </summary>
+        /// <param name="input">The record being compared</param>
+        /// <param name="configurationName">The configuration to use</param>
+        /// <param name="blocks">The blocked data to classify</param>
+        /// <returns>The candidate match results</returns>
+        IEnumerable<IRecordMatchResult> Classify(IdentifiedData input, IEnumerable<IdentifiedData> blocks, string configurationName);
     }
 }
