@@ -86,10 +86,12 @@ namespace SanteDB.Core.Services.Impl
             /// The callback to execute on the worker
             /// </summary>
             public Action<Object> Callback { get; set; }
+
             /// <summary>
             /// The state or parameter to the worker
             /// </summary>
             public object State { get; set; }
+
             /// <summary>
             /// The execution context
             /// </summary>
@@ -104,10 +106,11 @@ namespace SanteDB.Core.Services.Impl
             QueueUserWorkItem(callback, null);
         }
 
+       
         /// <summary>
         /// Queue a user work item with the specified parameters
         /// </summary>
-        public void QueueUserWorkItem(Action<Object> callback, object state)
+        public void QueueUserWorkItem<TParm>(Action<TParm> callback, TParm state)
         {
             this.QueueWorkItemInternal(callback, state);
         }
@@ -115,15 +118,15 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Perform queue of workitem internally
         /// </summary>
-        private void QueueWorkItemInternal(Action<Object> callback, object state)
+        private void QueueWorkItemInternal<TParm>(Action<TParm> callback, TParm state)
         {
             ThrowIfDisposed();
 
             try
             {
-                WorkItem wd = new WorkItem()
+                var wd = new WorkItem()
                 {
-                    Callback = callback,
+                    Callback = (o) => callback((TParm)o),
                     State = state,
                     ExecutionContext = ExecutionContext.Capture()
                 };

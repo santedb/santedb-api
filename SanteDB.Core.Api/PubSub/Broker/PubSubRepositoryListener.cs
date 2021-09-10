@@ -57,15 +57,19 @@ namespace SanteDB.Core.PubSub.Broker
         // Manager
         private IPubSubManagerService m_pubSubManager;
 
+        // Thread pool
+        private IThreadPoolService m_threadPool;
+
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager)
+        public PubSubRepositoryListener(IThreadPoolService threadPool, IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager)
         {
             this.m_pubSubManager = pubSubManager;
             this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
+            this.m_threadPool = threadPool;
 
             if (this.m_repository == null)
                 throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
@@ -140,61 +144,77 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// When unmerged
         /// </summary>
-        protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> e)
+        protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
-                    dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
-            }
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
+                        dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+                }
+
+            }, evt);
         }
 
         /// <summary>
         /// When merged
         /// </summary>
-        protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> e)
+        protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
-                    dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
-            }
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
+                        dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
+                }
+            }, evt);
         }
 
         /// <summary>
         /// When obsoleted
         /// </summary>
-        protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Delete, e.Data))
-                    dsptchr.NotifyObsoleted(e.Data);
-            }
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Delete, e.Data))
+                        dsptchr.NotifyObsoleted(e.Data);
+                }
+            }, evt);
         }
 
         /// <summary>
         /// When saved (updated)
         /// </summary>
-        protected virtual void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Update, e.Data))
-                    dsptchr.NotifyUpdated(e.Data);
-            }
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Update, e.Data))
+                        dsptchr.NotifyUpdated(e.Data);
+                }
+            }, evt);
         }
 
         /// <summary>
         /// When inserted
         /// </summary>
-        protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> e)
+        protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, e.Data))
-                    dsptchr.NotifyCreated(e.Data);
-            }
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, e.Data))
+                        dsptchr.NotifyCreated(e.Data);
+                }
+            }, evt);
         }
 
         /// <summary>

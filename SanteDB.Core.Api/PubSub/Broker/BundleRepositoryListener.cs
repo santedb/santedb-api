@@ -38,7 +38,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Bundle repository listener ctor
         /// </summary>
-        public BundleRepositoryListener(IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager) : base(pubSubManager, queueService, serviceManager)
+        public BundleRepositoryListener(IThreadPoolService threadPool, IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager) : base(threadPool, pubSubManager, queueService, serviceManager)
         {
 
         }

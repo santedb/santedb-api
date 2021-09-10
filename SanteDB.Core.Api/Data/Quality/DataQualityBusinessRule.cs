@@ -44,12 +44,12 @@ namespace SanteDB.Core.Data.Quality
     /// <summary>
     /// Represents a single data quality business rule
     /// </summary>
-    public class DataQualityBusinessRule<TModel> : BaseBusinessRulesService<TModel>, IDataQualityBusinessRuleService
+    public class DataQualityBusinessRule<TModel> : BaseBusinessRulesService<TModel>
         where TModel : IdentifiedData
     {
 
-        // Remove the resource configuration
-        private Dictionary<String, List<DataQualityResourceConfiguration>> m_resourceConfigurations = new Dictionary<String, List<DataQualityResourceConfiguration>>();
+        // Configuration provider
+        private IDataQualityConfigurationProviderService m_configurationProvider;
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
@@ -57,9 +57,10 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Creates a new data quality business rule
         /// </summary>
-        public DataQualityBusinessRule()
+        public DataQualityBusinessRule(IDataQualityConfigurationProviderService dataQualityConfigurationProviderService)
         {
             this.m_tracer.TraceVerbose("Business rule service for {0} created", typeof(TModel).Name);
+            this.m_configurationProvider = dataQualityConfigurationProviderService;
         }
 
         /// <summary>
@@ -78,24 +79,6 @@ namespace SanteDB.Core.Data.Quality
         {
             this.TagResource(data);
             return base.BeforeUpdate(data);
-        }
-
-        /// <summary>
-        /// Adds the specified configuration to the BR
-        /// </summary>
-        public void AddDataQualityResourceConfiguration(String ruleSetId, DataQualityResourceConfiguration configuration)
-        {
-            // Validate the configuration
-            foreach(var assert in configuration.Assertions)
-                foreach(var expression in assert.Expressions)
-                {
-                    this.m_tracer.TraceVerbose("Validing expression {0}", expression);
-                    QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(expression));
-                }
-            if (!this.m_resourceConfigurations.TryGetValue(ruleSetId, out List<DataQualityResourceConfiguration> current))
-                this.m_resourceConfigurations.Add(ruleSetId, new List<DataQualityResourceConfiguration>() { configuration });
-            else
-                current.Add(configuration);
         }
 
         /// <summary>
@@ -145,11 +128,9 @@ namespace SanteDB.Core.Data.Quality
 
             List<DetectedIssue> retVal = new List<DetectedIssue>();
             // Run each of the rules
-            foreach (var kv in this.m_resourceConfigurations)
+            foreach (var kv in this.m_configurationProvider.GetRulesForType<TModel>())
             {
-                this.m_tracer.TraceVerbose("Validating {0} against ruleset {1}", data, kv.Key);
-                foreach(var conf in kv.Value)
-                    retVal.AddRange(this.ValidateForRuleset(data, kv.Key, conf));
+                retVal.AddRange(this.ValidateForRuleset(data, kv));
             }
 
             return base.Validate(data).Union(retVal).ToList();
@@ -158,7 +139,7 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Validate for the ruleset
         /// </summary>
-        private IEnumerable<DetectedIssue> ValidateForRuleset(TModel data, String ruleSetId, DataQualityResourceConfiguration conf)
+        private IEnumerable<DetectedIssue> ValidateForRuleset(TModel data, DataQualityResourceConfiguration conf)
         {
             List<DetectedIssue> retVal = new List<DetectedIssue>(conf.Assertions.Count);
             List<TModel> exec = new List<TModel>() { data };
@@ -187,16 +168,16 @@ namespace SanteDB.Core.Data.Quality
                     }
 
                     if (!result)
-                        retVal.Add(new DetectedIssue(assert.Priority, $"{ruleSetId}.{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
+                        retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
                 }
                 catch(Exception e)
                 {
-                    this.m_tracer.TraceWarning("Error applying assertion {0}.{1} on {2} = {3} - {4}", ruleSetId, assert.Id, data, false, e.Message);
-                    retVal.Add(new DetectedIssue(assert.Priority, $"{ruleSetId}.{assert.Id}", $"{assert.Name} (e: {e.Message})", DetectedIssueKeys.FormalConstraintIssue));
+                    this.m_tracer.TraceWarning("Error applying assertion {0} on {1} = {2} - {3}", assert.Id, data, false, e.Message);
+                    retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", $"{assert.Name} (e: {e.Message})", DetectedIssueKeys.FormalConstraintIssue));
                 }
                 finally
                 {
-                    this.m_tracer.TraceVerbose("Assertion {0}.{1} on {2} = {3}", ruleSetId, assert.Id, data, result);
+                    this.m_tracer.TraceVerbose("Assertion {0} on {1} = {2}", assert.Id, data, result);
                 }
             }
 

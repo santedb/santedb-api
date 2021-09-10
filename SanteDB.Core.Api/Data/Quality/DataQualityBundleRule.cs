@@ -47,7 +47,7 @@ namespace SanteDB.Core.Data.Quality
             var issues = new List<DetectedIssue>();
             foreach (var itm in data.Item)
             {
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if(breSvc != null)
                     issues.AddRange(breSvc.Validate(itm));
             }
@@ -62,7 +62,7 @@ namespace SanteDB.Core.Data.Quality
             for(int i = 0; i < data.Item.Count; i++)
             {
                 var itm = data.Item[i];
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if(breSvc != null)
                     data.Item[i] = breSvc.BeforeInsert(itm) as IdentifiedData;
             }
@@ -77,7 +77,7 @@ namespace SanteDB.Core.Data.Quality
             for (int i = 0; i < data.Item.Count; i++)
             {
                 var itm = data.Item[i];
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if (breSvc != null)
                     data.Item[i] = breSvc.BeforeUpdate(itm) as IdentifiedData;
             }
