@@ -49,7 +49,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
-                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>().ClearCache(principal);
+                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
             }
 
             /// <summary>

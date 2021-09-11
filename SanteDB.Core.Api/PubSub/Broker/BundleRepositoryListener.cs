@@ -35,72 +35,86 @@ namespace SanteDB.Core.PubSub.Broker
     /// </summary>
     internal class BundleRepositoryListener : PubSubRepositoryListener<Bundle>
     {
+
+        // Thread pool
+        private IThreadPoolService m_threadPool;
+
         /// <summary>
         /// Bundle repository listener ctor
         /// </summary>
         public BundleRepositoryListener(IThreadPoolService threadPool, IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager) : base(threadPool, pubSubManager, queueService, serviceManager)
         {
-
+            this.m_threadPool = threadPool;
         }
 
         /// <summary>
         /// Notify inserted
         /// </summary>
-        protected override void OnInserted(object sender, DataPersistedEventArgs<Bundle> e)
+        protected override void OnInserted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    switch(itm.BatchOperation)
+                    foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
                     {
-                        case Model.DataTypes.BatchOperationType.Auto:
-                        case Model.DataTypes.BatchOperationType.InsertOrUpdate:
-                        case Model.DataTypes.BatchOperationType.Insert:
-                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                                dsptchr.NotifyCreated(itm);
-                            break;
-                        case Model.DataTypes.BatchOperationType.Update:
-                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                                dsptchr.NotifyUpdated(itm);
-                            break;
-                        case Model.DataTypes.BatchOperationType.Obsolete:
-                            foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                                dsptchr.NotifyObsoleted(itm);
-                            break;
+                        switch (itm.BatchOperation)
+                        {
+                            case Model.DataTypes.BatchOperationType.Auto:
+                            case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                            case Model.DataTypes.BatchOperationType.Insert:
+                                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                    dsptchr.NotifyCreated(itm);
+                                break;
+                            case Model.DataTypes.BatchOperationType.Update:
+                                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                    dsptchr.NotifyUpdated(itm);
+                                break;
+                            case Model.DataTypes.BatchOperationType.Obsolete:
+                                foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                                    dsptchr.NotifyObsoleted(itm);
+                                break;
+                        }
                     }
                 }
-            }
+            }, evt);
         }
 
         /// <summary>
         /// Notify inserted
         /// </summary>
-        protected override void OnSaved(object sender, DataPersistedEventArgs<Bundle> e)
+        protected override void OnSaved(object sender, DataPersistedEventArgs<Bundle> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                        dsptchr.NotifyUpdated(itm);
+                    foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                    {
+                        foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                            dsptchr.NotifyUpdated(itm);
+                    }
                 }
-            }
+            }, evt);
         }
 
         /// <summary>
         /// Notify obsoleted
         /// </summary>
-        protected override void OnObsoleted(object sender, DataPersistedEventArgs<Bundle> e)
+        protected override void OnObsoleted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
-            using (AuthenticationContext.EnterSystemContext())
+            this.m_threadPool.QueueUserWorkItem(e =>
             {
-                foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
-                        dsptchr.NotifyObsoleted(itm);
+                    foreach (var itm in e.Data.Item.Where(i => e.Data.FocalObjects.Contains(i.Key.Value)))
+                    {
+                        foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
+                            dsptchr.NotifyObsoleted(itm);
+                    }
                 }
-            }
+            }, evt);
         }
     }
 }

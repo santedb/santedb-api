@@ -50,6 +50,13 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
+        /// Validation only?
+        /// </summary>
+        [XmlIgnore, JsonProperty]
+        [Browsable(false)]
+        public bool ValidationOnly { get; set; }
+
+        /// <summary>
         /// The find type
         /// </summary>
         [XmlAttribute("findType"), JsonProperty("findType")]
