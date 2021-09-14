@@ -18,23 +18,23 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a thread pooling service
+    /// A match vector which is an attribute with a measure of that attribute's weighted score
     /// </summary>
-    public interface IThreadPoolService : IServiceImplementation
+    public interface IRecordMatchVector
     {
         /// <summary>
-        /// Queues the specified action into the worker pool
+        /// Gets the name of the attribute
         /// </summary>
-        void QueueUserWorkItem(Action<Object> action);
+        string Name { get; }
 
         /// <summary>
-        /// Queue user work item
+        /// Gets the score
         /// </summary>
-        void QueueUserWorkItem<TParam>(Action<TParam> action, TParam parm);
+        double Score { get; }
+
     }
 }

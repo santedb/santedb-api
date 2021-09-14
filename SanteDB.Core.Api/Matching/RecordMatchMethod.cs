@@ -18,42 +18,25 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System.Collections.Generic;
-using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Quality.Configuration
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a data quality rule set
+    /// Identifies the method used to calculate the match score
     /// </summary>
-    [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    public enum RecordMatchMethod
     {
-
         /// <summary>
-        /// Gets or sets whether the rule set is enabled
+        /// The match was recommended based on an known good identifier
         /// </summary>
-        [XmlAttribute("enabled")]
-        public bool Enabled { get; set; }
-
+        Identifier,
         /// <summary>
-        /// Gets or sets the unique identifier of the rule set
+        /// Exact matching/deterministic
         /// </summary>
-        [XmlAttribute("id")]
-        public string Id { get; set; }
-
+        Deterministic,
         /// <summary>
-        /// Gets or sets the name of the rule set
+        /// The match was determined using a probability / weighted algorithm
         /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Adds the specified resources
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
-        public List<DataQualityResourceConfiguration> Resources { get; set; }
-
+        Weighted
     }
 }

@@ -65,9 +65,10 @@ namespace SanteDB.Core.Services
         public static object AddBusinessRule<TModel>(this IServiceProvider me, Type breType) where TModel : IdentifiedData
         {
             var cbre = me.GetService<IBusinessRulesService<TModel>>();
+            var serviceManager = me.GetService<IServiceManager>();
             if (cbre == null)
             {
-                me.GetService<IServiceManager>()?.AddServiceProvider(breType);
+                serviceManager?.AddServiceProvider(breType);
                 return me.GetService(breType);
             }
             else if (cbre.GetType() != breType) // Only add if different
@@ -77,7 +78,7 @@ namespace SanteDB.Core.Services
                     if (cbre.GetType() == breType) return breType; // duplicate
                     cbre = cbre.Next;
                 }
-                cbre.Next = Activator.CreateInstance(breType) as IBusinessRulesService<TModel>;
+                cbre.Next = serviceManager.CreateInjected(breType) as IBusinessRulesService<TModel>;
                 return cbre.Next;
             }
             else

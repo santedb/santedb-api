@@ -18,42 +18,29 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Quality.Configuration
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a data quality rule set
+    /// Gets the record matching configuration
     /// </summary>
-    [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    public interface IRecordMatchingConfiguration
     {
+        /// <summary>
+        /// Gets the name of the record matching configuration for use in blocking
+        /// </summary>
+        string Id { get; }
 
         /// <summary>
-        /// Gets or sets whether the rule set is enabled
+        /// Gets the types that this applies to
         /// </summary>
-        [XmlAttribute("enabled")]
-        public bool Enabled { get; set; }
+        Type[] AppliesTo { get; }
 
         /// <summary>
-        /// Gets or sets the unique identifier of the rule set
+        /// Record matching metadata
         /// </summary>
-        [XmlAttribute("id")]
-        public string Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the rule set
-        /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Adds the specified resources
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
-        public List<DataQualityResourceConfiguration> Resources { get; set; }
-
+        IRecordMatchingConfigurationMetadata Metadata { get; set; }
     }
 }

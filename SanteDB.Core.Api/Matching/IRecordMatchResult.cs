@@ -18,79 +18,61 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
+using SanteDB.Core.Model;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace SanteDB.Core.Jobs
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a timer job
+    /// Represents the match result
     /// </summary>
-    public interface IJob
+    public interface IRecordMatchResult<T> : IRecordMatchResult
+        where T : IdentifiedData
     {
-
         /// <summary>
-        /// A unique identifier for this job
+        /// The record that was matched
         /// </summary>
-        Guid Id { get; }
+        new T Record { get; }
 
-        /// <summary>
-        /// The name of the job
-        /// </summary>
-        String Name { get; }
-
-        /// <summary>
-        /// True if the job can be cancelled
-        /// </summary>
-        bool CanCancel { get;  }
-
-        /// <summary>
-        /// Execute the job
-        /// </summary>
-        void Run(object sender, EventArgs e, object[] parameters);
-
-        /// <summary>
-        /// Cancel the job
-        /// </summary>
-        void Cancel();
-
-        /// <summary>
-        /// Gets the current status of the job
-        /// </summary>
-        JobStateType CurrentState { get; }
-
-        /// <summary>
-        /// Get the parameter definitions
-        /// </summary>
-        IDictionary<String, Type> Parameters { get; }
-
-        /// <summary>
-        /// Gets the time the job last started
-        /// </summary>
-        DateTime? LastStarted { get; }
-
-        /// <summary>
-        /// Gets the time the job last finished
-        /// </summary>
-        DateTime? LastFinished { get; }
     }
-
-
     /// <summary>
-    /// Job which reports progress
+    /// Represents a general purpose match result interface
     /// </summary>
-    public interface IReportProgressJob : IJob
+    public interface IRecordMatchResult
     {
         /// <summary>
-        /// Gets the progress of the job
+        /// Gets or sets the record which match was performe don 
         /// </summary>
-        float Progress { get; }
+        IdentifiedData Record { get; }
 
         /// <summary>
-        /// Get the status text of the job
+        /// Gets or sets the score of the result, usually an absolute score
         /// </summary>
-        string StatusText { get; }
+        double Score { get; }
+
+        /// <summary>
+        /// Gets or sets the relative strength of the result
+        /// </summary>
+        double Strength { get; }
+
+        /// <summary>
+        /// Gets the classification from the matcher
+        /// </summary>
+        RecordMatchClassification Classification { get; }
+
+        /// <summary>
+        /// Indicates the method used to match
+        /// </summary>
+        RecordMatchMethod Method { get; }
+
+        /// <summary>
+        /// Match record attributes
+        /// </summary>
+        IEnumerable<IRecordMatchVector> Vectors { get; }
+
+        /// <summary>
+        /// Gets the configuration name
+        /// </summary>
+        string ConfigurationName { get; }
     }
 }

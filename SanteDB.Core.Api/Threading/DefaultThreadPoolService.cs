@@ -39,7 +39,7 @@ namespace SanteDB.Core.Services.Impl
     /// didn't have a thread pool. Additionally it provided statistics on the thread pool load, etc. This has been 
     /// refactored.
     /// </remarks>
-    public class DefaultThreadPoolService : IThreadPoolService
+    public class DefaultThreadPoolService : IThreadPoolService, IDisposable
     {
 
         // Lock
@@ -86,10 +86,12 @@ namespace SanteDB.Core.Services.Impl
             /// The callback to execute on the worker
             /// </summary>
             public Action<Object> Callback { get; set; }
+
             /// <summary>
             /// The state or parameter to the worker
             /// </summary>
             public object State { get; set; }
+
             /// <summary>
             /// The execution context
             /// </summary>
@@ -104,10 +106,11 @@ namespace SanteDB.Core.Services.Impl
             QueueUserWorkItem(callback, null);
         }
 
+       
         /// <summary>
         /// Queue a user work item with the specified parameters
         /// </summary>
-        public void QueueUserWorkItem(Action<Object> callback, object state)
+        public void QueueUserWorkItem<TParm>(Action<TParm> callback, TParm state)
         {
             this.QueueWorkItemInternal(callback, state);
         }
@@ -115,15 +118,15 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Perform queue of workitem internally
         /// </summary>
-        private void QueueWorkItemInternal(Action<Object> callback, object state)
+        private void QueueWorkItemInternal<TParm>(Action<TParm> callback, TParm state)
         {
             ThrowIfDisposed();
 
             try
             {
-                WorkItem wd = new WorkItem()
+                var wd = new WorkItem()
                 {
-                    Callback = callback,
+                    Callback = (o) => callback((TParm)o),
                     State = state,
                     ExecutionContext = ExecutionContext.Capture()
                 };
@@ -166,7 +169,7 @@ namespace SanteDB.Core.Services.Impl
         {
             return new Thread(this.DispatchLoop)
             {
-                Name = String.Format("RSRVR-ThreadPoolThread"),
+                Name = String.Format("SanteDB-ThreadPoolThread"),
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
             };

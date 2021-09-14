@@ -18,6 +18,11 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
+using SanteDB.Core.Attributes;
+
+[assembly: PluginTraceSource("SanteDB")]
+
 namespace SanteDB.Core
 {
     /// <summary>

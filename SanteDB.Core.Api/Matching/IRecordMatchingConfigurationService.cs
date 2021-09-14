@@ -18,31 +18,41 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using Newtonsoft.Json;
+using SanteDB.Core.Matching;
+using SanteDB.Core.Services;
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Serialization;
+using System.Linq.Expressions;
 
-namespace SanteDB.Core.Configuration
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a configuration for MDM
+    /// Represents a service 
     /// </summary>
-    [XmlType(nameof(ResourceMergeConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class ResourceMergeConfigurationSection : IConfigurationSection
+    [System.ComponentModel.Description("Record Matching Configuration Provider")]
+    public interface IRecordMatchingConfigurationService : IServiceImplementation
     {
+
         /// <summary>
-        /// MDM configuration
+        /// Get the specified named configuration
         /// </summary>
-        public ResourceMergeConfigurationSection()
-        {
-            this.ResourceTypes = new List<ResourceMergeConfiguration>();
-        }
-        
+        IRecordMatchingConfiguration GetConfiguration(String configurationId);
+
         /// <summary>
-        /// Gets or sets the resource types
+        /// Saves the specified configuration to the configuration service
         /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
-        public List<ResourceMergeConfiguration> ResourceTypes { get; set; }
+        IRecordMatchingConfiguration SaveConfiguration(IRecordMatchingConfiguration configuration);
+
+        /// <summary>
+        /// Delete the configuration
+        /// </summary>
+        IRecordMatchingConfiguration DeleteConfiguration(String configurationId);
+
+        /// <summary>
+        /// Gets the names of configurations in this provider
+        /// </summary>
+        IEnumerable<IRecordMatchingConfiguration> Configurations { get; }
 
     }
 }

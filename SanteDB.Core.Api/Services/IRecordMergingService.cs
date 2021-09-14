@@ -150,6 +150,43 @@ namespace SanteDB.Core.Services
         /// <param name="unmergeDuplicateKey">The record which is to be unmerged</param>
         /// <returns>The newly created master record from which <paramref name="unmergeDuplicateKey"/> was created</returns>
         RecordMergeResult Unmerge(Guid masterKey, Guid unmergeDuplicateKey);
+
+        /// <summary>
+        /// Reset the merge links in the data
+        /// </summary>
+        void DetectGlobalMergeCandidates();
+
+        /// <summary>
+        /// Clear global merge candidates
+        /// </summary>
+        void ClearGlobalMergeCanadidates();
+
+        /// <summary>
+        /// Clear all ignore flags
+        /// </summary>
+        void ClearGlobalIgnoreFlags();
+
+        /// <summary>
+        /// Clear all merge candidates
+        /// </summary>
+        void ClearMergeCandidates(Guid masterKey);
+
+        /// <summary>
+        /// Clear ignored flags
+        /// </summary>
+        void ClearIgnoreFlags(Guid masterKey);
+
+        /// <summary>
+        /// Reset the specified merge service data on the specified record
+        /// </summary>
+        void Reset(Guid masterKey, bool includeVerified, bool linksOnly);
+
+        /// <summary>
+        /// Removes all data related to matching and re-runs the matching
+        /// </summary>
+        /// <param name="includeVerified">When true, even data/links which are marked as "verified" should be removed</param>
+        /// <param name="linksOnly">When true, only the links between objects should be removed, when false the implementer should remove links and any orphaned records</param>
+        void Reset(bool includeVerified, bool linksOnly);
     }
 
     /// <summary>

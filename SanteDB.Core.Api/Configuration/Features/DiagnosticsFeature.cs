@@ -130,7 +130,7 @@ namespace SanteDB.Core.Configuration.Features
 
             configFeature.Options.Add("initializationData", () => ConfigurationOptionType.FileName);
             configFeature.Categories.Add("Writers", new[] { "writer", "initializationData", "filter" });
-            configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter?.GetType() ?? tw.FirstOrDefault());
+            configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter ?? tw.FirstOrDefault());
             configFeature.Values.Add("initializationData", config.TraceWriter.FirstOrDefault()?.InitializationData ?? "santedb.log");
             configFeature.Values.Add("filter", config.Mode);
             this.Configuration = configFeature;
