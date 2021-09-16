@@ -298,17 +298,7 @@ namespace SanteDB.Core.Data
                 try
                 {
                     var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    // TODO: When the persistence refactor is done - change this to use the bulk method
-                    int offset = 0, totalResults = 1, batchSize = 10;
-                    while (offset < totalResults)
-                    {
-                        var results = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
-                        foreach (var itm in results)
-                        {
-                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                        }
-                        offset += batchSize;
-                    }
+                    dataService.ObsoleteAll(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
                 catch (Exception e)
                 {
@@ -342,17 +332,7 @@ namespace SanteDB.Core.Data
                 try
                 {
                     var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    // TODO: When the persistence refactor is done - change this to use the bulk method
-                    int offset = 0, totalResults = 1, batchSize = 10;
-                    while (offset < totalResults)
-                    {
-                        var results = dataService.Query(o => o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
-                        foreach (var itm in results)
-                        {
-                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                        }
-                        offset += batchSize;
-                    }
+                    dataService.ObsoleteAll(o=>o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
                 catch (Exception e)
                 {

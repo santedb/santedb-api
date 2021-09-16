@@ -125,6 +125,11 @@ namespace SanteDB.Core.Services
         TData Obsolete(Guid key, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
+        /// Obsolete all matching data
+        /// </summary>
+        void ObsoleteAll(Expression<Func<TData, bool>> matching, TransactionMode mode, IPrincipal principal);
+
+        /// <summary>
         /// Get the object specified <paramref name="key"/>.
         /// </summary>
         /// <param name="key">Key.</param>
