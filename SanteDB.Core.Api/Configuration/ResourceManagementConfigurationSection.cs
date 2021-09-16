@@ -18,42 +18,31 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Quality.Configuration
+namespace SanteDB.Core.Configuration
 {
     /// <summary>
-    /// Represents a data quality rule set
+    /// Represents a configuration for MDM
     /// </summary>
-    [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    [XmlType(nameof(ResourceManagementConfigurationSection), Namespace = "http://santedb.org/configuration")]
+    public class ResourceManagementConfigurationSection : IConfigurationSection
     {
-
         /// <summary>
-        /// Gets or sets whether the rule set is enabled
+        /// MDM configuration
         /// </summary>
-        [XmlAttribute("enabled")]
-        public bool Enabled { get; set; }
-
+        public ResourceManagementConfigurationSection()
+        {
+            this.ResourceTypes = new List<ResourceTypeReferenceConfiguration>();
+        }
+        
         /// <summary>
-        /// Gets or sets the unique identifier of the rule set
+        /// Gets or sets the resource types
         /// </summary>
-        [XmlAttribute("id")]
-        public string Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the rule set
-        /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Adds the specified resources
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
-        public List<DataQualityResourceConfiguration> Resources { get; set; }
+        [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
+        public List<ResourceTypeReferenceConfiguration> ResourceTypes { get; set; }
 
     }
 }

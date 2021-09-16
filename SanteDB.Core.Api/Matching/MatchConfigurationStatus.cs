@@ -18,42 +18,25 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System.Collections.Generic;
-using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Quality.Configuration
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a data quality rule set
+    /// Match configuration status
     /// </summary>
-    [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    public enum MatchConfigurationStatus
     {
-
         /// <summary>
-        /// Gets or sets whether the rule set is enabled
+        /// The configuration is inactive and is being stored
         /// </summary>
-        [XmlAttribute("enabled")]
-        public bool Enabled { get; set; }
-
+        Inactive = 0,
         /// <summary>
-        /// Gets or sets the unique identifier of the rule set
+        /// The configuration is active and should be used for matching
         /// </summary>
-        [XmlAttribute("id")]
-        public string Id { get; set; }
-
+        Active = 1,
         /// <summary>
-        /// Gets or sets the name of the rule set
+        /// The configuration is obsolete and should not be used
         /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Adds the specified resources
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
-        public List<DataQualityResourceConfiguration> Resources { get; set; }
-
+        Obsolete = 2
     }
 }

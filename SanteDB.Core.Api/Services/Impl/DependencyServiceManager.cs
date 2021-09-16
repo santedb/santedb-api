@@ -249,9 +249,26 @@ namespace SanteDB.Core.Services.Impl
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
                             this.m_serviceRegistrations.Add(candidateService);
                         }
-                        else
+                        else // Attempt to call the service factories to create it
                         {
-                            this.m_notConfiguredServices.Add(serviceType);
+                            var created = false;
+                            var factories = this.m_configuration.ServiceProviders.Where(s => s.Type != null && typeof(IServiceFactory).IsAssignableFrom(s.Type));
+                            foreach(var factory in factories)
+                            {
+                                // Is the service factory already created?
+                                var serviceFactory = this.GetService(factory.Type) as IServiceFactory;
+                                created |= serviceFactory.TryCreateService(serviceType, out object serviceInstance);
+                                if(created)
+                                {
+                                    candidateService = new ServiceInstanceInformation(serviceInstance, this);
+                                    this.m_cachedServices.TryAdd(serviceType, candidateService);
+                                    break;
+                                }
+                            }
+                            if (!created)
+                            {
+                                this.m_notConfiguredServices.Add(serviceType);
+                            }
                         }
                     }
                     if (candidateService != null)

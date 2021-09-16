@@ -31,6 +31,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.Core.Matching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,7 +56,7 @@ namespace SanteDB.Core.Data
             private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
             // The configuration
-            private ResourceMergeConfiguration m_configuration;
+            private IRecordMatchingConfigurationService m_matchingConfigurationService;
 
             // Service for matching
             private IRecordMatchingService m_matchingService;
@@ -83,13 +84,12 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Creates a new resource merger with specified configuration
             /// </summary>
-            public SimResourceMerger(ResourceMergeConfiguration configuration)
+            public SimResourceMerger()
             {
-                this.m_configuration = configuration;
 
                 // Find the specified matching configuration
                 this.m_matchingService = ApplicationServiceContext.Current.GetService<IRecordMatchingService>();
-
+                this.m_matchingConfigurationService = ApplicationServiceContext.Current.GetService<IRecordMatchingConfigurationService>();
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Inserting += DataInsertingHandler;
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Updating += DataUpdatingHandler;
             }
@@ -101,7 +101,7 @@ namespace SanteDB.Core.Data
             private void DataUpdatingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
@@ -114,24 +114,15 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_configuration.MatchConfiguration.Where(r=>r.AutoLink).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.MatchConfiguration, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
                 if (matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
                 {
                     var match = matches.SingleOrDefault();
-                    if (this.m_configuration.PreserveOriginal)
-                    {
-                        this.m_tracer.TraceInfo("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL BE SET TO NULLIFIED ---", e.Data, match.Record, match.Score);
-                        this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
-                        (e.Data as IHasState).StatusConceptKey = StatusKeys.Nullified;
-                    }
-                    else
-                    {
-                        this.m_tracer.TraceWarning("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL NOT BE PERSISTED ---", e.Data, match.Record, match.Score);
-                        this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
-                        e.Cancel = true;
-                    }
+                    this.m_tracer.TraceInfo("{0} matches with {1} ({2}) and AutoMerge is true --- NEW RECORD WILL BE SET TO NULLIFIED ---", e.Data, match.Record, match.Score);
+                    this.Merge(match.Record.Key.Value, new Guid[] { e.Data.Key.GetValueOrDefault() }); // Merge the data
+                    (e.Data as IHasState).StatusConceptKey = StatusKeys.Nullified;
                 }
 
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
@@ -248,7 +239,7 @@ namespace SanteDB.Core.Data
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
                 var candidate = dataService.Get(masterKey, null, AuthenticationContext.SystemPrincipal);
-                return this.m_configuration.MatchConfiguration.SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.MatchConfiguration, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
+                return this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.Id, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 
             /// <summary>
@@ -288,8 +279,102 @@ namespace SanteDB.Core.Data
             public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates()
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                var candidate = dataService.Query(o=>o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
                 return candidate;
+            }
+
+            /// <summary>
+            /// Re-run a global merge candidate scoring
+            /// </summary>
+            public void DetectGlobalMergeCandidates()
+            {
+                throw new NotImplementedException();
+            }
+            /// <summary>
+            /// Clear the merge candidates
+            /// </summary>
+            public void ClearGlobalMergeCanadidates()
+            {
+                try
+                {
+                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                    // TODO: When the persistence refactor is done - change this to use the bulk method
+                    int offset = 0, totalResults = 1, batchSize = 10;
+                    while (offset < totalResults)
+                    {
+                        var results = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
+                        foreach (var itm in results)
+                        {
+                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        offset += batchSize;
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error clearing global merge candidates: {0}", e);
+                    throw new Exception("Error clearing global merge candidates", e);
+                }
+            }
+
+            /// <summary>
+            /// Reset the entire environment
+            /// </summary>
+            /// <remarks>Since SIM has no special capabilities - we just clear candidates</remarks>
+            public void Reset(bool includeVerified, bool linksOnly)
+            {
+                this.ClearGlobalMergeCanadidates();
+            }
+
+            /// <summary>
+            /// Clear global ignore flags
+            /// </summary>
+            public void ClearGlobalIgnoreFlags()
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Clear merge candidates from the database
+            /// </summary>
+            public void ClearMergeCandidates(Guid masterKey)
+            {
+                try
+                {
+                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                    // TODO: When the persistence refactor is done - change this to use the bulk method
+                    int offset = 0, totalResults = 1, batchSize = 10;
+                    while (offset < totalResults)
+                    {
+                        var results = dataService.Query(o => o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
+                        foreach (var itm in results)
+                        {
+                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        offset += batchSize;
+                    }
+                }
+                catch (Exception e)
+                {
+                    this.m_tracer.TraceError("Error clearing global merge candidates: {0}", e);
+                    throw new Exception("Error clearing global merge candidates", e);
+                }
+            }
+
+            /// <summary>
+            /// Clear ignore flags
+            /// </summary>
+            public void ClearIgnoreFlags(Guid masterKey)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <summary>
+            /// Reset all data for specified key
+            /// </summary>
+            public void Reset(Guid masterKey, bool includeVerified, bool linksOnly)
+            {
+                this.ClearMergeCandidates(masterKey);
             }
         }
 
@@ -297,7 +382,7 @@ namespace SanteDB.Core.Data
         private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
         // Configuration section 
-        private ResourceMergeConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<ResourceMergeConfigurationSection>();
+        private ResourceManagementConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<ResourceManagementConfigurationSection>();
 
         // Merge services
         private List<IDisposable> m_mergeServices = new List<IDisposable>();
@@ -342,8 +427,8 @@ namespace SanteDB.Core.Data
             // Register mergers for all types in configuration
             foreach (var i in this.m_configuration.ResourceTypes)
             {
-                this.m_tracer.TraceInfo("Creating record management service for {0}", i.ResourceType.Type.Name);
-                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.ResourceType.Type);
+                this.m_tracer.TraceInfo("Creating record management service for {0}", i.Type.Name);
+                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.Type);
                 this.m_mergeServices.Add(Activator.CreateInstance(idt, i) as IDisposable);
             }
 

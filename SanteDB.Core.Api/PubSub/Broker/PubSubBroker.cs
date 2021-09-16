@@ -123,8 +123,6 @@ namespace SanteDB.Core.PubSub.Broker
 
             ApplicationServiceContext.Current.Started += (o,e) =>
             {
-                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>().ClearCache(AuthenticationContext.SystemPrincipal);
-
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     try

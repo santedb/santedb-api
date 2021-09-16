@@ -18,42 +18,25 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System.Collections.Generic;
-using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Quality.Configuration
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a data quality rule set
+    /// Record match classifications
     /// </summary>
-    [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    public enum RecordMatchClassification
     {
-
         /// <summary>
-        /// Gets or sets whether the rule set is enabled
+        /// The records match
         /// </summary>
-        [XmlAttribute("enabled")]
-        public bool Enabled { get; set; }
-
+        Match = 0x2,
         /// <summary>
-        /// Gets or sets the unique identifier of the rule set
+        /// There is a probable match
         /// </summary>
-        [XmlAttribute("id")]
-        public string Id { get; set; }
-
+        Probable = 0x1,
         /// <summary>
-        /// Gets or sets the name of the rule set
+        /// The is a non-match
         /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Adds the specified resources
-        /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
-        public List<DataQualityResourceConfiguration> Resources { get; set; }
-
+        NonMatch = 0x0
     }
 }

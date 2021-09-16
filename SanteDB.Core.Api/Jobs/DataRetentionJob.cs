@@ -49,6 +49,11 @@ namespace SanteDB.Core.Jobs
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
 
         /// <summary>
+        /// Gets the identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("71F82F18-992D-4A71-9D0C-ECCE92490D8C");
+
+        /// <summary>
         /// Gets the name of the service
         /// </summary>
         public string Name => "Data Retention Policy Job";

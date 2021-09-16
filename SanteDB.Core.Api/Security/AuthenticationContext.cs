@@ -49,6 +49,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
+                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
             }
 
             /// <summary>
@@ -177,6 +178,8 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterSystemContext()
         {
+
+            // TODO: Validate the caller can enter the system context
             return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
 

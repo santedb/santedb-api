@@ -70,13 +70,13 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Queue worker 
         /// </summary>
-        public void QueueUserWorkItem(Action<object> action, object parm)
+        public void QueueUserWorkItem<TParm>(Action<TParm> action, TParm parm)
         {
             ThreadPool.QueueUserWorkItem(o =>
             {
                 try
                 {
-                    action(o);
+                    action((TParm)o);
                 }
                 catch (Exception e)
                 {

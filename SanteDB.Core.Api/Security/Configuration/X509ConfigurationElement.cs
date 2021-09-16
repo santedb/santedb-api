@@ -46,7 +46,15 @@ namespace SanteDB.Core.Security.Configuration
             this.FindType = X509FindType.FindByThumbprint;
             this.StoreLocation = StoreLocation.LocalMachine;
             this.StoreName = StoreName.My;
+            this.FindTypeSpecified = this.StoreLocationSpecified = true;
         }
+
+        /// <summary>
+        /// Validation only?
+        /// </summary>
+        [XmlIgnore, JsonProperty]
+        [Browsable(false)]
+        public bool ValidationOnly { get; set; }
 
         /// <summary>
         /// The find type

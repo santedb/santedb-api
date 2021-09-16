@@ -212,8 +212,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditAccessControlDecision(IPrincipal principal, string policy, PolicyGrantType action)
         {
-            traceSource.TraceInfo($"ACS: {principal} - {policy} - {action}");
-
+            
             if(s_configuration?.CompleteAuditTrail != true && action == PolicyGrantType.Grant)
             {
                 return; // don't audit successful ACS

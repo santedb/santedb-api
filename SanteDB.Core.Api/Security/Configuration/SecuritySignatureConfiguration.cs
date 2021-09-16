@@ -198,5 +198,11 @@ namespace SanteDB.Core.Security.Configuration
             //this.m_plainTextSecret = String.Empty;
             return true;
         }
+
+
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string ToString() => this.KeyName;
     }
 }

@@ -335,9 +335,9 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Get the specified job instance
         /// </summary>
-        public IJob GetJobInstance(String jobTypeName)
+        public IJob GetJobInstance(Guid jobKey)
         {
-            return this.m_jobs.FirstOrDefault(o => o.Job.GetType().FullName == jobTypeName)?.Job;
+            return this.m_jobs.FirstOrDefault(o => o.Job.Id == jobKey)?.Job;
         }
 
         /// <summary>
