@@ -48,7 +48,14 @@ namespace SanteDB.Core.Diagnostics
         public TraceWriter(EventLevel filter, String initializationData, IDictionary<String, EventLevel> configuration)
         {
             this.m_filter = filter;
-            this.m_sourceFilters = new ConcurrentDictionary<string, EventLevel>(configuration);
+            if (configuration != null)
+            {
+                this.m_sourceFilters = new ConcurrentDictionary<string, EventLevel>(configuration);
+            }
+            else
+            {
+                this.m_sourceFilters = new ConcurrentDictionary<string, EventLevel>();
+            }
         }
 
         /// <summary>
