@@ -36,5 +36,14 @@ namespace SanteDB.Core.Matching
         /// </summary>
         double Score { get; }
 
+        /// <summary>
+        /// The value evaluated in the first record
+        /// </summary>
+        object A { get; }
+
+        /// <summary>
+        /// The value evaluated in the second record.
+        /// </summary>
+        object B { get; }
     }
 }
