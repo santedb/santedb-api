@@ -19,6 +19,7 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -130,10 +131,12 @@ namespace SanteDB.Core.Event
         /// <param name="principal">The principal which is executing the query</param>
         /// <param name="offset">The requested offset in the result set</param>
         /// <param name="count">The requested total results to be returned in this result set</param>
+        /// <param name="orderBy">The ordering instructions</param>
         /// <param name="tag">A query tag object</param>
-        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, dynamic tag = null) : base(query, offset, count, queryId, principal)
+        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, IEnumerable<ModelSort<TData>> orderBy, dynamic tag = null) : base(query, offset, count, queryId, principal)
         {
             this.QueryTag = tag;
+            this.OrderBy = orderBy;
         }
 
         /// <summary>
@@ -143,6 +146,11 @@ namespace SanteDB.Core.Event
         {
             get;
         }
+
+        /// <summary>
+        /// Order by instructions
+        /// </summary>
+        public IEnumerable<ModelSort<TData>> OrderBy { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance cancel.
