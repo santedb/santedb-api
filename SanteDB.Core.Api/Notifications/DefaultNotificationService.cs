@@ -20,11 +20,9 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Notifications
 {
@@ -84,7 +82,7 @@ namespace SanteDB.Core.Notifications
 
             var sendRelays = to.Select(o => new Uri(o)).GroupBy(o => o.Scheme);
             List<Guid> retVal = new List<Guid>(to.Length);
-            foreach(var itm in sendRelays)
+            foreach (var itm in sendRelays)
             {
                 if (this.m_relays.TryGetValue(itm.Key, out INotificationRelay relay))
                 {

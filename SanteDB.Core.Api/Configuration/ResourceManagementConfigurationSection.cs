@@ -37,7 +37,7 @@ namespace SanteDB.Core.Configuration
         {
             this.ResourceTypes = new List<ResourceTypeReferenceConfiguration>();
         }
-        
+
         /// <summary>
         /// Gets or sets the resource types
         /// </summary>

@@ -19,10 +19,6 @@
  * Date: 2021-8-5
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
@@ -73,7 +69,7 @@ namespace SanteDB.Core.Services
         /// Gets or sets the configuration type
         /// </summary>
         public Type Configuration { get; set; }
-        
+
         /// <summary>
         /// Service type
         /// </summary>

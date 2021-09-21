@@ -29,7 +29,7 @@ namespace SanteDB.Core.Configuration
     /// Represents a generic resource type reference by simple name
     /// </summary>
     [XmlType(nameof(ResourceTypeReferenceConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class ResourceTypeReferenceConfiguration 
+    public class ResourceTypeReferenceConfiguration
     {
 
         /// <summary>

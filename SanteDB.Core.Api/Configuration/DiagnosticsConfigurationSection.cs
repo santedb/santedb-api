@@ -19,8 +19,6 @@
  * Date: 2021-8-5
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;

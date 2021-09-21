@@ -19,7 +19,6 @@
  * Date: 2021-8-5
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Security;
 using System;
 using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
@@ -125,7 +124,7 @@ namespace SanteDB.Core.Security.Configuration
                 if (value == null)
                     this.FindValue = null;
                 else
-                    switch(this.FindType)
+                    switch (this.FindType)
                     {
                         case X509FindType.FindBySubjectName:
                             this.FindValue = value.Subject;
@@ -150,7 +149,7 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         private X509Certificate2 GetCertificate()
         {
-            if(this.m_certificate == null)
+            if (this.m_certificate == null)
             {
                 try
                 {
@@ -168,7 +167,7 @@ namespace SanteDB.Core.Security.Configuration
                             this.m_certificate = matches[0];
                         }
                     }
-                    catch 
+                    catch
                     {
                         return null;
                     }
@@ -177,7 +176,8 @@ namespace SanteDB.Core.Security.Configuration
                         store.Close();
                     }
                 }
-                catch {
+                catch
+                {
                     return null;
                 }
             }

@@ -22,10 +22,10 @@ using System;
 
 namespace SanteDB.Core.BusinessRules
 {
-	/// <summary>
-	/// Detected issue type keys
-	/// </summary>
-	public static class DetectedIssueKeys
+    /// <summary>
+    /// Detected issue type keys
+    /// </summary>
+    public static class DetectedIssueKeys
     {
 
         /// <summary>

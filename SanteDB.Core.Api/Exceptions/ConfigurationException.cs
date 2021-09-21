@@ -33,7 +33,7 @@ namespace SanteDB.Core.Exceptions
         /// Gets the configuration that caused the exception
         /// </summary>
         public SanteDBConfiguration Configuration { get; private set; }
-        
+
         /// <summary>
         /// Configuration exception
         /// </summary>

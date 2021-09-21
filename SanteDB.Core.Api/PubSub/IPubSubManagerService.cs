@@ -19,12 +19,10 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Core.PubSub
 {
@@ -114,7 +112,7 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Register a new subscription for the specified type
         /// </summary>
-        PubSubSubscriptionDefinition RegisterSubscription<TModel>(String name, String description, PubSubEventType events, Expression<Func<TModel,bool>> filter, Guid channelId, String supportAddress = null, DateTimeOffset? notBefore = null, DateTimeOffset? notAfter = null);
+        PubSubSubscriptionDefinition RegisterSubscription<TModel>(String name, String description, PubSubEventType events, Expression<Func<TModel, bool>> filter, Guid channelId, String supportAddress = null, DateTimeOffset? notBefore = null, DateTimeOffset? notAfter = null);
 
         /// <summary>
         /// Register a new subscription for the specified type

@@ -19,8 +19,6 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
 
@@ -76,14 +74,14 @@ namespace SanteDB.Core.Services
             this.Policies = policies;
         }
     }
-    
+
     /// <summary>
     /// Represents a service which is responsible for the storage and retrieval of sessions
     /// </summary>
     [System.ComponentModel.Description("Session Storage Provider")]
     public interface ISessionProviderService : IServiceImplementation
     {
-        
+
         /// <summary>
         /// Fired when the session provider service has established
         /// </summary>
@@ -126,6 +124,6 @@ namespace SanteDB.Core.Services
         /// </summary>
         void Abandon(ISession session);
 
-       
+
     }
 }

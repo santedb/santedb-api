@@ -31,7 +31,7 @@ namespace SanteDB.Core.Services
     /// Represents a data persistence provider that can store and continue queries
     /// </summary>
     public interface IUnionQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
-        where TEntity: IdentifiedData
+        where TEntity : IdentifiedData
     {
         /// <summary>
         /// Queries or continues a query 

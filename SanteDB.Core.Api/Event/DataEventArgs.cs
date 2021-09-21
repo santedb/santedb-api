@@ -24,11 +24,8 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
@@ -161,7 +158,7 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-        
+
         /// <summary>
         /// Instructs the query engine to use fuzzy totals
         /// </summary>
@@ -252,7 +249,7 @@ namespace SanteDB.Core.Event
         /// <param name="identifier">The identifier of the object being retrieved</param>
         /// <param name="principal">The principal under which the query is being executed, or null if the current <see cref="AuthenticationContext"/> is being used</param>
         /// <param name="versionId">The version identifier of the object being retrieved if supplied</param>
-        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal) 
+        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal)
         {
             this.Id = identifier;
             this.VersionId = versionId;

@@ -25,19 +25,19 @@ namespace SanteDB.Core.Http.Description
     /// </summary>
     public interface IRestClientBindingDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Content type mapper
         /// </summary>
         /// <value>The content type mapper.</value>
         IContentTypeMapper ContentTypeMapper { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets a value indicating whether this <see cref="IRestClientBindingDescription"/> is optimize.
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>
         bool Optimize { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the security configuration
         /// </summary>
         /// <value>The security.</value>

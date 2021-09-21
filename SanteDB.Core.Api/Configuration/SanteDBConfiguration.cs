@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Serialization;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -72,7 +71,7 @@ namespace SanteDB.Core.Configuration
             this.Sections = new List<Object>();
             this.Version = typeof(SanteDBConfiguration).Assembly.GetName().Version.ToString();
         }
-        
+
         /// <summary>
         /// Gets or sets the version of the configuration
         /// </summary>
@@ -117,8 +116,8 @@ namespace SanteDB.Core.Configuration
                 throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))} allowed sections {allowedSections}", retVal);
             }
 
-            if(retVal.Includes != null)
-                foreach(var incl in retVal.Includes)
+            if (retVal.Includes != null)
+                foreach (var incl in retVal.Includes)
                 {
                     string fileName = incl.Replace('\\', Path.DirectorySeparatorChar);
                     if (!Path.IsPathRooted(fileName))
@@ -131,8 +130,9 @@ namespace SanteDB.Core.Configuration
                             retVal.Sections.AddRange(inclData.Sections);
                         }
                     else
-                        throw new ConfigurationException($"Include {fileName} was not found", retVal);                }
-            
+                        throw new ConfigurationException($"Include {fileName} was not found", retVal);
+                }
+
 
             return retVal;
         }
@@ -144,7 +144,7 @@ namespace SanteDB.Core.Configuration
         public void Save(Stream dataStream)
         {
             this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
-            var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o=>o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o=>new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
+            var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
             var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
@@ -172,7 +172,7 @@ namespace SanteDB.Core.Configuration
         /// Get the specified section
         /// </summary>
         /// <returns>The section.</returns>
-        public T GetSection<T>() 
+        public T GetSection<T>()
         {
             return (T)this.GetSection(typeof(T));
         }

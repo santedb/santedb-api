@@ -18,10 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Interop;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace SanteDB.Core.Interop
 {

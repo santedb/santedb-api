@@ -18,8 +18,6 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -74,11 +72,11 @@ namespace SanteDB.Core.Diagnostics
             try
             {
                 var sourceConfig = this.m_filter;
-                if(!this.m_sourceFilters.TryGetValue(source, out sourceConfig))
+                if (!this.m_sourceFilters.TryGetValue(source, out sourceConfig))
                 {
                     var key = this.m_sourceFilters.FirstOrDefault(o => source.StartsWith(o.Key));
 
-                    if(String.IsNullOrEmpty(key.Key ))
+                    if (String.IsNullOrEmpty(key.Key))
                     {
                         sourceConfig = this.m_filter;
                     }

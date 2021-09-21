@@ -20,37 +20,37 @@
  */
 namespace SanteDB.Core.Http.Description
 {
-	/// <summary>
-	/// Represtens REST client security description
-	/// </summary>
-	public interface IRestClientSecurityDescription
+    /// <summary>
+    /// Represtens REST client security description
+    /// </summary>
+    public interface IRestClientSecurityDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Gets the authentication realm
         /// </summary>
         string AuthRealm { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the certificate validator
         /// </summary>
         ICertificateValidator CertificateValidator { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the certificate
         /// </summary>
         IRestClientCertificateDescription ClientCertificate { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the credential provider
         /// </summary>
         ICredentialProvider CredentialProvider { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the mode of security
         /// </summary>
         SecurityScheme Mode { get; }
 
-	    /// <summary>
+        /// <summary>
         /// When true instructs the client to pre-emptively authenticate itself
         /// </summary>
         bool PreemptiveAuthentication { get; set; }

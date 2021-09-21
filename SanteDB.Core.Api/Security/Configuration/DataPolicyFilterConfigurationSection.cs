@@ -23,7 +23,6 @@ using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
@@ -54,7 +53,7 @@ namespace SanteDB.Core.Security.Configuration
     /// </summary>
     [XmlType(nameof(ResourceDataPolicyFilter), Namespace = "http://santedb.org/configuration")]
 
-    public class ResourceDataPolicyFilter 
+    public class ResourceDataPolicyFilter
     {
 
         /// <summary>

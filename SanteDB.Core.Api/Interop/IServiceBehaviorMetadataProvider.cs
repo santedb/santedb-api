@@ -19,9 +19,6 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Interop.Description;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Interop
 {

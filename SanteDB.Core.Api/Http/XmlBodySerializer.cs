@@ -18,14 +18,11 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -68,7 +65,7 @@ namespace SanteDB.Core.Http
         {
             if (o.GetType() == this.m_type)
             {
-                if(this.m_serializer == null)
+                if (this.m_serializer == null)
                     this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(this.m_type);
 
                 this.m_serializer.Serialize(s, o);

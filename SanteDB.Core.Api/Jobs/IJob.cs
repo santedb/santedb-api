@@ -20,8 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Jobs
 {
@@ -44,7 +42,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// True if the job can be cancelled
         /// </summary>
-        bool CanCancel { get;  }
+        bool CanCancel { get; }
 
         /// <summary>
         /// Execute the job
