@@ -15,6 +15,13 @@ namespace SanteDB.Core.Exceptions
         public String LockedUser { get; }
 
         /// <summary>
+        /// Object is locked
+        /// </summary>
+        public ObjectLockedException() : base("Object locked")
+        {
+        }
+
+        /// <summary>
         /// Object has been locked
         /// </summary>
         public ObjectLockedException(String lockUser) : base($"Object Locked by {lockUser}")
