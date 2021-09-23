@@ -27,13 +27,13 @@ namespace SanteDB.Core.Matching
     public enum MatchConfigurationStatus
     {
         /// <summary>
-        /// The configuration is inactive and is being stored
-        /// </summary>
-        Inactive = 0,
-        /// <summary>
         /// The configuration is active and should be used for matching
         /// </summary>
-        Active = 1,
+        Active = 0,
+        /// <summary>
+        /// The configuration is inactive and is being stored
+        /// </summary>
+        Inactive = 1,
         /// <summary>
         /// The configuration is obsolete and should not be used
         /// </summary>

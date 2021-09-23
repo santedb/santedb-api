@@ -19,7 +19,6 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
@@ -95,7 +94,7 @@ namespace SanteDB.Core.Security
         public static DateTime AsDateTime(this IClaim me)
         {
             DateTime value = DateTime.MinValue;
-            if(!DateTime.TryParse(me.Value, out value))
+            if (!DateTime.TryParse(me.Value, out value))
             {
                 int offset = 0;
                 if (Int32.TryParse(me.Value, out offset))

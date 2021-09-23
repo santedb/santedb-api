@@ -22,8 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -35,7 +33,7 @@ namespace SanteDB.Core.Security.Claims
     {
         // Claims made about the user
         private List<IClaim> m_claims;
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SanteDBClaimsIdentity"/> class.
         /// </summary>
@@ -69,7 +67,7 @@ namespace SanteDB.Core.Security.Claims
         public SanteDBClaimsIdentity(IIdentity identity, IEnumerable<IClaim> claims)
             : this(identity.Name, identity.IsAuthenticated, identity.AuthenticationType, claims)
         {
-            
+
         }
 
         /// <summary>

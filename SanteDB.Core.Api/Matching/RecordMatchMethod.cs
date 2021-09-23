@@ -29,14 +29,14 @@ namespace SanteDB.Core.Matching
         /// <summary>
         /// The match was recommended based on an known good identifier
         /// </summary>
-        Identifier,
+        Identifier = 0x1,
         /// <summary>
         /// Exact matching/deterministic
         /// </summary>
-        Deterministic,
+        Simple = 0x2,
         /// <summary>
         /// The match was determined using a probability / weighted algorithm
         /// </summary>
-        Weighted
+        Weighted = 0x3
     }
 }

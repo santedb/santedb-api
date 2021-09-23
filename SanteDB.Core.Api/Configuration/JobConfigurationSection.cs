@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -74,7 +73,8 @@ namespace SanteDB.Core.Configuration
         [XmlIgnore, JsonIgnore, Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"),
            TypeConverter("SanteDB.Configuration.Converters.TypeDisplayConverter, SanteDB.Configuration"), BindingAttribute(typeof(IJob))]
         [DisplayName("Job Type"), Description("The type of job to run on the specified schedule")]
-        public Type Type {
+        public Type Type
+        {
             get => !String.IsNullOrEmpty(this.TypeXml) ? Type.GetType(this.TypeXml) : null;
             set => this.TypeXml = value?.AssemblyQualifiedName;
         }
@@ -88,17 +88,17 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// The schedule for this job
         /// </summary>
-        [XmlArray("schedule"), 
+        [XmlArray("schedule"),
             XmlArrayItem("add"),
             JsonProperty("schedule"),
-            DisplayName("Schedule"), 
+            DisplayName("Schedule"),
             Description("The schedule for this job")]
         public List<JobItemSchedule> Schedule { get; set; }
 
         /// <summary>
         /// Parameters for this job
         /// </summary>
-        [XmlArray("parameters"), 
+        [XmlArray("parameters"),
             XmlArrayItem("int", typeof(Int32)),
             XmlArrayItem("string", typeof(string)),
             XmlArrayItem("bool", typeof(bool)),
@@ -159,12 +159,13 @@ namespace SanteDB.Core.Configuration
         {
             var retVal = refDate >= this.StartDate; // The reference date is in valid bounds for start
             retVal &= !this.StopDateSpecified || refDate < this.StopDate; // The reference date is in valid bounds of stop (if specified)
-            
+
             // Are there week days specified
-            if(this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalMilliseconds> this.Interval)) {
+            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalMilliseconds > this.Interval))
+            {
                 return true;
             }
-            else if(this.RepeatOn != null)
+            else if (this.RepeatOn != null)
             {
                 retVal &= this.RepeatOn.Any(r => r == refDate.DayOfWeek) &&
                     refDate.Hour >= this.StartDate.Hour &&
@@ -188,11 +189,11 @@ namespace SanteDB.Core.Configuration
         public override string ToString()
         {
             var sb = new StringBuilder();
-            if(this.IntervalSpecified)
+            if (this.IntervalSpecified)
             {
                 sb.AppendFormat("Every {0} ms", this.Interval);
             }
-            else if(this.RepeatOn?.Any() == true)
+            else if (this.RepeatOn?.Any() == true)
             {
                 sb.AppendFormat("Every {0} at {1:HH:mm} starting {1:yyyy-MM-dd}", String.Join(",", this.RepeatOn), this.StartDate);
             }
@@ -201,7 +202,7 @@ namespace SanteDB.Core.Configuration
                 sb.AppendFormat("On {0:yyyy-MM-dd} at {0:HH:mm}", this.StartDate);
             }
 
-            if(this.StopDateSpecified)
+            if (this.StopDateSpecified)
             {
                 sb.AppendFormat(" until {0:yyyy-MM-dd} at {0:HH:mm}", this.StopDate);
             }

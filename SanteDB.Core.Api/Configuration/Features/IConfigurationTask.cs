@@ -18,43 +18,43 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
 using SanteDB.Core.Services;
+using System;
 
 namespace SanteDB.Core.Configuration
 {
-    
+
     /// <summary>
     /// Represents a configuration task
     /// </summary>
     public interface IConfigurationTask : IReportProgressChanged
     {
-	    /// <summary>
+        /// <summary>
         /// Get description of the task
         /// </summary>
-        string Description { get;  }
+        string Description { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the feature that is being configured
         /// </summary>
         IFeature Feature { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Get the name of the task
         /// </summary>
         string Name { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Execute the configuration task
         /// </summary>
         bool Execute(SanteDBConfiguration configuration);
 
-	    /// <summary>
+        /// <summary>
         /// Rollback changes in the specified configuration
         /// </summary>
         bool Rollback(SanteDBConfiguration configuration);
 
-	    /// <summary>
+        /// <summary>
         /// Verify the task prior to running
         /// </summary>
         bool VerifyState(SanteDBConfiguration configuration);
@@ -65,12 +65,12 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public interface IDescribedConfigurationTask : IConfigurationTask
     {
-	    /// <summary>
+        /// <summary>
         /// Gets the additional information
         /// </summary>
         string AdditionalInformation { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Get information about the task
         /// </summary>
         Uri HelpUri { get; }

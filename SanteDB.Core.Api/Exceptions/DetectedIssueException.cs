@@ -19,7 +19,6 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -71,7 +70,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Detected issue exception
         /// </summary>
-        public DetectedIssueException(DetectedIssue issue) : this(new List<DetectedIssue>() {  issue })
+        public DetectedIssueException(DetectedIssue issue) : this(new List<DetectedIssue>() { issue })
         {
 
         }

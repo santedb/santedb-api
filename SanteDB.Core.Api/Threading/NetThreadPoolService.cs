@@ -18,14 +18,8 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Core.Services.Impl

@@ -18,21 +18,16 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Configuration;
-using System.Threading;
-using System.Diagnostics;
-using System.Timers;
-using System.ComponentModel;
-using SanteDB.Core.Jobs;
 using SanteDB.Core.Configuration;
-using SanteDB.Core.Services;
-using SanteDB.Core.Interfaces;
-using System.Collections.Concurrent;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Interfaces;
+using SanteDB.Core.Services;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Timers;
 
 namespace SanteDB.Core.Jobs
 {
@@ -102,7 +97,7 @@ namespace SanteDB.Core.Jobs
             /// <summary>
             /// The last time the job was run
             /// </summary>
-            public DateTime? LastRun { get; set;  }
+            public DateTime? LastRun { get; set; }
 
             /// <summary>
             /// The last time the job was run
@@ -180,7 +175,7 @@ namespace SanteDB.Core.Jobs
                 var ji = new JobExecutionInfo(job);
                 this.m_jobs.Add(ji);
 
-                if(job.StartType == JobStartType.Immediate)
+                if (job.StartType == JobStartType.Immediate)
                 {
                     this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
                 }
@@ -220,22 +215,22 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         private void SystemJobTimer(object sender, ElapsedEventArgs e)
         {
-            
+
             // Iterate through our jobs
-            foreach(var itm in this.m_jobs)
+            foreach (var itm in this.m_jobs)
             {
                 // Does the job have a schedule?
-                if(itm.Schedule == null || !itm.Schedule.Any() || itm.StartType == JobStartType.Never) 
+                if (itm.Schedule == null || !itm.Schedule.Any() || itm.StartType == JobStartType.Never)
                 {
                     continue;
                 }
 
                 // Do any of the schedules fit with the current system time?
                 var scheduleHits = itm.Schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
-                if(scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
+                if (scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
                 {
                     this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", itm.Schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
-                    if(itm.Job.CurrentState != JobStateType.Running)
+                    if (itm.Job.CurrentState != JobStateType.Running)
                     {
                         this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
                         this.m_threadPool.QueueUserWorkItem(this.RunJob, itm);
@@ -259,9 +254,9 @@ namespace SanteDB.Core.Jobs
 
             this.m_systemTimer.Dispose();
             this.m_systemTimer = null;
-            foreach(var itm in this.m_jobs)
+            foreach (var itm in this.m_jobs)
             {
-                if(itm.Job is IDisposable disp)
+                if (itm.Job is IDisposable disp)
                 {
                     disp.Dispose();
                 }
@@ -284,7 +279,7 @@ namespace SanteDB.Core.Jobs
 
             var ji = new JobExecutionInfo(jobObject, startType, elapseTime, new object[0]);
             this.m_jobs.Add(ji);
-            if(startType == JobStartType.Immediate)
+            if (startType == JobStartType.Immediate)
             {
                 this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
             }
@@ -311,7 +306,7 @@ namespace SanteDB.Core.Jobs
         {
             get
             {
-                return this.m_jobs.Select(o=>o.Job);
+                return this.m_jobs.Select(o => o.Job);
             }
         }
 

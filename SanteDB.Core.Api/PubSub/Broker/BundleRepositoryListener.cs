@@ -23,10 +23,7 @@ using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.PubSub.Broker
 {

@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Linq;
@@ -63,7 +62,7 @@ namespace SanteDB.Core.Exceptions
         /// <param name="decision">The decision of the policy which caused the exception</param>
         public PolicyViolationException(IPrincipal principal, PolicyDecision decision)
         {
-            this.PolicyId = decision.Details.First(p=>p.Outcome == decision.Outcome).PolicyId;
+            this.PolicyId = decision.Details.First(p => p.Outcome == decision.Outcome).PolicyId;
             this.Detail = decision;
             this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : decision.Outcome;
         }

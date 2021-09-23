@@ -115,7 +115,8 @@ namespace SanteDB.Core.Mail
         /// Receipt to
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(RcptToXml))]
-        public List<SecurityUser> RcptTo {
+        public List<SecurityUser> RcptTo
+        {
             get
             {
                 return this.RcptToXml?.Select(o => EntitySource.Current.Get<SecurityUser>(o) ?? new SecurityUser() { Key = o }).ToList();

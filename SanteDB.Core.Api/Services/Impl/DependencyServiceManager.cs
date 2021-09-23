@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Security;
@@ -253,12 +252,12 @@ namespace SanteDB.Core.Services.Impl
                         {
                             var created = false;
                             var factories = this.m_configuration.ServiceProviders.Where(s => s.Type != null && typeof(IServiceFactory).IsAssignableFrom(s.Type));
-                            foreach(var factory in factories)
+                            foreach (var factory in factories)
                             {
                                 // Is the service factory already created?
                                 var serviceFactory = this.GetService(factory.Type) as IServiceFactory;
                                 created |= serviceFactory.TryCreateService(serviceType, out object serviceInstance);
-                                if(created)
+                                if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
                                     this.m_cachedServices.TryAdd(serviceType, candidateService);
@@ -425,7 +424,7 @@ namespace SanteDB.Core.Services.Impl
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
-                if(svc is IDisposable dsp)
+                if (svc is IDisposable dsp)
                 {
                     this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
                     dsp.Dispose();
@@ -443,11 +442,11 @@ namespace SanteDB.Core.Services.Impl
         public object CreateInjected(Type type)
         {
 
-            if(type == null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), "Cannot find type for dependency injection");
             }
-            if(!this.m_activators.TryGetValue(type, out Func<Object> activator))
+            if (!this.m_activators.TryGetValue(type, out Func<Object> activator))
             {
                 // TODO: Check for circular dependencies
                 var constructors = type.GetConstructors();
@@ -479,7 +478,7 @@ namespace SanteDB.Core.Services.Impl
                             var expr = Expression.Convert(Expression.Call(
                                 Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
                                 (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
-                                Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type); 
+                                Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type);
                             //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
                             parameterValues[i] = expr;
                         }

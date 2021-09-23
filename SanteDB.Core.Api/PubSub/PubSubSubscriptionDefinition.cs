@@ -23,7 +23,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.PubSub
@@ -76,7 +75,7 @@ namespace SanteDB.Core.PubSub
         /// </summary>
         [XmlAttribute("name"), JsonProperty("name")]
         public String Name { get; set; }
-        
+
         /// <summary>
         /// True if is active
         /// </summary>
@@ -92,7 +91,7 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Gets or sets the event
         /// </summary>
-        [XmlAttribute("event"),JsonProperty("event")]
+        [XmlAttribute("event"), JsonProperty("event")]
         public PubSubEventType Event { get; set; }
 
         /// <summary>
@@ -111,7 +110,7 @@ namespace SanteDB.Core.PubSub
         /// Starts when
         /// </summary>
         [XmlElement("notBefore"), JsonProperty("notBefore")]
-        public DateTimeOffset? NotBefore{ get; set; }
+        public DateTimeOffset? NotBefore { get; set; }
 
         /// <summary>
         /// Not after

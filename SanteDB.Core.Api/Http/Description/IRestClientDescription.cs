@@ -22,22 +22,22 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Http.Description
 {
-	/// <summary>
-	/// Represents a description of a service
-	/// </summary>
-	public interface IRestClientDescription
+    /// <summary>
+    /// Represents a description of a service
+    /// </summary>
+    public interface IRestClientDescription
     {
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the binding for the service client.
         /// </summary>
         IRestClientBindingDescription Binding { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the endpoints for the client
         /// </summary>
         List<IRestClientEndpointDescription> Endpoint { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets whether a tracing is enabled.
         /// </summary>
         bool Trace { get; }

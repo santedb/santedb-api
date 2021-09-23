@@ -28,13 +28,9 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -113,7 +109,7 @@ namespace SanteDB.Core.Data.Quality
             {
                 this.m_tracer.TraceWarning("Object {0} contains {1} data quality issues", data, ruleViolations.Count);
 
-                if(extendable.Extensions.Any(o=>o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension))
+                if (extendable.Extensions.Any(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension))
                     extendable.RemoveExtension(ExtensionTypeKeys.DataQualityExtension);
                 extendable.AddExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), ruleViolations);
             }
@@ -143,17 +139,17 @@ namespace SanteDB.Core.Data.Quality
         {
             List<DetectedIssue> retVal = new List<DetectedIssue>(conf.Assertions.Count);
             List<TModel> exec = new List<TModel>() { data };
-            
-            foreach(var assert in conf.Assertions)
+
+            foreach (var assert in conf.Assertions)
             {
                 bool result = assert.Evaluation == AssertionEvaluationType.Any ? false : true;
                 try
                 {
-                    foreach(var expression in assert.Expressions)
+                    foreach (var expression in assert.Expressions)
                     {
                         var linq = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(expression), null, safeNullable: true, forceLoad: true);
                         var linqResult = (bool)linq.Compile().DynamicInvoke(data);
-                        switch(assert.Evaluation)
+                        switch (assert.Evaluation)
                         {
                             case AssertionEvaluationType.All:
                                 result &= linqResult;
@@ -170,7 +166,7 @@ namespace SanteDB.Core.Data.Quality
                     if (!result)
                         retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     this.m_tracer.TraceWarning("Error applying assertion {0} on {1} = {2} - {3}", assert.Id, data, false, e.Message);
                     retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", $"{assert.Name} (e: {e.Message})", DetectedIssueKeys.FormalConstraintIssue));

@@ -29,42 +29,42 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public static class FeatureGroup
     {
-	    /// <summary>
+        /// <summary>
         /// Feature is related to development
         /// </summary>
         public const string Development = "Development";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is related to diagnostics
         /// </summary>
         public const string Diagnostics = "Diagnostics";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is related to messaging
         /// </summary>
         public const string Messaging = "Messaging";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is an operating system / runtime feature
         /// </summary>
         public const string OperatingSystem = "Operating System";
 
-	    /// <summary>
+        /// <summary>
         /// Performance
         /// </summary>
         public const string Performance = "Performance";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is related to persistence
         /// </summary>
         public const string Persistence = "Persistence";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is a security feature
         /// </summary>
         public const string Security = "Security";
 
-	    /// <summary>
+        /// <summary>
         /// Feature is a system feature
         /// </summary>
         public const string System = "System";
@@ -169,47 +169,47 @@ namespace SanteDB.Core.Configuration
     /// </summary>
     public interface IFeature
     {
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the configuration object
         /// </summary>
         object Configuration { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the configuration type
         /// </summary>
         Type ConfigurationType { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Get the description of the feature
         /// </summary>
         string Description { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the flags for this feature
         /// </summary>
         FeatureFlags Flags { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Get the grouping in the configuration
         /// </summary>
         string Group { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the name of the feature
         /// </summary>
         string Name { get; }
 
-	    /// <summary>
+        /// <summary>
         /// Create the necessary tasks to configure the feature
         /// </summary>
         IEnumerable<IConfigurationTask> CreateInstallTasks();
 
-	    /// <summary>
+        /// <summary>
         /// Create uninstallation tasks
         /// </summary>
         IEnumerable<IConfigurationTask> CreateUninstallTasks();
 
-	    /// <summary>
+        /// <summary>
         /// Returns true if the configuration supplied is configured for this feature
         /// </summary>
         FeatureInstallState QueryState(SanteDBConfiguration configuration);

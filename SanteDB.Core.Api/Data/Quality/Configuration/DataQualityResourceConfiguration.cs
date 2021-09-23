@@ -42,7 +42,8 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// Gets or sets the type of the resource
         /// </summary>
         [XmlIgnore]
-        public Type ResourceType {
+        public Type ResourceType
+        {
             get => new ModelSerializationBinder().BindToType(null, this.ResourceName);
             set
             {

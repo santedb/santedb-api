@@ -26,9 +26,9 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents session information related to a user
     /// </summary>
-    public interface ISession 
+    public interface ISession
     {
-        
+
         /// <summary>
         /// Gets the identifier of the session
         /// </summary>

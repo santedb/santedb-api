@@ -20,7 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Services
 {
@@ -56,7 +55,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="locale"></param>
         /// <returns></returns>
-        KeyValuePair<String,String>[] GetStrings(String locale);
+        KeyValuePair<String, String>[] GetStrings(String locale);
 
         /// <summary>
         /// Reload string definitions

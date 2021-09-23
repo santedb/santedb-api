@@ -18,12 +18,9 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Matching;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Matching
 {

@@ -19,10 +19,6 @@
  * Date: 2021-8-5
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -44,7 +40,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Gets the type
         /// </summary>
-        public string Type {get;}
+        public string Type { get; }
 
         /// <summary>
         /// Gets the value of the claim

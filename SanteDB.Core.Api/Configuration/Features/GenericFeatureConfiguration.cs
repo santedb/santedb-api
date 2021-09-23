@@ -30,7 +30,7 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     public class GenericFeatureConfiguration
     {
-	    /// <summary>
+        /// <summary>
         /// Generic feature configuration
         /// </summary>
         public GenericFeatureConfiguration()
@@ -40,17 +40,17 @@ namespace SanteDB.Core.Configuration.Features
             this.Categories = new Dictionary<string, string[]>();
         }
 
-	    /// <summary>
+        /// <summary>
         /// If the configuration is broken into categories
         /// </summary>
         public Dictionary<string, string[]> Categories { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the configuration options for this generic feature
         /// </summary>
         public Dictionary<string, Func<object>> Options { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Gets the current set configuration values
         /// </summary>
         public Dictionary<string, object> Values { get; set; }

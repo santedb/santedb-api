@@ -18,12 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Event;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
@@ -37,19 +32,12 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Security;
-using System.Security.Authentication;
 using System.Security.Principal;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security.Privacy
 {

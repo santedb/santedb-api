@@ -26,6 +26,12 @@ namespace SanteDB.Core.Matching
     /// </summary>
     public interface IRecordMatchVector
     {
+
+        /// <summary>
+        /// Gets whether this was evaluated
+        /// </summary>
+        bool Evaluated { get; }
+
         /// <summary>
         /// Gets the name of the attribute
         /// </summary>
@@ -36,5 +42,14 @@ namespace SanteDB.Core.Matching
         /// </summary>
         double Score { get; }
 
+        /// <summary>
+        /// The value evaluated in the first record
+        /// </summary>
+        object A { get; }
+
+        /// <summary>
+        /// The value evaluated in the second record.
+        /// </summary>
+        object B { get; }
     }
 }
