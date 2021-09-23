@@ -26,6 +26,12 @@ namespace SanteDB.Core.Matching
     /// </summary>
     public interface IRecordMatchVector
     {
+
+        /// <summary>
+        /// Gets whether this was evaluated
+        /// </summary>
+        bool Evaluated { get; }
+
         /// <summary>
         /// Gets the name of the attribute
         /// </summary>
