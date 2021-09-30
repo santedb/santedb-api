@@ -45,6 +45,12 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Allow unsigned assemblies
+        /// </summary>
+        [XmlAttribute("allowUnsignedAssemblies"), DisplayName("Allow Unsigned Assemblies"), Description("When true, the application host context will allow unsigned service plugins to operate")]
+        public bool AllowUnsignedAssemblies { get; set; }
+
+        /// <summary>
         /// Thread pool size
         /// </summary>
         [XmlAttribute("threadPoolSize"), DisplayName("Thread Pool"), Description("Sets the number of threads to allocate in the default thread pool")]

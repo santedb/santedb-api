@@ -24,6 +24,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security
 {
@@ -111,6 +112,51 @@ namespace SanteDB.Core.Security
         public static Int32 ToUnixEpoch(this DateTime me)
         {
             return (Int32)me.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
+
+        /// <summary>
+        /// Returns true if the certificate <paramref name="me"/> is trusted by a SanteSuite certificate
+        /// </summary>
+        public static bool IsTrustedIntern(this X509Certificate2 me)
+        {
+
+            var chain = X509Chain.Create();
+            chain.ChainPolicy = new X509ChainPolicy()
+            {
+                RevocationMode = X509RevocationMode.NoCheck
+            };
+            var retVal = chain.Build(me);
+
+            // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
+            if (!retVal)
+            {
+                foreach(var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o=>o.StartsWith(typeof(SecurityExtensions).Namespace)))
+                {
+                    using(var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
+                    {
+                        var certTrust = new X509Certificate2();
+                        byte[] certData = new byte[x509Stream.Length];
+                        x509Stream.Read(certData, 0, (int)x509Stream.Length);
+                        certTrust.Import(certData);
+
+                        retVal |= chain.ChainElements.OfType<X509ChainElement>().Any(c => c.Certificate.Thumbprint == certTrust.Thumbprint);
+                    }
+                }
+                
+            }
+
+            // Try on machine context
+            if (!retVal)
+            {
+                chain = new X509Chain(true);
+                chain.ChainPolicy = new X509ChainPolicy()
+                {
+                    RevocationMode = X509RevocationMode.NoCheck
+                };
+                retVal = chain.Build(me);
+            }
+
+            return retVal;
         }
     }
 }
