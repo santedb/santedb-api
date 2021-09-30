@@ -59,7 +59,7 @@ namespace SanteDB.Core.Interop
         /// The object is an operation
         /// </summary>
         [XmlEnum("operation")]
-        RpcOperation =0x2 ,
+        RpcOperation = 0x2,
     }
 
     /// <summary>
@@ -250,7 +250,7 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlElement("children"), JsonProperty("children")]
         public List<ChildServiceResourceOptions> ChildResources { get; set; }
-         
+
     }
 
     /// <summary>

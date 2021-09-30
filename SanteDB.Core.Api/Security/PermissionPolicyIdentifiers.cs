@@ -127,7 +127,7 @@ namespace SanteDB.Core.Security
         /// Allow principals to enable pubsub
         /// </summary>
         public const string EnablePubSubSubscription = UnrestrictedPubSub + ".2";
-        
+
         /// <summary>
         /// Allow principals to delete pubsub subs
         /// </summary>

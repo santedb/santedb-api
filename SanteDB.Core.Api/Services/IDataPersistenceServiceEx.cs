@@ -20,10 +20,7 @@
  */
 using SanteDB.Core.Model;
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Services
 {
@@ -43,8 +40,8 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Generic interface implementation
     /// </summary>
-     public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceServiceEx, IDataPersistenceService<TModel>
-        where TModel : IdentifiedData
+    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceServiceEx, IDataPersistenceService<TModel>
+       where TModel : IdentifiedData
     {
 
     }

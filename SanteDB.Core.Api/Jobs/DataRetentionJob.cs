@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Jobs
 {
@@ -47,6 +46,11 @@ namespace SanteDB.Core.Jobs
 
         // Configuration 
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
+
+        /// <summary>
+        /// Gets the identifier of this job
+        /// </summary>
+        public Guid Id => Guid.Parse("71F82F18-992D-4A71-9D0C-ECCE92490D8C");
 
         /// <summary>
         /// Gets the name of the service

@@ -20,17 +20,14 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
 
 namespace SanteDB.Core.Notifications.Email
 {
@@ -54,7 +51,7 @@ namespace SanteDB.Core.Notifications.Email
         /// <summary>
         /// Send the specified e-mail
         /// </summary>
-        public Guid Send(string[] toAddress, string subject, string body,  DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        public Guid Send(string[] toAddress, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
             try
             {
@@ -63,9 +60,9 @@ namespace SanteDB.Core.Notifications.Email
                 mailMessage.Sender = new MailAddress(this.m_configuration.Smtp.From);
                 toAddress.Select(o => o.Replace("mailto:", "")).ToList().ForEach(o => mailMessage.To.Add(o));
 
-                if(ccAdmins)
+                if (ccAdmins)
                     this.m_configuration.AdministrativeContacts
-                        .Where(o=>!mailMessage.To.Contains(new MailAddress(o)))
+                        .Where(o => !mailMessage.To.Contains(new MailAddress(o)))
                         .ToList()
                         .ForEach(o => mailMessage.CC.Add(o));
                 mailMessage.Subject = subject;

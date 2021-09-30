@@ -50,7 +50,7 @@ namespace SanteDB.Core.Interop.Description
         /// <summary>
         /// Resource property description
         /// </summary>
-        public OperationParameterDescription(String name, Type type, OperationParameterLocation location) : base (name, type)
+        public OperationParameterDescription(String name, Type type, OperationParameterLocation location) : base(name, type)
         {
             this.Location = location;
         }

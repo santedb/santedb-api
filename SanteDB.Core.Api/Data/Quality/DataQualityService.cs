@@ -23,12 +23,9 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -39,7 +36,29 @@ namespace SanteDB.Core.Data.Quality
     {
 
         // Configuration
-        private DataQualityConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataQualityConfigurationSection>();
+        private DataQualityConfigurationSection m_configuration;
+
+        // Data quality configuration provider
+        private IDataQualityConfigurationProviderService m_dataQualityConfigurationProvider;
+
+        // Service manager
+        private IServiceManager m_serviceManager;
+
+        /// <summary>
+        /// Create new data quality service
+        /// </summary>
+        public DataQualityService(IConfigurationManager configurationManager, IServiceManager serviceProvider, IDataQualityConfigurationProviderService configurationProvider = null)
+        {
+            this.m_configuration = configurationManager.GetSection<DataQualityConfigurationSection>();
+            if (configurationProvider == null)
+            {
+                configurationProvider = serviceProvider.CreateInjected<LegacyRulesetConfigurationProvider>();
+                serviceProvider.AddServiceProvider(configurationProvider);
+            }
+
+            this.m_dataQualityConfigurationProvider = configurationProvider;
+            this.m_serviceManager = serviceProvider;
+        }
 
         // Data quality service
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityService));
@@ -47,7 +66,7 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Ruleset evaluators
         /// </summary>
-        private List<IDataQualityBusinessRuleService> m_attachedRules = new List<IDataQualityBusinessRuleService>();
+        private List<IBusinessRulesService> m_attachedRules = new List<IBusinessRulesService>();
 
         /// <summary>
         /// True if the service is running
@@ -83,29 +102,23 @@ namespace SanteDB.Core.Data.Quality
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            if(this.m_configuration != null)
+            if (this.m_configuration != null)
             {
                 ApplicationServiceContext.Current.AddBusinessRule(typeof(DataQualityBundleRule));
                 // Iterate over rule sets and regiser their rules as BRE
-                foreach(var ruleSet in this.m_configuration.RuleSets)
+                foreach (var ruleType in this.m_dataQualityConfigurationProvider.GetRuleSets().Where(t => t.Enabled).SelectMany(o => o.Resources).Select(o => o.ResourceType).Distinct())
                 {
-                    if (!ruleSet.Enabled) continue;
-
-                    this.m_tracer.TraceInfo("Initializing ruleset {0}", ruleSet.Name);
+                    this.m_tracer.TraceInfo("Initializing ruleset {0}", ruleType.Name);
                     // Iterate over resources in rule set and register BRE if not already done
-                    foreach(var resource in ruleSet.Resources)
+
+                    var breType = typeof(DataQualityBusinessRule<>).MakeGenericType(ruleType);
+                    var current = ApplicationServiceContext.Current.GetService(breType) as IBusinessRulesService;
+
+                    // If the current is null we want to add the service
+                    if (current == null)
                     {
-                        var breType = typeof(DataQualityBusinessRule<>).MakeGenericType(resource.ResourceType);
-                        var current = ApplicationServiceContext.Current.GetService(breType) as IDataQualityBusinessRuleService;
-
-                        // If the current is null we want to add the service
-                        if (current == null)
-                        {
-                            current = ApplicationServiceContext.Current.AddBusinessRule(breType) as IDataQualityBusinessRuleService;
-                            this.m_attachedRules.Add(current);
-                        }
-
-                        current.AddDataQualityResourceConfiguration(ruleSet.Id, resource);
+                        current = ApplicationServiceContext.Current.AddBusinessRule(breType) as IBusinessRulesService;
+                        this.m_attachedRules.Add(current);
                     }
                 }
             }

@@ -22,8 +22,6 @@ using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -197,5 +195,11 @@ namespace SanteDB.Core.Security.Configuration
             this.m_plainTextSecret = String.Empty;
             return true;
         }
+
+
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string ToString() => this.KeyName;
     }
 }

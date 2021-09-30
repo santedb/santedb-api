@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Configuration.Data;
 using System;
 
 namespace SanteDB.Core

@@ -19,11 +19,7 @@
  * Date: 2021-8-5
  */
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -72,7 +68,7 @@ namespace SanteDB.Core.Security.Claims
         /// Telephone address claim
         /// </summary>
         public const string Telephone = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone";
-        
+
         /// <summary>
         /// Default name claim
         /// </summary>
@@ -101,7 +97,7 @@ namespace SanteDB.Core.Security.Claims
         /// Claim for conveying the one time password / access code
         /// </summary>
         public const string SanteDBOTAuthCode = "otac";
-        
+
         /// <summary>
         /// TFA secret expiry
         /// </summary>
@@ -111,7 +107,7 @@ namespace SanteDB.Core.Security.Claims
         /// Override claim
         /// </summary>
         public const string SanteDBOverrideClaim = "urn:santedb:org:override";
-        
+
         /// <summary>
         /// Patient identifier claim
         /// </summary>
@@ -172,7 +168,7 @@ namespace SanteDB.Core.Security.Claims
         /// Language claim
         /// </summary>
         public const string Language = "http://santedb.org/claims/language";
-        
+
 
     }
 }

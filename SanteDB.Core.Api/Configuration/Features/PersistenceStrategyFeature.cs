@@ -4,7 +4,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -89,10 +88,10 @@ namespace SanteDB.Core.Configuration.Features
             var currentStrategy = appService.ServiceProviders.Find(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
 
             // Resource manager config section
-            var resourceMergeConfiguration = configuration.GetSection<ResourceMergeConfigurationSection>();
-            if(resourceMergeConfiguration == null)
+            var resourceMergeConfiguration = configuration.GetSection<ResourceManagementConfigurationSection>();
+            if (resourceMergeConfiguration == null)
             {
-                resourceMergeConfiguration = new ResourceMergeConfigurationSection();
+                resourceMergeConfiguration = new ResourceManagementConfigurationSection();
             }
 
             // Get strategies
@@ -147,7 +146,7 @@ namespace SanteDB.Core.Configuration.Features
 
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             appSection.ServiceProviders.RemoveAll(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
-            configuration.RemoveSection<ResourceMergeConfigurationSection>();
+            configuration.RemoveSection<ResourceManagementConfigurationSection>();
             return true;
 
         }
@@ -175,7 +174,7 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     internal class InstallPersistenceStrategyTask : IConfigurationTask
     {
-       
+
         // The resource merge
         private GenericFeatureConfiguration m_resourceMergeConfiguration;
 
@@ -217,7 +216,7 @@ namespace SanteDB.Core.Configuration.Features
 
             appSection.ServiceProviders.RemoveAll(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
             appSection.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME] as Type));
-            configuration.RemoveSection<ResourceMergeConfigurationSection>();
+            configuration.RemoveSection<ResourceManagementConfigurationSection>();
             configuration.AddSection(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MERGE_CONFIG]);
             return true;
         }

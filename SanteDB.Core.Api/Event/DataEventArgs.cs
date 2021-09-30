@@ -19,15 +19,13 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
@@ -130,10 +128,12 @@ namespace SanteDB.Core.Event
         /// <param name="principal">The principal which is executing the query</param>
         /// <param name="offset">The requested offset in the result set</param>
         /// <param name="count">The requested total results to be returned in this result set</param>
+        /// <param name="orderBy">The ordering instructions</param>
         /// <param name="tag">A query tag object</param>
-        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, dynamic tag = null) : base(query, offset, count, queryId, principal)
+        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, int offset, int? count, Guid? queryId, IPrincipal principal, IEnumerable<ModelSort<TData>> orderBy, dynamic tag = null) : base(query, offset, count, queryId, principal)
         {
             this.QueryTag = tag;
+            this.OrderBy = orderBy;
         }
 
         /// <summary>
@@ -145,6 +145,11 @@ namespace SanteDB.Core.Event
         }
 
         /// <summary>
+        /// Order by instructions
+        /// </summary>
+        public IEnumerable<ModelSort<TData>> OrderBy { get; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this instance cancel.
         /// </summary>
         /// <value><c>true</c> if this instance cancel; otherwise, <c>false</c>.</value>
@@ -153,7 +158,7 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-        
+
         /// <summary>
         /// Instructs the query engine to use fuzzy totals
         /// </summary>
@@ -244,7 +249,7 @@ namespace SanteDB.Core.Event
         /// <param name="identifier">The identifier of the object being retrieved</param>
         /// <param name="principal">The principal under which the query is being executed, or null if the current <see cref="AuthenticationContext"/> is being used</param>
         /// <param name="versionId">The version identifier of the object being retrieved if supplied</param>
-        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal) 
+        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal)
         {
             this.Id = identifier;
             this.VersionId = versionId;

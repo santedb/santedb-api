@@ -18,14 +18,9 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Diagnostics.Performance
 {
@@ -109,7 +104,7 @@ namespace SanteDB.Core.Diagnostics.Performance
 
         }
 
-        
+
         /// <summary>
         /// Get the UUID of the thread pool
         /// </summary>

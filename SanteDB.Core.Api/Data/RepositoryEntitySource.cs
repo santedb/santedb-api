@@ -24,7 +24,6 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Data

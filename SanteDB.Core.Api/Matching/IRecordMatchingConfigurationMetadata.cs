@@ -18,23 +18,35 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Data.Quality.Configuration;
-using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 
-namespace SanteDB.Core.Data.Quality
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a basic data quality business rule service
+    /// Record matching metadata
     /// </summary>
-    internal interface IDataQualityBusinessRuleService : IBusinessRulesService
+    public interface IRecordMatchingConfigurationMetadata
     {
 
         /// <summary>
-        /// Adds a data quality resource configuration to this business rules object
+        /// Gets the author of the configuration metadata
         /// </summary>
-        void AddDataQualityResourceConfiguration(String ruleSetId, DataQualityResourceConfiguration configuration);
+        String CreatedBy { get; }
 
-       
+        /// <summary>
+        /// Creation time
+        /// </summary>
+        DateTimeOffset CreationTime { get; }
+
+        /// <summary>
+        /// Get or sets the state of the configuration
+        /// </summary>
+        MatchConfigurationStatus State { get; }
+
+        /// <summary>
+        /// Plugin specific tags for this match configuration
+        /// </summary>
+        IDictionary<String, String> Tags { get; }
     }
 }

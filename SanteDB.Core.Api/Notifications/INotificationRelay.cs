@@ -18,9 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Model.Security;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace SanteDB.Core.Notifications
@@ -77,16 +75,16 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the name of the attachment
         /// </summary>
-        public String Name { get;  }
+        public String Name { get; }
 
         /// <summary>
         /// Gets or sets the content-type
         /// </summary>
-        public String ContentType { get;  }
+        public String ContentType { get; }
 
         /// <summary>
         /// Gets or sets the content
         /// </summary>
-        public byte[] Content { get;   }
+        public byte[] Content { get; }
     }
 }

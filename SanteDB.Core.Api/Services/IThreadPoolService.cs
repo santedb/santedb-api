@@ -33,9 +33,8 @@ namespace SanteDB.Core.Services
         void QueueUserWorkItem(Action<Object> action);
 
         /// <summary>
-        /// Queues the specified action into the worker pool
+        /// Queue user work item
         /// </summary>
-        void QueueUserWorkItem(Action<Object> action, Object parm);
-
+        void QueueUserWorkItem<TParam>(Action<TParam> action, TParam parm);
     }
 }

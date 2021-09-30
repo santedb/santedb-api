@@ -21,7 +21,6 @@
 using SanteDB.Core.Http.Description;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Xml.Serialization;
 
@@ -38,7 +37,8 @@ namespace SanteDB.Core.Http
         /// Gets or sets the service binding
         /// </summary>
         [XmlElement("binding")]
-        public ServiceClientBindingDescription Binding {
+        public ServiceClientBindingDescription Binding
+        {
             get; set;
         }
 
@@ -76,7 +76,7 @@ namespace SanteDB.Core.Http
         /// Endpoint collection for configuration
         /// </summary>
         [XmlArray("endpoint"), XmlArrayItem("add")]
-        public List<ServiceClientEndpointDescription> EndpointCollection { get;set;}
+        public List<ServiceClientEndpointDescription> EndpointCollection { get; set; }
     }
 
 
@@ -109,8 +109,9 @@ namespace SanteDB.Core.Http
         /// Gets or sets the address
         /// </summary>
         [XmlAttribute("address")]
-        public string Address {
-            get;set;
+        public string Address
+        {
+            get; set;
         }
 
         /// <summary>
@@ -119,7 +120,7 @@ namespace SanteDB.Core.Http
         [XmlAttribute("timeout")]
         public int Timeout
         {
-            get;set;
+            get; set;
         }
     }
 
@@ -127,7 +128,7 @@ namespace SanteDB.Core.Http
     /// REST client binding description
     /// </summary>
     [XmlType(nameof(ServiceClientBindingDescription), Namespace = "http://santedb.org/configuration")]
-    public class ServiceClientBindingDescription :  IRestClientBindingDescription
+    public class ServiceClientBindingDescription : IRestClientBindingDescription
     {
         /// <summary>
         /// Gets the content type mapper
@@ -139,8 +140,9 @@ namespace SanteDB.Core.Http
         /// Gets or sets the optimization flag
         /// </summary>
         [XmlAttribute("optimize")]
-        public bool Optimize {
-            get;set;
+        public bool Optimize
+        {
+            get; set;
         }
 
         /// <summary>

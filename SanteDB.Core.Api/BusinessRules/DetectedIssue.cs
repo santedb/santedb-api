@@ -24,10 +24,10 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.BusinessRules
 {
-	/// <summary>
-	/// Detected issue priority
-	/// </summary>
-	public enum DetectedIssuePriorityType : int
+    /// <summary>
+    /// Detected issue priority
+    /// </summary>
+    public enum DetectedIssuePriorityType : int
     {
         /// <summary>
         /// The issue is an error, processing cannot continue until the issue is corrected
@@ -97,6 +97,6 @@ namespace SanteDB.Core.BusinessRules
         /// <seealso cref="DetectedIssueKeys"/>
         [XmlAttribute("type"), JsonProperty("type")]
         public Guid TypeKey { get; set; }
-        
+
     }
 }

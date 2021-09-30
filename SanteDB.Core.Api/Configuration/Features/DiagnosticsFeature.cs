@@ -18,16 +18,15 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Attributes;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Reflection;
-using SanteDB.Core.Attributes;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -36,17 +35,17 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     public class DiagnosticsFeature : IFeature
     {
-	    /// <summary>
+        /// <summary>
         /// Gets or sets the configuration object
         /// </summary>
         public object Configuration { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Configuration type
         /// </summary>
         public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
-	    /// <summary>
+        /// <summary>
         /// Create the installation tasks
         /// </summary>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
@@ -56,7 +55,7 @@ namespace SanteDB.Core.Configuration.Features
             };
         }
 
-	    /// <summary>
+        /// <summary>
         /// Create uninstall tasks
         /// </summary>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
@@ -64,27 +63,27 @@ namespace SanteDB.Core.Configuration.Features
             throw new NotSupportedException();
         }
 
-	    /// <summary>
+        /// <summary>
         /// Get the description of the diagnostics feature
         /// </summary>
         public string Description => "Configures the diagnostics trace sources";
 
-	    /// <summary>
+        /// <summary>
         /// Get the flags
         /// </summary>
         public FeatureFlags Flags => FeatureFlags.SystemFeature;
 
-	    /// <summary>
+        /// <summary>
         /// Get the group for the diagnostics feature
         /// </summary>
         public string Group => FeatureGroup.Diagnostics;
 
-	    /// <summary>
+        /// <summary>
         /// Gets the name of the feature
         /// </summary>
         public string Name => "Logging / Tracing";
 
-	    /// <summary>
+        /// <summary>
         /// Query the state of the diagnostics configuration
         /// </summary>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
@@ -93,7 +92,7 @@ namespace SanteDB.Core.Configuration.Features
             var config = configuration.GetSection<DiagnosticsConfigurationSection>();
             if (config == null)
             {
-	            config = new DiagnosticsConfigurationSection();
+                config = new DiagnosticsConfigurationSection();
             }
 
             // Configuration for trace sources missing?
@@ -110,11 +109,11 @@ namespace SanteDB.Core.Configuration.Features
                     s => s.SourceName == source.TraceSourceName);
                 if (src != null)
                 {
-	                configFeature.Values.Add(source.TraceSourceName, src.Filter);
+                    configFeature.Values.Add(source.TraceSourceName, src.Filter);
                 }
                 else
                 {
-	                configFeature.Values.Add(source.TraceSourceName, EventLevel.Warning);
+                    configFeature.Values.Add(source.TraceSourceName, EventLevel.Warning);
                 }
             }
 
@@ -130,7 +129,7 @@ namespace SanteDB.Core.Configuration.Features
 
             configFeature.Options.Add("initializationData", () => ConfigurationOptionType.FileName);
             configFeature.Categories.Add("Writers", new[] { "writer", "initializationData", "filter" });
-            configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter?.GetType() ?? tw.FirstOrDefault());
+            configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter ?? tw.FirstOrDefault());
             configFeature.Values.Add("initializationData", config.TraceWriter.FirstOrDefault()?.InitializationData ?? "santedb.log");
             configFeature.Values.Add("filter", config.Mode);
             this.Configuration = configFeature;
@@ -138,17 +137,17 @@ namespace SanteDB.Core.Configuration.Features
         }
 
 
-	    /// <summary>
+        /// <summary>
         /// Configure the diagnostics services
         /// </summary>
         private class ConfigureDiagnosticsTask : IConfigurationTask
         {
-	        /// <summary>
+            /// <summary>
             /// Backup of diagnostics
             /// </summary>
             private DiagnosticsConfigurationSection m_backup;
 
-	        /// <summary>
+            /// <summary>
             /// Constructor for the diagnostics task
             /// </summary>
             public ConfigureDiagnosticsTask(DiagnosticsFeature feature)
@@ -156,12 +155,12 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-	        /// <summary>
+            /// <summary>
             /// Configures the diagnostics subsystem
             /// </summary>
             public string Description => "Configures the diagnostics subsystem";
 
-	        /// <summary>
+            /// <summary>
             /// Execute the configuration
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
@@ -173,7 +172,8 @@ namespace SanteDB.Core.Configuration.Features
                 var featureConfig = this.Feature.Configuration as GenericFeatureConfiguration;
                 var config = new DiagnosticsConfigurationSection();
 
-                if (featureConfig == null) {
+                if (featureConfig == null)
+                {
                     this.Feature.QueryState(configuration);
                     featureConfig = this.Feature.Configuration as GenericFeatureConfiguration;
                 }
@@ -194,7 +194,7 @@ namespace SanteDB.Core.Configuration.Features
                 {
                     config.Sources.Add(new TraceSourceConfiguration
                     {
-                        SourceName = k, 
+                        SourceName = k,
                         Filter = (EventLevel)featureConfig.Values[k]
                     });
                 }
@@ -205,22 +205,22 @@ namespace SanteDB.Core.Configuration.Features
 
             }
 
-	        /// <summary>
+            /// <summary>
             /// Gets the feature associated with this task
             /// </summary>
             public IFeature Feature { get; }
 
-	        /// <summary>
+            /// <summary>
             /// Gets the name of the task
             /// </summary>
             public string Name => "Configure Diagnostics";
 
-	        /// <summary>
+            /// <summary>
             /// Progress has changed
             /// </summary>
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-	        /// <summary>
+            /// <summary>
             /// Rollback configuration
             /// </summary>
             /// <param name="configuration"></param>
@@ -235,7 +235,7 @@ namespace SanteDB.Core.Configuration.Features
                 return true;
             }
 
-	        /// <summary>
+            /// <summary>
             /// Verify that configuration needsto occur
             /// </summary>
             public bool VerifyState(SanteDBConfiguration configuration)

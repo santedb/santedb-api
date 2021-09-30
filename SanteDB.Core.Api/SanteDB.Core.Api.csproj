@@ -276,6 +276,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <None Remove="Security\Trust\appca.santesuite.org.cer" />
+    <None Remove="Security\Trust\appca.santesuite.org.v2.cer" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Security\Trust\appca.santesuite.org.cer" />
+    <EmbeddedResource Include="Security\Trust\appca.santesuite.org.v2.cer" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
       <Link>SanteDB.licenseheader</Link>
     </None>

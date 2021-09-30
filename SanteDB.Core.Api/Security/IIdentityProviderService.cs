@@ -106,7 +106,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Creates the override event args
         /// </summary>
-        public SecurityOverrideEventArgs(IPrincipal principal, string purposeOfUse, IEnumerable<String> scopes) 
+        public SecurityOverrideEventArgs(IPrincipal principal, string purposeOfUse, IEnumerable<String> scopes)
         {
             this.Principal = principal;
             this.PurposeOfUse = purposeOfUse;
@@ -193,7 +193,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
         /// <param name="principal">The principal that was created</param>
-        IIdentity CreateIdentity(String userName, String password,  IPrincipal principal);
+        IIdentity CreateIdentity(String userName, String password, IPrincipal principal);
 
         /// <summary>
         /// Authenticate the user creating an identity
@@ -260,6 +260,6 @@ namespace SanteDB.Core.Security.Services
         /// <param name="tfaSecret">The TFA secret to include in elevation authentication request</param>
         IPrincipal ElevatedAuthenticate(String userName, String password, String tfaSecret, String purpose, params String[] policies);
     }
-   
+
 }
 

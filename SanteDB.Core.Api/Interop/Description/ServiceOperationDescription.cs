@@ -56,7 +56,7 @@ namespace SanteDB.Core.Interop.Description
         /// <summary>
         /// Gets the parameters
         /// </summary>
-        public IList<OperationParameterDescription>  Parameters { get; }
+        public IList<OperationParameterDescription> Parameters { get; }
 
         /// <summary>
         /// Gets the path description

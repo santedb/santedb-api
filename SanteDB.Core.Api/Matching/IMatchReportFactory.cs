@@ -18,37 +18,35 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Model;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Matching
 {
     /// <summary>
-    /// Represents a service 
+    /// Represents a service that can construct a report from a match result
     /// </summary>
-    [System.ComponentModel.Description("Record Matching Configuration Provider")]
-    public interface IRecordMatchingConfigurationService : IServiceImplementation
+    public interface IMatchReportFactory
     {
 
         /// <summary>
-        /// Get the specified named configuration
+        /// Create a match report for the matches
         /// </summary>
-        IRecordMatchingConfiguration GetConfiguration(String name);
+        /// <param name="input">The input record</param>
+        /// <param name="matches">The matches</param>
+        /// <param name="inputType">The type of input to create the report for</param>
+        /// <returns>A serializable object representing the match reports</returns>
+        object CreateMatchReport(Type inputType, object input, IEnumerable<IRecordMatchResult> matches);
 
         /// <summary>
-        /// Saves the specified configuration to the configuration service
+        /// Create a match report for the matches
         /// </summary>
-        IRecordMatchingConfiguration SaveConfiguration(IRecordMatchingConfiguration configuration);
-
-        /// <summary>
-        /// Delete the configuration
-        /// </summary>
-        IRecordMatchingConfiguration DeleteConfiguration(String name);
-
-        /// <summary>
-        /// Gets the names of configurations in this provider
-        /// </summary>
-        IEnumerable<String> Configurations { get; }
+        /// <typeparam name="T">The type of result to construct a match report for</typeparam>
+        /// <param name="input">The input record</param>
+        /// <param name="matches">The matches</param>
+        /// <returns>A serializable object representing the match reports</returns>
+        object CreateMatchReport<T>(T input, IEnumerable<IRecordMatchResult<T>> matches)
+            where T : IdentifiedData;
     }
 }

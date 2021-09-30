@@ -18,14 +18,8 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Core.Services.Impl
@@ -70,13 +64,13 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Queue worker 
         /// </summary>
-        public void QueueUserWorkItem(Action<object> action, object parm)
+        public void QueueUserWorkItem<TParm>(Action<TParm> action, TParm parm)
         {
             ThreadPool.QueueUserWorkItem(o =>
             {
                 try
                 {
-                    action(o);
+                    action((TParm)o);
                 }
                 catch (Exception e)
                 {

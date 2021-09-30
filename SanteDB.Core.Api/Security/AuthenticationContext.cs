@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Principal;
@@ -28,7 +27,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Authentication context
     /// </summary>
-    public sealed class AuthenticationContext 
+    public sealed class AuthenticationContext
     {
 
         /// <summary>
@@ -49,6 +48,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
+                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
             }
 
             /// <summary>
@@ -79,11 +79,11 @@ namespace SanteDB.Core.Security
         /// System identity
         /// </summary>
         private static readonly IPrincipal s_system = new GenericPrincipal(new GenericIdentity("SYSTEM"), new string[] { "SYSTEM" });
-        
+
         /// <summary>
         /// Anonymous identity
         /// </summary>
-        private static readonly IPrincipal s_anonymous = new GenericPrincipal(new GenericIdentity("ANONYMOUS"), new string[] {  "ANONYMOUS" });
+        private static readonly IPrincipal s_anonymous = new GenericPrincipal(new GenericIdentity("ANONYMOUS"), new string[] { "ANONYMOUS" });
 
         /// <summary>
         /// Gets the anonymous principal
@@ -145,7 +145,7 @@ namespace SanteDB.Core.Security
             this.m_principal = principal;
         }
 
-       
+
         /// <summary>
         /// Gets or sets the current context
         /// </summary>
@@ -153,8 +153,8 @@ namespace SanteDB.Core.Security
         {
             get
             {
-                if(s_current == null)
-                    lock(s_lockObject)
+                if (s_current == null)
+                    lock (s_lockObject)
                         s_current = new AuthenticationContext(s_anonymous);
                 return s_current;
             }
@@ -177,6 +177,8 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterSystemContext()
         {
+
+            // TODO: Validate the caller can enter the system context
             return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
 

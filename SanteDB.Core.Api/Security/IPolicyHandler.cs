@@ -26,7 +26,7 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represnts an individual policy handler instance
     /// </summary>
-    public interface IPolicyHandler 
+    public interface IPolicyHandler
     {
 
         /// <summary>

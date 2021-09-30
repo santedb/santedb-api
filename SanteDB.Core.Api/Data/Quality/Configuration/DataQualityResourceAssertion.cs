@@ -72,7 +72,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// All of the expressions must evaluate to true
         /// </summary>
         [XmlEnum("all")]
-        All, 
+        All,
         /// <summary>
         /// Any of the expressions must evaluate to true
         /// </summary>

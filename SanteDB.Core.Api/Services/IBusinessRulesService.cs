@@ -18,16 +18,14 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services
 {
-    
+
     /// <summary>
     /// Represents a generic interface for business rules services
     /// </summary>

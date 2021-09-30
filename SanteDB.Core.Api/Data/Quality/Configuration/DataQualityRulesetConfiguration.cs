@@ -27,6 +27,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
     /// Represents a data quality rule set
     /// </summary>
     [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
+    [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
     public class DataQualityRulesetConfiguration
     {
 

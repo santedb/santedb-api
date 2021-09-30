@@ -22,12 +22,8 @@ using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -47,8 +43,8 @@ namespace SanteDB.Core.Data.Quality
             var issues = new List<DetectedIssue>();
             foreach (var itm in data.Item)
             {
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
-                if(breSvc != null)
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
+                if (breSvc != null)
                     issues.AddRange(breSvc.Validate(itm));
             }
             return base.Validate(data).Union(issues).ToList();
@@ -59,11 +55,11 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public override Bundle BeforeInsert(Bundle data)
         {
-            for(int i = 0; i < data.Item.Count; i++)
+            for (int i = 0; i < data.Item.Count; i++)
             {
                 var itm = data.Item[i];
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
-                if(breSvc != null)
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
+                if (breSvc != null)
                     data.Item[i] = breSvc.BeforeInsert(itm) as IdentifiedData;
             }
             return base.BeforeInsert(data);
@@ -77,7 +73,7 @@ namespace SanteDB.Core.Data.Quality
             for (int i = 0; i < data.Item.Count; i++)
             {
                 var itm = data.Item[i];
-                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IDataQualityBusinessRuleService;
+                var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if (breSvc != null)
                     data.Item[i] = breSvc.BeforeUpdate(itm) as IdentifiedData;
             }

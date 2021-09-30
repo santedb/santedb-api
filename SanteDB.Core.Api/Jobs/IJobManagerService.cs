@@ -21,9 +21,6 @@
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Jobs
@@ -96,7 +93,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Get this manager's instance of a job
         /// </summary>
-        /// <param name="jobTypeName">The job type to fetch</param>
-        IJob GetJobInstance(String jobTypeName);
+        /// <param name="jobKey">The job type to fetch</param>
+        IJob GetJobInstance(Guid jobKey);
     }
 }

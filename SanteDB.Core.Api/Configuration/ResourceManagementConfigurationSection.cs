@@ -27,22 +27,22 @@ namespace SanteDB.Core.Configuration
     /// <summary>
     /// Represents a configuration for MDM
     /// </summary>
-    [XmlType(nameof(ResourceMergeConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class ResourceMergeConfigurationSection : IConfigurationSection
+    [XmlType(nameof(ResourceManagementConfigurationSection), Namespace = "http://santedb.org/configuration")]
+    public class ResourceManagementConfigurationSection : IConfigurationSection
     {
         /// <summary>
         /// MDM configuration
         /// </summary>
-        public ResourceMergeConfigurationSection()
+        public ResourceManagementConfigurationSection()
         {
-            this.ResourceTypes = new List<ResourceMergeConfiguration>();
+            this.ResourceTypes = new List<ResourceTypeReferenceConfiguration>();
         }
-        
+
         /// <summary>
         /// Gets or sets the resource types
         /// </summary>
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
-        public List<ResourceMergeConfiguration> ResourceTypes { get; set; }
+        public List<ResourceTypeReferenceConfiguration> ResourceTypes { get; set; }
 
     }
 }

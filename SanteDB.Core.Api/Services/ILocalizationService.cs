@@ -20,7 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Services
 {
@@ -44,19 +43,19 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Format a <paramref name="stringKey"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String stringKey, params object[] parameters);
+        String FormatString(String stringKey, dynamic parameters);
 
         /// <summary>
         /// Format a <paramref name="stringKey"/> from <paramref name="locale"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String locale, String stringKey, params object[] parameters);
+        String FormatString(String locale, String stringKey, dynamic parameters);
 
         /// <summary>
         /// Get all strings in the specified locale
         /// </summary>
         /// <param name="locale"></param>
         /// <returns></returns>
-        KeyValuePair<String,String>[] GetStrings(String locale);
+        KeyValuePair<String, String>[] GetStrings(String locale);
 
         /// <summary>
         /// Reload string definitions

@@ -19,14 +19,10 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security
 {
@@ -36,7 +32,7 @@ namespace SanteDB.Core.Security
     [System.ComponentModel.Description("Security Challenge Storage Provider")]
     public interface ISecurityChallengeService : IServiceImplementation
     {
-       
+
         /// <summary>
         /// Gets the challenges current registered for the user (not the answers)
         /// </summary>

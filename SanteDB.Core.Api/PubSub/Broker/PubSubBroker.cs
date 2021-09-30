@@ -21,13 +21,10 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Core.PubSub.Broker
 {
@@ -99,9 +96,9 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         public void Dispose()
         {
-            if(this.m_repositoryListeners != null)
-            foreach (var itm in this.m_repositoryListeners)
-                itm.Dispose();
+            if (this.m_repositoryListeners != null)
+                foreach (var itm in this.m_repositoryListeners)
+                    itm.Dispose();
             this.m_repositoryListeners = null;
         }
 
@@ -121,10 +118,8 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_pubSubManager.UnSubscribed += this.PubSubUnSubscribed;
             this.m_repositoryListeners = new List<IDisposable>();
 
-            ApplicationServiceContext.Current.Started += (o,e) =>
+            ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                ApplicationServiceContext.Current.GetService<IPolicyDecisionService>().ClearCache(AuthenticationContext.SystemPrincipal);
-
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     try

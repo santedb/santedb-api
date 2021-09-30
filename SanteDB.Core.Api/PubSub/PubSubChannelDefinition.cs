@@ -22,7 +22,6 @@ using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.PubSub
@@ -45,7 +44,7 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Gets or sets whether the channel is active
         /// </summary>
-        [XmlAttribute("active"),JsonProperty("active")]
+        [XmlAttribute("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
         /// <summary>
@@ -71,6 +70,6 @@ namespace SanteDB.Core.PubSub
         /// </summary>
         [XmlIgnore, JsonIgnore]
         public Type DispatcherFactoryType => System.Type.GetType(this.DispatcherFactoryTypeXml);
-        
+
     }
 }

@@ -26,7 +26,7 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
-    
+
     /// <summary>
     /// Represents a class which can create care plans
     /// </summary>

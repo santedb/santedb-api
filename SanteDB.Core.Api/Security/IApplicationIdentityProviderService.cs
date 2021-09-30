@@ -18,10 +18,8 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.ComponentModel;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -32,30 +30,30 @@ namespace SanteDB.Core.Security.Services
     [System.ComponentModel.Description("Application Identity Provider")]
     public interface IApplicationIdentityProviderService : IServiceImplementation
     {
-		/// <summary>
-		/// Fired after an authentication request has been made.
-		/// </summary>
-		event EventHandler<AuthenticatedEventArgs> Authenticated;
+        /// <summary>
+        /// Fired after an authentication request has been made.
+        /// </summary>
+        event EventHandler<AuthenticatedEventArgs> Authenticated;
 
-		/// <summary>
-		/// Fired prior to an authentication request being made.
-		/// </summary>
-		event EventHandler<AuthenticatingEventArgs> Authenticating;
+        /// <summary>
+        /// Fired prior to an authentication request being made.
+        /// </summary>
+        event EventHandler<AuthenticatingEventArgs> Authenticating;
 
-		/// <summary>
-		/// Authenticate the application identity.
-		/// </summary>
-		/// <param name="applicationId">The application id to authenticate.</param>
-		/// <param name="applicationSecret">The application secret to authenticate.</param>
-		/// <returns>Returns the principal of the application.</returns>
-		IPrincipal Authenticate(String applicationId, String applicationSecret);
+        /// <summary>
+        /// Authenticate the application identity.
+        /// </summary>
+        /// <param name="applicationId">The application id to authenticate.</param>
+        /// <param name="applicationSecret">The application secret to authenticate.</param>
+        /// <returns>Returns the principal of the application.</returns>
+        IPrincipal Authenticate(String applicationId, String applicationSecret);
 
-		/// <summary>
-		/// Gets the specified identity for an application.
-		/// </summary>
-		/// <param name="name">The name of the application for which to retrieve the identity.</param>
-		/// <returns>Returns the identity of the application.</returns>
-		IIdentity GetIdentity(string name);
+        /// <summary>
+        /// Gets the specified identity for an application.
+        /// </summary>
+        /// <param name="name">The name of the application for which to retrieve the identity.</param>
+        /// <returns>Returns the identity of the application.</returns>
+        IIdentity GetIdentity(string name);
 
 
         /// <summary>
