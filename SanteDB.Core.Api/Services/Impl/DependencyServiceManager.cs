@@ -455,6 +455,7 @@ namespace SanteDB.Core.Services.Impl
 #if !DEBUG
                     throw new SecurityException($"Service {type} in assembly {asmFile} is not signed - or its signature could not be validated! Plugin may be tampered!");
 #else
+                    this.m_verifiedAssemblies.Add(asmFile);
                     this.m_tracer.TraceWarning("!!!!!!!!! ALERT !!!!!!! {0} in {1} is not signed - in a release version of SanteDB this will cause the host to not load this service!", type, asmFile);
 #endif
                 }
