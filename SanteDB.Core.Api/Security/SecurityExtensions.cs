@@ -24,6 +24,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security
@@ -115,9 +116,59 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Install certificates for chain - this happens in the local user context
+        /// </summary>
+        public static void InstallCertsForChain()
+        {
+
+            try
+            {
+                using (var store = new X509Store(StoreLocation.LocalMachine))
+                {
+                    store.Open(OpenFlags.ReadOnly);
+                    // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
+                    foreach (var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o => o.StartsWith(typeof(SecurityExtensions).Namespace)))
+                    {
+                        using (var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
+                        {
+                            byte[] certData = new byte[x509Stream.Length];
+                            x509Stream.Read(certData, 0, (int)x509Stream.Length);
+                            var certTrust = new X509Certificate2(certData);
+
+                            if(store.Certificates.Find(X509FindType.FindBySubjectName, certTrust.Subject, false).Count == 0)
+                            {
+                                var storeName = StoreName.My;
+                                
+                                if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust"))
+                                {
+                                    storeName = StoreName.Root;
+                                }
+                                else if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Inter"))
+                                {
+                                    storeName = StoreName.CertificateAuthority;
+                                }
+
+                                using (var trustStore = new X509Store(storeName, StoreLocation.LocalMachine))
+                                {
+                                    trustStore.Open(OpenFlags.ReadWrite);
+                                    trustStore.Add(certTrust);
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                throw new SecurityException("Unable to install SanteDB's trusted certificates", e);
+            }
+        }
+
+        /// <summary>
         /// Returns true if the certificate <paramref name="me"/> is trusted by a SanteSuite certificate
         /// </summary>
-        public static bool IsTrustedIntern(this X509Certificate2 me)
+        public static bool IsTrustedIntern(this X509Certificate2 me, out IEnumerable<X509ChainStatus> chainStatus)
         {
 
             var chain = X509Chain.Create();
@@ -126,24 +177,7 @@ namespace SanteDB.Core.Security
                 RevocationMode = X509RevocationMode.NoCheck
             };
             var retVal = chain.Build(me);
-
-            // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
-            if (!retVal)
-            {
-                foreach(var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o=>o.StartsWith(typeof(SecurityExtensions).Namespace)))
-                {
-                    using(var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
-                    {
-                        var certTrust = new X509Certificate2();
-                        byte[] certData = new byte[x509Stream.Length];
-                        x509Stream.Read(certData, 0, (int)x509Stream.Length);
-                        certTrust.Import(certData);
-
-                        retVal |= chain.ChainElements.OfType<X509ChainElement>().Any(c => c.Certificate.Thumbprint == certTrust.Thumbprint);
-                    }
-                }
-                
-            }
+            chainStatus = chain.ChainStatus;
 
             // Try on machine context
             if (!retVal)
@@ -154,7 +188,9 @@ namespace SanteDB.Core.Security
                     RevocationMode = X509RevocationMode.NoCheck
                 };
                 retVal = chain.Build(me);
+                chainStatus = chainStatus.Union(chain.ChainStatus);
             }
+           
 
             return retVal;
         }

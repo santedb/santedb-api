@@ -212,7 +212,7 @@ namespace SanteDB.Core.Services.Impl
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
                 else
                 {
-                    this.ValidateServiceSignature(serviceType.GetType());
+                    this.ValidateServiceSignature(serviceType);
                     this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
                 }
                 this.m_notConfiguredServices.Clear();
@@ -437,12 +437,20 @@ namespace SanteDB.Core.Services.Impl
                     {
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
                         this.m_tracer.TraceInfo("Validating {0} published by {1}", asmFile, certificate.Subject);
-                        valid = certificate.IsTrustedIntern();
+                        valid = certificate.IsTrustedIntern(out IEnumerable<X509ChainStatus> chainStatus);
+                        if(!valid)
+                        {
+                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o=>$"{o.Status}:{o.StatusInformation}"))})");
+                        }
                     }
                     catch (Exception e)
                     {
+#if !DEBUG
+                        throw new SecurityException($"Could not load digital signature information for {asmFile}", e);
+#else
                         this.m_tracer.TraceWarning("Could not verify {0} due to error {1}", asmFile, e.Message);
                         valid = false;
+#endif
                     }
                 }
                 else
