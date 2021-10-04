@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -116,6 +117,23 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Get all internal certificates
+        /// </summary>
+        private static IEnumerable<X509Certificate2> GetInternalCertificates()
+        {
+            // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
+            foreach (var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o => o.StartsWith(typeof(SecurityExtensions).Namespace)))
+            {
+                using (var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
+                {
+                    byte[] certData = new byte[x509Stream.Length];
+                    x509Stream.Read(certData, 0, (int)x509Stream.Length);
+                    yield return new X509Certificate2(certData);
+                }
+            }
+        }
+
+        /// <summary>
         /// Install certificates for chain - this happens in the local user context
         /// </summary>
         public static void InstallCertsForChain()
@@ -135,10 +153,10 @@ namespace SanteDB.Core.Security
                             x509Stream.Read(certData, 0, (int)x509Stream.Length);
                             var certTrust = new X509Certificate2(certData);
 
-                            if(store.Certificates.Find(X509FindType.FindBySubjectName, certTrust.Subject, false).Count == 0)
+                            if (store.Certificates.Find(X509FindType.FindBySubjectName, certTrust.Subject, false).Count == 0)
                             {
                                 var storeName = StoreName.My;
-                                
+
                                 if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust"))
                                 {
                                     storeName = StoreName.Root;
@@ -159,7 +177,7 @@ namespace SanteDB.Core.Security
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new SecurityException("Unable to install SanteDB's trusted certificates", e);
             }
@@ -168,7 +186,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Returns true if the certificate <paramref name="me"/> is trusted by a SanteSuite certificate
         /// </summary>
-        public static bool IsTrustedIntern(this X509Certificate2 me, out IEnumerable<X509ChainStatus> chainStatus)
+        public static bool IsTrustedIntern(this X509Certificate2 me, X509Certificate2Collection extraCerts, out IEnumerable<X509ChainStatus> chainStatus)
         {
 
             var chain = X509Chain.Create();
@@ -176,22 +194,32 @@ namespace SanteDB.Core.Security
             {
                 RevocationMode = X509RevocationMode.NoCheck
             };
+
+            if (extraCerts != null)
+            {
+                chain.ChainPolicy.ExtraStore.AddRange(extraCerts);
+            }
+            chain.ChainPolicy.ExtraStore.AddRange(GetInternalCertificates().ToArray());
+
+            Trace.TraceInformation($"Extra Certificates - {chain.ChainPolicy.ExtraStore.Count}");
             var retVal = chain.Build(me);
             chainStatus = chain.ChainStatus;
 
-            // Try on machine context
+            Trace.TraceInformation($"Validating {me.Subject} - ");
+            foreach (var itm in chain.ChainElements)
+            {
+                Trace.TraceInformation($"\t- Element {itm.Certificate.Subject} ({String.Join(",", itm.ChainElementStatus.Select(o => o.StatusInformation))})");
+            }
+
+
             if (!retVal)
             {
-                chain = new X509Chain(true);
-                chain.ChainPolicy = new X509ChainPolicy()
+                using (var trustedPublisherStore = new X509Store(StoreName.TrustedPublisher, StoreLocation.LocalMachine))
                 {
-                    RevocationMode = X509RevocationMode.NoCheck
-                };
-                retVal = chain.Build(me);
-                chainStatus = chainStatus.Union(chain.ChainStatus);
+                    trustedPublisherStore.Open(OpenFlags.ReadOnly);
+                    retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindBySubjectName, me.Subject, false).Count > 0;
+                }
             }
-           
-
             return retVal;
         }
     }

@@ -67,7 +67,6 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         [XmlElement("resourceType")]
         [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
-        [TypeConverter("SanteDB.Configuration.Converters.StringCollectionRenderConverter, SanteDB.Configuration")]
         public ResourceTypeReferenceConfiguration ResourceType { get; set; }
     }
 

@@ -373,7 +373,7 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
                             else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
                                 this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                            else 
+                            else
                             {
                                 this.ValidateServiceSignature(svc.Type);
                                 var svci = new ServiceInstanceInformation(svc.Type, this);
@@ -435,12 +435,15 @@ namespace SanteDB.Core.Services.Impl
                 {
                     try
                     {
+                        var extraCerts = new X509Certificate2Collection();
+                        extraCerts.Import(asmFile);
+
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
                         this.m_tracer.TraceInfo("Validating {0} published by {1}", asmFile, certificate.Subject);
-                        valid = certificate.IsTrustedIntern(out IEnumerable<X509ChainStatus> chainStatus);
-                        if(!valid)
+                        valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
+                        if (!valid)
                         {
-                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o=>$"{o.Status}:{o.StatusInformation}"))})");
+                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");
                         }
                     }
                     catch (Exception e)
