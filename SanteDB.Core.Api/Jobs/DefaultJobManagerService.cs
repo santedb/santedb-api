@@ -202,7 +202,7 @@ namespace SanteDB.Core.Jobs
             jinfo.LastRun = DateTime.Now;
             try
             {
-                jinfo.Job.Run(this, EventArgs.Empty, new object[0]);
+                jinfo.Job.Run(this, EventArgs.Empty, jinfo.Parameters);
             }
             catch (Exception ex)
             {
