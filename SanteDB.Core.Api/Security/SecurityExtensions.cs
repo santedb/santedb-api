@@ -186,7 +186,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Returns true if the certificate is not trusted by the operating system but is trusted by an internal store
         /// </summary>
-        public static bool IsTrustedRootCert(this X509Chain chain)
+        public static bool HasTrustedRootCert(this X509Chain chain)
         {
             if (s_trustCertificates == null)
             {
@@ -222,7 +222,6 @@ namespace SanteDB.Core.Security
             }
             chain.ChainPolicy.ExtraStore.AddRange(GetInternalCertificates().ToArray());
 
-            Trace.TraceInformation($"Extra Certificates - {chain.ChainPolicy.ExtraStore.Count}");
             var retVal = chain.Build(me);
             chainStatus = chain.ChainStatus;
 
@@ -234,7 +233,7 @@ namespace SanteDB.Core.Security
                     retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindBySubjectName, me.Subject, false).Count > 0;
                 }
             }
-            return retVal || IsTrustedRootCert(chain);
+            return retVal || HasTrustedRootCert(chain);
         }
     }
 }
