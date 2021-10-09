@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -50,67 +51,97 @@ namespace SanteDB.Core.Security.Audit
     /// Event type codes
     /// </summary>
 #pragma warning disable CS1591
+
     public enum EventTypeCodes
     {
         [XmlEnum("SecurityAuditCode-ApplicationActivity")]
         ApplicationActivity,
+
         [XmlEnum("SecurityAuditCode-AuditLogUsed")]
         AuditLogUsed,
+
         [XmlEnum("SecurityAuditCode-Export")]
         Export,
+
         [XmlEnum("SecurityAuditCode-Import")]
         Import,
+
         [XmlEnum("SecurityAuditCode-NetworkActivity")]
         NetworkActivity,
+
         [XmlEnum("SecurityAuditCode-OrderRecord")]
         OrderRecord,
+
         [XmlEnum("SecurityAuditCode-PatientRecord")]
         PatientRecord,
+
         [XmlEnum("SecurityAuditCode-ProcedureRecord")]
         ProcedureRecord,
+
         [XmlEnum("SecurityAuditCode-Query")]
         Query,
+
         [XmlEnum("SecurityAuditCode-SecurityAlert")]
         SecurityAlert,
+
         [XmlEnum("SecurityAuditCode-UserAuthentication")]
         UserAuthentication,
+
         [XmlEnum("SecurityAuditCode-ApplicationStart")]
         ApplicationStart,
+
         [XmlEnum("SecurityAuditCode-ApplicationStop")]
         ApplicationStop,
+
         [XmlEnum("SecurityAuditCode-Login")]
         Login,
+
         [XmlEnum("SecurityAuditCode-Logout")]
         Logout,
+
         [XmlEnum("SecurityAuditCode-Attach")]
         Attach,
+
         [XmlEnum("SecurityAuditCode-Detach")]
         Detach,
+
         [XmlEnum("SecurityAuditCode-NodeAuthentication")]
         NodeAuthentication,
+
         [XmlEnum("SecurityAuditCode-EmergencyOverrideStarted")]
         EmergencyOverrideStarted,
+
         [XmlEnum("SecurityAuditCode-Useofarestrictedfunction")]
         UseOfARestrictedFunction,
+
         [XmlEnum("SecurityAuditCode-Securityattributeschanged")]
         SecurityAttributesChanged,
+
         [XmlEnum("SecurityAuditCode-Securityroleschanged")]
         SecurityRolesChanged,
+
         [XmlEnum("SecurityAuditCode-SecurityObjectChanged")]
         SecurityObjectChanged,
+
         [XmlEnum("SecurityAuditCode-AuditLoggingStarted")]
         AuditLoggingStarted,
+
         [XmlEnum("SecurityAuditCode-AuditLoggingStopped")]
         AuditLoggingStopped,
+
         [XmlEnum("SecurityAuditCode-SessionStarted")]
         SessionStarted,
+
         [XmlEnum("SecurityAuditCode-SessionStopped")]
         SessionStopped,
+
         [XmlEnum("SecurityAuditCode-AccessControlDecision")]
         AccessControlDecision,
+
         [XmlEnum("SecurityAuditCode-SecondaryUseQuery")]
         SecondaryUseQuery,
     }
+
 #pragma warning restore CS1591
 
     /// <summary>
@@ -118,7 +149,6 @@ namespace SanteDB.Core.Security.Audit
     /// </summary>
     public static class AuditUtil
     {
-
         private static Tracer traceSource = Tracer.GetTracer(typeof(AuditUtil));
 
         private static AuditAccountabilityConfigurationSection s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
@@ -161,7 +191,6 @@ namespace SanteDB.Core.Security.Audit
             }
 
             SendAudit(audit);
-
         }
 
         /// <summary>
@@ -173,7 +202,7 @@ namespace SanteDB.Core.Security.Audit
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export, eventTypeId);
 
             AddLocalDeviceActor(audit);
-            if (lifecycle == AuditableObjectLifecycle.Export) // me to remote 
+            if (lifecycle == AuditableObjectLifecycle.Export) // me to remote
             {
                 // I am the source
                 audit.Actors.First().ActorRoleCode = new List<AuditCode>() { new AuditCode("110153", "DCM") { DisplayName = "Source" } };
@@ -208,7 +237,6 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditAccessControlDecision(IPrincipal principal, string policy, PolicyGrantType action)
         {
-
             if (s_configuration?.CompleteAuditTrail != true && action == PolicyGrantType.Grant)
             {
                 return; // don't audit successful ACS
@@ -311,7 +339,6 @@ namespace SanteDB.Core.Security.Audit
             SendAudit(audit);
         }
 
-
         /// <summary>
         /// Audit data action
         /// </summary>
@@ -321,11 +348,10 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Autility utility which can be used to send a data audit 
+        /// Autility utility which can be used to send a data audit
         /// </summary>
         public static void AuditDataAction<TData>(AuditCode typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, PolicyDecision grantInfo, params TData[] data)
         {
-
             traceSource.TraceInfo("Create AuditDataAction audit");
 
             AuditData audit = new AuditData(DateTime.Now, action, outcome, eventType, typeCode);
@@ -369,7 +395,6 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="lifecycle">The lifecycle of </param>
         private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
         {
-
             var idTypeCode = AuditableObjectIdType.Custom;
             var roleCode = AuditableObjectRole.Resource;
             var objType = AuditableObjectType.Other;
@@ -392,7 +417,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 idTypeCode = AuditableObjectIdType.EncounterNumber;
                 roleCode = AuditableObjectRole.Report;
-                if ((obj as Act)?.ReasonConceptKey == NullReasonKeys.Masked) // Masked 
+                if ((obj as Act)?.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                     lifecycle = AuditableObjectLifecycle.Deidentification;
             }
             else if (obj is SecurityUser)
@@ -460,7 +485,6 @@ namespace SanteDB.Core.Security.Audit
                 CreateAuditableObject(decision, AuditableObjectLifecycle.Verification)
             };
 
-
             SendAudit(audit);
         }
 
@@ -517,13 +541,11 @@ namespace SanteDB.Core.Security.Audit
             SendAudit(audit);
         }
 
-
         /// <summary>
         /// Send specified audit
         /// </summary>
         public static void SendAudit(AuditData audit)
         {
-
             // If the current principal is SYSTEM then we don't need to send an audit
             Action<object> workitem = (o) =>
             {
@@ -555,11 +577,10 @@ namespace SanteDB.Core.Security.Audit
                     using (AuthenticationContext.EnterSystemContext())
                     {
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                            ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>()?.Insert(auditData); // insert into local AR 
+                            ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>()?.Insert(auditData); // insert into local AR
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
                             ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(auditData);
                     }
-
                 }
                 catch (Exception e)
                 {
@@ -573,7 +594,6 @@ namespace SanteDB.Core.Security.Audit
                 ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem, parm); // background
             else
                 workitem(parm); // service is stopped
-
         }
 
         /// <summary>
@@ -583,9 +603,8 @@ namespace SanteDB.Core.Security.Audit
         {
             var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
 
-            // Use all remote endpoint providers to find the current request 
+            // Use all remote endpoint providers to find the current request
             principal = principal ?? AuthenticationContext.Current.Principal;
-
 
             if (principal is IClaimsPrincipal cp)
             {
@@ -632,7 +651,6 @@ namespace SanteDB.Core.Security.Audit
                         });
                     }
                 }
-
             }
             else
             {
@@ -654,7 +672,6 @@ namespace SanteDB.Core.Security.Audit
                 }
                 audit.Actors.Add(actor);
             }
-
         }
 
         /// <summary>
@@ -662,7 +679,6 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AddLocalDeviceActor(AuditData audit)
         {
-
             traceSource.TraceInfo("Adding local device actor to audit {0}", audit.EventIdentifier);
             // For the current device name
             audit.Actors.Add(new AuditActorData()
@@ -674,7 +690,6 @@ namespace SanteDB.Core.Security.Audit
                     new  AuditCode("110152", "DCM") { DisplayName = "Destination" }
                 }
             });
-
         }
 
         /// <summary>
@@ -682,7 +697,6 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditOverride(ISession session, IPrincipal principal, string purposeOfUse, string[] policies, bool success)
         {
-
             traceSource.TraceInfo("Create Override audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.EmergencyOverrideStarted));
@@ -741,13 +755,11 @@ namespace SanteDB.Core.Security.Audit
             SendAudit(audit);
         }
 
-
         /// <summary>
         /// Audit a login of a principal
         /// </summary>
         public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin = true)
         {
-
             traceSource.TraceInfo("Create Login audit");
 
             AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
@@ -786,7 +798,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, NameValueCollection requestHeaders, NameValueCollection responseHeaders)
         {
-            AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
+            AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders?.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
         }
 
         /// <summary>
@@ -809,6 +821,12 @@ namespace SanteDB.Core.Security.Audit
                 Type = AuditableObjectType.SystemObject
             });
 
+            // Get root cause
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+            }
+
             if (ex is PolicyViolationException)
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
@@ -817,7 +835,7 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/policy/{(ex as PolicyViolationException).PolicyId}",
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    NameData = ex.ToString()
+                    NameData = ex.Message
                 });
             else
                 audit.AuditableObjects.Add(new AuditableObject()
@@ -827,26 +845,31 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/error/{ex.GetType().Name}",
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    NameData = ex.ToString()
+                    NameData = ex.Message
                 });
 
-
-            audit.AuditableObjects.Add(new AuditableObject()
+            if (requestHeaders != null)
             {
-                IDTypeCode = AuditableObjectIdType.Uri,
-                Type = AuditableObjectType.Other,
-                Role = AuditableObjectRole.RoutingCriteria,
-                ObjectId = "HttpRequest",
-                ObjectData = requestHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
-            });
-            audit.AuditableObjects.Add(new AuditableObject()
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    Type = AuditableObjectType.Other,
+                    Role = AuditableObjectRole.RoutingCriteria,
+                    ObjectId = "HttpRequest",
+                    ObjectData = requestHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+                });
+            }
+            if (responseHeaders != null)
             {
-                IDTypeCode = AuditableObjectIdType.Uri,
-                Type = AuditableObjectType.Other,
-                Role = AuditableObjectRole.Report,
-                ObjectId = "HttpResponse",
-                ObjectData = responseHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
-            });
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    Type = AuditableObjectType.Other,
+                    Role = AuditableObjectRole.Report,
+                    ObjectId = "HttpResponse",
+                    ObjectData = responseHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+                });
+            }
             SendAudit(audit);
         }
 
@@ -953,7 +976,7 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Audit the export of data 
+        /// Audit the export of data
         /// </summary>
         public static void AuditDataExport(params object[] exportedData)
         {
@@ -971,6 +994,5 @@ namespace SanteDB.Core.Security.Audit
 
             SendAudit(audit);
         }
-
     }
 }
