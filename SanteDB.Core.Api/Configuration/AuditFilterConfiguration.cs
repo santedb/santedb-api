@@ -91,19 +91,19 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// True if the action is specified
         /// </summary>
-        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
+        [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool ActionSpecified { get; set; }
 
         /// <summary>
         /// True if the event is specified
         /// </summary>
-        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
+        [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool EventSpecified { get; set; }
 
         /// <summary>
         /// True if the outcome is specified
         /// </summary>
-        [XmlIgnore,JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
+        [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
         #endregion
 

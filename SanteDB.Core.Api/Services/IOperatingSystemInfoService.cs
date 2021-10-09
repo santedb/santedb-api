@@ -19,8 +19,6 @@
  * Date: 2021-8-5
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Services
 {
@@ -28,7 +26,7 @@ namespace SanteDB.Core.Services
     /// Operating system information service
     /// </summary>
     [System.ComponentModel.Description("Operating System Information Provider")]
-    public interface IOperatingSystemInfoService 
+    public interface IOperatingSystemInfoService
     {
 
         /// <summary>

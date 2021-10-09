@@ -20,14 +20,9 @@
  */
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
 
 namespace SanteDB.Core.Security.Audit
 {
@@ -94,7 +89,7 @@ namespace SanteDB.Core.Security.Audit
                 {
                     this.m_tracer.TraceInfo("Binding to service events...");
 
-                    if(ApplicationServiceContext.Current.GetService<IIdentityProviderService>() != null)
+                    if (ApplicationServiceContext.Current.GetService<IIdentityProviderService>() != null)
                         ApplicationServiceContext.Current.GetService<IIdentityProviderService>().Authenticated += (so, se) =>
                         {
                             AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);

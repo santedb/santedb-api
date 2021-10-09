@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services
     /// </summary>
     [Obsolete]
     public interface IUnionQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
-        where TEntity: IdentifiedData
+        where TEntity : IdentifiedData
     {
         /// <summary>
         /// Queries or continues a query 

@@ -23,9 +23,7 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -45,6 +43,12 @@ namespace SanteDB.Core.Configuration
             this.ServiceProviders = new List<TypeReferenceConfiguration>();
             this.AppSettings = new List<AppSettingKeyValuePair>();
         }
+
+        /// <summary>
+        /// Allow unsigned assemblies
+        /// </summary>
+        [XmlAttribute("allowUnsignedAssemblies"), DisplayName("Allow Unsigned Assemblies"), Description("When true, the application host context will allow unsigned service plugins to operate")]
+        public bool AllowUnsignedAssemblies { get; set; }
 
         /// <summary>
         /// Thread pool size

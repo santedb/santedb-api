@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -26,8 +25,8 @@ using System.Collections.Generic;
 namespace SanteDB.Core.Configuration.Data
 {
 
-    
-    
+
+
     /// <summary>
     /// Represents a storage provider
     /// </summary>

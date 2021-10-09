@@ -51,7 +51,7 @@ namespace SanteDB.Core.Interop.Description
         /// <summary>
         /// Gets the properties in the description
         /// </summary>
-        public IList<ResourcePropertyDescription>  Properties { get;  }
+        public IList<ResourcePropertyDescription> Properties { get; }
 
 
     }

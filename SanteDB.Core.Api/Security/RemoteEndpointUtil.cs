@@ -20,7 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {
@@ -45,11 +44,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         public String OriginalRequestUrl { get; set; }
 
-    } 
+    }
     /// <summary>
     /// Represents a resolver service which can get the current request endpoint
     /// </summary>
-    public class RemoteEndpointUtil 
+    public class RemoteEndpointUtil
     {
 
         // Singleton instance
@@ -84,7 +83,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public void AddEndpointProvider(Func<RemoteEndpointInfo> provider)
         {
-            if(!this.m_providers.Contains(provider))
+            if (!this.m_providers.Contains(provider))
                 this.m_providers.Add(provider);
         }
 
@@ -93,7 +92,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public RemoteEndpointInfo GetRemoteClient()
         {
-            foreach(var itm in this.m_providers)
+            foreach (var itm in this.m_providers)
             {
                 var retVal = itm();
                 if (retVal != null)

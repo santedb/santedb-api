@@ -45,7 +45,7 @@ namespace SanteDB.Core.Http
     {
         // Configuration
         private IRestClientDescription m_configuration;
-        
+
         // Get tracer
         private static Tracer s_tracer = Tracer.GetTracer(typeof(RestClientBase));
 

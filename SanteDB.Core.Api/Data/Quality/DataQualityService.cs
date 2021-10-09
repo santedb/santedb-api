@@ -23,12 +23,9 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Data.Quality
 {

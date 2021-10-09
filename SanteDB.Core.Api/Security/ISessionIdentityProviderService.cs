@@ -19,7 +19,6 @@
  * Date: 2021-8-5
  */
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Services;
 using System.Security.Principal;
 using SanteDB.Core.Services;
 
@@ -46,6 +45,6 @@ namespace SanteDB.Core.Security.Services
         /// <param name="session">The session to get an authenticated principal from</param>
         /// <returns>The unauthenticated principal</returns>
         IIdentity[] GetIdentities(ISession session);
-        
+
     }
 }

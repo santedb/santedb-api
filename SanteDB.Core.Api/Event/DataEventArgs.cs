@@ -2,52 +2,45 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
-
     /// <summary>
     /// Base class for query event args
     /// </summary>
     public abstract class QueryEventArgsBase<TData> : SecureAccessEventArgs where TData : class
     {
-
         /// <summary>
         /// Data query event ctor
         /// </summary>
         public QueryEventArgsBase(Expression<Func<TData, bool>> query, IPrincipal principal) : base(principal)
         {
-            
             this.Query = query;
         }
-
-     
 
         /// <summary>
         /// Gets or sets the results.
@@ -73,7 +66,6 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-
     }
 
     /// <summary>
@@ -95,8 +87,6 @@ namespace SanteDB.Core.Event
         {
             this.Results = results;
         }
-
-
     }
 
     /// <summary>
@@ -110,10 +100,13 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="query">The query about to be executed</param>
         /// <param name="principal">The principal which is executing the query</param>
+        /// <param name="offset">The requested offset in the result set</param>
+        /// <param name="count">The requested total results to be returned in this result set</param>
         /// <param name="tag">A query tag object</param>
         public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal, dynamic tag = null) : base(query, principal)
         {
             this.QueryTag = tag;
+            this.OrderBy = orderBy;
         }
 
         /// <summary>
@@ -125,6 +118,11 @@ namespace SanteDB.Core.Event
         }
 
         /// <summary>
+        /// Order by instructions
+        /// </summary>
+        public IEnumerable<ModelSort<TData>> OrderBy { get; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this instance cancel.
         /// </summary>
         /// <value><c>true</c> if this instance cancel; otherwise, <c>false</c>.</value>
@@ -133,7 +131,7 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-        
+
         /// <summary>
         /// Instructs the query engine to use fuzzy totals
         /// </summary>
@@ -171,7 +169,6 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <remarks>This is used to notify the caller that it should assume operation continued as normal</remarks>
         public bool Success { get; set; }
-
     }
 
     /// <summary>
@@ -180,7 +177,6 @@ namespace SanteDB.Core.Event
     /// <remarks>This event is fired whenever data has been successfully perssited to the database</remarks>
     public class DataPersistedEventArgs<TData> : SecureAccessEventArgs where TData : class
     {
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DataPersistedEventArgs{TData}"/> class.
         /// </summary>
@@ -207,7 +203,6 @@ namespace SanteDB.Core.Event
             get;
             set;
         }
-
     }
 
     /// <summary>
@@ -217,14 +212,13 @@ namespace SanteDB.Core.Event
     public class DataRetrievingEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
-
         /// <summary>
         /// Creates a new pre-retrieval event args object
         /// </summary>
         /// <param name="identifier">The identifier of the object being retrieved</param>
         /// <param name="principal">The principal under which the query is being executed, or null if the current <see cref="AuthenticationContext"/> is being used</param>
         /// <param name="versionId">The version identifier of the object being retrieved if supplied</param>
-        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal) 
+        public DataRetrievingEventArgs(Guid? identifier, Guid? versionId, IPrincipal principal = null) : base(principal)
         {
             this.Id = identifier;
             this.VersionId = versionId;
@@ -263,7 +257,6 @@ namespace SanteDB.Core.Event
     public class DataRetrievedEventArgs<TData> : SecureAccessEventArgs
         where TData : IdentifiedData
     {
-
         /// <summary>
         /// Post retrieval data
         /// </summary>
@@ -279,5 +272,4 @@ namespace SanteDB.Core.Event
         /// </summary>
         public TData Data { get; set; }
     }
-
 }

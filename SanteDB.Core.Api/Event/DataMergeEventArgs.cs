@@ -21,9 +21,6 @@
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Event
 {
@@ -44,7 +41,7 @@ namespace SanteDB.Core.Event
         /// Gets the linked records
         /// </summary>
         public IEnumerable<Guid> LinkedKeys { get; }
-        
+
         /// <summary>
         /// Creates a new data merge event args structure
         /// </summary>

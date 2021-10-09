@@ -20,11 +20,8 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {

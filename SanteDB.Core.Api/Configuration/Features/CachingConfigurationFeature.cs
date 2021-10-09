@@ -18,15 +18,12 @@
  * User: fyfej
  * Date: 2021-8-17
  */
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Configuration.Features;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -74,7 +71,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Gets the flags for this feature
         /// </summary>
-        public FeatureFlags Flags => FeatureFlags.AutoSetup ;
+        public FeatureFlags Flags => FeatureFlags.AutoSetup;
 
         /// <summary>
         /// Gets the group of the feature
@@ -132,7 +129,7 @@ namespace SanteDB.Core.Configuration.Features
             {
                 objCache = new TypeReferenceConfiguration(cacheProviders.FirstOrDefault(t => t.Name == "MemoryCacheService"));
             }
-            if(adCache == null)
+            if (adCache == null)
             {
                 adCache = new TypeReferenceConfiguration(adhocProvider.FirstOrDefault(t => t.Name == "MemoryAdhocCacheService"));
             }
@@ -163,7 +160,7 @@ namespace SanteDB.Core.Configuration.Features
                 }
             }
 
-           
+
             return originalCache != null && originalAdCache != null && originalQuery != null ? FeatureInstallState.Installed : originalQuery != null || originalCache != null || originalAdCache != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
         }
     }

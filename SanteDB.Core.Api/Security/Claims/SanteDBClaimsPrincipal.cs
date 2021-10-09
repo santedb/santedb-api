@@ -22,8 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -126,7 +124,7 @@ namespace SanteDB.Core.Security.Claims
         {
             return this.Claims.Any(o => o.Type == SanteDBClaimTypes.DefaultRoleClaimType && o.Value == role);
         }
-        
+
         /// <summary>
         /// Add identity
         /// </summary>

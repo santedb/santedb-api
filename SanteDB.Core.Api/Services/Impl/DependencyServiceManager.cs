@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Security;
@@ -31,6 +30,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -45,6 +46,9 @@ namespace SanteDB.Core.Services.Impl
 
         // Not configured services
         private HashSet<Type> m_notConfiguredServices = new HashSet<Type>();
+
+        // Verified assemblies
+        private HashSet<String> m_verifiedAssemblies = new HashSet<string>();
 
         /// <summary>
         /// Gets the service instance information
@@ -203,10 +207,14 @@ namespace SanteDB.Core.Services.Impl
 
             lock (this.m_lock)
             {
+
                 if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
                 else
+                {
+                    this.ValidateServiceSignature(serviceType);
                     this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
+                }
                 this.m_notConfiguredServices.Clear();
             }
         }
@@ -220,6 +228,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
                     this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
+                this.ValidateServiceSignature(serviceInstance.GetType());
                 this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
                 this.m_notConfiguredServices.Clear();
             }
@@ -253,12 +262,12 @@ namespace SanteDB.Core.Services.Impl
                         {
                             var created = false;
                             var factories = this.m_configuration.ServiceProviders.Where(s => s.Type != null && typeof(IServiceFactory).IsAssignableFrom(s.Type));
-                            foreach(var factory in factories)
+                            foreach (var factory in factories)
                             {
                                 // Is the service factory already created?
                                 var serviceFactory = this.GetService(factory.Type) as IServiceFactory;
                                 created |= serviceFactory.TryCreateService(serviceType, out object serviceInstance);
-                                if(created)
+                                if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
                                     this.m_cachedServices.TryAdd(serviceType, candidateService);
@@ -359,18 +368,21 @@ namespace SanteDB.Core.Services.Impl
 
                         // Add configured services
                         foreach (var svc in this.m_configuration.ServiceProviders)
+                        {
                             if (svc.Type == null)
                                 this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
                             else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
                                 this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                             else
                             {
+                                this.ValidateServiceSignature(svc.Type);
                                 var svci = new ServiceInstanceInformation(svc.Type, this);
 
                                 this.m_serviceRegistrations.Add(svci);
                                 foreach (var iface in svci.ImplementedServices)
                                     this.m_cachedServices.TryAdd(iface, svci);
                             }
+                        }
 
                         this.m_tracer.TraceInfo("Loading singleton services");
                         foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
@@ -405,6 +417,68 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Validates that the assembly is signed either by authenticode or via 
+        /// </summary>
+        private void ValidateServiceSignature(Type type)
+        {
+
+            bool valid = false;
+            var asmFile = type.Assembly.Location;
+            if (String.IsNullOrEmpty(asmFile))
+            {
+                this.m_tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
+            }
+            else if (!this.m_configuration?.AllowUnsignedAssemblies == true)
+            {
+                // Verified assembly?
+                if (!this.m_verifiedAssemblies.Contains(asmFile))
+                {
+                    try
+                    {
+                        var extraCerts = new X509Certificate2Collection();
+                        extraCerts.Import(asmFile);
+
+                        var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
+                        this.m_tracer.TraceInfo("Validating {0} published by {1}", asmFile, certificate.Subject);
+                        valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
+                        if (!valid)
+                        {
+                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+#if !DEBUG
+                        throw new SecurityException($"Could not load digital signature information for {asmFile}", e);
+#else
+                        this.m_tracer.TraceWarning("Could not verify {0} due to error {1}", asmFile, e.Message);
+                        valid = false;
+#endif
+                    }
+                }
+                else
+                {
+                    valid = true;
+                }
+
+                if (!valid)
+                {
+#if !DEBUG
+                    throw new SecurityException($"Service {type} in assembly {asmFile} is not signed - or its signature could not be validated! Plugin may be tampered!");
+#else
+                    this.m_verifiedAssemblies.Add(asmFile);
+                    this.m_tracer.TraceWarning("!!!!!!!!! ALERT !!!!!!! {0} in {1} is not signed - in a release version of SanteDB this will cause the host to not load this service!", type, asmFile);
+#endif
+                }
+                else
+                {
+                    this.m_tracer.TraceVerbose("{0} was validated as trusted code", asmFile);
+                    this.m_verifiedAssemblies.Add(asmFile);
+                }
+            }
+        }
+
+        /// <summary>
         /// Stop this instance
         /// </summary>
         public bool Stop()
@@ -425,7 +499,7 @@ namespace SanteDB.Core.Services.Impl
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
-                if(svc is IDisposable dsp)
+                if (svc is IDisposable dsp)
                 {
                     this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
                     dsp.Dispose();
@@ -443,11 +517,11 @@ namespace SanteDB.Core.Services.Impl
         public object CreateInjected(Type type)
         {
 
-            if(type == null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), "Cannot find type for dependency injection");
             }
-            if(!this.m_activators.TryGetValue(type, out Func<Object> activator))
+            if (!this.m_activators.TryGetValue(type, out Func<Object> activator))
             {
                 // TODO: Check for circular dependencies
                 var constructors = type.GetConstructors();
@@ -478,7 +552,7 @@ namespace SanteDB.Core.Services.Impl
                             var expr = Expression.Convert(Expression.Call(
                                 Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
                                 (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
-                                Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type); 
+                                Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type);
                             //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
                             parameterValues[i] = expr;
                         }

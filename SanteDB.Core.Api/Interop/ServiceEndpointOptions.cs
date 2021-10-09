@@ -22,7 +22,6 @@ using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Model.Attributes;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -148,7 +147,7 @@ namespace SanteDB.Core.Interop
         /// Internal API
         /// </summary>
         [XmlEnum("internalApi")]
-        InternalApi = ViewModel | BearerAuth |Compression,
+        InternalApi = ViewModel | BearerAuth | Compression,
         /// <summary>
         /// IdP API
         /// </summary>
@@ -184,7 +183,7 @@ namespace SanteDB.Core.Interop
                 this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);
                 this.Contracts = provider.BehaviorType.GetInterfaces()
                     .Where(t => t.GetCustomAttributes(Type.GetType("RestSrvr.Attributes.ServiceContractAttribute, RestSrvr, Version=1.31.0.0")) != null)
-                    .Select(t=>new TypeReferenceConfiguration(t))
+                    .Select(t => new TypeReferenceConfiguration(t))
                     .ToArray();
             }
         }

@@ -18,25 +18,24 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
-using SanteDB.Core.Security;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -187,10 +186,10 @@ namespace SanteDB.Core.Services.Impl
                     throw new InvalidOperationException("Cannot find appropriate repository service");
 
                 // HACK: .NET is using late binding and getting confused
-                var results = repoService.Find(filterExpression, 0, 2,out int tr) as IEnumerable<IdentifiedData>;
+                var results = repoService.Find(filterExpression, 0, 2, out int tr) as IEnumerable<IdentifiedData>;
                 if (tr > 1)
                     throw new InvalidOperationException("Resource is ambiguous (points to more than one resource)");
-                
+
                 var result = results.FirstOrDefault();
 
                 // Validate the signature if we have the key
@@ -200,10 +199,10 @@ namespace SanteDB.Core.Services.Impl
                     var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
 
                     // We have the key?
-                    if(!signatureService.GetKeys().Any(k=>k == keyId))
+                    if (!signatureService.GetKeys().Any(k => k == keyId))
                     {
                         // Is this an app key id?
-                        if(keyId.StartsWith("SA."))
+                        if (keyId.StartsWith("SA."))
                         {
                             var appId = Guid.Parse(keyId.Substring(3));
                             var appInstance = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityApplication>>().Get(appId);

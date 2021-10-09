@@ -4,7 +4,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -90,7 +89,7 @@ namespace SanteDB.Core.Configuration.Features
 
             // Resource manager config section
             var resourceMergeConfiguration = configuration.GetSection<ResourceManagementConfigurationSection>();
-            if(resourceMergeConfiguration == null)
+            if (resourceMergeConfiguration == null)
             {
                 resourceMergeConfiguration = new ResourceManagementConfigurationSection();
             }
@@ -175,7 +174,7 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     internal class InstallPersistenceStrategyTask : IConfigurationTask
     {
-       
+
         // The resource merge
         private GenericFeatureConfiguration m_resourceMergeConfiguration;
 

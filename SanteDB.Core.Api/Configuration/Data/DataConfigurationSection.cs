@@ -19,7 +19,6 @@
  * Date: 2021-8-5
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -121,7 +120,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         public String GetComponent(String component)
         {
-            var values = this.Value.Split(';').Where(t=>t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
 
             String retVal = null;
             values.TryGetValue(component, out retVal);
@@ -141,7 +140,7 @@ namespace SanteDB.Core.Configuration.Data
                 else
                     values[component] = value;
             }
-            else if(!String.IsNullOrEmpty(value))
+            else if (!String.IsNullOrEmpty(value))
                 values.Add(component, value.ToString());
             this.Value = String.Join(";", values.Select(o => $"{o.Key}={o.Value}"));
         }

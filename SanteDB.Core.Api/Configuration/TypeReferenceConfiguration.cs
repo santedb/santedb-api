@@ -19,15 +19,10 @@
  * Date: 2021-8-5
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -73,7 +68,7 @@ namespace SanteDB.Core.Configuration
         /// Gets the type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
-        public String TypeXml 
+        public String TypeXml
         {
             get => this.m_typeXml;
             set
@@ -95,7 +90,7 @@ namespace SanteDB.Core.Configuration
                 if (this.m_type == null && !String.IsNullOrEmpty(this.TypeXml))
                 {
                     this.m_type = Type.GetType(this.TypeXml);
-                    if(this.m_type == null)
+                    if (this.m_type == null)
                     {
                         throw new InvalidOperationException($"Type {this.TypeXml} not found");
                     }
