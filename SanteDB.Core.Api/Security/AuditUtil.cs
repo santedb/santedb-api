@@ -51,67 +51,97 @@ namespace SanteDB.Core.Security.Audit
     /// Event type codes
     /// </summary>
 #pragma warning disable CS1591
+
     public enum EventTypeCodes
     {
         [XmlEnum("SecurityAuditCode-ApplicationActivity")]
         ApplicationActivity,
+
         [XmlEnum("SecurityAuditCode-AuditLogUsed")]
         AuditLogUsed,
+
         [XmlEnum("SecurityAuditCode-Export")]
         Export,
+
         [XmlEnum("SecurityAuditCode-Import")]
         Import,
+
         [XmlEnum("SecurityAuditCode-NetworkActivity")]
         NetworkActivity,
+
         [XmlEnum("SecurityAuditCode-OrderRecord")]
         OrderRecord,
+
         [XmlEnum("SecurityAuditCode-PatientRecord")]
         PatientRecord,
+
         [XmlEnum("SecurityAuditCode-ProcedureRecord")]
         ProcedureRecord,
+
         [XmlEnum("SecurityAuditCode-Query")]
         Query,
+
         [XmlEnum("SecurityAuditCode-SecurityAlert")]
         SecurityAlert,
+
         [XmlEnum("SecurityAuditCode-UserAuthentication")]
         UserAuthentication,
+
         [XmlEnum("SecurityAuditCode-ApplicationStart")]
         ApplicationStart,
+
         [XmlEnum("SecurityAuditCode-ApplicationStop")]
         ApplicationStop,
+
         [XmlEnum("SecurityAuditCode-Login")]
         Login,
+
         [XmlEnum("SecurityAuditCode-Logout")]
         Logout,
+
         [XmlEnum("SecurityAuditCode-Attach")]
         Attach,
+
         [XmlEnum("SecurityAuditCode-Detach")]
         Detach,
+
         [XmlEnum("SecurityAuditCode-NodeAuthentication")]
         NodeAuthentication,
+
         [XmlEnum("SecurityAuditCode-EmergencyOverrideStarted")]
         EmergencyOverrideStarted,
+
         [XmlEnum("SecurityAuditCode-Useofarestrictedfunction")]
         UseOfARestrictedFunction,
+
         [XmlEnum("SecurityAuditCode-Securityattributeschanged")]
         SecurityAttributesChanged,
+
         [XmlEnum("SecurityAuditCode-Securityroleschanged")]
         SecurityRolesChanged,
+
         [XmlEnum("SecurityAuditCode-SecurityObjectChanged")]
         SecurityObjectChanged,
+
         [XmlEnum("SecurityAuditCode-AuditLoggingStarted")]
         AuditLoggingStarted,
+
         [XmlEnum("SecurityAuditCode-AuditLoggingStopped")]
         AuditLoggingStopped,
+
         [XmlEnum("SecurityAuditCode-SessionStarted")]
         SessionStarted,
+
         [XmlEnum("SecurityAuditCode-SessionStopped")]
         SessionStopped,
+
         [XmlEnum("SecurityAuditCode-AccessControlDecision")]
         AccessControlDecision,
+
         [XmlEnum("SecurityAuditCode-SecondaryUseQuery")]
         SecondaryUseQuery,
     }
+
 #pragma warning restore CS1591
 
     /// <summary>
@@ -767,7 +797,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, NameValueCollection requestHeaders, NameValueCollection responseHeaders)
         {
-            AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
+            AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders?.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
         }
 
         /// <summary>
@@ -790,6 +820,12 @@ namespace SanteDB.Core.Security.Audit
                 Type = AuditableObjectType.SystemObject
             });
 
+            // Get root cause
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+            }
+
             if (ex is PolicyViolationException)
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
@@ -798,7 +834,7 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/policy/{(ex as PolicyViolationException).PolicyId}",
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    NameData = ex.ToString()
+                    NameData = ex.Message
                 });
             else
                 audit.AuditableObjects.Add(new AuditableObject()
@@ -808,25 +844,31 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = $"http://santedb.org/error/{ex.GetType().Name}",
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    NameData = ex.ToString()
+                    NameData = ex.Message
                 });
 
-            audit.AuditableObjects.Add(new AuditableObject()
+            if (requestHeaders != null)
             {
-                IDTypeCode = AuditableObjectIdType.Uri,
-                Type = AuditableObjectType.Other,
-                Role = AuditableObjectRole.RoutingCriteria,
-                ObjectId = "HttpRequest",
-                ObjectData = requestHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
-            });
-            audit.AuditableObjects.Add(new AuditableObject()
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    Type = AuditableObjectType.Other,
+                    Role = AuditableObjectRole.RoutingCriteria,
+                    ObjectId = "HttpRequest",
+                    ObjectData = requestHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+                });
+            }
+            if (responseHeaders != null)
             {
-                IDTypeCode = AuditableObjectIdType.Uri,
-                Type = AuditableObjectType.Other,
-                Role = AuditableObjectRole.Report,
-                ObjectId = "HttpResponse",
-                ObjectData = responseHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
-            });
+                audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Uri,
+                    Type = AuditableObjectType.Other,
+                    Role = AuditableObjectRole.Report,
+                    ObjectId = "HttpResponse",
+                    ObjectData = responseHeaders.Select(o => new ObjectDataExtension(o.Key, Encoding.UTF8.GetBytes(o.Value))).ToList()
+                });
+            }
             SendAudit(audit);
         }
 

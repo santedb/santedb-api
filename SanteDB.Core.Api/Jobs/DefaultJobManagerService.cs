@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -37,7 +38,6 @@ namespace SanteDB.Core.Jobs
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
     public class DefaultJobManagerService : IJobManagerService
     {
-
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
 
@@ -57,7 +57,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         private class JobExecutionInfo
         {
-
             /// <summary>
             /// Start the job
             /// </summary>
@@ -139,14 +138,17 @@ namespace SanteDB.Core.Jobs
         /// Timer service is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Timer service is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Timer service is started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Timer service is stopped
         /// </summary>
@@ -164,7 +166,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public bool Start()
         {
-
             Trace.TraceInformation("Starting timer service...");
 
             // Invoke the starting event handler
@@ -191,7 +192,6 @@ namespace SanteDB.Core.Jobs
             return true;
         }
 
-
         /// <summary>
         /// Run the specified job
         /// </summary>
@@ -215,7 +215,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         private void SystemJobTimer(object sender, ElapsedEventArgs e)
         {
-
             // Iterate through our jobs
             foreach (var itm in this.m_jobs)
             {
@@ -273,7 +272,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public void AddJob(IJob jobObject, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate)
         {
-
             if (this.IsJobRegistered(jobObject.GetType()))
                 return; // Job is already added
 
@@ -283,7 +281,6 @@ namespace SanteDB.Core.Jobs
             {
                 this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
             }
-
         }
 
         /// <summary>
@@ -324,7 +321,7 @@ namespace SanteDB.Core.Jobs
         public void StartJob(IJob job, object[] parameters)
         {
             this.m_threadPool.QueueUserWorkItem(this.RunJob,
-                new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters));
+                new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters.Where(o => o != null).ToArray()));
         }
 
         /// <summary>
@@ -346,6 +343,7 @@ namespace SanteDB.Core.Jobs
                 this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
             }
         }
-        #endregion
+
+        #endregion ITimerService Members
     }
 }
