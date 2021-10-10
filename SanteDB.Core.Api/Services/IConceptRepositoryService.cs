@@ -104,7 +104,7 @@ namespace SanteDB.Core.Services
         /// Gets the concept reference term for the specified code system
         /// </summary>
         /// <returns></returns>
-        ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem);
+        ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem, bool exact = true);
 
         /// <summary>
         /// Gets the concept reference term for the specified code system
