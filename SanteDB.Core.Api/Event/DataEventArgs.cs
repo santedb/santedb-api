@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -100,13 +101,10 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="query">The query about to be executed</param>
         /// <param name="principal">The principal which is executing the query</param>
-        /// <param name="offset">The requested offset in the result set</param>
-        /// <param name="count">The requested total results to be returned in this result set</param>
         /// <param name="tag">A query tag object</param>
         public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal, dynamic tag = null) : base(query, principal)
         {
             this.QueryTag = tag;
-            this.OrderBy = orderBy;
         }
 
         /// <summary>
