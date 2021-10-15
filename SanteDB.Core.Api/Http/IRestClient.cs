@@ -90,6 +90,15 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <typeparam name="TPatch">The type of patch being applied</typeparam>
         /// <param name="url">The path on which the patch should be applied</param>
+        /// <param name="ifMatch">Target version/etag to patch</param>
+        /// <param name="patch">The patch to apply</param>
+        String Patch<TPatch>(string url, String ifMatch, TPatch patch);
+
+        /// <summary>
+        /// Instructs the server to perform a PATCH operation
+        /// </summary>
+        /// <typeparam name="TPatch">The type of patch being applied</typeparam>
+        /// <param name="url">The path on which the patch should be applied</param>
         /// <param name="contentType">The content/type of th epatch</param>
         /// <param name="ifMatch">Target version/etag to patch</param>
         /// <param name="patch">The patch to apply</param>

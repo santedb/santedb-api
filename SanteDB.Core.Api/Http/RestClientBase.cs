@@ -626,6 +626,18 @@ namespace SanteDB.Core.Http
         /// Patches the specified resource at <paramref name="url"/> with <paramref name="patch"/> when <paramref name="ifMatch"/> is true
         /// </summary>
         /// <param name="url">The resource URL to patch</param>
+        /// <param name="ifMatch">Identifies the If-Match header</param>
+        /// <param name="patch">The patch contents</param>
+        /// <returns>The new ETAG of the patched resource</returns>
+        public String Patch<TPatch>(string url, String ifMatch, TPatch patch)
+        {
+            return this.Patch<TPatch>(url, ifMatch, this.Description.Accept, patch);
+        }
+
+        /// <summary>
+        /// Patches the specified resource at <paramref name="url"/> with <paramref name="patch"/> when <paramref name="ifMatch"/> is true
+        /// </summary>
+        /// <param name="url">The resource URL to patch</param>
         /// <param name="contentType">The content/type of the patch (dictates serialization)</param>
         /// <param name="ifMatch">Identifies the If-Match header</param>
         /// <param name="patch">The patch contents</param>
