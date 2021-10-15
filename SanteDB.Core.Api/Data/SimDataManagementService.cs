@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
@@ -42,7 +43,6 @@ namespace SanteDB.Core.Data
     /// </summary>
     public class SimDataManagementService : IDaemonService, IDataManagementPattern
     {
-
         /// <summary>
         /// Single Instance Mode Handler
         /// </summary>
@@ -50,7 +50,6 @@ namespace SanteDB.Core.Data
         private class SimResourceMerger<TModel> : IRecordMergingService<TModel>
             where TModel : VersionedEntityData<TModel>, new()
         {
-
             // Tracer
             private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
@@ -69,10 +68,12 @@ namespace SanteDB.Core.Data
             /// Fired after data has been merged
             /// </summary>
             public event EventHandler<DataMergeEventArgs<TModel>> Merged;
+
             /// <summary>
             /// Un-Merging data
             /// </summary>
             public event EventHandler<DataMergingEventArgs<TModel>> UnMerging;
+
             /// <summary>
             /// Merging data
             /// </summary>
@@ -85,7 +86,6 @@ namespace SanteDB.Core.Data
             /// </summary>
             public SimResourceMerger()
             {
-
                 // Find the specified matching configuration
                 this.m_matchingService = ApplicationServiceContext.Current.GetService<IRecordMatchingService>();
                 this.m_matchingConfigurationService = ApplicationServiceContext.Current.GetService<IRecordMatchingConfigurationService>();
@@ -196,7 +196,6 @@ namespace SanteDB.Core.Data
                             entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, masterKey) { TargetEntityKey = l });
                     }
                     (local as IHasState).StatusConceptKey = StatusKeys.Nullified;
-
                 }
                 master.Key = masterKey;
                 persistenceBundle.Add(master);
@@ -218,7 +217,7 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Ignore the specified candidate matches
             /// </summary>
-            public void Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
+            public IdentifiedData Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
             {
                 throw new NotImplementedException();
             }
@@ -226,7 +225,7 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Perform an un-ignore operation
             /// </summary>
-            public void UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys)
+            public IdentifiedData UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys)
             {
                 throw new NotImplementedException();
             }
@@ -289,6 +288,7 @@ namespace SanteDB.Core.Data
             {
                 throw new NotImplementedException();
             }
+
             /// <summary>
             /// Clear the merge candidates
             /// </summary>
@@ -380,7 +380,7 @@ namespace SanteDB.Core.Data
         // Tracer for SIM
         private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
-        // Configuration section 
+        // Configuration section
         private ResourceManagementConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<ResourceManagementConfigurationSection>();
 
         // Merge services
@@ -400,14 +400,17 @@ namespace SanteDB.Core.Data
         /// Service is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Service has started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Service is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Service has stopped
         /// </summary>
