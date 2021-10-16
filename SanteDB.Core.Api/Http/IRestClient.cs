@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Services;
 using System;
@@ -40,12 +41,6 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Gets or sets a list of acceptable response formats
-        /// </summary>
-        /// <value>The accept.</value>
-        String Accept { get; set; }
-
-        /// <summary>
         /// Gets the specified item
         /// </summary>
         /// <typeparam name="TResult">The type of model item to retrieve</typeparam>
@@ -56,6 +51,16 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <typeparam name="TResult">The type of model item to retrieve</typeparam>
         TResult Get<TResult>(String url, params KeyValuePair<String, Object>[] query);
+
+        /// <summary>
+        /// Invokes the specified method against the URL provided
+        /// </summary>
+        /// <param name="method">The HTTP method wich should be executed</param>
+        /// <param name="url">The URL which should be invoked</param>
+        /// <param name="body">The contents of the body</param>
+        /// <typeparam name="TBody">The type of object being submitted to the server</typeparam>
+        /// <typeparam name="TResult">The expected response from the server</typeparam>
+        TResult Invoke<TBody, TResult>(String method, String url, TBody body);
 
         /// <summary>
         /// Invokes the specified method against the URL provided
@@ -85,10 +90,28 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <typeparam name="TPatch">The type of patch being applied</typeparam>
         /// <param name="url">The path on which the patch should be applied</param>
+        /// <param name="ifMatch">Target version/etag to patch</param>
+        /// <param name="patch">The patch to apply</param>
+        String Patch<TPatch>(string url, String ifMatch, TPatch patch);
+
+        /// <summary>
+        /// Instructs the server to perform a PATCH operation
+        /// </summary>
+        /// <typeparam name="TPatch">The type of patch being applied</typeparam>
+        /// <param name="url">The path on which the patch should be applied</param>
         /// <param name="contentType">The content/type of th epatch</param>
         /// <param name="ifMatch">Target version/etag to patch</param>
         /// <param name="patch">The patch to apply</param>
         String Patch<TPatch>(string url, string contentType, String ifMatch, TPatch patch);
+
+        /// <summary>
+        /// Executes a post against the url
+        /// </summary>
+        /// <param name="url">The URL to which the data should be posted</param>
+        /// <param name="body">The contents/object submitted to the server</param>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected result type</typeparam>
+        TResult Post<TBody, TResult>(String url, TBody body);
 
         /// <summary>
         /// Executes a post against the url
@@ -106,6 +129,15 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL to execute the HTTP DELETE command against</param>
         /// <typeparam name="TResult">The type of result expected from the server</typeparam>
         TResult Delete<TResult>(String url);
+
+        /// <summary>
+        /// Executes a PUT (update) for the specified object
+        /// </summary>
+        /// <param name="url">The URL of the object to be updated</param>
+        /// <param name="body">The actual object/resource being updated</param>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected return resource type from the server</typeparam>
+        TResult Put<TBody, TResult>(String url, TBody body);
 
         /// <summary>
         /// Executes a PUT (update) for the specified object
@@ -173,6 +205,5 @@ namespace SanteDB.Core.Http
         /// Fired when the response is initiated
         /// </summary>
         event EventHandler<RestResponseEventArgs> Responding;
-
     }
 }

@@ -2,27 +2,29 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -30,17 +32,18 @@ using System.Security.Cryptography.X509Certificates;
 namespace SanteDB.Core.Security
 {
     /// <summary>
-    /// Security extensions used for 
+    /// Security extensions used for
     /// </summary>
     public static class SecurityExtensions
     {
+        // Trust Certificates
+        private static X509Certificate2Collection s_trustCertificates;
 
         /// <summary>
         /// Represents a generic policy instance from a claims principal
         /// </summary>
         private class ClaimsPolicyInstance : IPolicyInstance
         {
-
             /// <summary>
             /// Create a new claims policy instance from claim
             /// </summary>
@@ -116,11 +119,27 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Get all internal certificates
+        /// </summary>
+        private static IEnumerable<X509Certificate2> GetInternalCertificates()
+        {
+            // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
+            foreach (var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o => o.StartsWith(typeof(SecurityExtensions).Namespace)))
+            {
+                using (var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
+                {
+                    byte[] certData = new byte[x509Stream.Length];
+                    x509Stream.Read(certData, 0, (int)x509Stream.Length);
+                    yield return new X509Certificate2(certData);
+                }
+            }
+        }
+
+        /// <summary>
         /// Install certificates for chain - this happens in the local user context
         /// </summary>
         public static void InstallCertsForChain()
         {
-
             try
             {
                 using (var store = new X509Store(StoreLocation.LocalMachine))
@@ -135,10 +154,10 @@ namespace SanteDB.Core.Security
                             x509Stream.Read(certData, 0, (int)x509Stream.Length);
                             var certTrust = new X509Certificate2(certData);
 
-                            if(store.Certificates.Find(X509FindType.FindBySubjectName, certTrust.Subject, false).Count == 0)
+                            if (store.Certificates.Find(X509FindType.FindBySubjectName, certTrust.Subject, false).Count == 0)
                             {
                                 var storeName = StoreName.My;
-                                
+
                                 if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust"))
                                 {
                                     storeName = StoreName.Root;
@@ -154,45 +173,67 @@ namespace SanteDB.Core.Security
                                     trustStore.Add(certTrust);
                                 }
                             }
-
                         }
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new SecurityException("Unable to install SanteDB's trusted certificates", e);
             }
         }
 
         /// <summary>
+        /// Returns true if the certificate is not trusted by the operating system but is trusted by an internal store
+        /// </summary>
+        public static bool HasTrustedRootCert(this X509Chain chain)
+        {
+            if (s_trustCertificates == null)
+            {
+                s_trustCertificates = new X509Certificate2Collection();
+                foreach (var crt in typeof(SecurityExtensions).Assembly.GetManifestResourceNames().Where(o => o.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust")))
+                {
+                    using (var x509Stream = typeof(SecurityExtensions).Assembly.GetManifestResourceStream(crt))
+                    {
+                        byte[] certData = new byte[x509Stream.Length];
+                        x509Stream.Read(certData, 0, (int)x509Stream.Length);
+                        var certTrust = new X509Certificate2(certData);
+                        s_trustCertificates.Add(certTrust);
+                    }
+                }
+            }
+            return s_trustCertificates.Find(X509FindType.FindByThumbprint, chain.ChainElements[chain.ChainElements.Count - 1].Certificate.Thumbprint, false).Count > 0;
+        }
+
+        /// <summary>
         /// Returns true if the certificate <paramref name="me"/> is trusted by a SanteSuite certificate
         /// </summary>
-        public static bool IsTrustedIntern(this X509Certificate2 me, out IEnumerable<X509ChainStatus> chainStatus)
+        public static bool IsTrustedIntern(this X509Certificate2 me, X509Certificate2Collection extraCerts, out IEnumerable<X509ChainStatus> chainStatus)
         {
-
             var chain = X509Chain.Create();
             chain.ChainPolicy = new X509ChainPolicy()
             {
                 RevocationMode = X509RevocationMode.NoCheck
             };
+
+            if (extraCerts != null)
+            {
+                chain.ChainPolicy.ExtraStore.AddRange(extraCerts);
+            }
+            chain.ChainPolicy.ExtraStore.AddRange(GetInternalCertificates().ToArray());
+
             var retVal = chain.Build(me);
             chainStatus = chain.ChainStatus;
 
-            // Try on machine context
             if (!retVal)
             {
-                chain = new X509Chain(true);
-                chain.ChainPolicy = new X509ChainPolicy()
+                using (var trustedPublisherStore = new X509Store(StoreName.TrustedPublisher, StoreLocation.LocalMachine))
                 {
-                    RevocationMode = X509RevocationMode.NoCheck
-                };
-                retVal = chain.Build(me);
-                chainStatus = chainStatus.Union(chain.ChainStatus);
+                    trustedPublisherStore.Open(OpenFlags.ReadOnly);
+                    retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindBySubjectName, me.Subject, false).Count > 0;
+                }
             }
-           
-
-            return retVal;
+            return retVal || HasTrustedRootCert(chain);
         }
     }
 }

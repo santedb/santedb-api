@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
@@ -26,7 +27,6 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
-
     /// <summary>
     /// Record merge statuys
     /// </summary>
@@ -36,14 +36,17 @@ namespace SanteDB.Core.Services
         /// Merge was completed as instructed
         /// </summary>
         Success,
+
         /// <summary>
         /// Merge was submitted but is not complete
         /// </summary>
         Submitted,
+
         /// <summary>
         /// Merge was cancelled
         /// </summary>
         Cancelled,
+
         /// <summary>
         /// An alternate merging strategy was used
         /// </summary>
@@ -55,7 +58,6 @@ namespace SanteDB.Core.Services
     /// </summary>
     public class RecordMergeResult
     {
-
         /// <summary>
         /// Indicates if the operation was a success
         /// </summary>
@@ -80,7 +82,6 @@ namespace SanteDB.Core.Services
             this.Replaced = replaced;
             this.Survivors = survivors;
         }
-
     }
 
     /// <summary>
@@ -89,7 +90,6 @@ namespace SanteDB.Core.Services
     [System.ComponentModel.Description("Record Merging Provider")]
     public interface IRecordMergingService : IServiceImplementation
     {
-
         /// <summary>
         /// Gets the duplicates for the specified master record
         /// </summary>
@@ -124,7 +124,7 @@ namespace SanteDB.Core.Services
         /// <param name="masterKey">The master record which has been identified</param>
         /// <param name="falsePositives">The list of false positives to be flagged</param>
         /// <returns>The updated master record</returns>
-        void Ignore(Guid masterKey, IEnumerable<Guid> falsePositives);
+        IdentifiedData Ignore(Guid masterKey, IEnumerable<Guid> falsePositives);
 
         /// <summary>
         /// Indicates that an ignored record should be removed from the ignore list
@@ -132,7 +132,7 @@ namespace SanteDB.Core.Services
         /// <param name="masterKey">The master record which has been identified</param>
         /// <param name="ignoredKeys">The list of ignored keys to be re-considered</param>
         /// <returns>The updated master record</returns>
-        void UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys);
+        IdentifiedData UnIgnore(Guid masterKey, IEnumerable<Guid> ignoredKeys);
 
         /// <summary>
         /// Merges the specified <paramref name="linkedDuplicates"/> into <paramref name="masterKey"/>
@@ -194,7 +194,6 @@ namespace SanteDB.Core.Services
     public interface IRecordMergingService<T> : IRecordMergingService
         where T : IdentifiedData
     {
-
         /// <summary>
         /// Fired prior to a merge occurring
         /// </summary>
@@ -214,7 +213,5 @@ namespace SanteDB.Core.Services
         /// Fired after a merge has occurred
         /// </summary>
         event EventHandler<DataMergeEventArgs<T>> UnMerged;
-
-
     }
 }

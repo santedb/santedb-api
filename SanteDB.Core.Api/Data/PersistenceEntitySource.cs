@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
@@ -35,8 +36,6 @@ namespace SanteDB.Core.Data
     /// </summary>
     public class PersistenceEntitySource : IEntitySourceProvider
     {
-
-
         #region IEntitySourceProvider implementation
 
         /// <summary>
@@ -86,22 +85,15 @@ namespace SanteDB.Core.Data
         /// </summary>
         public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationServiceContext.Current.GetService<IFastQueryDataPersistenceService<TObject>>();
+            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null)
             {
                 var tr = 0;
-                if (typeof(Act).IsAssignableFrom(typeof(TObject)) ||
-                    typeof(ActParticipation).IsAssignableFrom(typeof(TObject)))
-                    return persistenceService.QueryFast(query, Guid.Empty, 0, null, out tr, AuthenticationContext.Current.Principal);
-                else
-                    return persistenceService.Query(query, Guid.Empty, 0, null, out tr, AuthenticationContext.Current.Principal);
-
+                return persistenceService.Query(query, 0, null, out tr, AuthenticationContext.Current.Principal);
             }
             return new List<TObject>();
         }
 
-        #endregion
-
+        #endregion IEntitySourceProvider implementation
     }
 }
-
