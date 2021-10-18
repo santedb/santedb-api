@@ -21,8 +21,9 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Install service task
         /// </summary>
-        /// <param name="exclusive">True if the <paramref name="serviceType"/> should be the only of its type</param>
+        /// <param name="exclusiveFor">True if the <paramref name="serviceType"/> should be the only of its type</param>
         /// <param name="owner">The owner feature</param>
+        /// <param name="queryValidateFunc">The function callback to be used to determine if the task needs to be run</param>
         /// <param name="serviceType">The type of service</param>
         public InstallServiceTask(IFeature owner, Type serviceType, Func<bool> queryValidateFunc, params Type[] exclusiveFor)
         {
