@@ -21,6 +21,7 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         /// <param name="owner">The owner feature</param>
         /// <param name="serviceType">The type of service</param>
+        /// <param name="queryValidateFunc">The callback to call to determine if the removal needs to occur</param>
         public UnInstallServiceTask(IFeature owner, Type serviceType, Func<bool> queryValidateFunc)
         {
             this.m_serviceType = serviceType;
