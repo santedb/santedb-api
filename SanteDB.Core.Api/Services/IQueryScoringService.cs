@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Matching;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,11 @@ namespace SanteDB.Core.Services
         /// Gets the score
         /// </summary>
         double Score { get; }
+
+        /// <summary>
+        /// Indicates the method used to match
+        /// </summary>
+        RecordMatchMethod Method { get; }
 
     }
 
