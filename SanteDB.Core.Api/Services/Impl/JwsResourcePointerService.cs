@@ -208,7 +208,9 @@ namespace SanteDB.Core.Services.Impl
                             var appId = Guid.Parse(keyId.Substring(3));
                             var appInstance = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityApplication>>().Get(appId);
                             if (appInstance == null)
+                            {
                                 throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.app", "Unknown source application", DetectedIssueKeys.SecurityIssue));
+                            }
 
                             var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetPublicKey(appInstance.Name);
                             signatureService.AddSigningKey(keyId, secret, Security.Configuration.SignatureAlgorithm.HS256);
