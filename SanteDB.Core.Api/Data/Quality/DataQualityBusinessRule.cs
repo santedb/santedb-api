@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -34,16 +35,12 @@ using System.Linq;
 
 namespace SanteDB.Core.Data.Quality
 {
-
-
-
     /// <summary>
     /// Represents a single data quality business rule
     /// </summary>
     public class DataQualityBusinessRule<TModel> : BaseBusinessRulesService<TModel>
         where TModel : IdentifiedData
     {
-
         // Configuration provider
         private IDataQualityConfigurationProviderService m_configurationProvider;
 
@@ -91,11 +88,13 @@ namespace SanteDB.Core.Data.Quality
                 switch (rv.Priority)
                 {
                     case DetectedIssuePriorityType.Error:
-                        this.m_tracer.TraceError("DATA QUALITY ERROR ({0}) -> {1} ({2})", data, rv.Text, rv.TypeKey);
+                        this.m_tracer.TraceInfo("DATA QUALITY ERROR ({0}) -> {1} ({2})", data, rv.Text, rv.TypeKey);
                         break;
+
                     case DetectedIssuePriorityType.Warning:
-                        this.m_tracer.TraceWarning("DATA QUALITY WARNING ({0}) -> {1} ({2})", data, rv.Text, rv.TypeKey);
+                        this.m_tracer.TraceInfo("DATA QUALITY WARNING ({0}) -> {1} ({2})", data, rv.Text, rv.TypeKey);
                         break;
+
                     case DetectedIssuePriorityType.Information:
                         this.m_tracer.TraceInfo("DATA QUALITY ISSUE ({0}) -> {1} ({2})", data, rv.Text, rv.TypeKey);
                         break;
@@ -113,7 +112,6 @@ namespace SanteDB.Core.Data.Quality
                     extendable.RemoveExtension(ExtensionTypeKeys.DataQualityExtension);
                 extendable.AddExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), ruleViolations);
             }
-
         }
 
         /// <summary>
@@ -121,7 +119,6 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public override List<DetectedIssue> Validate(TModel data)
         {
-
             List<DetectedIssue> retVal = new List<DetectedIssue>();
             // Run each of the rules
             foreach (var kv in this.m_configurationProvider.GetRulesForType<TModel>())
@@ -154,9 +151,11 @@ namespace SanteDB.Core.Data.Quality
                             case AssertionEvaluationType.All:
                                 result &= linqResult;
                                 break;
+
                             case AssertionEvaluationType.Any:
                                 result |= linqResult;
                                 break;
+
                             case AssertionEvaluationType.None:
                                 result &= !linqResult;
                                 break;

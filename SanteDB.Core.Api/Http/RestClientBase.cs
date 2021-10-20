@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
@@ -183,19 +184,12 @@ namespace SanteDB.Core.Http
             if (this.Description.Binding.Optimize)
                 retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
 
-            // Return type?
-            if (!String.IsNullOrEmpty(this.Accept))
-            {
-                s_tracer.TraceVerbose("Accepts {0}", this.Accept);
-                retVal.Accept = this.Accept;
-            }
+            retVal.Accept = this.Description.Accept;
 
             return retVal;
         }
 
         #region IRestClient implementation
-
-
 
         /// <summary>
         /// Gets the specified item
@@ -229,8 +223,6 @@ namespace SanteDB.Core.Http
 
             try
             {
-
-
                 var requestEventArgs = new RestRequestEventArgs("GET", url, new NameValueCollection(query), null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
@@ -266,10 +258,9 @@ namespace SanteDB.Core.Http
                                 {
                                     br = httpStream.Read(buffer, 0, 2048);
                                     ms.Write(buffer, 0, br);
-                                    // Raise event 
+                                    // Raise event
                                     this.FireProgressChanged(o.Result.ContentType, ms.Length / (float)o.Result.ContentLength);
                                 }
-
 
                                 ms.Seek(0, SeekOrigin.Begin);
 
@@ -283,6 +274,7 @@ namespace SanteDB.Core.Http
                                             retVal = oms.ToArray();
                                         }
                                         break;
+
                                     case "gzip":
                                         using (var gzs = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
@@ -291,6 +283,7 @@ namespace SanteDB.Core.Http
                                             retVal = oms.ToArray();
                                         }
                                         break;
+
                                     case "bzip2":
                                         using (var lzmas = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
                                         using (var oms = new MemoryStream())
@@ -299,6 +292,7 @@ namespace SanteDB.Core.Http
                                             retVal = oms.ToArray();
                                         }
                                         break;
+
                                     case "lzma":
                                         using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
@@ -307,6 +301,7 @@ namespace SanteDB.Core.Http
                                             retVal = oms.ToArray();
                                         }
                                         break;
+
                                     default:
                                         retVal = ms.ToArray();
                                         break;
@@ -322,7 +317,6 @@ namespace SanteDB.Core.Http
                 if (requestException != null)
                     throw requestException;
 
-
                 this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0, this.ConvertHeaders(headers)));
 
                 return retVal;
@@ -333,6 +327,7 @@ namespace SanteDB.Core.Http
                 {
                     case ServiceClientErrorType.Ok:
                         return this.Get(url);
+
                     default:
                         throw new RestClientException<byte[]>(
                                             null,
@@ -347,6 +342,19 @@ namespace SanteDB.Core.Http
                 this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 500, 0, null));
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Invokes the specified method against the URL provided
+        /// </summary>
+        /// <param name="method">The HTTP method to be executed</param>
+        /// <param name="body">The body to be sent to the server</param>
+        /// <typeparam name="TBody">The type of the <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response from the server</typeparam>
+        /// <param name="url">The URL on which the invokation should occur</param>
+        public TResult Invoke<TBody, TResult>(string method, string url, TBody body)
+        {
+            return this.Invoke<TBody, TResult>(method, url, this.Description.Accept, body, null);
         }
 
         /// <summary>
@@ -428,6 +436,19 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">The expected response type from the server</typeparam>
         /// <param name="url">The resource URL</param>
+        /// <param name="body">The body contents to be submitted to the server</param>
+        /// <returns>The result from the server</returns>
+        public TResult Post<TBody, TResult>(string url, TBody body)
+        {
+            return this.Invoke<TBody, TResult>("POST", url, this.Description.Accept, body);
+        }
+
+        /// <summary>
+        /// Execute a post against the <paramref name="url"/>
+        /// </summary>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="url">The resource URL</param>
         /// <param name="contentType">The content/type of <paramref name="body"/></param>
         /// <param name="body">The body contents to be submitted to the server</param>
         /// <returns>The result from the server</returns>
@@ -445,6 +466,19 @@ namespace SanteDB.Core.Http
         public TResult Delete<TResult>(string url)
         {
             return this.Invoke<Object, TResult>("DELETE", url, null, null);
+        }
+
+        /// <summary>
+        /// Executes an HTTP PUT against the server
+        /// </summary>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected result from the server</typeparam>
+        /// <param name="url">The resource URL to be executed against</param>
+        /// <param name="body">The content to be submitted to the server</param>
+        /// <returns>The response from th eserver</returns>
+        public TResult Put<TBody, TResult>(string url, TBody body)
+        {
+            return this.Invoke<TBody, TResult>("PUT", url, this.Description.Accept, body);
         }
 
         /// <summary>
@@ -476,16 +510,6 @@ namespace SanteDB.Core.Http
         /// Gets or sets the credentials to be used for this client
         /// </summary>
         public Credentials Credentials
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets a list of acceptable response formats
-        /// </summary>
-        /// <value>The accept.</value>
-        public string Accept
         {
             get;
             set;
@@ -548,7 +572,6 @@ namespace SanteDB.Core.Http
                                     }
                                 }
 
-
                                 // Credential provider
                                 if (this.Description.Binding.Security.CredentialProvider != null)
                                 {
@@ -557,7 +580,6 @@ namespace SanteDB.Core.Http
                                         this.Credentials = this.Description.Binding.Security.CredentialProvider?.Authenticate(this);
                                         if (this.Credentials != null) // We have authentication, just needs elevation?
                                         {
-
                                             return ServiceClientErrorType.Ok;
                                         }
                                         else
@@ -574,6 +596,7 @@ namespace SanteDB.Core.Http
                         }
                     case HttpStatusCode.ServiceUnavailable:
                         return ServiceClientErrorType.NotReady;
+
                     case HttpStatusCode.OK:
                     case HttpStatusCode.NoContent:
                     case HttpStatusCode.NotModified:
@@ -583,6 +606,7 @@ namespace SanteDB.Core.Http
                     case HttpStatusCode.RedirectKeepVerb:
                     case HttpStatusCode.RedirectMethod:
                         return ServiceClientErrorType.Ok;
+
                     default:
                         return ServiceClientErrorType.GenericError;
                 }
@@ -602,6 +626,18 @@ namespace SanteDB.Core.Http
         /// Patches the specified resource at <paramref name="url"/> with <paramref name="patch"/> when <paramref name="ifMatch"/> is true
         /// </summary>
         /// <param name="url">The resource URL to patch</param>
+        /// <param name="ifMatch">Identifies the If-Match header</param>
+        /// <param name="patch">The patch contents</param>
+        /// <returns>The new ETAG of the patched resource</returns>
+        public String Patch<TPatch>(string url, String ifMatch, TPatch patch)
+        {
+            return this.Patch<TPatch>(url, ifMatch, this.Description.Accept, patch);
+        }
+
+        /// <summary>
+        /// Patches the specified resource at <paramref name="url"/> with <paramref name="patch"/> when <paramref name="ifMatch"/> is true
+        /// </summary>
+        /// <param name="url">The resource URL to patch</param>
         /// <param name="contentType">The content/type of the patch (dictates serialization)</param>
         /// <param name="ifMatch">Identifies the If-Match header</param>
         /// <param name="patch">The patch contents</param>
@@ -610,7 +646,6 @@ namespace SanteDB.Core.Http
         {
             try
             {
-
                 var requestEventArgs = new RestRequestEventArgs("PATCH", url, null, contentType, patch);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
@@ -626,7 +661,7 @@ namespace SanteDB.Core.Http
                 // Invoke
                 this.InvokeInternal<TPatch, Object>("PATCH", url, contentType, requestHeaders, out responseHeaders, patch, null);
 
-                // Return the ETag of the 
+                // Return the ETag of the
                 return responseHeaders["ETag"];
             }
             catch (Exception e)
@@ -635,7 +670,6 @@ namespace SanteDB.Core.Http
                 this.Responded?.Invoke(this, new RestResponseEventArgs("PATCH", url, null, contentType, null, 500, 0, null));
                 throw;
             }
-
         }
 
         /// <summary>
@@ -726,6 +760,7 @@ namespace SanteDB.Core.Http
             return this.Invoke<Object, TResult>("UNLOCK", url, null, null, null);
         }
     }
+
     /// <summary>
     /// Service client error type
     /// </summary>
@@ -735,22 +770,27 @@ namespace SanteDB.Core.Http
         /// The service client response is valid
         /// </summary>
         Ok,
+
         /// <summary>
         /// The service client encountered a general error
         /// </summary>
         GenericError,
+
         /// <summary>
         /// The service client's authentication scheme does not match the server
         /// </summary>
         AuthenticationSchemeMismatch,
+
         /// <summary>
         /// The service client encountered a security error
         /// </summary>
         SecurityError,
+
         /// <summary>
         /// The service client is contacting the wrong realm
         /// </summary>
         RealmMismatch,
+
         /// <summary>
         /// The service client was not ready
         /// </summary>

@@ -82,5 +82,6 @@ namespace SanteDB.Core.Interop.Description
         /// Requires authorization
         /// </summary>
         public bool RequiresAuth { get; }
+
     }
 }
