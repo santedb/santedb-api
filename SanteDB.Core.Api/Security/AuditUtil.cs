@@ -567,6 +567,7 @@ namespace SanteDB.Core.Security.Audit
                     auditData.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
                     auditData.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
                     auditData.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
+                    auditData.AddMetadata(AuditMetadataKey.ForwardInformation, rc?.ForwardInformation);
                     auditData.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
                     //audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? null)?.ToString());
 
