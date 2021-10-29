@@ -361,7 +361,7 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            if (action == ActionType.Create || action == ActionType.Update || action == ActionType.Delete)
+            if (action == ActionType.Create || action == ActionType.Update || action == ActionType.Delete || s_configuration.CompleteAuditTrail)
             {
                 audit.AuditableObjects = data.OfType<TData>().SelectMany(o =>
                 {

@@ -598,7 +598,18 @@ namespace SanteDB.Core.Services.Impl
             {
                 return this.GetAllTypes()
                     .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                    .Select(t => this.CreateInjected(t))
+                    .Select(t =>
+                    {
+                        try
+                        {
+                            return this.CreateInjected(t);
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceWarning($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
+                            return null;
+                        }
+                    })
                     .OfType<TInterface>();
             }
             else
