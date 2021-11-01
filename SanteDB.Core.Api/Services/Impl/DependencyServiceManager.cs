@@ -52,6 +52,9 @@ namespace SanteDB.Core.Services.Impl
         // Not configured services
         private HashSet<Type> m_notConfiguredServices = new HashSet<Type>();
 
+        // Service factories
+        private HashSet<IServiceFactory> m_serviceFactories = new HashSet<IServiceFactory>();
+
         // Verified assemblies
         private HashSet<String> m_verifiedAssemblies = new HashSet<string>();
 
@@ -214,7 +217,13 @@ namespace SanteDB.Core.Services.Impl
                 else
                 {
                     this.ValidateServiceSignature(serviceType);
-                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
+                    var sii = new ServiceInstanceInformation(serviceType, this);
+                    this.m_serviceRegistrations.Add(sii);
+
+                    if (typeof(IServiceFactory).IsAssignableFrom(serviceType))
+                    {
+                        this.AddServiceFactory(sii.GetInstance() as IServiceFactory);
+                    }
                 }
                 this.m_notConfiguredServices.Clear();
             }
@@ -232,6 +241,11 @@ namespace SanteDB.Core.Services.Impl
                 this.ValidateServiceSignature(serviceInstance.GetType());
                 this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
                 this.m_notConfiguredServices.Clear();
+
+                if (serviceInstance is IServiceFactory sf)
+                {
+                    this.AddServiceFactory(sf);
+                }
             }
         }
 
@@ -262,12 +276,10 @@ namespace SanteDB.Core.Services.Impl
                         else // Attempt to call the service factories to create it
                         {
                             var created = false;
-                            var factories = this.m_configuration.ServiceProviders.Where(s => s.Type != null && typeof(IServiceFactory).IsAssignableFrom(s.Type));
-                            foreach (var factory in factories)
+                            foreach (var factory in this.m_serviceFactories)
                             {
                                 // Is the service factory already created?
-                                var serviceFactory = this.GetService(factory.Type) as IServiceFactory;
-                                created |= serviceFactory.TryCreateService(serviceType, out object serviceInstance);
+                                created |= factory.TryCreateService(serviceType, out object serviceInstance);
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
@@ -375,12 +387,7 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                             else
                             {
-                                this.ValidateServiceSignature(svc.Type);
-                                var svci = new ServiceInstanceInformation(svc.Type, this);
-
-                                this.m_serviceRegistrations.Add(svci);
-                                foreach (var iface in svci.ImplementedServices)
-                                    this.m_cachedServices.TryAdd(iface, svci);
+                                this.AddServiceProvider(svc.Type);
                             }
                         }
 
@@ -618,6 +625,20 @@ namespace SanteDB.Core.Services.Impl
                     .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                     .Select(t => this.CreateInjected(t))
                     .OfType<TInterface>();
+            }
+        }
+
+        /// <summary>
+        /// Add a service factory
+        /// </summary>
+        public void AddServiceFactory(IServiceFactory serviceFactory)
+        {
+            lock (this.m_lock)
+            {
+                if (!this.m_serviceFactories.Any(t => t.GetType() == serviceFactory.GetType()))
+                {
+                    this.m_serviceFactories.Add(serviceFactory);
+                }
             }
         }
     }
