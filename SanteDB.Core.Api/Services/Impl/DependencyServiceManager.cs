@@ -245,6 +245,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public object GetService(Type serviceType)
         {
+            
             ServiceInstanceInformation candidateService = null;
             if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false && !this.m_notConfiguredServices.Contains(serviceType))
             {
@@ -353,37 +354,36 @@ namespace SanteDB.Core.Services.Impl
             {
                 Stopwatch startWatch = new Stopwatch();
 
-                using (AuthenticationContext.EnterSystemContext())
+                try
                 {
-                    try
+                    if (this.GetService<IConfigurationManager>() == null)
+                        throw new InvalidOperationException("Cannot find configuration manager!");
+                    if (this.m_configuration == null)
+                        this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+
+                    // Add configured services
+                    foreach (var svc in this.m_configuration.ServiceProviders)
+                    {
+                        if (svc.Type == null)
+                            this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
+                        else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
+                            this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
+                        else
+                        {
+                            this.ValidateServiceSignature(svc.Type);
+                            var svci = new ServiceInstanceInformation(svc.Type, this);
+
+                            this.m_serviceRegistrations.Add(svci);
+                            foreach (var iface in svci.ImplementedServices)
+                                this.m_cachedServices.TryAdd(iface, svci);
+                        }
+                    }
+
+                    using (AuthenticationContext.EnterSystemContext())
                     {
                         this.Starting?.Invoke(this, EventArgs.Empty);
 
                         startWatch.Start();
-
-                        if (this.GetService<IConfigurationManager>() == null)
-                            throw new InvalidOperationException("Cannot find configuration manager!");
-                        if (this.m_configuration == null)
-                            this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
-
-                        // Add configured services
-                        foreach (var svc in this.m_configuration.ServiceProviders)
-                        {
-                            if (svc.Type == null)
-                                this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
-                            else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
-                                this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                            else
-                            {
-                                this.ValidateServiceSignature(svc.Type);
-                                var svci = new ServiceInstanceInformation(svc.Type, this);
-
-                                this.m_serviceRegistrations.Add(svci);
-                                foreach (var iface in svci.ImplementedServices)
-                                    this.m_cachedServices.TryAdd(iface, svci);
-                            }
-                        }
-
                         this.m_tracer.TraceInfo("Loading singleton services");
                         foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
                         {
@@ -403,14 +403,14 @@ namespace SanteDB.Core.Services.Impl
                         if (this.Started != null)
                             this.Started(this, null);
                     }
-                    finally
-                    {
-                        startWatch.Stop();
-                    }
-                    this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
-                    this.Started?.Invoke(this, EventArgs.Empty);
-                    this.IsRunning = true;
                 }
+                finally
+                {
+                    startWatch.Stop();
+                }
+                this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
+                this.Started?.Invoke(this, EventArgs.Empty);
+                this.IsRunning = true;
             }
             return this.IsRunning;
         }
