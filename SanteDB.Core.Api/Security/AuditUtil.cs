@@ -593,10 +593,14 @@ namespace SanteDB.Core.Security.Audit
 
             // Action
             var parm = new { rc = RemoteEndpointUtil.Current.GetRemoteClient(), principal = AuthenticationContext.Current.Principal, audit = audit };
-            if (ApplicationServiceContext.Current.IsRunning)
+            try
+            {
                 ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem, parm); // background
-            else
+            }
+            catch
+            {
                 workitem(parm); // service is stopped
+            }
         }
 
         /// <summary>
