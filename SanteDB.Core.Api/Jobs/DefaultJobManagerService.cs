@@ -82,7 +82,7 @@ namespace SanteDB.Core.Jobs
             /// <param name="configuration"></param>
             public JobExecutionInfo(JobItemConfiguration configuration)
             {
-                this.Job = ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected(configuration.Type) as IJob;
+                this.Job = configuration.Type.CreateInjected() as IJob;
                 this.Schedule = configuration.Schedule?.ToArray();
                 this.StartType = configuration.StartType;
                 this.Parameters = configuration.Parameters;

@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace SanteDB.Core.Interfaces
+namespace SanteDB.Core.Services
 {
     /// <summary>
     /// Represents a service manager
