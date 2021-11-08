@@ -28,6 +28,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Data
@@ -75,10 +76,10 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
+        public IEnumerable<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             // Is the collection already loaded?
-            return this.Query<TObject>(o => o.SourceEntityKey == sourceKey);
+            return this.Query<TObject>(o => sourceKey.Contains(o.SourceEntityKey));
         }
 
         /// <summary>

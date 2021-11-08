@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 namespace SanteDB.Core.Security
 {
     /// <summary>
@@ -87,7 +88,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string CreateLocalIdentity = CreateIdentity + ".1";
 
-
         /// <summary>
         /// Allows an identity to alter a policy
         /// </summary>
@@ -139,6 +139,26 @@ namespace SanteDB.Core.Security
         public const string ReadPubSubSubscription = UnrestrictedPubSub + ".4";
 
         /// <summary>
+        /// Unrestricted system configuration
+        /// </summary>
+        public const string AlterSystemConfiguration = UnrestrictedAdministration + ".15";
+
+        /// <summary>
+        /// Un-restricted match configurations
+        /// </summary>
+        public const string UnrestrictedMatchConfiguration = AlterSystemConfiguration + ".1";
+
+        /// <summary>
+        /// Un-restricted match configurations
+        /// </summary>
+        public const string AlterMatchConfiguration = UnrestrictedMatchConfiguration + ".1";
+
+        /// <summary>
+        /// Activate match configuration
+        /// </summary>
+        public const string ActivateMatchConfiguration = UnrestrictedMatchConfiguration + ".2";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";
@@ -158,10 +178,8 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string LoginImpersonateApplication = LoginAsService + ".2";
 
-
-
         /// <summary>
-        /// Access clinical data permission 
+        /// Access clinical data permission
         /// </summary>
         public const string UnrestrictedClinicalData = UnrestrictedAll + ".2";
 
@@ -195,7 +213,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string ElevateClinicalData = UnrestrictedClinicalData + ".5";
 
-
         /// <summary>
         /// Indicates the user can update metadata
         /// </summary>
@@ -207,59 +224,65 @@ namespace SanteDB.Core.Security
         public const string ReadMetadata = UnrestrictedMetadata + ".0";
 
         /// <summary>
-        /// Allow a user all access to the warehouse 
+        /// Allow a user all access to the warehouse
         /// </summary>
         public const string UnrestrictedWarehouse = UnrestrictedAll + ".5";
 
         /// <summary>
-        /// Allow a user to write data to the warehouse 
+        /// Allow a user to write data to the warehouse
         /// </summary>
         public const string WriteWarehouseData = UnrestrictedWarehouse + ".0";
 
         /// <summary>
-        /// Allow a user to write data to the warehouse 
+        /// Allow a user to write data to the warehouse
         /// </summary>
         public const string DeleteWarehouseData = UnrestrictedWarehouse + ".1";
 
         /// <summary>
-        /// Allow a user to write data to the warehouse 
+        /// Allow a user to write data to the warehouse
         /// </summary>
         public const string ReadWarehouseData = UnrestrictedWarehouse + ".2";
 
         /// <summary>
-        /// Allow a user to write data to the warehouse 
+        /// Allow a user to write data to the warehouse
         /// </summary>
         public const string QueryWarehouseData = UnrestrictedWarehouse + ".3";
 
         /// <summary>
-        /// Write all materials 
+        /// Write all materials
         /// </summary>
         public const string WriteMaterials = UnrestrictedMetadata + ".1.0";
+
         /// <summary>
         /// delete alll materials
         /// </summary>
         public const string DeleteMaterials = UnrestrictedMetadata + ".1.1";
+
         /// <summary>
         /// Read materials
         /// </summary>
         public const string ReadMaterials = ReadMetadata + ".1.2";
+
         /// <summary>
         /// Query materials
         /// </summary>
         public const string QueryMaterials = ReadMetadata + ".1.3";
 
         /// <summary>
-        /// Write all facilities 
+        /// Write all facilities
         /// </summary>
         public const string WritePlacesAndOrgs = UnrestrictedMetadata + ".2.0";
+
         /// <summary>
         /// delete alll facilities
         /// </summary>
         public const string DeletePlacesAndOrgs = UnrestrictedMetadata + ".2.1";
+
         /// <summary>
         /// Read facilities
         /// </summary>
         public const string ReadPlacesAndOrgs = ReadMetadata + ".2.2";
+
         /// <summary>
         /// Query facilities
         /// </summary>
@@ -276,11 +299,11 @@ namespace SanteDB.Core.Security
         public const string SecurityElevations = UnrestrictedAll + ".600";
 
         /// <summary>
-        /// Policy identifier for allowing for the editing of an identity's security  
+        /// Policy identifier for allowing for the editing of an identity's security
         /// </summary>
         public const string AlterSecurityChallenge = SecurityElevations + ".1";
 
-        #endregion
+        #endregion IMS Policies in the 1.3.6.1.4.1.33349.3.1.5.9.2 namespace
 
         #region SanteDB Client Functions
 
@@ -289,6 +312,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string AccessClientAdministrativeFunction = "1.3.6.1.4.1.33349.3.1.5.9.2.10";
 
-        #endregion
+        #endregion SanteDB Client Functions
     }
 }

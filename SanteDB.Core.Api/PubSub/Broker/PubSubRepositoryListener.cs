@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
@@ -35,7 +36,6 @@ namespace SanteDB.Core.PubSub.Broker
     /// </summary>
     public class PubSubRepositoryListener<TModel> : IDisposable where TModel : IdentifiedData
     {
-
         // Cached filter criteria
         private Dictionary<Guid, Func<Object, bool>> m_filterCriteria = new Dictionary<Guid, Func<Object, bool>>();
 
@@ -70,7 +70,6 @@ namespace SanteDB.Core.PubSub.Broker
 
             if (this.m_repository == null)
                 throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
-
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
@@ -114,7 +113,6 @@ namespace SanteDB.Core.PubSub.Broker
                                                ), parameter);
                                     else
                                         dynFn = fFn;
-
                                 }
 
                                 if (dynFn == null)
@@ -133,7 +131,7 @@ namespace SanteDB.Core.PubSub.Broker
                 {
                     var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
                     var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
-                    yield return factory.CreateDispatcher(chnl.Key, channelDef.Endpoint, channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
+                    yield return factory.CreateDispatcher(chnl.Key, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
                 }
             }
         }
@@ -150,7 +148,6 @@ namespace SanteDB.Core.PubSub.Broker
                     foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
                         dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
                 }
-
             }, evt);
         }
 
@@ -215,7 +212,7 @@ namespace SanteDB.Core.PubSub.Broker
         }
 
         /// <summary>
-        /// Dispose of this 
+        /// Dispose of this
         /// </summary>
         public void Dispose()
         {

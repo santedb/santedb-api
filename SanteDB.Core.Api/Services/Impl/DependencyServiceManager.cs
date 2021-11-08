@@ -52,6 +52,9 @@ namespace SanteDB.Core.Services.Impl
         // Not configured services
         private HashSet<Type> m_notConfiguredServices = new HashSet<Type>();
 
+        // Service factories
+        private HashSet<IServiceFactory> m_serviceFactories = new HashSet<IServiceFactory>();
+
         // Verified assemblies
         private HashSet<String> m_verifiedAssemblies = new HashSet<string>();
 
@@ -214,7 +217,13 @@ namespace SanteDB.Core.Services.Impl
                 else
                 {
                     this.ValidateServiceSignature(serviceType);
-                    this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceType, this));
+                    var sii = new ServiceInstanceInformation(serviceType, this);
+                    this.m_serviceRegistrations.Add(sii);
+
+                    if (typeof(IServiceFactory).IsAssignableFrom(serviceType))
+                    {
+                        this.AddServiceFactory(sii.GetInstance() as IServiceFactory);
+                    }
                 }
                 this.m_notConfiguredServices.Clear();
             }
@@ -232,6 +241,11 @@ namespace SanteDB.Core.Services.Impl
                 this.ValidateServiceSignature(serviceInstance.GetType());
                 this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
                 this.m_notConfiguredServices.Clear();
+
+                if (serviceInstance is IServiceFactory sf)
+                {
+                    this.AddServiceFactory(sf);
+                }
             }
         }
 
@@ -262,12 +276,10 @@ namespace SanteDB.Core.Services.Impl
                         else // Attempt to call the service factories to create it
                         {
                             var created = false;
-                            var factories = this.m_configuration.ServiceProviders.Where(s => s.Type != null && typeof(IServiceFactory).IsAssignableFrom(s.Type));
-                            foreach (var factory in factories)
+                            foreach (var factory in this.m_serviceFactories)
                             {
                                 // Is the service factory already created?
-                                var serviceFactory = this.GetService(factory.Type) as IServiceFactory;
-                                created |= serviceFactory.TryCreateService(serviceType, out object serviceInstance);
+                                created |= factory.TryCreateService(serviceType, out object serviceInstance);
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
@@ -353,21 +365,21 @@ namespace SanteDB.Core.Services.Impl
             {
                 Stopwatch startWatch = new Stopwatch();
 
-                using (AuthenticationContext.EnterSystemContext())
+                try
                 {
-                    try
+                    if (this.GetService<IConfigurationManager>() == null)
+                        throw new InvalidOperationException("Cannot find configuration manager!");
+                    if (this.m_configuration == null)
+                        this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+
+                    // Add configured services
+                    foreach (var svc in this.m_configuration.ServiceProviders)
                     {
-                        this.Starting?.Invoke(this, EventArgs.Empty);
-
-                        startWatch.Start();
-
-                        if (this.GetService<IConfigurationManager>() == null)
-                            throw new InvalidOperationException("Cannot find configuration manager!");
-                        if (this.m_configuration == null)
-                            this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
-
-                        // Add configured services
-                        foreach (var svc in this.m_configuration.ServiceProviders)
+                        if (svc.Type == null)
+                            this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
+                        else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
+                            this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
+                        else
                         {
                             if (svc.Type == null)
                                 this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
@@ -375,15 +387,16 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                             else
                             {
-                                this.ValidateServiceSignature(svc.Type);
-                                var svci = new ServiceInstanceInformation(svc.Type, this);
-
-                                this.m_serviceRegistrations.Add(svci);
-                                foreach (var iface in svci.ImplementedServices)
-                                    this.m_cachedServices.TryAdd(iface, svci);
+                                this.AddServiceProvider(svc.Type);
                             }
                         }
+                    }
 
+                    using (AuthenticationContext.EnterSystemContext())
+                    {
+                        this.Starting?.Invoke(this, EventArgs.Empty);
+
+                        startWatch.Start();
                         this.m_tracer.TraceInfo("Loading singleton services");
                         foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
                         {
@@ -403,14 +416,14 @@ namespace SanteDB.Core.Services.Impl
                         if (this.Started != null)
                             this.Started(this, null);
                     }
-                    finally
-                    {
-                        startWatch.Stop();
-                    }
-                    this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
-                    this.Started?.Invoke(this, EventArgs.Empty);
-                    this.IsRunning = true;
                 }
+                finally
+                {
+                    startWatch.Stop();
+                }
+                this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
+                this.Started?.Invoke(this, EventArgs.Empty);
+                this.IsRunning = true;
             }
             return this.IsRunning;
         }
@@ -553,8 +566,7 @@ namespace SanteDB.Core.Services.Impl
                             var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
                             if (candidateService == null && dependencyInfo.Required)
                             {
-                                this.m_tracer.TraceWarning($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
-                                return null;
+                                throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
                             }
                             else
                             {
@@ -599,7 +611,18 @@ namespace SanteDB.Core.Services.Impl
             {
                 return this.GetAllTypes()
                     .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                    .Select(t => this.CreateInjected(t))
+                    .Select(t =>
+                    {
+                        try
+                        {
+                            return this.CreateInjected(t);
+                        }
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceWarning($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
+                            return null;
+                        }
+                    })
                     .OfType<TInterface>();
             }
             else
@@ -608,6 +631,20 @@ namespace SanteDB.Core.Services.Impl
                     .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                     .Select(t => this.CreateInjected(t))
                     .OfType<TInterface>();
+            }
+        }
+
+        /// <summary>
+        /// Add a service factory
+        /// </summary>
+        public void AddServiceFactory(IServiceFactory serviceFactory)
+        {
+            lock (this.m_lock)
+            {
+                if (!this.m_serviceFactories.Any(t => t.GetType() == serviceFactory.GetType()))
+                {
+                    this.m_serviceFactories.Add(serviceFactory);
+                }
             }
         }
 
