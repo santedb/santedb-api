@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Serialization;
 using System;
@@ -30,7 +31,6 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
 {
-
     /// <summary>
     /// SanteDB Base configuration
     /// </summary>
@@ -63,6 +63,9 @@ namespace SanteDB.Core.Configuration
         // Serializer
         private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
 
+        // Serializer
+        private XmlSerializer m_serializer = null;
+
         /// <summary>
         /// SanteDB configuration
         /// </summary>
@@ -82,7 +85,6 @@ namespace SanteDB.Core.Configuration
             get { return typeof(SanteDBConfiguration).Assembly.GetName().Version.ToString(); }
             set
             {
-
                 Version v = new Version(value),
                     myVersion = typeof(SanteDBConfiguration).Assembly.GetName().Version;
                 if (v.Major > myVersion.Major)
@@ -107,9 +109,10 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+            var xsz = new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
+            retVal.m_serializer = xsz;
             if (retVal.Sections.Any(o => o is XmlNode[]))
             {
                 string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>()?.TypeName} (in {o.TypeXml})"));
@@ -133,7 +136,6 @@ namespace SanteDB.Core.Configuration
                         throw new ConfigurationException($"Include {fileName} was not found", retVal);
                 }
 
-
             return retVal;
         }
 
@@ -147,8 +149,7 @@ namespace SanteDB.Core.Configuration
             var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
-            xsz.Serialize(dataStream, this, xmlns);
+            this.m_serializer.Serialize(dataStream, this, xmlns);
         }
 
         /// <summary>
@@ -217,4 +218,3 @@ namespace SanteDB.Core.Configuration
         }
     }
 }
-
