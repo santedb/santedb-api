@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security;
@@ -34,9 +35,8 @@ namespace SanteDB.Core.PubSub.Broker
     /// </summary>
     public class PubSubBroker : IDaemonService, IDisposable, IPubSubBroker
     {
-
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
 
         // Cached factories
         private IDictionary<String, IPubSubDispatcherFactory> m_factories;
@@ -66,14 +66,17 @@ namespace SanteDB.Core.PubSub.Broker
         /// The service is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// The service is started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// The service is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// The service is stopped
         /// </summary>
@@ -124,7 +127,7 @@ namespace SanteDB.Core.PubSub.Broker
                 {
                     try
                     {
-                        // Hook up the listeners for existing 
+                        // Hook up the listeners for existing
                         foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
                         {
                             this.PubSubSubscribed(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
@@ -218,7 +221,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         public IPubSubDispatcherFactory GetDispatcherFactory(Type factoryType)
         {
-            // TODO: Optimize this , basically this ensures that the factory type is not 
+            // TODO: Optimize this , basically this ensures that the factory type is not
             // initialized more than once.
             return this.GetFactories().Values.FirstOrDefault(o => o.GetType() == factoryType);
         }

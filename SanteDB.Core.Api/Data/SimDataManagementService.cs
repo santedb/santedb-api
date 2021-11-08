@@ -51,7 +51,7 @@ namespace SanteDB.Core.Data
             where TModel : VersionedEntityData<TModel>, new()
         {
             // Tracer
-            private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
+            private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
             // The configuration
             private IRecordMatchingConfigurationService m_matchingConfigurationService;
@@ -331,7 +331,7 @@ namespace SanteDB.Core.Data
                 try
                 {
                     var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    dataService.ObsoleteAll(o=>o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    dataService.ObsoleteAll(o => o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
                 catch (Exception e)
                 {
@@ -358,7 +358,7 @@ namespace SanteDB.Core.Data
         }
 
         // Tracer for SIM
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
         // Configuration section
         private ResourceManagementConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<ResourceManagementConfigurationSection>();

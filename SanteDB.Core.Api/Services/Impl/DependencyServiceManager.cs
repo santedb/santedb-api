@@ -64,7 +64,7 @@ namespace SanteDB.Core.Services.Impl
         private class ServiceInstanceInformation : IDisposable
         {
             // Tracer
-            private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
+            private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
 
             // Singleton instance
             private object m_singletonInstance = null;
@@ -161,7 +161,7 @@ namespace SanteDB.Core.Services.Impl
         private bool m_isDisposed = false;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
 
         // Lock for the sync
         private object m_lock = new object();

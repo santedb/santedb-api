@@ -39,7 +39,7 @@ namespace SanteDB.Core.Jobs
     public class DefaultJobManagerService : IJobManagerService
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
 
         // Thread pool
         private IThreadPoolService m_threadPool;
@@ -294,7 +294,8 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Returns true when the service is running
         /// </summary>
-        public bool IsRunning { get { return this.m_systemTimer != null; } }
+        public bool IsRunning
+        { get { return this.m_systemTimer != null; } }
 
         /// <summary>
         /// Get the jobs

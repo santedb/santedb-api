@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -53,7 +54,7 @@ namespace SanteDB.Core.Security.Privacy
         public string ServiceName => "Data Policy Enforcement Filter Service";
 
         // Security tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
 
         // Filter configuration
         private DataPolicyFilterConfigurationSection m_configuration;
@@ -63,10 +64,13 @@ namespace SanteDB.Core.Security.Privacy
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;
+
         // Adhoc cache
         private IAdhocCacheService m_adhocCache;
+
         // Password Hashing
         private IPasswordHashingService m_hasher;
+
         // Pip service
         private IPolicyInformationService m_pipService;
 
@@ -106,7 +110,6 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public virtual IEnumerable<TData> Apply<TData>(IEnumerable<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
-
             if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
                 return results
                     .Select(
@@ -125,7 +128,6 @@ namespace SanteDB.Core.Security.Privacy
                 key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
             else
                 key = this.m_hasher.ComputeHash($"$aa.filter.{principal.Identity.Name}");
-
 
             var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
             if (domainsToFilter == null)
@@ -236,17 +238,14 @@ namespace SanteDB.Core.Security.Privacy
 
                     AuditUtil.AuditSensitiveDisclosure(result, null, true);
                     break;
-
             }
-
         }
 
         /// <summary>
-        /// Returns true if updates to the record 
+        /// Returns true if updates to the record
         /// </summary>
         public bool ValidateWrite<TData>(TData record, IPrincipal accessor) where TData : IdentifiedData
         {
-
             // Is the record a bundle?
             if (record is Bundle bdl)
                 return !bdl.Item.Any(o => !this.ValidateWrite(o, accessor)); // We do ! since we want the first FALSE to stop searching the bundle
@@ -268,7 +267,6 @@ namespace SanteDB.Core.Security.Privacy
                 else
                     return true;
             }
-
         }
 
         /// <summary>
@@ -276,7 +274,6 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public virtual TData Apply<TData>(TData result, IPrincipal principal) where TData : IdentifiedData
         {
-
             // Is the record a bundle?
             if (result == default(TData))
                 return default(TData);
@@ -304,15 +301,17 @@ namespace SanteDB.Core.Security.Privacy
                         case ResourceDataPolicyActionType.Audit:
                             AuditUtil.AuditSensitiveDisclosure(result, decision, true);
                             return result;
+
                         case ResourceDataPolicyActionType.Hide:
                             return null;
+
                         case ResourceDataPolicyActionType.Hide | ResourceDataPolicyActionType.Audit:
                             AuditUtil.AuditMasking(result, decision, true);
                             return null;
+
                         case ResourceDataPolicyActionType.Redact:
                         case ResourceDataPolicyActionType.Redact | ResourceDataPolicyActionType.Audit:
                             {
-
                                 if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
                                     AuditUtil.AuditMasking(result, decision, false);
@@ -346,6 +345,7 @@ namespace SanteDB.Core.Security.Privacy
                             throw new SecurityException($"Access denied");
                         case ResourceDataPolicyActionType.None:
                             return result;
+
                         default:
                             throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
                     }
@@ -353,10 +353,10 @@ namespace SanteDB.Core.Security.Privacy
                     if (result is ISecurable sec && sec.Policies.Any())
                         AuditUtil.AuditSensitiveDisclosure(result, decision, true);
                     return result;
+
                 default:
                     throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
             }
-
         }
 
         /// <summary>
@@ -392,6 +392,5 @@ namespace SanteDB.Core.Security.Privacy
             }
             return result;
         }
-
     }
 }

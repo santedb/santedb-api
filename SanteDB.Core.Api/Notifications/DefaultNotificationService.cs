@@ -34,7 +34,7 @@ namespace SanteDB.Core.Notifications
     public class DefaultNotificationService : INotificationService
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultNotificationService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultNotificationService));
 
         // Relay cache
         private IDictionary<String, INotificationRelay> m_relays;

@@ -45,7 +45,7 @@ namespace SanteDB.Core.Data.Quality
         private IDataQualityConfigurationProviderService m_configurationProvider;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
 
         /// <summary>
         /// Creates a new data quality business rule

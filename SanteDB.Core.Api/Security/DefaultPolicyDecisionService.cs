@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
@@ -40,11 +41,11 @@ namespace SanteDB.Core.Security
     [ServiceProvider("Default PDP Service")]
     public class DefaultPolicyDecisionService : IPolicyDecisionService
     {
-
         // Adhoc cache reference
         private IAdhocCacheService m_adhocCacheService;
+
         private IPasswordHashingService m_hasher;
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         /// <summary>
         /// Policy for the grant
@@ -56,11 +57,10 @@ namespace SanteDB.Core.Security
             /// </summary>
             public EffectivePolicy()
             {
-
             }
 
             /// <summary>
-            /// Constructs a simple policy 
+            /// Constructs a simple policy
             /// </summary>
             public EffectivePolicy(Guid key, String oid, String name, bool canOverride)
             {
@@ -117,7 +117,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         private class EffectivePolicyInstance : IPolicyInstance
         {
-
             // Securable
             private object m_securable;
 
@@ -126,7 +125,6 @@ namespace SanteDB.Core.Security
             /// </summary>
             public EffectivePolicyInstance()
             {
-
             }
 
             /// <summary>
@@ -187,7 +185,6 @@ namespace SanteDB.Core.Security
             this.m_hasher = hashService;
         }
 
-
         /// <summary>
         /// This is not cached
         /// </summary>
@@ -221,7 +218,7 @@ namespace SanteDB.Core.Security
                 // Create an effective policy list
                 result = allPolicies.Select(masterPolicy =>
                 {
-                    // Get all policies which are related to this policy 
+                    // Get all policies which are related to this policy
                     var activePolicy = activePoliciesForObject.Where(p => masterPolicy.Oid.StartsWith(p.Policy.Oid)).OrderByDescending(o => o.Policy.Oid.Length).FirstOrDefault(); // The most specific policy grant for this policy
 
                     // What is the most specific policy in this tree?
@@ -252,7 +249,7 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
-        /// Get a policy decision 
+        /// Get a policy decision
         /// </summary>
         public PolicyDecision GetPolicyDecision(IPrincipal principal, object securable)
         {
@@ -302,7 +299,7 @@ namespace SanteDB.Core.Security
             // Get the user object from the principal
             var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
 
-            // Can we make this decision based on the claims? 
+            // Can we make this decision based on the claims?
             if (principal is IClaimsPrincipal claimsPrincipal && claimsPrincipal.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim)) // must adhere to the token
             {
                 if (claimsPrincipal.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && policyId == c.Value))
@@ -318,7 +315,6 @@ namespace SanteDB.Core.Security
             }
             else
             {
-
                 // Most restrictive
                 IPolicyInstance policyInstance = this.GetEffectivePolicySet(principal).FirstOrDefault(o => policyId == o.Policy.Oid);
                 var retVal = PolicyGrantType.Deny;
@@ -334,12 +330,10 @@ namespace SanteDB.Core.Security
                     var policy = policyInstance.Policy as IHandledPolicy;
                     if (policy != null)
                         retVal = policy.Handler.GetPolicyDecision(principal, policy, null).Outcome;
-
                 }
                 else
                     retVal = policyInstance.Rule;
                 return retVal;
-
             }
         }
     }

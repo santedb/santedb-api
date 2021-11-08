@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -49,7 +50,7 @@ namespace SanteDB.Core.Services.Impl
         };
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SimplePatchService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimplePatchService));
 
         // Property information
         private Dictionary<Type, IEnumerable<PropertyInfo>> m_properties = new Dictionary<Type, IEnumerable<PropertyInfo>>();
@@ -123,7 +124,7 @@ namespace SanteDB.Core.Services.Impl
 
                     // Test
                     if (existingValue == updatedValue)
-                        continue; // same 
+                        continue; // same
                     else
                     {
                         if (existingValue != null && updatedValue == null) // remove
@@ -148,7 +149,6 @@ namespace SanteDB.Core.Services.Impl
                         }
                         else if (existingValue is IList && !existingValue.GetType().IsArray)
                         {
-
                             // Simple or complex list?
                             if (typeof(IIdentifiedEntity).IsAssignableFrom(existingValue.GetType().StripGeneric()))
                             {
@@ -158,9 +158,8 @@ namespace SanteDB.Core.Services.Impl
                                 // Removals
                                 retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.SemanticEquals(u))).Select(c => this.BuildRemoveQuery(path + serializationName, c)));
 
-                                // Additions 
+                                // Additions
                                 retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.SemanticEquals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
-
                             }
                             else
                             {
@@ -170,9 +169,8 @@ namespace SanteDB.Core.Services.Impl
                                 // Removals
                                 retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.Equals(u))).Select(c => new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", c)));
 
-                                // Additions 
+                                // Additions
                                 retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.Equals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
-
                             }
                         }
                         else if (updatedValue?.Equals(existingValue) == false)// simple value has changed
@@ -184,7 +182,6 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
-
 
             return retVal;
         }
@@ -266,7 +263,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IdentifiedData Patch(Patch patch, IdentifiedData data, bool force = false)
         {
-
             this.m_tracer.TraceVerbose("-->> {0} patch with:\r\n{1}", data, patch);
 
             var retVal = Activator.CreateInstance(data.GetType());
@@ -320,6 +316,7 @@ namespace SanteDB.Core.Services.Impl
                         else
                             throw new PatchException("Add can only be applied to an IList instance");
                         break;
+
                     case PatchOperationType.Remove:
                         // We add the value!!! Yay!
                         if (applyTo is IList)
@@ -342,6 +339,7 @@ namespace SanteDB.Core.Services.Impl
                             throw new PatchException("Remove can only be applied to an IList instance or to remove a value");
 
                         break;
+
                     case PatchOperationType.Replace:
                         {
                             Object val = null;
@@ -372,7 +370,6 @@ namespace SanteDB.Core.Services.Impl
                             }
                             else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
                                 throw new PatchAssertionException($"Assertion failed: {op.Value} could not be found in list {applyTo} at {op}");
-
                         }
                         else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
                             throw new PatchAssertionException(op.Value, applyTo, op);
@@ -403,7 +400,6 @@ namespace SanteDB.Core.Services.Impl
                 }
                 else
                     lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}={op.Value}") });
-
             }
             else
                 lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });
@@ -420,7 +416,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public bool Test(Patch patch, IdentifiedData data)
         {
-
             this.m_tracer.TraceVerbose("-->> {0} test with:\r\n{1}", data, patch);
             bool retVal = true;
 
@@ -473,6 +468,7 @@ namespace SanteDB.Core.Services.Impl
                             retVal &= instance != null;
                         }
                         break;
+
                     case PatchOperationType.Test:
                         // We test the value! Also pretty cool
                         if (applyTo is IdentifiedData && !(applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData))
@@ -488,7 +484,6 @@ namespace SanteDB.Core.Services.Impl
                             }
                             else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
                                 retVal = false;
-
                         }
                         else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
                             retVal = false;

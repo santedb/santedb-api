@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Query;
@@ -31,20 +32,19 @@ using System.Linq;
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// A generic data retention job that reads from the IDataPersistence service and uses 
+    /// A generic data retention job that reads from the IDataPersistence service and uses
     /// the IDataArchive service to retain data
     /// </summary>
     [DisplayName("Data Retention Job")]
     public class DataRetentionJob : IReportProgressJob
     {
-
-        // Tracer 
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataRetentionJob));
+        // Tracer
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataRetentionJob));
 
         // Cancel flag
         private bool m_cancelFlag = false;
 
-        // Configuration 
+        // Configuration
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
 
         /// <summary>
@@ -108,17 +108,14 @@ namespace SanteDB.Core.Jobs
         {
             try
             {
-
                 this.CurrentState = JobStateType.Running;
                 this.LastStarted = DateTime.Now;
                 float ruleProgress = 1.0f / this.m_configuration.RetentionRules.Count;
 
                 var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
 
-
                 for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count && !this.m_cancelFlag; ruleIdx++)
                 {
-
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
                     this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.TypeXml);
@@ -129,7 +126,6 @@ namespace SanteDB.Core.Jobs
                     var persistenceService = ApplicationServiceContext.Current.GetService(pserviceType) as IBulkDataPersistenceService;
                     if (persistenceService == null)
                         throw new InvalidOperationException("Cannot locate appropriate persistence service");
-
 
                     // Included keys for retention
                     IEnumerable<Guid> keys = new Guid[0];
@@ -151,7 +147,7 @@ namespace SanteDB.Core.Jobs
                         var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
                         this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress);
                         int offset = 0, totalCount = 1;
-                        while (offset < totalCount) // gather the included keys 
+                        while (offset < totalCount) // gather the included keys
                         {
                             keys = keys.Except(persistenceService.QueryKeys(expr, offset, 1000, out totalCount));
                             offset += 1000;
@@ -166,9 +162,11 @@ namespace SanteDB.Core.Jobs
                         case DataRetentionActionType.Obsolete:
                             persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
+
                         case DataRetentionActionType.Purge:
                             persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
+
                         case DataRetentionActionType.Archive:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Obsolete:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Purge:
@@ -196,7 +194,6 @@ namespace SanteDB.Core.Jobs
                 }
 
                 this.LastFinished = DateTime.Now;
-
             }
             catch (Exception ex) // Absolute failure
             {

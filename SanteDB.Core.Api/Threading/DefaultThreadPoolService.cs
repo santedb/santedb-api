@@ -42,7 +42,7 @@ namespace SanteDB.Core.Services.Impl
         private object s_lock = new object();
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         // Number of threads to keep alive
         private int m_concurrencyLevel = System.Environment.ProcessorCount * 4;

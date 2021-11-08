@@ -16,7 +16,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyEnforcementService : IPolicyEnforcementService
     {
         // Default policy decision service
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;

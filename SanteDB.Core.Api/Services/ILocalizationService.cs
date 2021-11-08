@@ -44,12 +44,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Format a <paramref name="stringKey"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String stringKey, dynamic parameters);
+        String GetString(String stringKey, dynamic parameters);
 
         /// <summary>
         /// Format a <paramref name="stringKey"/> from <paramref name="locale"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String locale, String stringKey, dynamic parameters);
+        String GetString(String locale, String stringKey, dynamic parameters);
 
         /// <summary>
         /// Get all strings in the specified locale
