@@ -145,14 +145,14 @@ namespace SanteDB.Core.Configuration
         /// <param name="dataStream">Data stream.</param>
         public void Save(Stream dataStream)
         {
-            if (this.m_serializer == null)
-            {
-                this.m_serializer = new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).ToArray());
-            }
             this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
             var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+            if (this.m_serializer == null)
+            {
+                this.m_serializer = new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).ToArray());
+            }
             this.m_serializer.Serialize(dataStream, this, xmlns);
         }
 
