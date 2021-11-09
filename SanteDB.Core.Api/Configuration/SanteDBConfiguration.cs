@@ -63,9 +63,6 @@ namespace SanteDB.Core.Configuration
         // Serializer
         private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
 
-        // Serializer
-        private XmlSerializer m_serializer = null;
-
         /// <summary>
         /// SanteDB configuration
         /// </summary>
@@ -109,10 +106,9 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
-            var xsz = new XmlSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
-            retVal.m_serializer = xsz;
             if (retVal.Sections.Any(o => o is XmlNode[]))
             {
                 string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>()?.TypeName} (in {o.TypeXml})"));
@@ -149,11 +145,8 @@ namespace SanteDB.Core.Configuration
             var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            if (this.m_serializer == null)
-            {
-                this.m_serializer = new XmlSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).ToArray());
-            }
-            this.m_serializer.Serialize(dataStream, this, xmlns);
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+            xsz.Serialize(dataStream, this, xmlns);
         }
 
         /// <summary>
