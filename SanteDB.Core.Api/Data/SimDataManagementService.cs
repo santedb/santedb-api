@@ -255,12 +255,13 @@ namespace SanteDB.Core.Data
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
                 var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.SourceEntityKey == masterKey && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
-                return candidate.Select(o =>
+
+                foreach (var itm in candidate)
                 {
-                    var rv = o.LoadProperty(p => p.TargetEntity);
-                    rv.AddTag("$match.score", o.Strength.ToString());
-                    return rv;
-                });
+                    var rv = itm.LoadProperty(p => p.TargetEntity);
+                    rv.AddTag("$match.score", itm.Strength.ToString());
+                    yield return rv;
+                }
             }
 
             /// <summary>
