@@ -363,7 +363,7 @@ namespace SanteDB.Core.Security.Audit
             // Objects
             if (action == ActionType.Create || action == ActionType.Update || action == ActionType.Delete || s_configuration.CompleteAuditTrail)
             {
-                audit.AuditableObjects = data.OfType<TData>().SelectMany(o =>
+                audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
                 {
                     if (o is Bundle bundle)
                         return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
