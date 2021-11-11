@@ -68,7 +68,7 @@ namespace SanteDB.Core.PubSub.Broker
                                 foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
                                     dsptchr.NotifyUpdated(itm);
                                 break;
-                            case Model.DataTypes.BatchOperationType.Obsolete:
+                            case Model.DataTypes.BatchOperationType.Delete:
                                 foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, itm))
                                     dsptchr.NotifyObsoleted(itm);
                                 break;
