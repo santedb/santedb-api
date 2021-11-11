@@ -19,6 +19,7 @@
  * Date: 2021-8-5
  */
 using System;
+using System.Diagnostics.CodeAnalysis;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services.Impl;
 using SanteDB.Core.Model.Patch;
@@ -38,6 +39,7 @@ namespace SanteDB.Core.Api.Test
     /// <summary>
     /// Represents a unit test which tests the patching ability 
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [TestFixture(Category = "Core API")]
     public class SimplePatchServiceTest
     {
