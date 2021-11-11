@@ -18,14 +18,16 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using System;
+
+using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Query.FilterExtension;
 using SanteDB.Core.Model.Roles;
 
-namespace SanteDB.Core.Api.Tests
+namespace SanteDB.Core.Api.Test
 {
+    [ExcludeFromCodeCoverage]
     [TestFixture(Category = "Core API")]
     public class ExtendedQueryFilterTest
     {
