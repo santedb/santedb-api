@@ -105,10 +105,10 @@ namespace SanteDB.Core.Services.Impl
                         this.m_tracer.TraceWarning("No application identity could be found in principal (available identities: {0})", String.Join(",", claimsPrincipal.Identities.Select(o => o.GetType())));
                         throw new InvalidOperationException("No application identity found in principal");
                     }
-                    var key = this.m_applicationIdService.GetSecureKey(appIdentity.Name);
+                    var key = this.m_applicationIdService.GetPublicKey(appIdentity.Name);
 
                     // Get the key
-                    signatureService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
+                    this.m_signingService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
 
                     return keyId;
                 }
@@ -226,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
                             }
 
                             var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetPublicKey(appInstance.Name);
-                            signatureService.AddSigningKey(keyId, secret, Security.Configuration.SignatureAlgorithm.HS256);
+                            this.m_signingService.AddSigningKey(keyId, secret, Security.Configuration.SignatureAlgorithm.HS256);
                         }
                         else
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", "Invalid Key Type", DetectedIssueKeys.SecurityIssue));
