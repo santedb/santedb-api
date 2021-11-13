@@ -21,6 +21,7 @@
 
 using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
@@ -46,6 +47,24 @@ namespace SanteDB.Core.Services.Impl
     [ServiceProvider("JWS Resource Pointer", Dependencies = new Type[] { typeof(IDataSigningService) })]
     public class JwsResourcePointerService : IResourcePointerService
     {
+        // Tracer
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(JwsResourcePointerService));
+
+        // Application identity service
+        private readonly IApplicationIdentityProviderService m_applicationIdService;
+
+        // Data signing service
+        private readonly IDataSigningService m_signingService;
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null)
+        {
+            this.m_signingService = signingService;
+            this.m_applicationIdService = applicationIdentityProviderService;
+        }
+
         /// <summary>
         /// JWS format regex
         /// </summary>
@@ -61,12 +80,8 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private String GetAppKeyId()
         {
-            var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-            if (signatureService == null)
-                throw new InvalidOperationException("Cannot find data signing service");
-
             // Is there a key called jwsdefault? If so, use it as the default signature key
-            if (signatureService.GetKeys().Contains("jwsdefault"))
+            if (m_signingService.GetKeys().Contains("jwsdefault"))
                 return "jwsdefault";
 
             // Otherwise use the configured secure application HMAC key as the default
@@ -79,13 +94,18 @@ namespace SanteDB.Core.Services.Impl
                 var keyId = $"SA.{appId}";
 
                 // Does the key provider have the key for this app?
-                if (signatureService.GetKeys().Any(k => k == keyId))
+                if (m_signingService.GetKeys().Any(k => k == keyId))
                     return keyId;
                 else
                 {
                     // Application identity
-                    var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
-                    var key = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>().GetPublicKey(appIdentity.Name);
+                    var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+                    if (appIdentity == null)
+                    {
+                        this.m_tracer.TraceWarning("No application identity could be found in principal (available identities: {0})", String.Join(",", claimsPrincipal.Identities.Select(o => o.GetType())));
+                        throw new InvalidOperationException("No application identity found in principal");
+                    }
+                    var key = this.m_applicationIdService.GetSecureKey(appIdentity.Name);
 
                     // Get the key
                     signatureService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
@@ -103,10 +123,6 @@ namespace SanteDB.Core.Services.Impl
         public string GeneratePointer<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifers) where TEntity : VersionedEntityData<TEntity>, new()
         {
             // Setup signatures
-            var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-            if (signatureService == null)
-                throw new InvalidOperationException("Cannot find data signing service");
-
             var keyId = this.GetAppKeyId();
 
             var entityType = identifers.FirstOrDefault()?.LoadProperty<Entity>("SourceEntity")?.GetType() ??
@@ -115,7 +131,7 @@ namespace SanteDB.Core.Services.Impl
             // Append authorities to identifiers
             var header = new
             {
-                alg = signatureService.GetSignatureAlgorithm(),
+                alg = this.m_signingService.GetSignatureAlgorithm(),
                 typ = $"x-santedb+{entityType.GetSerializationName()}",
                 key = keyId
             };
@@ -141,7 +157,7 @@ namespace SanteDB.Core.Services.Impl
             // Sign the data
             // From RFC7515
             var tokenData = Encoding.UTF8.GetBytes(identityToken.ToString());
-            var signature = signatureService.SignData(tokenData, keyId);
+            var signature = this.m_signingService.SignData(tokenData, keyId);
             identityToken.AppendFormat(".{0}", signature.Base64UrlEncode());
 
             return identityToken.ToString();
@@ -196,11 +212,8 @@ namespace SanteDB.Core.Services.Impl
                 // Validate the signature if we have the key
                 if (validate)
                 {
-                    // Validate the signature service can service the algorithm
-                    var signatureService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
-
                     // We have the key?
-                    if (!signatureService.GetKeys().Any(k => k == keyId))
+                    if (!this.m_signingService.GetKeys().Any(k => k == keyId))
                     {
                         // Is this an app key id?
                         if (keyId.StartsWith("SA."))
@@ -219,12 +232,12 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", "Invalid Key Type", DetectedIssueKeys.SecurityIssue));
                     }
 
-                    if (signatureService.GetSignatureAlgorithm(keyId) != algorithm)
-                        throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm {algorithm} Not Supported (expected {signatureService.GetSignatureAlgorithm(keyId)})", DetectedIssueKeys.SecurityIssue));
+                    if (this.m_signingService.GetSignatureAlgorithm(keyId) != algorithm)
+                        throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm {algorithm} Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(keyId)})", DetectedIssueKeys.SecurityIssue));
 
                     var payload = Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}");
 
-                    if (!signatureService.Verify(payload, signatureBytes, keyId))
+                    if (!this.m_signingService.Verify(payload, signatureBytes, keyId))
                         throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                 }
                 // Return the result

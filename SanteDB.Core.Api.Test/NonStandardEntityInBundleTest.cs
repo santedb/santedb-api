@@ -18,26 +18,24 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
+using NUnit.Framework;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 using System.Xml.Serialization;
-using NUnit.Framework;
 
-namespace SanteDB.Core.PCL.Tests
+namespace SanteDB.Core.Api.Test
 {
 
     /// <summary>
     /// Simple shim for entity master
     /// </summary>
     /// <typeparam name="T"></typeparam>
+    [ExcludeFromCodeCoverage]
     [XmlType(Namespace = "http://santedb.org/model")]
     public class EntityMaster<T> : Entity
        where T : IdentifiedData, new()
@@ -47,6 +45,7 @@ namespace SanteDB.Core.PCL.Tests
     /// <summary>
     /// Tests the serialization of a bundle when custom elements are in the bundle
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [TestFixture(Category = "Core API")]
     public class NonStandardEntityInBundleTest
     {
