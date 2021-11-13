@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -34,13 +35,12 @@ using System.Linq;
 namespace SanteDB.Core.Protocol
 {
     /// <summary>
-    /// Represents a care plan service that can bundle protocol acts together 
+    /// Represents a care plan service that can bundle protocol acts together
     /// based on their start/stop times
     /// </summary>
     [ServiceProvider("Simple Care Planning Service")]
     public class SimpleCarePlanService : ICarePlanService
     {
-
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -56,7 +56,6 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         public class ParameterDictionary<TKey, TValue> : Dictionary<TKey, TValue> where TValue : class
         {
-
             /// <summary>
             /// Add new item key
             /// </summary>
@@ -111,8 +110,10 @@ namespace SanteDB.Core.Protocol
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
-        // Protocols 
+
+        // Protocols
         private List<IClinicalProtocol> m_protocols = new List<IClinicalProtocol>();
+
         // Care plan loading promise dictionary (prevents double-loading of patients)
         private Dictionary<Guid, Patient> m_patientPromise = new Dictionary<Guid, Patient>();
 
@@ -173,6 +174,7 @@ namespace SanteDB.Core.Protocol
         {
             return this.CreateCarePlan(p, asEncounters, parameters, this.Protocols.Select(o => o.Id).ToArray());
         }
+
         /// <summary>
         /// Create a care plan with the specified protocols only
         /// </summary>
@@ -205,7 +207,7 @@ namespace SanteDB.Core.Protocol
                             if (p.Participations.Count == 0 && p.VersionKey.HasValue)
                             {
                                 p.Participations = EntitySource.Current.Provider.Query<Act>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key) &&
-                                    o.StatusConceptKey != StatusKeys.Nullified && o.StatusConceptKey != StatusKeys.Obsolete && o.StatusConceptKey != StatusKeys.Cancelled).OfType<Act>()
+                                    StatusKeys.ActiveStates.Contains(o.StatusConceptKey.Value)).OfType<Act>()
                                     .Select(a =>
                                     new ActParticipation()
                                     {
@@ -250,7 +252,6 @@ namespace SanteDB.Core.Protocol
 
                             // Add to the promised patient
                             this.m_patientPromise.Add(p.Key.Value, currentProcessing);
-
                         }
                 }
                 else if (!p.Key.HasValue) // Not persisted
@@ -267,7 +268,7 @@ namespace SanteDB.Core.Protocol
                 lock (currentProcessing)
                 {
                     var thdPatient = currentProcessing.Copy() as Patient;
-                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && o.Act?.StatusConceptKey != StatusKeys.Nullified && o.Act?.StatusConceptKey != StatusKeys.Obsolete && o.Act?.StatusConceptKey != StatusKeys.Cancelled));
+                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)));
 
                     // Let's ensure that there are some properties loaded eh?
                     if (this.IgnoreViewModelInitializer)
@@ -284,13 +285,12 @@ namespace SanteDB.Core.Protocol
                     protocolActs = execProtocols.AsParallel().WithDegreeOfParallelism(2).SelectMany(o => o.Calculate(thdPatient, parmDict)).OrderBy(o => o.StopTime - o.StartTime).ToList();
                 }
 
-                // Current processing 
+                // Current processing
                 if (asEncounters)
                 {
                     List<PatientEncounter> encounters = new List<PatientEncounter>();
                     foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime.AddDays(7)) - o.StartTime))
                     {
-
                         act.StopTime = act.StopTime ?? act.ActTime;
                         // Is there a candidate encounter which is bound by start/end
                         var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue)
@@ -330,7 +330,6 @@ namespace SanteDB.Core.Protocol
                         // Remove so we don't have duplicates
                         protocolActs.Remove(act);
                         currentProcessing.Participations.RemoveAll(o => o.Act == act);
-
                     }
 
                     // for those acts which do not have a stop time, schedule them in the first appointment available
@@ -350,7 +349,6 @@ namespace SanteDB.Core.Protocol
                         protocolActs.Remove(act);
                         currentProcessing.Participations.RemoveAll(o => o.Act == act);
                     }
-
                 }
 
                 // TODO: Configure for days of week
@@ -399,7 +397,6 @@ namespace SanteDB.Core.Protocol
                 Act = retVal
             });
             return retVal;
-
         }
     }
 }
