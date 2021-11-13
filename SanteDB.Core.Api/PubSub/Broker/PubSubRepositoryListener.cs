@@ -93,6 +93,7 @@ namespace SanteDB.Core.PubSub.Broker
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
                         .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .OfType<PubSubSubscriptionDefinition>()
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {

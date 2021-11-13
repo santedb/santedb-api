@@ -30,6 +30,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -59,6 +60,12 @@ namespace SanteDB.Core.Data
             // Service for matching
             private IRecordMatchingService m_matchingService;
 
+            // Relationship service
+            private IDataPersistenceService<EntityRelationship> m_entityRelationshipService;
+
+            // Relationship service
+            private IDataPersistenceService<ActRelationship> m_actRelationshipService;
+
             /// <summary>
             /// Fired when data is about to be merged
             /// </summary>
@@ -84,11 +91,14 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Creates a new resource merger with specified configuration
             /// </summary>
-            public SimResourceMerger()
+            public SimResourceMerger(IRecordMatchingService matchingService, IRecordMatchingConfigurationService configurationService, IDataPersistenceService<EntityRelationship> entityRelationshipService, IDataPersistenceService<ActRelationship> actRelationshipService)
             {
                 // Find the specified matching configuration
-                this.m_matchingService = ApplicationServiceContext.Current.GetService<IRecordMatchingService>();
-                this.m_matchingConfigurationService = ApplicationServiceContext.Current.GetService<IRecordMatchingConfigurationService>();
+                this.m_matchingService = matchingService;
+                this.m_matchingConfigurationService = configurationService;
+
+                this.m_entityRelationshipService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                this.m_actRelationshipService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActRelationship>>();
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Inserting += DataInsertingHandler;
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Updating += DataUpdatingHandler;
             }
@@ -251,23 +261,30 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get merged candidates
             /// </summary>
-            public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
+            public IQueryResultSet<IdentifiedData> GetMergeCandidates(Guid masterKey)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
                 var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.SourceEntityKey == masterKey && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
 
-                foreach (var itm in candidate)
+                return new TransformQueryResultSet<EntityRelationship, IdentifiedData>(candidate, (itm) =>
                 {
-                    var rv = itm.LoadProperty(p => p.TargetEntity);
-                    rv.AddTag("$match.score", itm.Strength.ToString());
-                    yield return rv;
-                }
+                    if (itm is EntityRelationship er)
+                    {
+                        var rv = er.LoadProperty(p => p.TargetEntity);
+                        rv.AddTag("$match.score", er.Strength.ToString());
+                        return rv;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                });
             }
 
             /// <summary>
             /// Get ignored list
             /// </summary>
-            public IEnumerable<IdentifiedData> GetIgnored(Guid masterKey)
+            public IQueryResultSet<IdentifiedData> GetIgnored(Guid masterKey)
             {
                 throw new NotImplementedException();
             }
@@ -275,11 +292,11 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get global merge candidates
             /// </summary>
-            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates()
+            public IQueryResultSet<ITargetedAssociation> GetGlobalMergeCandidates()
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
                 var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
-                return candidate;
+                return new TransformQueryResultSet<EntityRelationship, ITargetedAssociation>(candidate, (o) => o);
             }
 
             /// <summary>
@@ -297,8 +314,16 @@ namespace SanteDB.Core.Data
             {
                 try
                 {
-                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    dataService.ObsoleteAll(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    var classKeys = typeof(TModel).GetClassKeys();
+
+                    if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                    {
+                        exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                    }
+                    else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                    {
+                        exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -331,8 +356,18 @@ namespace SanteDB.Core.Data
             {
                 try
                 {
-                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    dataService.ObsoleteAll(o => o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    var classKeys = typeof(TModel).GetClassKeys();
+
+                    if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                    {
+                        exEntityRel.DeleteAll(o => classKeys.Contains(o.TargetEntity.ClassConceptKey.Value) && o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                        exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                    }
+                    else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                    {
+                        exActRel.DeleteAll(o => classKeys.Contains(o.TargetAct.ClassConceptKey.Value) && o.TargetActKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                        exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                    }
                 }
                 catch (Exception e)
                 {

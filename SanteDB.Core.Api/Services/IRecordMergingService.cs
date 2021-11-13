@@ -22,6 +22,7 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 
@@ -101,12 +102,12 @@ namespace SanteDB.Core.Services
         /// Get merge candidate keys
         /// </summary>
         /// <param name="masterKey">The key of the master</param>
-        IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
+        IQueryResultSet<IdentifiedData> GetMergeCandidates(Guid masterKey);
 
         /// <summary>
         /// Get all merge candidates
         /// </summary>
-        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates();
+        IQueryResultSet<ITargetedAssociation> GetGlobalMergeCandidates();
 
         /// <summary>
         /// Gets the ignore list for the specified master record
@@ -116,7 +117,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets the ignore list for the specified master record
         /// </summary>
-        IEnumerable<IdentifiedData> GetIgnored(Guid masterKey);
+        IQueryResultSet<IdentifiedData> GetIgnored(Guid masterKey);
 
         /// <summary>
         /// Indicates that the engine should ignore the specified false positives

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
@@ -38,14 +39,42 @@ namespace SanteDB.Core.Services
         /// Inherit the persistence mode from a parent context
         /// </summary>
         None,
+
         /// <summary>
         /// Debug mode, this means nothing is actually committed to the database
         /// </summary>
         Rollback,
+
         /// <summary>
         /// Production, everything is for reals
         /// </summary>
         Commit
+    }
+
+    /// <summary>
+    /// Specified the method of deletion
+    /// </summary>
+    public enum DeleteMode
+    {
+        /// <summary>
+        /// Logically delete the record - it should not appear in query results as the data is not accurate - it should be marked as inactive
+        /// </summary>
+        LogicalDelete = 0,
+
+        /// <summary>
+        /// The data is no longer active - it should be set to obsolete
+        /// </summary>
+        ObsoleteDelete = 1,
+
+        /// <summary>
+        /// Nullify the record - it never should have existed in the first place
+        /// </summary>
+        NullifyDelete = 2,
+
+        /// <summary>
+        /// Permanently delete - it should be purged from the database
+        /// </summary>
+        PermanentDelete = 3
     }
 
     /// <summary>
@@ -58,30 +87,49 @@ namespace SanteDB.Core.Services
         /// Occurs when inserted.
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TData>> Inserted;
+
         /// <summary>
         /// Occurs when inserting.
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TData>> Inserting;
+
         /// <summary>
         /// Occurs when updated.
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TData>> Updated;
+
         /// <summary>
         /// Occurs when updating.
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TData>> Updating;
+
         /// <summary>
         /// Occurs when obsoleted.
         /// </summary>
+        [Obsolete("Use Deleted Event", true)]
         event EventHandler<DataPersistedEventArgs<TData>> Obsoleted;
+
         /// <summary>
         /// Occurs when obsoleting.
         /// </summary>
+        [Obsolete("Use Deleting Event", true)]
         event EventHandler<DataPersistingEventArgs<TData>> Obsoleting;
+
+        /// <summary>
+        /// Occurs when obsoleted.
+        /// </summary>
+        event EventHandler<DataPersistedEventArgs<TData>> Deleted;
+
+        /// <summary>
+        /// Occurs when obsoleting.
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<TData>> Deleting;
+
         /// <summary>
         /// Occurs when queried.
         /// </summary>
         event EventHandler<QueryResultEventArgs<TData>> Queried;
+
         /// <summary>
         /// Occurs when querying.
         /// </summary>
@@ -102,41 +150,90 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">Data.</param>
         /// <param name="principal">The principal which is executing the insert</param>
-        /// <param name="mode">The mode of insert (commit or rollback for testing)</param>
-        TData Insert(TData data, TransactionMode mode, IPrincipal principal);
+        /// <param name="transactionMode">The mode of insert (commit or rollback for testing)</param>
+        TData Insert(TData data, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
-        /// <param name="mode">The mode of update (commit or rollback)</param>
+        /// <param name="transactionMode">The mode of update (commit or rollback)</param>
         /// <param name="principal">The principal which is executing the operation</param>
-        TData Update(TData data, TransactionMode mode, IPrincipal principal);
+        TData Update(TData data, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
         /// Obsolete the specified identified data
         /// </summary>
-        /// <param name="data">Data.</param>
-        TData Obsolete(Guid key, TransactionMode mode, IPrincipal principal);
+        [Obsolete("Use Delete(key, mode, principal, DeleteMode.Obsolete) instead", true)]
+        TData Obsolete(Guid key, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
-        /// Obsolete all matching data
+        /// Delete the specified identified data
         /// </summary>
-        void ObsoleteAll(Expression<Func<TData, bool>> matching, TransactionMode mode, IPrincipal principal);
+        /// <param name="deletionMode">How the persistence service should attempt to remove data</param>
+        /// <param name="key">The identifier/key of the data to be deleted</param>
+        /// <param name="principal">The principal which is deleting the data</param>
+        /// <param name="transactionMode">The transaction mode</param>
+        /// <remarks>
+        /// <para>
+        /// This method will attempt to delete data according to the <paramref name="deletionMode"/> specified by the caller.
+        /// </para>
+        /// <list type="table">
+        ///     <item>
+        ///         <term>LogicalDelete</term>
+        ///         <description>The perssitence layer should attempt to logically delete the record. This means that the record should not appear in queries, nor in direct retrieves unless specifically asked for</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>ObsoleteDelete</term>
+        ///         <description>The persistence layer should mark the record as obsolete.</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>NullifyDelete</term>
+        ///         <description>The persistence layer should mark the record as nullified (i.e. entered in error)</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>PermanentDelete</term>
+        ///         <description>The persistence layer should purge the data from the database</description>
+        ///     </item>
+        /// </list>
+        /// <para>
+        /// The <paramref name="deletionMode"/> parameter is a suggestion to the persistence layer, generally the closest, most appropriate value
+        /// is chosen based on:
+        /// </para>
+        /// <list type="bullet">
+        ///     <item>Whether the <typeparamref name="TData"/> class can be logically deleted (i.e. does it carry the necessary fields to support deletion)</item>
+        ///     <item>Whether there are other references to the object</item>
+        ///     <item>Whether the configuration for the persistence layer permits logical deletion</item>
+        /// </list>
+        /// </remarks>
+        TData Delete(Guid key, TransactionMode transactionMode, IPrincipal principal, DeleteMode deletionMode);
 
         /// <summary>
-        /// Get the object specified <paramref name="key"/>.
+        /// Get the object with identifier <paramref name="key"/>.
         /// </summary>
-        /// <param name="key">Key.</param>
+        /// <param name="key">The identifier of the object to fetch</param>
         /// <param name="principal">The security principal which is executing the retrieve</param>
         /// <param name="versionKey">The version of the oject to fetch</param>
+        /// <remarks>
+        /// This method will retrieve the record of type <typeparamref name="TData"/> from the database regardless of its state. If the
+        /// record is logically deleted, or indicated as inactive (i.e. would not appear in a result set), this method will still
+        /// retrieve the data from the database.
+        /// </remarks>
         TData Get(Guid key, Guid? versionKey, IPrincipal principal);
 
         /// <summary>
-        /// Query the specified data
+        /// Query for <typeparamref name="TData"/> whose current version matches <paramref name="query"/>
         /// </summary>
         /// <param name="query">Query.</param>
         /// <param name="principal">The principal under which the query is occurring</param>
+        /// <remarks>
+        /// <para>This method will query for all records of type <typeparamref name="TData"/>. By default the query will
+        /// only return active records, unless a status parameter is passed, in which case records matching the
+        /// requested status will be returned.</para>
+        /// <para>The result of this call is an <see cref="IQueryResultSet{TData}"/>, this class supports delayed execution
+        /// and yielded returns of records. This means that each call to methods on the return value may result in a
+        /// query to the database.</para>
+        /// </remarks>
         IQueryResultSet<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>

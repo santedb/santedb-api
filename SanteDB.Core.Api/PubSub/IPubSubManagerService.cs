@@ -2,23 +2,25 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Event;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -31,7 +33,6 @@ namespace SanteDB.Core.PubSub
     /// </summary>
     public interface IPubSubManagerService : IServiceImplementation
     {
-
         /// <summary>
         /// Fired when a subscription is requested, but not yet registered
         /// </summary>
@@ -75,23 +76,24 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Find an existing channel
         /// </summary>
-        IEnumerable<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter);
+        IQueryResultSet<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter);
 
         /// <summary>
         /// Find an existing subscription
         /// </summary>
-        IEnumerable<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter);
+        IQueryResultSet<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter);
 
         /// <summary>
         /// Find an existing channel
         /// </summary>
+        [Obsolete("Use FindChannel(filter)", true)]
         IEnumerable<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter, int offset, int count, out int totalResults);
 
         /// <summary>
         /// Find an existing subscription
         /// </summary>
+        [Obsolete("Use FindSubscription(filter)", true)]
         IEnumerable<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter, int offset, int count, out int totalResults);
-
 
         /// <summary>
         /// Registers the specified pub-sub channel using the specified dispatcher
@@ -104,10 +106,9 @@ namespace SanteDB.Core.PubSub
         PubSubChannelDefinition RegisterChannel(String name, Uri endpoint, IDictionary<String, String> settings);
 
         /// <summary>
-        /// Updates the specified pub-sub channel 
+        /// Updates the specified pub-sub channel
         /// </summary>
         PubSubChannelDefinition UpdateChannel(Guid key, String name, Uri endpoint, IDictionary<String, String> settings);
-
 
         /// <summary>
         /// Register a new subscription for the specified type
@@ -132,7 +133,6 @@ namespace SanteDB.Core.PubSub
         /// <returns>The subscription</returns>
         PubSubSubscriptionDefinition ActivateSubscription(Guid key, bool isActive);
 
-
         /// <summary>
         /// Gets the subscription information
         /// </summary>
@@ -149,7 +149,7 @@ namespace SanteDB.Core.PubSub
         PubSubChannelDefinition RemoveChannel(Guid id);
 
         /// <summary>
-        /// Removes the subscription 
+        /// Removes the subscription
         /// </summary>
         PubSubSubscriptionDefinition RemoveSubscription(Guid id);
 

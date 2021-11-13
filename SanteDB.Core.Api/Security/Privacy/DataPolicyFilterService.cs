@@ -27,6 +27,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
@@ -108,13 +109,12 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Handle post query event
         /// </summary>
-        public virtual IEnumerable<TData> Apply<TData>(IEnumerable<TData> results, IPrincipal principal) where TData : IdentifiedData
+        public virtual IQueryResultSet<TData> Apply<TData>(IQueryResultSet<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
             if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
-                return results
-                    .Select(
-                        o => this.Apply(o, principal)
-                    );
+            {
+                return new NestedQueryResultSet<TData>(results, (o) => this.Apply(o, principal));
+            }
             return results;
         }
 
@@ -279,7 +279,7 @@ namespace SanteDB.Core.Security.Privacy
                 return default(TData);
             else if (result is Bundle bdl)
             {
-                bdl.Item = this.Apply(bdl.Item, principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
+                bdl.Item = this.Apply(new MemoryQueryResultSet<IdentifiedData>(bdl.Item), principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
                 return result;
             }
 

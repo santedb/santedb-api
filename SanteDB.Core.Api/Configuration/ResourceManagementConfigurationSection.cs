@@ -20,6 +20,7 @@
  */
 
 using Newtonsoft.Json;
+using SanteDB.Core.Services;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Xml.Serialization;
@@ -46,5 +47,11 @@ namespace SanteDB.Core.Configuration
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
         [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
         public List<ResourceTypeReferenceConfiguration> ResourceTypes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the master data deletion mode for old data
+        /// </summary>
+        [XmlElement("oldMasterRetention"), Description("Specifies the retention mode for old master relationship data which is not needed"), DisplayName("Master Data Retention")]
+        public DeleteMode MasterDataDeletionMode { get; set; }
     }
 }

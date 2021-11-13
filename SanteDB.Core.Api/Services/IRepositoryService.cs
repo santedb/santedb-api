@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
@@ -27,7 +28,6 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-
     /// <summary>
     /// Represents event args fired at the repository level
     /// </summary>
@@ -45,7 +45,6 @@ namespace SanteDB.Core.Services
         /// Gets the data elements related to the event
         /// </summary>
         public TModel Data { get; private set; }
-
     }
 
     /// <summary>
@@ -53,7 +52,6 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IRepositoryService : IServiceImplementation
     {
-
         /// <summary>
         /// Get the specified object
         /// </summary>
@@ -62,11 +60,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Find the specified object
         /// </summary>
-        IEnumerable<IdentifiedData> Find(Expression query);
+        IQueryResultSet Find(Expression query);
 
         /// <summary>
         /// Find the specified object
         /// </summary>
+        [Obsolete("Use Find(Expression)", true)]
         IEnumerable<IdentifiedData> Find(Expression query, int offset, int? count, out int totalResults);
 
         /// <summary>
@@ -96,7 +95,6 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Gets the specified model.
         /// </summary>
@@ -117,7 +115,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="query">The query.</param>
         /// <returns>Returns a list of identified data.</returns>
-        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query);
+        IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query);
 
         /// <summary>
         /// Finds the specified data.
@@ -128,6 +126,7 @@ namespace SanteDB.Core.Services
         /// <param name="totalResults">The total results.</param>
         /// <param name="orderBy">The ordering instructions that are to be appended to the query</param>
         /// <returns>Returns a list of identified data.</returns>
+        [Obsolete("Use Find(Expression<Func<TModel, bool>>)", true)]
         IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
 
         /// <summary>
@@ -158,7 +157,6 @@ namespace SanteDB.Core.Services
     public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Touch the specified object
         /// </summary>
@@ -180,38 +178,47 @@ namespace SanteDB.Core.Services
         /// Data is inserting
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TModel>> Inserting;
+
         /// <summary>
-        /// Fired after data was inserted 
+        /// Fired after data was inserted
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TModel>> Inserted;
+
         /// <summary>
         /// Fired before saving
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TModel>> Saving;
+
         /// <summary>
         /// Fired after data was saved
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TModel>> Saved;
+
         /// <summary>
         /// Fired before obsoleting
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TModel>> Obsoleting;
+
         /// <summary>
         /// Fired after data was obsoleted
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TModel>> Obsoleted;
+
         /// <summary>
         /// Retrieving the data
         /// </summary>
         event EventHandler<DataRetrievingEventArgs<TModel>> Retrieving;
+
         /// <summary>
         /// Fired after data was retrieved
         /// </summary>
         event EventHandler<DataRetrievedEventArgs<TModel>> Retrieved;
+
         /// <summary>
         /// Fired after data was queried
         /// </summary>
         event EventHandler<QueryRequestEventArgs<TModel>> Querying;
+
         /// <summary>
         /// Fired after data was queried
         /// </summary>
@@ -224,7 +231,6 @@ namespace SanteDB.Core.Services
     public interface ICancelRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Cancels the specified object
         /// </summary>

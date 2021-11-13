@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -97,24 +98,18 @@ namespace SanteDB.Core.Data.Quality
                 var actService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActExtension>>();
 
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
-                int ofs = 0, tr = 1;
-                while (ofs < tr)
+                IQueryResultSet results = entityService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, AuthenticationContext.SystemPrincipal);
+                foreach (EntityExtension r in results)
                 {
-                    var results = entityService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
-                    foreach (EntityExtension r in results)
-                        entityService.Obsolete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    ofs += 100;
+                    entityService.Delete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
                 }
 
                 this.m_tracer.TraceInfo("Cleaning Act extensions...");
-                ofs = 0;
-                tr = 1;
-                while (ofs < tr)
+                results = actService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, AuthenticationContext.SystemPrincipal);
+
+                foreach (ActExtension r in results)
                 {
-                    var results = actService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
-                    foreach (ActExtension r in results)
-                        actService.Obsolete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    ofs += 100;
+                    actService.Delete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
                 }
 
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");

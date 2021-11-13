@@ -92,8 +92,7 @@ namespace SanteDB.Core.Data
             var persistenceService = ApplicationServiceContext.Current.GetService<IRepositoryService<TObject>>();
             if (persistenceService != null)
             {
-                var tr = 0;
-                return persistenceService.Find(query, 0, null, out tr);
+                return persistenceService.Find(query);
             }
             return new List<TObject>();
         }

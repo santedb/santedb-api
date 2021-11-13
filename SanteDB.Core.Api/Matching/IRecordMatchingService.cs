@@ -2,38 +2,37 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Matching
 {
-
-
     /// <summary>
     /// Represents a service that performs record matching and classification
     /// </summary>
     [System.ComponentModel.Description("Record Matching Provider")]
     public interface IRecordMatchingService : IServiceImplementation
     {
-
         /// <summary>
         /// Instructs the record matching service to perform a quick block function of records
         /// for type <typeparamref name="T"/> with <paramref name="input"/>
@@ -48,7 +47,7 @@ namespace SanteDB.Core.Matching
         /// <param name="configurationId">The configuration that should be used for blocking</param>
         /// <param name="ignoreList">The list of keys which should be ignored (in addition to the IRecordMergingService instructions)</param>
         /// <returns>The record which match the blocking configuration for type <typeparamref name="T"/></returns>
-        IEnumerable<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
+        IQueryResultSet<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
 
         /// <summary>
         /// Instructs the record matcher to run a detailed classification on the matching blocks in <paramref name="blocks"/>

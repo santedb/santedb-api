@@ -21,6 +21,7 @@
 
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,7 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Counters
         /// </summary>
-        private IEnumerable<IDiagnosticsProbe> m_probes;
+        private MemoryQueryResultSet<IDiagnosticsProbe> m_probes;
 
         // Lock object
         private static object m_lockObject = new object();
@@ -50,10 +51,10 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         private DiagnosticsProbeManager()
         {
-            this.m_probes = AppDomain.CurrentDomain.GetAllTypes()
+            this.m_probes = new MemoryQueryResultSet<IDiagnosticsProbe>(AppDomain.CurrentDomain.GetAllTypes()
                 .Where(t => typeof(IDiagnosticsProbe).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.GetConstructors().Any(o => o.GetParameters().Length == 0))
                 .Select(t => Activator.CreateInstance(t) as IDiagnosticsProbe)
-                .ToArray();
+                .ToArray());
         }
 
         /// <summary>
@@ -84,11 +85,10 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Find the specified performance counters
         /// </summary>
-        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query, int offset, int? count, out int totalResults)
+        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query)
         {
             var matches = this.m_probes.Where(query);
-            totalResults = matches.Count();
-            return matches.Skip(offset).Take(count ?? 100);
+            return matches;
         }
     }
 }

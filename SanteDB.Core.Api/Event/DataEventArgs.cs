@@ -31,6 +31,87 @@ using System.Security.Principal;
 namespace SanteDB.Core.Event
 {
     /// <summary>
+    /// Fired for free-text search queries
+    /// </summary>
+    public abstract class FreeTextQueryEventArgsBase : SecureAccessEventArgs
+    {
+        /// <summary>
+        /// Creates a new freetext query event
+        /// </summary>
+        /// <param name="principal">The user which is executing the query</param>
+        /// <param name="terms">The terms the user is searching for</param>
+        public FreeTextQueryEventArgsBase(IPrincipal principal, String[] terms) : base(principal)
+        {
+        }
+
+        /// <summary>
+        /// Gets the search terms that were used for the query
+        /// </summary>
+        public String[] Terms { get; }
+    }
+
+    /// <summary>
+    /// Fired before the freetext query
+    /// </summary>
+    public class FreeTextQueryRequestEventArgs<TData> : FreeTextQueryEventArgsBase
+    {
+        /// <summary>
+        /// Fired before the
+        /// </summary>
+        /// <param name="principal"></param>
+        /// <param name="terms"></param>
+        public FreeTextQueryRequestEventArgs(IPrincipal principal, string[] terms) : base(principal, terms)
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance cancel.
+        /// </summary>
+        /// <value><c>true</c> if this instance cancel; otherwise, <c>false</c>.</value>
+        public bool Cancel
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets the results.
+        /// </summary>
+        /// <value>The results.</value>
+        public IQueryResultSet<TData> Results
+        {
+            get;
+            set;
+        }
+    }
+
+    /// <summary>
+    /// Fired before the freetext query
+    /// </summary>
+    public class FreeTextQueryResultEventArgs<TData> : FreeTextQueryEventArgsBase
+    {
+        /// <summary>
+        /// Fired before the
+        /// </summary>
+        /// <param name="principal">The principal that executed the query</param>
+        /// <param name="terms">The terms searched for</param>
+        /// <param name="results">The results of the query</param>
+        public FreeTextQueryResultEventArgs(IPrincipal principal, string[] terms, IQueryResultSet<TData> results) : base(principal, terms)
+        {
+            this.Results = results;
+        }
+
+        /// <summary>
+        /// Gets or sets the results.
+        /// </summary>
+        /// <value>The results.</value>
+        public IEnumerable<TData> Results
+        {
+            get;
+        }
+    }
+
+    /// <summary>
     /// Base class for query event args
     /// </summary>
     public abstract class QueryEventArgsBase<TData> : SecureAccessEventArgs where TData : class
@@ -44,28 +125,12 @@ namespace SanteDB.Core.Event
         }
 
         /// <summary>
-        /// Gets or sets the results.
-        /// </summary>
-        /// <value>The results.</value>
-        public IEnumerable<TData> Results
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets the query ID
-        /// </summary>
-        public Guid? QueryId { get; }
-
-        /// <summary>
         /// Gets or sets the query.
         /// </summary>
         /// <value>The query.</value>
         public Expression<Func<TData, bool>> Query
         {
             get;
-            set;
         }
     }
 
@@ -79,14 +144,19 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="query">Query.</param>
         /// <param name="results">Results.</param>
-        /// <param name="count">The number of results which are to be returned</param>
-        /// <param name="offset">The offset of the result set</param>
         /// <param name="principal">The principal under which the query was executed</param>
-        /// <param name="queryId">The unique identifier for the query</param>
-        /// <param name="totalResults">The total results in the result set</param>
-        public QueryResultEventArgs(Expression<Func<TData, bool>> query, IEnumerable<TData> results, IPrincipal principal) : base(query, principal)
+        public QueryResultEventArgs(Expression<Func<TData, bool>> query, IQueryResultSet<TData> results, IPrincipal principal) : base(query, principal)
         {
             this.Results = results;
+        }
+
+        /// <summary>
+        /// Gets or sets the results.
+        /// </summary>
+        /// <value>The results.</value>
+        public IQueryResultSet<TData> Results
+        {
+            get; set;
         }
     }
 
@@ -102,23 +172,9 @@ namespace SanteDB.Core.Event
         /// <param name="query">The query about to be executed</param>
         /// <param name="principal">The principal which is executing the query</param>
         /// <param name="tag">A query tag object</param>
-        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal, dynamic tag = null) : base(query, principal)
+        public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal) : base(query, principal)
         {
-            this.QueryTag = tag;
         }
-
-        /// <summary>
-        /// Gets the query tag
-        /// </summary>
-        public dynamic QueryTag
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Order by instructions
-        /// </summary>
-        public IEnumerable<ModelSort<TData>> OrderBy { get; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance cancel.
@@ -131,9 +187,14 @@ namespace SanteDB.Core.Event
         }
 
         /// <summary>
-        /// Instructs the query engine to use fuzzy totals
+        /// Gets or sets the results.
         /// </summary>
-        public bool UseFuzzyTotals { get; set; }
+        /// <value>The results.</value>
+        public IQueryResultSet<TData> Results
+        {
+            get;
+            set;
+        }
     }
 
     /// <summary>
