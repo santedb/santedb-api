@@ -607,8 +607,7 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AddUserActor(AuditEventData audit, IPrincipal principal = null)
         {
-            var configService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-
+   
             // Use all remote endpoint providers to find the current request
             principal = principal ?? AuthenticationContext.Current.Principal;
 
@@ -663,7 +662,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 var actor = new AuditActorData()
                 {
-                    NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
+                    NetworkAccessPointId = RemoteEndpointUtil.Current?.GetRemoteClient()?.RemoteAddress,
                     NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                     UserName = principal.Identity.Name
                 };
