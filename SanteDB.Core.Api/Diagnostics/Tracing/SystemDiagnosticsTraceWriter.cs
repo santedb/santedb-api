@@ -61,31 +61,43 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// </summary>
         protected override void WriteTrace(EventLevel level, string source, string format, params object[] args)
         {
-            TraceEventType eventLvl = TraceEventType.Information;
+            this.m_traceSource.TraceEvent(this.MapLevel(level), 0, format, args);
+        }
+
+        /// <summary>
+        /// Map event level
+        /// </summary>
+        private TraceEventType MapLevel(EventLevel level)
+        {
             switch (level)
             {
                 case EventLevel.Critical:
-                    eventLvl = TraceEventType.Critical;
-                    break;
+                    return TraceEventType.Critical;
 
                 case EventLevel.Error:
-                    eventLvl = TraceEventType.Error;
-                    break;
+                    return TraceEventType.Error;
 
                 case EventLevel.Informational:
-                    eventLvl = TraceEventType.Information;
-                    break;
+                    return TraceEventType.Information;
 
                 case EventLevel.Verbose:
-                    eventLvl = TraceEventType.Verbose;
-                    break;
+                    return TraceEventType.Verbose;
 
                 case EventLevel.Warning:
-                    eventLvl = TraceEventType.Warning;
-                    break;
-            }
+                    return TraceEventType.Warning;
 
-            this.m_traceSource.TraceEvent(eventLvl, 0, format, args);
+                default:
+                    return TraceEventType.Information;
+            }
+        }
+
+        /// <summary>
+        /// Trace event with data
+        /// </summary>
+        public override void TraceEventWithData(EventLevel level, string source, string message, object[] data)
+        {
+            this.TraceEvent(level, source, message);
+            this.m_traceSource.TraceData(this.MapLevel(level), 0, data);
         }
     }
 }

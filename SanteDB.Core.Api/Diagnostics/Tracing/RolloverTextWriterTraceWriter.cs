@@ -32,6 +32,7 @@ using System.Diagnostics.Tracing;
 using System.Collections.Concurrent;
 using SanteDB.Core.Diagnostics;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -178,6 +179,17 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_resetEvent.Set();
                 // this.m_dispatchThread.Join(); // Abort thread
                 this.m_dispatchThread = null;
+            }
+        }
+
+        /// <summary>
+        /// Write out data
+        /// </summary>
+        public override void TraceEventWithData(EventLevel level, string source, string message, object[] data)
+        {
+            foreach (var obj in data)
+            {
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
             }
         }
     }
