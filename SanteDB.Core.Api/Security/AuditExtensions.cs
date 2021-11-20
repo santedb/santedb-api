@@ -50,13 +50,6 @@ using System.Xml.Serialization;
 namespace SanteDB.Core.Security.Audit
 {
     /// <summary>
-    /// Event type codes
-    /// </summary>
-#pragma warning disable CS1591
-
-#pragma warning restore CS1591
-
-    /// <summary>
     /// Security utility
     /// </summary>
     public static class AuditExtensions
