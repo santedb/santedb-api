@@ -168,9 +168,12 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         static AuditUtil()
         {
-            m_queueService.Open(QueueName);
-            m_queueService.SubscribeTo(QueueName, AuditQueued);
-            m_queueService.Open($"{QueueName}.dead");
+            if (m_queueService != null)
+            {
+                m_queueService.Open(QueueName);
+                m_queueService.SubscribeTo(QueueName, AuditQueued);
+                m_queueService.Open($"{QueueName}.dead");
+            }
         }
 
         /// <summary>
