@@ -159,6 +159,11 @@ namespace SanteDB.Core.Security
         public const string ActivateMatchConfiguration = UnrestrictedMatchConfiguration + ".2";
 
         /// <summary>
+        /// Manage all dispatcher / persistent queues
+        /// </summary>
+        public const string ManageDispatcherQueues = UnrestrictedAdministration + ".16";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";
