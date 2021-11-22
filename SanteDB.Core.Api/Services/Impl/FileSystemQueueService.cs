@@ -245,7 +245,7 @@ namespace SanteDB.Core.Services.Impl
             foreach (var d in Directory.GetDirectories(this.m_configuration.QueuePath))
             {
                 var di = new DirectoryInfo(d);
-                yield return new DispatcherQueueInfo() { Id = Path.GetFileNameWithoutExtension(d), Name = Path.GetFileNameWithoutExtension(d), QueueSize = di.GetFiles().Length, CreationTime = di.CreationTime };
+                yield return new DispatcherQueueInfo() { Id = Path.GetFileName(d), Name = Path.GetFileName(d), QueueSize = di.GetFiles().Length, CreationTime = di.CreationTime };
             }
         }
 

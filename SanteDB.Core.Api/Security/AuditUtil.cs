@@ -185,7 +185,14 @@ namespace SanteDB.Core.Security.Audit
                 {
                     try
                     {
-                        m_dispatcher.SendAudit(ad);
+                        if (m_dispatcher == null)
+                        {
+                            traceSource.TraceWarning("Cannot dispatch audit to central server - no dispatcher is available");
+                        }
+                        else
+                        {
+                            m_dispatcher?.SendAudit(ad);
+                        }
                     }
                     catch (Exception ex)
                     {
