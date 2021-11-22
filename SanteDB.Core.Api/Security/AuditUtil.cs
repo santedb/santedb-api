@@ -31,6 +31,7 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Queue;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
@@ -152,6 +153,58 @@ namespace SanteDB.Core.Security.Audit
         private static Tracer traceSource = Tracer.GetTracer(typeof(AuditUtil));
 
         private static AuditAccountabilityConfigurationSection s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
+
+        // Queue service
+        private static IDispatcherQueueManagerService m_queueService = ApplicationServiceContext.Current.GetService<IDispatcherQueueManagerService>();
+
+        // Dispatch service
+        private static IAuditDispatchService m_dispatcher = ApplicationServiceContext.Current.GetService<IAuditDispatchService>();
+
+        // Queue name for audits
+        private const string QueueName = "sys.audit";
+
+        /// <summary>
+        /// Audit utility
+        /// </summary>
+        static AuditUtil()
+        {
+            if (m_queueService != null)
+            {
+                m_queueService.Open(QueueName);
+                m_queueService.SubscribeTo(QueueName, AuditQueued);
+                m_queueService.Open($"{QueueName}.dead");
+            }
+        }
+
+        /// <summary>
+        /// Fired when the audit has been queued
+        /// </summary>
+        private static void AuditQueued(DispatcherMessageEnqueuedInfo e)
+        {
+            if (e.QueueName == QueueName)
+            {
+                object queueObject = null;
+                while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditData ad)
+                {
+                    try
+                    {
+                        if (m_dispatcher == null)
+                        {
+                            traceSource.TraceWarning("Cannot dispatch audit to central server - no dispatcher is available");
+                        }
+                        else
+                        {
+                            m_dispatcher?.SendAudit(ad);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        traceSource.TraceError("Error dispatching audit - {0}", ex);
+                        m_queueService.Enqueue($"{QueueName}.dead", ad);
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Audit that the audit log was used
@@ -582,7 +635,12 @@ namespace SanteDB.Core.Security.Audit
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
                             ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>()?.Insert(auditData); // insert into local AR
                         if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
-                            ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(auditData);
+                        {
+                            if (m_queueService != null)
+                                m_queueService.Enqueue(QueueName, auditData);
+                            else
+                                ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(auditData); // Not ideal -
+                        }
                     }
                 }
                 catch (Exception e)
@@ -713,7 +771,6 @@ namespace SanteDB.Core.Security.Audit
 
             audit.AuditableObjects.Add(new AuditableObject()
             {
-                IDTypeCode = AuditableObjectIdType.NotSpecified,
                 ObjectId = SanteDBClaimTypes.PurposeOfUse,
                 LifecycleType = AuditableObjectLifecycle.NotSet,
                 Role = AuditableObjectRole.SecurityGranularityDefinition,

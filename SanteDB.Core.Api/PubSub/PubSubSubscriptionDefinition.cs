@@ -37,27 +37,27 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Record is created
         /// </summary>
-        [XmlEnum("c")]
+        [XmlEnum("create")]
         Create = 0x1,
         /// <summary>
         /// Record is updated
         /// </summary>
-        [XmlEnum("u")]
+        [XmlEnum("update")]
         Update = 0x2,
         /// <summary>
         /// Record is deleted
         /// </summary>
-        [XmlEnum("d")]
+        [XmlEnum("delete")]
         Delete = 0x4,
         /// <summary>
         /// Record was merged
         /// </summary>
-        [XmlEnum("m")]
+        [XmlEnum("merge")]
         Merge = 0x8,
         /// <summary>
         /// Record was un-merged
         /// </summary>
-        [XmlEnum("u")]
+        [XmlEnum("unmerge")]
         UnMerge = 0x10
     }
 
