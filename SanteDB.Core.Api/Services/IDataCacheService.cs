@@ -25,8 +25,13 @@ using System;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Data cache event args
+    /// Data caching event arguments
     /// </summary>
+    /// <remarks>Whenever the <see cref="IDataCachingService"/> adds or removes
+    /// data to/from its cache, it will raise a series of events to indicate to callers
+    /// that some cache event occurs. This is useful if there are processes which the
+    /// subscriber of these events wish to action (like logging, or broadcasting updates,
+    /// or maintaining private data)</remarks>
     public class DataCacheEventArgs : EventArgs
     {
         /// <summary>
@@ -44,59 +49,88 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Represents a data caching service which allows services to retrieve
-    /// cached objects
+    /// Defines a service which can be used by callers to store full <see cref="IdentifiedData"/> RIM objects
+    /// in a transient cache.
     /// </summary>
+    /// <remarks>
+    /// <para>The data caching service is primarily used to store fully loaded objects from the database. This loading into the cache
+    /// reduces the load on the persistence layer of the SanteDB host context. The data persistence layers themselves will use implementations
+    /// of this class to prevent re-loading of data to/from the disk system. The process on a read is generally: </para>
+    /// <list type="number">
+    ///     <item>Check the cache service to determine if the data has already been loaded</item>
+    ///     <item>If not found in cache load the data from disk / database</item>
+    ///     <item>Add the object to the cache</item>
+    /// </list>
+    /// <para>Of course, keeping the cache service in a consistent state is tantamount to the reliable functioning of SanteDB, this means that any update, delete or create on
+    /// an object that already exists in cache results in its eviction from the cache via the <see cref="Remove(Guid)"/> method.</para>
+    /// </remarks>
+    /// <seealso cref="IAdhocCacheService"/>
     [System.ComponentModel.Description("Primary Data Caching Provider")]
     public interface IDataCachingService : IServiceImplementation
     {
         /// <summary>
-        /// Item was added to cache
+        /// Fired after an object has successfully been committed to the cache
         /// </summary>
         event EventHandler<DataCacheEventArgs> Added;
 
         /// <summary>
-        /// Item was updated from cache
+        /// Fired after an object has successfully been updated within the cache
         /// </summary>
         event EventHandler<DataCacheEventArgs> Updated;
 
         /// <summary>
-        /// Item was removed from cache
+        /// Fired after an object has successfully been evicted from cache
         /// </summary>
         event EventHandler<DataCacheEventArgs> Removed;
 
         /// <summary>
-        /// Get the specified cache item
+        /// Gets the cache item specified by <paramref name="key"/> returning it as a casted instance of <typeparamref name="TData"/>. Returning the default of <typeparamref name="TData"/> if the
+        /// object doesn't exist or if the object is the wrong type.
         /// </summary>
+        /// <typeparam name="TData">The type of data which is expected to be found with <paramref name="key"/></typeparam>
+        /// <param name="key">The key identifier of the object to fetch from cache</param>
+        /// <returns>The retrieved item</returns>
         TData GetCacheItem<TData>(Guid key) where TData : IdentifiedData;
 
         /// <summary>
-        /// Gets the specified cache item
+        /// Gets the cache item specified by <paramref name="key"/> regardless of the type of data
         /// </summary>
-        object GetCacheItem(Guid key);
+        /// <remarks>This method differs from <see cref="GetCacheItem{TData}(Guid)"/> in that it does not attempt to cast the data
+        /// it locates. The data returned will be an instance of <see cref="IdentifiedData" /> </remarks>
+        /// <param name="key">The key identifier of the object to fetch from cache</param>
+        /// <returns>The retrieved cache item</returns>
+        IdentifiedData GetCacheItem(Guid key);
 
         /// <summary>
-        /// Adds the specified item to the cache
+        /// Adds <paramref name="data"/> to the cache
         /// </summary>
+        /// <remarks>This method will use the key identifier of the <paramref name="data"/> object passed into it by the caller as the
+        /// basis for storing the data in the cache. When retrieving via the <see cref="GetCacheItem(Guid)"/> method</remarks>
+        /// <param name="data">The data which is to be added to the cache</param>
         void Add(IdentifiedData data);
 
         /// <summary>
-        /// Removes an object from the cache
+        /// Removes/evicts an object with identifier <paramref name="key"/> from the cache
         /// </summary>
+        /// <param name="key">The key of the object to be removed</param>
         void Remove(Guid key);
 
         /// <summary>
-        /// Removes an object from the cache
+        /// Removes/evicts the provided object form cache if available
         /// </summary>
+        /// <param name="data">The data which is to be removed from the cache</param>
         void Remove(IdentifiedData data);
 
         /// <summary>
-        /// Clear all keys in the cache
+        /// Purges the entire cache of all entries
         /// </summary>
+        /// <remarks>The ability of a cache provider to implement this method may depend on the server environment in which the SanteDB instance is operating. For example,
+        /// if running the REDIS cache provider, a call to this will require an administrative connection to the REDIS server, or else a <see cref="InvalidOperationException"/>
+        /// will be thrown.</remarks>
         void Clear();
 
         /// <summary>
-        /// Gets the current size of the cache
+        /// Gets the current size of the cache in objects
         /// </summary>
         long Size { get; }
     }
