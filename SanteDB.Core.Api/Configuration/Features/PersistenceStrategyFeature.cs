@@ -8,15 +8,15 @@ using System.Linq;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents the persistence strategy feature - which is optional
+    /// A <see cref="IFeature"/> which configures the appropriate persistence strategy (SIM, MDM, etc.)
     /// </summary>
     public class PersistenceStrategyFeature : IFeature
     {
-
         /// <summary>
         /// The name of the resource name
         /// </summary>
         public const string RESOURCE_MANAGER_NAME = "Resource Manager";
+
         /// <summary>
         /// Manager configuration
         /// </summary>
@@ -25,65 +25,43 @@ namespace SanteDB.Core.Configuration.Features
         // The configuration reference
         private GenericFeatureConfiguration m_configuration;
 
-        /// <summary>
-        /// Gets the configuration for the object
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration
         {
             get => this.m_configuration;
             set => this.m_configuration = value as GenericFeatureConfiguration;
         }
 
-        /// <summary>
-        /// Gets the configuration type
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
-        /// <summary>
-        /// Gets the description of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Sets a resource manager which controls the persisting and linking of objects. None is recommended unless you require central registry functions.";
 
-        /// <summary>
-        /// Gets the flags for this option
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.None;
 
-        /// <summary>
-        /// Gets the group for this feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.Persistence;
 
-        /// <summary>
-        /// Gets the name
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Resource Management";
 
-        /// <summary>
-        /// Create the installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             yield return new InstallPersistenceStrategyTask(this, this.m_configuration);
         }
 
-        /// <summary>
-        /// Create the uninstall tasks
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             yield return new UninstallPersistenceStrategyTask(this);
         }
 
-        /// <summary>
-        /// Query for the current state of this feature
-        /// </summary>
-        /// <param name="configuration">The configuration on which to check the feature state</param>
-        /// <returns>The install status of the feature</returns>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
-
             var appService = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             var currentStrategy = appService.ServiceProviders.Find(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
 
@@ -106,7 +84,7 @@ namespace SanteDB.Core.Configuration.Features
     }
 
     /// <summary>
-    /// Uninstall the persistence strategy
+    /// Uninstall the persistence strategy from the current CDR
     /// </summary>
     internal class UninstallPersistenceStrategyTask : IConfigurationTask
     {
@@ -118,50 +96,35 @@ namespace SanteDB.Core.Configuration.Features
             this.Feature = persistenceStrategyFeature;
         }
 
-        /// <summary>
-        /// Gets the description
-        /// </summary>
+        /// <inheritdoc/>
+
         public string Description => "Removes Resource Persistence management strategy configuration, and the service";
 
-        /// <summary>
-        /// Gets the feature to which this belongs
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Remove Resource Manager";
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the removal procedure
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
-
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
             appSection.ServiceProviders.RemoveAll(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
             configuration.RemoveSection<ResourceManagementConfigurationSection>();
             return true;
-
         }
 
-        /// <summary>
-        /// Rollback the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Verify the state
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration)
         {
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
@@ -170,11 +133,10 @@ namespace SanteDB.Core.Configuration.Features
     }
 
     /// <summary>
-    /// Install the persistence strategy task
+    /// Install the persistence strategy into the CDR
     /// </summary>
     internal class InstallPersistenceStrategyTask : IConfigurationTask
     {
-
         // The resource merge
         private GenericFeatureConfiguration m_resourceMergeConfiguration;
 
@@ -187,29 +149,20 @@ namespace SanteDB.Core.Configuration.Features
             this.m_resourceMergeConfiguration = resourceMergeConfiguration;
         }
 
-        /// <summary>
-        /// Configures the description
-        /// </summary>
+        /// <inheritdoc/>
+
         public string Description => $"Configures the resource management strategy to {this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME]}";
 
-        /// <summary>
-        /// Gets the feature which controls 
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => $"Install Resource Manager";
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the configuration 
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
@@ -221,17 +174,13 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Rollback the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Verify state
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration) => true;
     }
 }

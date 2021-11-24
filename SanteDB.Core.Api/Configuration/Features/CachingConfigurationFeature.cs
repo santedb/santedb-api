@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-17
  */
+
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
@@ -28,16 +29,20 @@ using System.Reflection;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Memory cache configuration feature
+    /// Implementation of an <see cref="IFeature"/> which controls the caching environment
     /// </summary>
+    /// <remarks>This feature allows the administrator change the caching strategy to/from REDIS, in-process memory cache or any other
+    /// implementation of the caching service</remarks>
+    /// <seealso cref="IAdhocCacheService"/>
+    /// <seealso cref="IDataCachingService"/>
+    /// <seealso cref="IQueryPersistenceService"/>
     public class CachingConfigurationFeature : IFeature
     {
-
         internal const string DATA_CACHE_SERVICE = "Data Object Cache";
         internal const string ADHOC_CACHE_SERVICE = "Ad-Hoc Cache";
         internal const string QUERY_STATE_SERVICE = "Stateful Query Cache";
 
-        // Configuration feature        
+        // Configuration feature
         private GenericFeatureConfiguration m_configuration;
 
         /// <summary>
@@ -45,47 +50,31 @@ namespace SanteDB.Core.Configuration.Features
         /// </summary>
         public CachingConfigurationFeature()
         {
-
         }
 
-        /// <summary>
-        /// Gets or sets the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration
         {
             get => this.m_configuration;
             set => this.m_configuration = value as GenericFeatureConfiguration;
         }
 
-
-        /// <summary>
-        /// Gets the configuration type
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
-        /// <summary>
-        /// Gets the description of this feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Controls the caching of data which offloads traffic from the primary data store";
 
-        /// <summary>
-        /// Gets the flags for this feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.AutoSetup;
 
-        /// <summary>
-        /// Gets the group of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.Performance;
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Caching";
 
-        /// <summary>
-        /// Create installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             yield return new InstallCacheServiceTask(this, this.m_configuration, QUERY_STATE_SERVICE);
@@ -93,9 +82,7 @@ namespace SanteDB.Core.Configuration.Features
             yield return new InstallCacheServiceTask(this, this.m_configuration, ADHOC_CACHE_SERVICE);
         }
 
-        /// <summary>
-        /// Create uninstall tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             yield return new UninstallCacheServiceTask(this, this.m_configuration, QUERY_STATE_SERVICE);
@@ -103,9 +90,7 @@ namespace SanteDB.Core.Configuration.Features
             yield return new UninstallCacheServiceTask(this, this.m_configuration, ADHOC_CACHE_SERVICE);
         }
 
-        /// <summary>
-        /// Query for the feature state of this feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
             Type[] cacheProviders = AppDomain.CurrentDomain.GetAllTypes().Where(o => typeof(IDataCachingService).IsAssignableFrom(o) && !o.IsAbstract && !o.IsInterface).ToArray(),
@@ -160,13 +145,12 @@ namespace SanteDB.Core.Configuration.Features
                 }
             }
 
-
             return originalCache != null && originalAdCache != null && originalQuery != null ? FeatureInstallState.Installed : originalQuery != null || originalCache != null || originalAdCache != null ? FeatureInstallState.PartiallyInstalled : FeatureInstallState.NotInstalled;
         }
     }
 
     /// <summary>
-    /// Uninstall the data caching service task
+    /// A <see cref="IConfigurationTask"/> which removes the caching service from the configuration
     /// </summary>
     internal class UninstallCacheServiceTask : IConfigurationTask
     {
@@ -187,29 +171,19 @@ namespace SanteDB.Core.Configuration.Features
             m_cacheType = (Type)cacheType;
         }
 
-        /// <summary>
-        /// Gets the description of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => $"Remove {this.m_configurationName}";
 
-        /// <summary>
-        /// Gets the feature
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Get the name of the task
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => $"Remove {this.m_configurationName}";
 
-        /// <summary>
-        /// Fired when progress changes
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the process
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             // First - remove the service instance
@@ -228,20 +202,15 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Rollback the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Validate the service can be removed
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration) => this.m_cacheType != null;
     }
-
 
     /// <summary>
     /// Install the data cache service task
@@ -250,10 +219,13 @@ namespace SanteDB.Core.Configuration.Features
     {
         // Configuration for the feature
         private Type m_cacheType;
+
         // Configuration
         private object m_configuration;
+
         // Configuration name
         private String m_configurationName;
+
         // Alternate options
         private Type[] m_alternateOptions;
 
@@ -271,29 +243,19 @@ namespace SanteDB.Core.Configuration.Features
             this.m_alternateOptions = configuration.Options[this.m_configurationName]() as Type[];
         }
 
-        /// <summary>
-        /// Gets a description of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => $"Install {this.m_configurationName}";
 
-        /// <summary>
-        /// Gets the feature on which this task is attached
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Gets the name of this task
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => $"Install {this.m_configurationName}";
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the specified task configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             // First - remove the service instance
@@ -320,18 +282,13 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Rollback the confguration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Verify the state of this configuration file
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration) => true;
     }
-
 }
