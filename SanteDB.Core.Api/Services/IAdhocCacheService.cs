@@ -35,7 +35,8 @@ namespace SanteDB.Core.Services
     /// callers of this interface typically assume a short lifecycle of data within the cache, and transient, rapid access should be prioritized over
     /// durability.</para>
     /// </remarks>
-    /// <example lang="C#" title="Implementing a Cache">
+    /// <example>
+    /// <code language="cs" title="Implementing a Cache Service">
     /// <![CDATA[
     /// // A horrible implementation of the cache service that uses a simple dictionary
     /// public class DictionaryCache : IAdHocCacheService {
@@ -63,8 +64,10 @@ namespace SanteDB.Core.Services
     ///     }
     /// }
     /// ]]>
+    /// </code>
     /// </example>
-    /// <example lang="C#" title="Using the Ad-Hoc Cache">
+    /// <example>
+    /// <code language="cs" title="Using the Ad-Hoc Cache">
     /// <![CDATA[
     ///     bool IsAUser(String userName) {
     ///         var cacheService = ApplicationServiceContext.Current.GetService<IAdhocCacheService>();
@@ -77,6 +80,7 @@ namespace SanteDB.Core.Services
     ///         }
     ///         return cacheResult;
     /// ]]>
+    /// </code>
     /// </example>
     [System.ComponentModel.Description("Ad-Hoc Cache Provider")]
     public interface IAdhocCacheService : IServiceImplementation

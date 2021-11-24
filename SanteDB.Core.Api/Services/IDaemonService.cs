@@ -36,7 +36,8 @@ namespace SanteDB.Core.Services
     /// <para>On service teardown the <see cref="Stop()"/> method is called, again it is expected that implementers will raise <see cref="Stopping"/> and then <see cref="Stopped"/></para>
     /// <para>If the daemon also implements the .NET <see cref="IDisposable"/> interface, then the Dispose method is called after service shutdown.</para>
     /// </remarks>
-    /// <example lang="C#" title="Implementing a Daemon Service">
+    /// <example>
+    /// <code language="cs" title="Implementing a Daemon Service">
     /// <![CDATA[
     /// public class HelloWorldDaemon : IDaemonService {
     ///
@@ -63,6 +64,7 @@ namespace SanteDB.Core.Services
     ///     }
     /// }
     /// ]]>
+    /// </code>
     /// </example>
     public interface IDaemonService : IServiceImplementation
     {

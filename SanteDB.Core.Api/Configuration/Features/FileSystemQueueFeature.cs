@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents a storage queue on the file system
+    /// Configures the <see cref="FileSystemQueueService"/> in the SanteDB configuration
     /// </summary>
     public class FileSystemQueueFeature : GenericServiceFeature<FileSystemQueueService>
     {
@@ -44,19 +44,13 @@ namespace SanteDB.Core.Configuration.Features
         {
         }
 
-        /// <summary>
-        /// Gets the group
-        /// </summary>
+        /// <inheritdoc/>
         public override string Group => FeatureGroup.System;
 
-        /// <summary>
-        /// File system queue configuration service
-        /// </summary>
+        /// <inheritdoc/>
         public override Type ConfigurationType => typeof(FileSystemQueueConfigurationSection);
 
-        /// <summary>
-        /// Get default configuration
-        /// </summary>
+        /// <inheritdoc/>
         protected override object GetDefaultConfiguration() => new FileSystemQueueConfigurationSection()
         {
             QueuePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "queue")

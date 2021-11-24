@@ -24,6 +24,13 @@ using SanteDB.Core.Exceptions;
 using System;
 using System.Xml.Serialization;
 
+#pragma warning disable  CS1587
+/// <summary>
+/// The core business rules namespace in the SanteDB API is used to define common classes for expressing
+/// issues detected by SanteDB's business rules engine.
+/// </summary>
+#pragma warning restore CS1587
+
 namespace SanteDB.Core.BusinessRules
 {
     /// <summary>

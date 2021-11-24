@@ -21,6 +21,13 @@
 
 using System;
 
+#pragma warning disable  CS1587
+/// <summary>
+/// The SanteDB.Core.Attributes namespace contains common attributes used by the SanteDB core API
+/// to load and reflect information about plugins and their capabilities.
+/// </summary>
+#pragma warning restore  CS1587
+
 namespace SanteDB.Core.Attributes
 {
     /// <summary>
@@ -48,7 +55,6 @@ namespace SanteDB.Core.Attributes
     /// <summary>
     /// Attached to an <c>AssemblyInfo.cs</c> file to annotate a plugin
     /// </summary>
-    [Obsolete]
     [AttributeUsage(AttributeTargets.Assembly)]
     public class PluginAttribute : Attribute
     {

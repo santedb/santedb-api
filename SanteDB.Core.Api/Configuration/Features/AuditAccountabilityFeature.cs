@@ -2,68 +2,64 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Auditing;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable  CS1587
+/// <summary>
+/// The Features namespace in the core API is used to define the core configuration features (to be shown in the configuration tooling) for the
+/// SanteDB instance.
+/// </summary>
+#pragma warning restore  CS1587
+
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents a feature for the audit and accountability framework
+    /// An implementation of the <see cref="IFeature"/> interface for the auditing and accountability panel
     /// </summary>
     public class AuditAccountabilityFeature : IFeature, IConfigurationTask
     {
-        /// <summary>
-        /// Gets or sets the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration { get; set; }
 
-        /// <summary>
-        /// Gets the type of configuration
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(AuditAccountabilityConfigurationSection);
 
-        /// <summary>
-        /// Create the installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             return new IConfigurationTask[] { this };
         }
 
-        /// <summary>
-        /// Create uninstall tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Gets the description of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Controls the auditing and accountability framework found within the SanteDB server";
 
-        /// <summary>
-        /// Execute the installation task
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             // Configure the option
@@ -87,54 +83,35 @@ namespace SanteDB.Core.Configuration.Features
                         EnterpriseSite = Environment.MachineName,
                         SiteLocation = "DEFAULT"
                     }
-
                 };
             }
-
-
 
             configuration.AddSection(this.Configuration);
             return true;
         }
 
-        /// <summary>
-        /// Gets the feature this is configuring
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature => this;
 
-        /// <summary>
-        /// Gets or sets the flags of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.AlwaysConfigure | FeatureFlags.AutoSetup | FeatureFlags.SystemFeature;
 
-        /// <summary>
-        /// Gets the group
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.Security;
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Audit and Accountability";
 
-        /// <summary>
-        /// Fired when progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Query the state of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
-
-
             return configuration.GetSection<AuditAccountabilityConfigurationSection>() != null ? FeatureInstallState.Installed : FeatureInstallState.NotInstalled;
         }
 
-        /// <summary>
-        /// Rollback the task
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             // Configure the option
@@ -146,9 +123,7 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Verify that this can be configured
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration)
         {
             return true;

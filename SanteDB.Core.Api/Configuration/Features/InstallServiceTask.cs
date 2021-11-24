@@ -9,6 +9,9 @@ namespace SanteDB.Core.Configuration.Features
     /// <summary>
     /// A generic task which installs a service
     /// </summary>
+    /// <remarks>This generic <see cref="IConfigurationTask"/> implementation verifies that the current status of a service in the SanteDB configuration file,
+    /// removes any conflicting services, and adds the provided service. This task saves re-writing the same repetitive procedure of installing and enabling
+    /// services on a SanteDB iCDR service host</remarks>
     public class InstallServiceTask : IConfigurationTask
     {
         // Type of service
@@ -24,7 +27,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <param name="exclusiveFor">True if the <paramref name="serviceType"/> should be the only of its type</param>
         /// <param name="owner">The owner feature</param>
         /// <param name="queryValidateFunc">The function callback to be used to determine if the task needs to be run</param>
-        /// <param name="serviceType">The type of service</param>
+        /// <param name="serviceType">The type of service which is being installed</param>
         public InstallServiceTask(IFeature owner, Type serviceType, Func<bool> queryValidateFunc, params Type[] exclusiveFor)
         {
             this.m_serviceType = serviceType;
@@ -33,29 +36,19 @@ namespace SanteDB.Core.Configuration.Features
             this.m_queryValidateFunc = queryValidateFunc;
         }
 
-        /// <summary>
-        /// Get the description
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => $"Installs the {this.m_serviceType.Name} service in to the host context";
 
-        /// <summary>
-        /// The feature
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Gets the name
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => $"Install {this.m_serviceType.Name}";
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the install
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             var service = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
@@ -67,17 +60,13 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Rollback configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             return true;
         }
 
-        /// <summary>
-        /// Verify this can be installed
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration)
         {
             var service = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
