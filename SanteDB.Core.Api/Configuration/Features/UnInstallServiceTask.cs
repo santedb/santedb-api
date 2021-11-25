@@ -7,7 +7,7 @@ using System.Text;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// A generic task which removes a service
+    /// A generic task which removes a service from the SanteDB configuration
     /// </summary>
     public class UnInstallServiceTask : IConfigurationTask
     {
@@ -29,29 +29,19 @@ namespace SanteDB.Core.Configuration.Features
             this.m_queryValidateFunc = queryValidateFunc;
         }
 
-        /// <summary>
-        /// Get the description
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => $"Removes the {this.m_serviceType.Name} service in to the host context";
 
-        /// <summary>
-        /// The feature
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Gets the name
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => $"Remove {this.m_serviceType.Name}";
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the install
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             var service = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
@@ -60,17 +50,13 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Rollback configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             return true;
         }
 
-        /// <summary>
-        /// Verify this can be installed
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration)
         {
             var service = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;

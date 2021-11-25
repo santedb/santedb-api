@@ -2,30 +2,30 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Configuration
 {
-
     /// <summary>
-    /// Feature group constants
+    /// Default list of feature groupings for the Configuration tooling
     /// </summary>
     public static class FeatureGroup
     {
@@ -71,7 +71,7 @@ namespace SanteDB.Core.Configuration
     }
 
     /// <summary>
-    /// Feature installation state
+    /// Feature installation status
     /// </summary>
     public enum FeatureInstallState
     {
@@ -79,16 +79,19 @@ namespace SanteDB.Core.Configuration
         /// The feature is fully installed
         /// </summary>
         Installed,
+
         /// <summary>
-        /// The feature is partially installed
+        /// The feature is partially installed - it may lack necessary information to start or operate in the current configuration context.
         /// </summary>
         PartiallyInstalled,
+
         /// <summary>
         /// The feature is not installed
         /// </summary>
         NotInstalled,
+
         /// <summary>
-        /// The feature cannot be installed 
+        /// The feature cannot be installed
         /// </summary>
         CantInstall
     }
@@ -103,22 +106,27 @@ namespace SanteDB.Core.Configuration
         /// No flags
         /// </summary>
         None = 0x0,
+
         /// <summary>
         /// The feature should always be configured
         /// </summary>
         AlwaysConfigure = 0x1,
+
         /// <summary>
         /// The task should be executed automatically if not already run
         /// </summary>
         AutoSetup = 0x2,
+
         /// <summary>
         /// The feature is a system feature and cannot be uninstalled.
         /// </summary>
         NoRemove = 0x4,
+
         /// <summary>
         /// The feature is a system feature
         /// </summary>
         SystemFeature = 0x8 | NoRemove | AutoSetup | AlwaysConfigure,
+
         /// <summary>
         /// Non-public feature
         /// </summary>
@@ -134,30 +142,37 @@ namespace SanteDB.Core.Configuration
         /// Option is a user token
         /// </summary>
         User,
+
         /// <summary>
         /// Option is a string
         /// </summary>
         String,
+
         /// <summary>
         /// Option is a boolean
         /// </summary>
         Boolean,
+
         /// <summary>
         /// Option is a numeric
         /// </summary>
         Numeric,
+
         /// <summary>
         /// Option is a password
         /// </summary>
         Password,
+
         /// <summary>
         /// Option is a filename
         /// </summary>
         FileName,
+
         /// <summary>
         /// Database name
         /// </summary>
         DatabaseName,
+
         /// <summary>
         /// Object type
         /// </summary>
@@ -165,53 +180,62 @@ namespace SanteDB.Core.Configuration
     }
 
     /// <summary>
-    /// Representsa feature that can be configured which is not 
+    /// Defines a feature in the context of the configuration tooling
     /// </summary>
+    /// <remarks><para>The configuration tooling in SanteDB exposes a list of grouped "features" which can be configured using the SanteDB configuration tool. Each feature
+    /// defines a configuration object which the configuration tooling uses to render a property grid (allowing users to change the values of the setting). When the configuration
+    /// is applied, the feature is instructed to create either installation tasks or un-installation tasks</para>
+    /// <para>Each <see cref="IConfigurationTask"/> created for install or un-install is responsible for changing the configuration file, the host operating system,
+    /// or any other steps necessary to enable to remove the feature from the SanteDB instance.</para></remarks>
     public interface IFeature
     {
         /// <summary>
-        /// Gets or sets the configuration object
+        /// Gets or sets the configuration object which the feature wishes the configuration tool to render.
         /// </summary>
         object Configuration { get; set; }
 
         /// <summary>
-        /// Gets the configuration type
+        /// Gets or sets the type of configuration section which this feature is expecting
         /// </summary>
         Type ConfigurationType { get; }
 
         /// <summary>
-        /// Get the description of the feature
+        /// Gets a human readable description of the feature which can be shown on the user interface
         /// </summary>
         string Description { get; }
 
         /// <summary>
-        /// Gets the flags for this feature
+        /// Gets the flags for this feature (such as auto-configure, always apply configuration, etc.)
         /// </summary>
         FeatureFlags Flags { get; }
 
         /// <summary>
-        /// Get the grouping in the configuration
+        /// The group in which this feature belongs
         /// </summary>
+        /// <seealso cref="FeatureGroup" />
         string Group { get; }
 
         /// <summary>
-        /// Gets the name of the feature
+        /// Gets the name of the feature to show in the main configuration panel
         /// </summary>
         string Name { get; }
 
         /// <summary>
-        /// Create the necessary tasks to configure the feature
+        /// Creates one or more <see cref="IConfigurationTask"/> instances which can be executed to setup the feature
         /// </summary>
+        /// <seealso cref="IConfigurationTask"/>
         IEnumerable<IConfigurationTask> CreateInstallTasks();
 
         /// <summary>
-        /// Create uninstallation tasks
+        /// Creates one or more <see cref="IConfigurationTask"/> instances which can be executed to remove the feature from SanteDB
         /// </summary>
         IEnumerable<IConfigurationTask> CreateUninstallTasks();
 
         /// <summary>
-        /// Returns true if the configuration supplied is configured for this feature
+        /// Query the status of the feature in <paramref name="configuration"/>
         /// </summary>
+        /// <param name="configuration">The configuration which is being edited by the configuration tool. This is the configuration in which the feature implementation should look for install state</param>
+        /// <returns>The feature installation state</returns>
         FeatureInstallState QueryState(SanteDBConfiguration configuration);
     }
 }

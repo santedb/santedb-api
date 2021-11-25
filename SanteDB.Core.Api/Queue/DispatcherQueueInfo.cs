@@ -19,28 +19,49 @@
  * Date: 2021-8-5
  */
 
+using Newtonsoft.Json;
+using SanteDB.Core.Model;
 using System;
+using System.Xml.Serialization;
 
-namespace SanteDB.Core.Attributes
+namespace SanteDB.Core.Queue
 {
     /// <summary>
-    /// Annotates that the plugin within the assembly logs to the specified <see cref="TraceSourceName"/>
+    /// Queue entry
     /// </summary>
-    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-    public class PluginTraceSourceAttribute : Attribute
+    [XmlRoot(nameof(DispatcherQueueInfo), Namespace = "http://santedb.org/queue")]
+    [XmlType(nameof(DispatcherQueueInfo), Namespace = "http://santedb.org/queue")]
+    public class DispatcherQueueInfo
     {
         /// <summary>
-        /// Plugin trace source
+        /// Serialization ctor
         /// </summary>
-        /// <param name="traceSource"></param>
-        public PluginTraceSourceAttribute(String traceSource)
+        public DispatcherQueueInfo()
         {
-            this.TraceSourceName = traceSource;
         }
 
         /// <summary>
-        /// Gets or sets the trace source name
+        /// ID of the queue
         /// </summary>
-        public String TraceSourceName { get; set; }
+        [XmlElement("id"), JsonProperty("id")]
+        public String Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the payload type
+        /// </summary>
+        [XmlElement("name"), JsonProperty("name")]
+        public String Name { get; set; }
+
+        /// <summary>
+        /// Queue size
+        /// </summary>
+        [XmlElement("size"), JsonProperty("size")]
+        public int QueueSize { get; set; }
+
+        /// <summary>
+        /// Get the creation time
+        /// </summary>
+        [XmlElement("creationTime"), JsonProperty("creationTime")]
+        public DateTime CreationTime { get; set; }
     }
 }

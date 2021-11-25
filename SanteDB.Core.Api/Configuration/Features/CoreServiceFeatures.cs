@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Model;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;
@@ -36,19 +37,13 @@ namespace SanteDB.Core.Configuration.Features
     /// </summary>
     public class CoreServiceFeatures : IFeature
     {
-        /// <summary>
-        /// Gets or sets the configuration object
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration { get; set; }
 
-        /// <summary>
-        /// Gets the configuration option type
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
-        /// <summary>
-        /// Create the installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             return new IConfigurationTask[]
@@ -59,9 +54,7 @@ namespace SanteDB.Core.Configuration.Features
             };
         }
 
-        /// <summary>
-        /// Create uninstall tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             return new IConfigurationTask[]
@@ -71,32 +64,21 @@ namespace SanteDB.Core.Configuration.Features
             };
         }
 
-        /// <summary>
-        /// Description
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Core services for this SanteDB API hosting environment. This configuration should only be used by advanced users.";
 
-        /// <summary>
-        /// Flags for the configuration feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.SystemFeature;
 
-        /// <summary>
-        /// The group of these features
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.System;
 
-        /// <summary>
-        /// Get the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "SanteDB Core API";
 
-        /// <summary>
-        /// True if the options are configured
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
-
             // Get the configuratoin
             switch (configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Count(
                 s => s.Type == typeof(SimplePatchService) || s.Type == typeof(SimpleCarePlanService)
@@ -150,39 +132,32 @@ namespace SanteDB.Core.Configuration.Features
                     }
 
                     return FeatureInstallState.Installed;
+
                 case 1:
                     return FeatureInstallState.PartiallyInstalled;
+
                 case 0:
                 default:
                     return FeatureInstallState.NotInstalled;
             }
         }
 
-
-        /// <summary>
-        /// Configure services task
-        /// </summary>
+        /// <inheritdoc/>
         public class ConfigureServicesTask : IConfigurationTask
         {
             // Backup
             private ApplicationServiceContextConfigurationSection m_backup;
 
-            /// <summary>
-            /// Configure services task
-            /// </summary>
+            /// <inheritdoc/>
             public ConfigureServicesTask(CoreServiceFeatures feature)
             {
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Description
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Registers the selected services";
 
-            /// <summary>
-            /// Execute the service
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 this.m_backup = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
@@ -197,7 +172,6 @@ namespace SanteDB.Core.Configuration.Features
                     // Map configuration over to the features section
                     foreach (var pvd in types.Where(t => t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
                     {
-
                         object value = null;
                         if (config.Values.TryGetValue(pvd.Name, out value) &&
                             value != null &&
@@ -215,26 +189,16 @@ namespace SanteDB.Core.Configuration.Features
                 return true;
             }
 
-            /// <summary>
-            /// Gets the feature
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Get the name
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Save Service Configuration";
 
-            /// <summary>
-            /// Fired when the progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Perform a rollback
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 if (this.m_backup != null)
@@ -245,9 +209,7 @@ namespace SanteDB.Core.Configuration.Features
                 return true;
             }
 
-            /// <summary>
-            /// Verify the state
-            /// </summary>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return true;
@@ -267,14 +229,10 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Gets the description of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Registers the simple, built-in care planner service into the SanteDB context";
 
-            /// <summary>
-            /// Execute the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService)))
@@ -286,35 +244,23 @@ namespace SanteDB.Core.Configuration.Features
                 return false;
             }
 
-            /// <summary>
-            /// Gets the feature this is configuring
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Gets the name of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Setup Care Planner";
 
-            /// <summary>
-            /// Progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Rollback the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleCarePlanService));
                 return true;
             }
 
-            /// <summary>
-            /// Verify whether the task needs to be run
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService));
@@ -322,7 +268,7 @@ namespace SanteDB.Core.Configuration.Features
         }
 
         /// <summary>
-        /// Install care planner service
+        /// Install patching service
         /// </summary>
         public class InstallPatchServiceTask : IConfigurationTask
         {
@@ -334,14 +280,10 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Gets the description of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Registers the simple patching service which allows for partial updates over REST";
 
-            /// <summary>
-            /// Execute the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService)))
@@ -353,35 +295,23 @@ namespace SanteDB.Core.Configuration.Features
                 return false;
             }
 
-            /// <summary>
-            /// Gets the feature this is configuring
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Gets the name of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Setup Patch Service";
 
-            /// <summary>
-            /// Progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Rollback the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimplePatchService));
                 return true;
             }
 
-            /// <summary>
-            /// Verify whether the task needs to be run
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService));
@@ -389,7 +319,7 @@ namespace SanteDB.Core.Configuration.Features
         }
 
         /// <summary>
-        /// Install care planner service
+        /// Remove the care planner service
         /// </summary>
         public class UninstallCarePlannerServiceTask : IConfigurationTask
         {
@@ -401,49 +331,33 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Gets the description of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Removes the simple care planning service from the SanteDB service";
 
-            /// <summary>
-            /// Execute the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleCarePlanService));
                 return true;
             }
 
-            /// <summary>
-            /// Gets the feature this is configuring
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Gets the name of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Remove Care Planner";
 
-            /// <summary>
-            /// Progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Rollback the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
                 return true;
             }
 
-            /// <summary>
-            /// Verify whether the task needs to be run
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService));
@@ -451,7 +365,7 @@ namespace SanteDB.Core.Configuration.Features
         }
 
         /// <summary>
-        /// Install care planner service
+        /// Remove the patching service
         /// </summary>
         public class UninstallPatchServiceTask : IConfigurationTask
         {
@@ -463,49 +377,33 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Gets the description of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Removes the simple patching service which allows for partial updates over REST";
 
-            /// <summary>
-            /// Execute the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimplePatchService));
                 return true;
             }
 
-            /// <summary>
-            /// Gets the feature this is configuring
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Gets the name of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Remove Patch Service";
 
-            /// <summary>
-            /// Progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Rollback the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimplePatchService)));
                 return true;
             }
 
-            /// <summary>
-            /// Verify whether the task needs to be run
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService));

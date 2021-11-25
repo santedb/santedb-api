@@ -6,7 +6,7 @@ using System.Text;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Remove configuration section into the configuraion file
+    /// A generic task which removes a configuration section from the configuration file
     /// </summary>
     public class UnInstallConfigurationSectionTask : IConfigurationTask
     {
@@ -18,6 +18,9 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Remove configuration section task
         /// </summary>
+        /// <param name="section">The section which is removed by this task</param>
+        /// <param name="owner">The owner feature of this task</param>
+        /// <param name="nameOfService">The name of the service which this feature configures</param>
         public UnInstallConfigurationSectionTask(IFeature owner, IConfigurationSection section, string nameOfService)
         {
             this.Feature = owner;
@@ -26,46 +29,32 @@ namespace SanteDB.Core.Configuration.Features
             this.Description = $"Removes the {section.GetType().Name} configuration section which controls {nameOfService}";
         }
 
-        /// <summary>
-        /// Get the description
-        /// </summary>
+        /// <inheritdoc/>
         public string Description { get; }
 
-        /// <summary>
-        /// Get the owner
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature { get; }
 
-        /// <summary>
-        /// Get the name
-        /// </summary>
+        /// <inheritdoc/>
         public string Name { get; }
 
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Execute the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             configuration.RemoveSection(this.m_section.GetType());
             return true;
         }
 
-        /// <summary>
-        /// Rollback configuration
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             return true;
         }
 
-        /// <summary>
-        /// Verify status
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration) => true;
     }
 }

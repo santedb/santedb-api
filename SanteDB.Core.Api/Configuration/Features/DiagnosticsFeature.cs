@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
@@ -31,23 +32,18 @@ using System.Reflection;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents a diagnostics feature
+    /// Configuration <see cref="IFeature"/> which controls the <see cref="DiagnosticsConfigurationSection"/> settings
     /// </summary>
+    /// <seealso cref="DiagnosticsConfigurationSection"/>
     public class DiagnosticsFeature : IFeature
     {
-        /// <summary>
-        /// Gets or sets the configuration object
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration { get; set; }
 
-        /// <summary>
-        /// Configuration type
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(GenericFeatureConfiguration);
 
-        /// <summary>
-        /// Create the installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             return new IConfigurationTask[] {
@@ -55,37 +51,25 @@ namespace SanteDB.Core.Configuration.Features
             };
         }
 
-        /// <summary>
-        /// Create uninstall tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Get the description of the diagnostics feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Configures the diagnostics trace sources";
 
-        /// <summary>
-        /// Get the flags
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.SystemFeature;
 
-        /// <summary>
-        /// Get the group for the diagnostics feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.Diagnostics;
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Logging / Tracing";
 
-        /// <summary>
-        /// Query the state of the diagnostics configuration
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
             // Configuration is not known?
@@ -136,9 +120,8 @@ namespace SanteDB.Core.Configuration.Features
             return FeatureInstallState.Installed;
         }
 
-
         /// <summary>
-        /// Configure the diagnostics services
+        /// Configure the diagnostics services in the configuration file
         /// </summary>
         private class ConfigureDiagnosticsTask : IConfigurationTask
         {
@@ -155,17 +138,12 @@ namespace SanteDB.Core.Configuration.Features
                 this.Feature = feature;
             }
 
-            /// <summary>
-            /// Configures the diagnostics subsystem
-            /// </summary>
+            /// <inheritdoc/>
             public string Description => "Configures the diagnostics subsystem";
 
-            /// <summary>
-            /// Execute the configuration
-            /// </summary>
+            /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
-
                 this.m_backup = configuration.GetSection<DiagnosticsConfigurationSection>();
 
                 configuration.RemoveSection<DiagnosticsConfigurationSection>();
@@ -202,29 +180,18 @@ namespace SanteDB.Core.Configuration.Features
                 config.Sources.AddRange(this.m_backup.Sources.Where(s => !featureConfig.Categories["Sources"].Contains(s.SourceName)));
                 configuration.AddSection(config);
                 return true;
-
             }
 
-            /// <summary>
-            /// Gets the feature associated with this task
-            /// </summary>
+            /// <inheritdoc/>
             public IFeature Feature { get; }
 
-            /// <summary>
-            /// Gets the name of the task
-            /// </summary>
+            /// <inheritdoc/>
             public string Name => "Configure Diagnostics";
 
-            /// <summary>
-            /// Progress has changed
-            /// </summary>
+            /// <inheritdoc/>
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-            /// <summary>
-            /// Rollback configuration
-            /// </summary>
-            /// <param name="configuration"></param>
-            /// <returns></returns>
+            /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
                 if (this.m_backup != null)
@@ -235,9 +202,7 @@ namespace SanteDB.Core.Configuration.Features
                 return true;
             }
 
-            /// <summary>
-            /// Verify that configuration needsto occur
-            /// </summary>
+            /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
                 return true;

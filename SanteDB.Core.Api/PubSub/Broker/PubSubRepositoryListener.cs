@@ -19,31 +19,96 @@
  * Date: 2021-8-5
  */
 
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.PubSub.Broker
 {
+    /// <summary>
+    /// Notification metadata which is placed in the persistence queue
+    /// </summary>
+    [XmlType(nameof(PubSubNotifyQueueEntry), Namespace = "http://santedb.org/pubsub")]
+    [ResourceCollection()]
+    public class PubSubNotifyQueueEntry
+    {
+        /// <summary>
+        /// Pub-sub notify
+        /// </summary>
+        public PubSubNotifyQueueEntry()
+        {
+        }
+
+        /// <summary>
+        /// Create new queue entry
+        /// </summary>
+        public PubSubNotifyQueueEntry(Type tmodelType, PubSubEventType eventType, object data)
+        {
+            this.TargetType = tmodelType;
+            this.EventType = eventType;
+            this.Data = data;
+            this.NotificationDate = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Target type
+        /// </summary>
+        [XmlIgnore]
+        public Type TargetType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the target type XML
+        /// </summary>
+        [XmlAttribute("target")]
+        public String TargetTypeXml
+        {
+            get => this.TargetType?.AssemblyQualifiedName;
+            set => this.TargetType = value == null ? null : Type.GetType(value);
+        }
+
+        /// <summary>
+        /// The event type
+        /// </summary>
+        [XmlAttribute("event")]
+        public PubSubEventType EventType { get; set; }
+
+        /// <summary>
+        /// Notification date (note: we use datetime instead of datetimeoffset because XML serialization issues)
+        /// </summary>
+        [XmlAttribute("date")]
+        public DateTime NotificationDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the payload of the data
+        /// </summary>
+        [XmlElement("data")]
+        public Object Data { get; set; }
+    }
+
     /// <summary>
     /// Represents a class which listens to a repository and notifies the various subscriptions
     /// </summary>
     public class PubSubRepositoryListener<TModel> : IDisposable where TModel : IdentifiedData
     {
-        // Cached filter criteria
-        private Dictionary<Guid, Func<Object, bool>> m_filterCriteria = new Dictionary<Guid, Func<Object, bool>>();
+        // Tracer
+        private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubRepositoryListener<TModel>));
 
         // The repository this listener listens to
         private INotifyRepositoryService<TModel> m_repository;
 
         // Queue service
-        private IPersistentQueueService m_queueService;
+        private IDispatcherQueueManagerService m_queueService;
 
         // Service manager
         private IServiceManager m_serviceManager;
@@ -54,19 +119,15 @@ namespace SanteDB.Core.PubSub.Broker
         // Manager
         private IPubSubManagerService m_pubSubManager;
 
-        // Thread pool
-        private IThreadPoolService m_threadPool;
-
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IThreadPoolService threadPool, IPubSubManagerService pubSubManager, IPersistentQueueService queueService, IServiceManager serviceManager)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager)
         {
             this.m_pubSubManager = pubSubManager;
             this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
-            this.m_threadPool = threadPool;
 
             if (this.m_repository == null)
                 throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
@@ -84,72 +145,11 @@ namespace SanteDB.Core.PubSub.Broker
         }
 
         /// <summary>
-        /// Get all dispatchers and subscriptions
-        /// </summary>
-        protected IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, Object data)
-        {
-            using (AuthenticationContext.EnterSystemContext())
-            {
-                var resourceName = data.GetType().GetSerializationName();
-                var subscriptions = this.m_pubSubManager
-                        .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
-                        .OfType<PubSubSubscriptionDefinition>()
-                        .Where(o => o.Event.HasFlag(eventType))
-                        .Where(s =>
-                        {
-                            // Attempt to compile the filter criteria into an executable function
-                            if (!this.m_filterCriteria.TryGetValue(s.Key.Value, out Func<Object, bool> fn))
-                            {
-                                Expression dynFn = null;
-                                var parameter = Expression.Parameter(data.GetType());
-
-                                foreach (var itm in s.Filter)
-                                {
-                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), NameValueCollection.ParseQueryString(itm), "p", forceLoad: true, lazyExpandVariables: true);
-                                    if (dynFn is LambdaExpression le)
-                                        dynFn = Expression.Lambda(
-                                            Expression.And(
-                                                Expression.Invoke(le, parameter),
-                                                Expression.Invoke(fFn, parameter)
-                                               ), parameter);
-                                    else
-                                        dynFn = fFn;
-                                }
-
-                                if (dynFn == null)
-                                {
-                                    dynFn = Expression.Lambda(Expression.Constant(true), parameter);
-                                }
-                                parameter = Expression.Parameter(typeof(object));
-                                fn = Expression.Lambda(Expression.Invoke(dynFn, Expression.Convert(parameter, data.GetType())), parameter).Compile() as Func<Object, bool>;
-                                this.m_filterCriteria.Add(s.Key.Value, fn);
-                            }
-                            return fn(data);
-                        });
-
-                // Now we want to filter by channel, since the channel is really what we're interested in
-                foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
-                {
-                    var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                    var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
-                    yield return factory.CreateDispatcher(chnl.Key, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
-                }
-            }
-        }
-
-        /// <summary>
         /// When unmerged
         /// </summary>
         protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_threadPool.QueueUserWorkItem(e =>
-            {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.UnMerge, this.m_repository.Get(e.SurvivorKey)))
-                        dsptchr.NotifyUnMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
-                }
-            }, evt);
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
         }
 
         /// <summary>
@@ -157,14 +157,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_threadPool.QueueUserWorkItem(e =>
-            {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Merge, this.m_repository.Get(e.SurvivorKey)))
-                        dsptchr.NotifyMerged(this.m_repository.Get(e.SurvivorKey), e.LinkedKeys.Select(o => this.m_repository.Get(o)).ToArray());
-                }
-            }, evt);
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
         }
 
         /// <summary>
@@ -172,14 +165,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_threadPool.QueueUserWorkItem(e =>
-            {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Delete, e.Data))
-                        dsptchr.NotifyObsoleted(e.Data);
-                }
-            }, evt);
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, evt.Data));
         }
 
         /// <summary>
@@ -187,14 +173,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_threadPool.QueueUserWorkItem(e =>
-            {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Update, e.Data))
-                        dsptchr.NotifyUpdated(e.Data);
-                }
-            }, evt);
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, evt.Data));
         }
 
         /// <summary>
@@ -202,14 +181,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_threadPool.QueueUserWorkItem(e =>
-            {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    foreach (var dsptchr in this.GetDispatchers(PubSubEventType.Create, e.Data))
-                        dsptchr.NotifyCreated(e.Data);
-                }
-            }, evt);
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, evt.Data));
         }
 
         /// <summary>

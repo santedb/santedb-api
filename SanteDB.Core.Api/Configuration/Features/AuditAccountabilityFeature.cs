@@ -23,47 +23,42 @@ using System.Collections.Generic;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Services;
 
+#pragma warning disable  CS1587
+/// <summary>
+/// The Features namespace in the core API is used to define the core configuration features (to be shown in the configuration tooling) for the
+/// SanteDB instance.
+/// </summary>
+#pragma warning restore  CS1587
+
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents a feature for the audit and accountability framework
+    /// An implementation of the <see cref="IFeature"/> interface for the auditing and accountability panel
     /// </summary>
     public class AuditAccountabilityFeature : IFeature, IConfigurationTask
     {
-        /// <summary>
-        /// Gets or sets the configuration
-        /// </summary>
+        /// <inheritdoc/>
         public object Configuration { get; set; }
 
-        /// <summary>
-        /// Gets the type of configuration
-        /// </summary>
+        /// <inheritdoc/>
         public Type ConfigurationType => typeof(AuditAccountabilityConfigurationSection);
 
-        /// <summary>
-        /// Create the installation tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
         {
             return new IConfigurationTask[] { this };
         }
 
-        /// <summary>
-        /// Create uninstall tasks
-        /// </summary>
+        /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateUninstallTasks()
         {
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Gets the description of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Description => "Controls the auditing and accountability framework found within the SanteDB server";
 
-        /// <summary>
-        /// Execute the installation task
-        /// </summary>
+        /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
             // Configure the option
@@ -94,42 +89,28 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Gets the feature this is configuring
-        /// </summary>
+        /// <inheritdoc/>
         public IFeature Feature => this;
 
-        /// <summary>
-        /// Gets or sets the flags of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureFlags Flags => FeatureFlags.AlwaysConfigure | FeatureFlags.AutoSetup | FeatureFlags.SystemFeature;
 
-        /// <summary>
-        /// Gets the group
-        /// </summary>
+        /// <inheritdoc/>
         public string Group => FeatureGroup.Security;
 
-        /// <summary>
-        /// Gets the name of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public string Name => "Audit and Accountability";
 
-        /// <summary>
-        /// Fired when progress has changed
-        /// </summary>
+        /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
-        /// <summary>
-        /// Query the state of the feature
-        /// </summary>
+        /// <inheritdoc/>
         public FeatureInstallState QueryState(SanteDBConfiguration configuration)
         {
             return configuration.GetSection<AuditAccountabilityConfigurationSection>() != null ? FeatureInstallState.Installed : FeatureInstallState.NotInstalled;
         }
 
-        /// <summary>
-        /// Rollback the task
-        /// </summary>
+        /// <inheritdoc/>
         public bool Rollback(SanteDBConfiguration configuration)
         {
             // Configure the option
@@ -141,9 +122,7 @@ namespace SanteDB.Core.Configuration.Features
             return true;
         }
 
-        /// <summary>
-        /// Verify that this can be configured
-        /// </summary>
+        /// <inheritdoc/>
         public bool VerifyState(SanteDBConfiguration configuration)
         {
             return true;

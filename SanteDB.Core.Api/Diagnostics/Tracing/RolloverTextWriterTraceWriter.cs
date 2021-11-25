@@ -48,9 +48,6 @@ namespace SanteDB.Core.Diagnostics.Tracing
         // True when disposing
         private bool m_disposing = false;
 
-        // The text writer
-        private String m_logFile;
-
         // The log backlog
         private ConcurrentQueue<String> m_logBacklog = new ConcurrentQueue<string>();
 
