@@ -19,7 +19,7 @@
  * Date: 2021-8-5
  */
 
-using SanteDB.Core.Auditing;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -57,7 +57,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Append the outcome indicator to the audit
         /// </summary>
-        public static AuditData WithOutcome(this AuditData me, OutcomeIndicator outcome)
+        public static AuditEventData WithOutcome(this AuditEventData me, OutcomeIndicator outcome)
         {
             me.Outcome = outcome;
             return me;
@@ -66,7 +66,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Set the action on the audit
         /// </summary>
-        public static AuditData Action(this AuditData me, ActionType action)
+        public static AuditEventData Action(this AuditEventData me, ActionType action)
         {
             me.ActionCode = action;
             return me;
@@ -75,7 +75,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With event type
         /// </summary>
-        public static AuditData WithEventType(this AuditData me, String eventTypeCode, String eventTypeCodeSystem = "http://santedb.org/conceptset/SecurityAuditCode")
+        public static AuditEventData WithEventType(this AuditEventData me, String eventTypeCode, String eventTypeCodeSystem = "http://santedb.org/conceptset/SecurityAuditCode")
         {
             me.EventTypeCode = new AuditCode(eventTypeCode, eventTypeCodeSystem);
             return me;
@@ -84,7 +84,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With an enum set event type
         /// </summary>
-        public static AuditData WithEventType(this AuditData me, EventTypeCodes typeCode)
+        public static AuditEventData WithEventType(this AuditEventData me, EventTypeCodes typeCode)
         {
             var typeCodeWire = typeof(EventTypeCodes).GetRuntimeField(typeCode.ToString()).GetCustomAttribute<XmlEnumAttribute>();
             me.EventTypeCode = new AuditCode(typeCodeWire.Name, "http://santedb.org/conceptset/SecurityAuditCode");
@@ -94,7 +94,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With the specified action code
         /// </summary>
-        public static AuditData WithAction(this AuditData me, ActionType action)
+        public static AuditEventData WithAction(this AuditEventData me, ActionType action)
         {
             me.ActionCode = action;
             return me;
@@ -103,7 +103,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add timestamp
         /// </summary>
-        public static AuditData WithTimestamp(this AuditData me, DateTime? timestamp = null)
+        public static AuditEventData WithTimestamp(this AuditEventData me, DateTime? timestamp = null)
         {
             me.Timestamp = timestamp ?? DateTime.Now;
             return me;
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Event identiifer set
         /// </summary>
-        public static AuditData WithEventIdentifier(this AuditData me, EventIdentifierType identifier)
+        public static AuditEventData WithEventIdentifier(this AuditEventData me, EventIdentifierType identifier)
         {
             me.EventIdentifier = identifier;
             return me;
@@ -121,7 +121,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add a query performed data element
         /// </summary>
-        public static AuditData WithQueryPerformed(this AuditData me, String queryPerformed)
+        public static AuditEventData WithQueryPerformed(this AuditEventData me, String queryPerformed)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -137,7 +137,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add policy authorization to the audit
         /// </summary>
-        public static AuditData WithPolicyAuthorization(this AuditData me, PolicyDecision policy)
+        public static AuditEventData WithPolicyAuthorization(this AuditEventData me, PolicyDecision policy)
         {
             me.AuditableObjects.AddRange(policy.Details.Select(o => new AuditableObject()
             {
@@ -153,7 +153,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add local device information
         /// </summary>
-        public static AuditData WithLocalDevice(this AuditData me)
+        public static AuditEventData WithLocalDevice(this AuditEventData me)
         {
             me.Actors.Add(new AuditActorData()
             {
@@ -170,7 +170,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Append user information
         /// </summary>
-        public static AuditData WithUser(this AuditData me, IPrincipal principal = null)
+        public static AuditEventData WithUser(this AuditEventData me, IPrincipal principal = null)
         {
             // Use all remote endpoint providers to find the current request
             principal = principal ?? AuthenticationContext.Current.Principal;
@@ -248,7 +248,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With object of patient
         /// </summary>
-        public static AuditData WithPatient(this AuditData me, Patient patient, AuditableObjectLifecycle lifecycle)
+        public static AuditEventData WithPatient(this AuditEventData me, Patient patient, AuditableObjectLifecycle lifecycle)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -265,7 +265,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add patient object to the audit
         /// </summary>
-        public static AuditData WithPerson(this AuditData me, Person person, AuditableObjectLifecycle lifecycle)
+        public static AuditEventData WithPerson(this AuditEventData me, Person person, AuditableObjectLifecycle lifecycle)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -282,7 +282,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add provider object to the audit
         /// </summary>
-        public static AuditData WithProvider(this AuditData me, Provider provider, AuditableObjectLifecycle lifecycle)
+        public static AuditEventData WithProvider(this AuditEventData me, Provider provider, AuditableObjectLifecycle lifecycle)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -299,7 +299,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add act object to the audit
         /// </summary>
-        public static AuditData WithAct(this AuditData me, Act act, AuditableObjectLifecycle lifecycle)
+        public static AuditEventData WithAct(this AuditEventData me, Act act, AuditableObjectLifecycle lifecycle)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -316,7 +316,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add HTTP information
         /// </summary>
-        public static AuditData WithHttpInformation(this AuditData me, HttpListenerRequest request)
+        public static AuditEventData WithHttpInformation(this AuditEventData me, HttpListenerRequest request)
         {
             me.AuditableObjects.Add(new AuditableObject()
             {
@@ -335,7 +335,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With a system object
         /// </summary>
-        public static AuditData WithSystemObjects(this AuditData me, AuditableObjectRole role, AuditableObjectLifecycle lifecycle, params Uri[] objectIds)
+        public static AuditEventData WithSystemObjects(this AuditEventData me, AuditableObjectRole role, AuditableObjectLifecycle lifecycle, params Uri[] objectIds)
         {
             me.AuditableObjects.AddRange(objectIds.Select(o => new AuditableObject()
             {

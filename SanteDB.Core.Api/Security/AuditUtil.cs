@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using SanteDB.Core.Security;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Configuration;
@@ -184,7 +185,7 @@ namespace SanteDB.Core.Security.Audit
             if (e.QueueName == QueueName)
             {
                 object queueObject = null;
-                while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditData ad)
+                while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditEventData ad)
                 {
                     try
                     {
@@ -253,7 +254,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditSynchronization(AuditableObjectLifecycle lifecycle, String remoteTarget, OutcomeIndicator outcome, params IdentifiedData[] objects)
         {
             AuditCode eventTypeId = new AuditCode("Synchronization", "SecurityAuditCode");
-            AuditEventData audit = new AuditEventData(DateTime.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export , eventTypeId);
+            AuditEventData audit = new AuditEventData(DateTime.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export, eventTypeId);
 
             AddLocalDeviceActor(audit);
             if (lifecycle == AuditableObjectLifecycle.Export) // me to remote
@@ -527,7 +528,8 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create AuditEventDataAction audit");
 
-            AuditEventData audit = new AuditEventData(DateTime.Now, ActionType.Read, disclosed ? OutcomeIndicator.Success : OutcomeIndicator.MinorFail, EventIdentifierType.SecurityAlert, new AuditCode("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditEventDataEvent") {
+            AuditEventData audit = new AuditEventData(DateTime.Now, ActionType.Read, disclosed ? OutcomeIndicator.Success : OutcomeIndicator.MinorFail, EventIdentifierType.SecurityAlert, new AuditCode("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditEventDataEvent")
+            {
                 DisplayName = "Sensitive Data Was Disclosed to User"
             });
 
@@ -665,7 +667,6 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void AddUserActor(AuditEventData audit, IPrincipal principal = null)
         {
-   
             // Use all remote endpoint providers to find the current request
             principal = principal ?? AuthenticationContext.Current.Principal;
 
