@@ -71,7 +71,7 @@ namespace SanteDB.Core.Configuration.Data
         /// <summary>
         /// Gets the groupings for the options
         /// </summary>
-        Dictionary<String, String[]> OptionGroups { get; }
+        IDictionary<String, String[]> OptionGroups { get; }
 
         /// <summary>
         /// Get the database provider .NET type

@@ -2,28 +2,29 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
-using ExpressionEvaluator;
+
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Xml.Serialization;
+using DynamicExpresso;
 
 namespace SanteDB.Core.Configuration
 {
@@ -33,7 +34,6 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(DataRetentionConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class DataRetentionConfigurationSection : IConfigurationSection
     {
-
         /// <summary>
         /// Creates a new retention
         /// </summary>
@@ -42,7 +42,6 @@ namespace SanteDB.Core.Configuration
             this.Variables = new List<DataRetentionVariableConfiguration>();
             this.RetentionRules = new List<DataRetentionRuleConfiguration>();
         }
-
 
         /// <summary>
         /// Gets the variables for this retention policy
@@ -62,7 +61,6 @@ namespace SanteDB.Core.Configuration
         /// Represent as a string
         /// </summary>
         public override string ToString() => $"{this.RetentionRules?.Count ?? 0} Policies";
-
     }
 
     /// <summary>
@@ -88,20 +86,19 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public Func<Object> CompileFunc(Dictionary<String, Func<Object>> variableFunc = null)
         {
-            CompiledExpression<dynamic> exp = new CompiledExpression<dynamic>(this.Expression);
-            exp.TypeRegistry = new TypeRegistry();
-            exp.TypeRegistry.RegisterDefaultTypes();
-            exp.TypeRegistry.RegisterType<Guid>();
-            exp.TypeRegistry.RegisterType<TimeSpan>();
-            exp.TypeRegistry.RegisterParameter("now", () => DateTime.Now); // because MONO is scumbag
+            var interpretor = new Interpreter(InterpreterOptions.Default)
+                    .Reference(typeof(Guid))
+                    .Reference(typeof(TimeSpan))
+                    .SetFunction("now", (Func<DateTime>)(() => DateTime.Now));
 
             if (variableFunc != null)
                 foreach (var fn in variableFunc)
-                    exp.TypeRegistry.RegisterParameter(fn.Key, fn.Value);
+                    interpretor = interpretor.SetFunction(fn.Key, fn.Value);
+
             //exp.TypeRegistry.RegisterSymbol("data", expressionParm);
             //exp.ScopeCompile<TData>();
             //Func<TData, bool> d = exp.ScopeCompile<TData>();
-            return exp.Compile();
+            return interpretor.ParseAsDelegate<Func<Object>>(this.Expression);
         }
     }
 
@@ -115,11 +112,13 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlEnum("purge")]
         Purge = 0x1,
+
         /// <summary>
         /// The object should be obsoleted in the persistence layer
         /// </summary>
         [XmlEnum("obsolete")]
         Obsolete = 0x2,
+
         /// <summary>
         /// The object should be archived using the IDataArchiveService
         /// </summary>
@@ -133,7 +132,6 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(DataRetentionRuleConfiguration), Namespace = "http://santedb.org/configuration")]
     public class DataRetentionRuleConfiguration
     {
-
         /// <summary>
         /// Gets the name of the rule
         /// </summary>

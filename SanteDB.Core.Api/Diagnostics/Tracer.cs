@@ -139,7 +139,7 @@ namespace SanteDB.Core.Diagnostics
         public static TWriter GetWriter<TWriter>()
             where TWriter : TraceWriter
         {
-            return m_writers.FirstOrDefault(o => o.Value is TWriter).Value as TWriter;
+            return m_writers.FirstOrDefault(o => o.Key is TWriter).Key as TWriter;
         }
     }
 }
