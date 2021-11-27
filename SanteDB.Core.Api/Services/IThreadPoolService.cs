@@ -37,5 +37,10 @@ namespace SanteDB.Core.Services
         /// Queue user work item
         /// </summary>
         void QueueUserWorkItem<TParam>(Action<TParam> action, TParam parm);
+
+        /// <summary>
+        /// Get worker status
+        /// </summary>
+        void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingInQueue);
     }
 }
