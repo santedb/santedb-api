@@ -101,7 +101,6 @@ namespace SanteDB.Core.Data
             {
                 // Detect any duplicates
                 var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
-
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
             }
