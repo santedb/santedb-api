@@ -18,7 +18,7 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// A persistent queue service that uses the file system (use when there's no other infrastructure)
     /// </summary>
-    public class FileSystemQueueService : IDispatcherQueueManagerService, IDisposable
+    public class FileSystemDispatcherQueue : IDispatcherQueueManagerService, IDisposable
     {
         /// <summary>
         /// Gets the service name
@@ -108,7 +108,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Queue file
         /// </summary>
-        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemQueueService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDispatcherQueue));
 
         // Pep service
         private readonly IPolicyEnforcementService m_pepService;
@@ -116,7 +116,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Initializes the file system queue
         /// </summary>
-        public FileSystemQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
+        public FileSystemDispatcherQueue(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
         {
             this.m_configuration = configurationManager.GetSection<FileSystemQueueConfigurationSection>();
             if (!Directory.Exists(this.m_configuration.QueuePath))
