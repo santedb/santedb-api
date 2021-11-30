@@ -29,7 +29,6 @@ namespace SanteDB.Core.Matching
         /// <summary>
         /// Log the end of a stage
         /// </summary>
-        /// <param name="stageId">The implementation specific stage identifier</param>
         void LogEndStage();
 
         /// <summary>
@@ -41,7 +40,6 @@ namespace SanteDB.Core.Matching
         /// <summary>
         /// Log the end of the action
         /// </summary>
-        /// <param name="counterTag">The tag of the counter to stop </param>
         void LogEndAction();
 
         /// <summary>
