@@ -33,9 +33,9 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Configures the <see cref="FileSystemQueueService"/> in the SanteDB configuration
+    /// Configures the <see cref="FileSystemDispatcherQueueService"/> in the SanteDB configuration
     /// </summary>
-    public class FileSystemQueueFeature : GenericServiceFeature<FileSystemQueueService>
+    public class FileSystemQueueFeature : GenericServiceFeature<FileSystemDispatcherQueueService>
     {
         /// <summary>
         /// File system queue feature
@@ -48,10 +48,10 @@ namespace SanteDB.Core.Configuration.Features
         public override string Group => FeatureGroup.System;
 
         /// <inheritdoc/>
-        public override Type ConfigurationType => typeof(FileSystemQueueConfigurationSection);
+        public override Type ConfigurationType => typeof(FileSystemDispatcherQueueConfigurationSection);
 
         /// <inheritdoc/>
-        protected override object GetDefaultConfiguration() => new FileSystemQueueConfigurationSection()
+        protected override object GetDefaultConfiguration() => new FileSystemDispatcherQueueConfigurationSection()
         {
             QueuePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "queue")
         };

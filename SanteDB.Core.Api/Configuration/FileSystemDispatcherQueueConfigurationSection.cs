@@ -9,8 +9,8 @@ namespace SanteDB.Core.Configuration
     /// <summary>
     /// Represents a configuration section for file system queueing
     /// </summary>
-    [XmlType(nameof(FileSystemQueueConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class FileSystemQueueConfigurationSection : IConfigurationSection
+    [XmlType(nameof(FileSystemDispatcherQueueConfigurationSection), Namespace = "http://santedb.org/configuration")]
+    public class FileSystemDispatcherQueueConfigurationSection : IConfigurationSection
     {
         /// <summary>
         /// Gets or sets the path to the queue location

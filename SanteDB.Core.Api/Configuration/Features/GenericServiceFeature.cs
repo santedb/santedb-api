@@ -41,7 +41,7 @@ namespace SanteDB.Core.Configuration.Features
     ///         // Override the group you want your feature to appear in
     ///         public override string Group => FeatureGroup.System;
     ///         // Override the type of configuration
-    ///         public override Type ConfigurationType => typeof(FileSystemQueueConfigurationSection);
+    ///         public override Type ConfigurationType => typeof(FileSystemDispatcherQueueConfigurationSection);
     ///     }
     ///
     /// ]]>

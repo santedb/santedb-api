@@ -18,7 +18,7 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// A persistent queue service that uses the file system (use when there's no other infrastructure)
     /// </summary>
-    public class FileSystemQueueService : IDispatcherQueueManagerService, IDisposable
+    public class FileSystemDispatcherQueueService : IDispatcherQueueManagerService, IDisposable
     {
         /// <summary>
         /// Gets the service name
@@ -100,7 +100,7 @@ namespace SanteDB.Core.Services.Impl
         }
 
         // Queue root directory
-        private FileSystemQueueConfigurationSection m_configuration;
+        private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
         // Watchers
         private Dictionary<String, IDisposable> m_watchers = new Dictionary<string, IDisposable>();
@@ -108,7 +108,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Queue file
         /// </summary>
-        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemQueueService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDispatcherQueueService));
 
         // Pep service
         private readonly IPolicyEnforcementService m_pepService;
@@ -116,9 +116,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Initializes the file system queue
         /// </summary>
-        public FileSystemQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
+        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
         {
-            this.m_configuration = configurationManager.GetSection<FileSystemQueueConfigurationSection>();
+            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>();
             if (!Directory.Exists(this.m_configuration.QueuePath))
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
             this.m_pepService = pepService;
