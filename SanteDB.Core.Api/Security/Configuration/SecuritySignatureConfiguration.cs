@@ -2,22 +2,23 @@
  * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you 
- * may not use this file except in compliance with the License. You may 
- * obtain a copy of the License at 
- * 
- * http://www.apache.org/licenses/LICENSE-2.0 
- * 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
- * License for the specific language governing permissions and limitations under 
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * User: fyfej
  * Date: 2021-8-5
  */
+
 using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
@@ -27,7 +28,6 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
 {
-
     /// <summary>
     /// Represents the type of signature algorithms
     /// </summary>
@@ -35,15 +35,17 @@ namespace SanteDB.Core.Security.Configuration
     public enum SignatureAlgorithm
     {
         /// <summary>
-        /// The desired signature algorithm is RSA+SHA256 (i.e. an X.509 cert) 
+        /// The desired signature algorithm is RSA+SHA256 (i.e. an X.509 cert)
         /// </summary>
         [XmlEnum("rs256")]
         RS256,
+
         /// <summary>
         /// The desired signature algorithm is HMAC256
         /// </summary>
         [XmlEnum("hmac")]
         HS256,
+
         /// <summary>
         /// The desired signature algorithm is RSA+SHA512
         /// </summary>
@@ -57,12 +59,12 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SecuritySignatureConfiguration), Namespace = "http://santedb.org/configuration")]
     public class SecuritySignatureConfiguration : X509ConfigurationElement
     {
-
         // Algorithm
         private SignatureAlgorithm m_algorithm = SignatureAlgorithm.HS256;
 
         // HMAC key
         private string m_plainTextSecret = null;
+
         private byte[] m_secret = null;
         private byte[] m_decrypedSecret = null;
 
@@ -141,16 +143,15 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
-        /// Should never serialize the secret (even though it is just NONE)
+        /// SHould serialize the secret?
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => !String.IsNullOrEmpty(this.m_plainTextSecret) && this.m_secret == null;
+        public bool ShouldSerializeHmacSecret() => this.m_secret != null;
 
         /// <summary>
         /// Get the HMAC secret
         /// </summary>
         public byte[] GetSecret()
         {
-
             if (this.m_decrypedSecret != null)
                 return this.m_decrypedSecret;
 
@@ -192,10 +193,8 @@ namespace SanteDB.Core.Security.Configuration
             this.m_secret[0] = (byte)iv.Length;
             Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
             Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
-            this.m_plainTextSecret = String.Empty;
             return true;
         }
-
 
         /// <summary>
         /// Represent as a string

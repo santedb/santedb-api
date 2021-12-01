@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Queue;
@@ -40,7 +41,7 @@ namespace SanteDB.Core.PubSub.Broker
     /// Notification metadata which is placed in the persistence queue
     /// </summary>
     [XmlType(nameof(PubSubNotifyQueueEntry), Namespace = "http://santedb.org/pubsub")]
-    [ResourceCollection()]
+    [AddDependentSerializersAttribute]
     public class PubSubNotifyQueueEntry
     {
         /// <summary>
