@@ -321,8 +321,9 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <param name="targetOfMasking">The object which was masked</param>
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
+        /// <param name="maskedObject">The object that was masked</param>
         /// <param name="decision">The decision which caused the masking to occur</param>
-        public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved)
+        public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             where TModel : IdentifiedData
         {
             AuditUtil.AuditDataAction(new AuditCode("SecurityAuditCode-Masking", "SecurityAuditCode") { DisplayName = "Mask Sensitive Data" }, ActionType.Execute, AuditableObjectLifecycle.Deidentification, EventIdentifierType.ApplicationActivity, OutcomeIndicator.Success, null, decision, targetOfMasking);
@@ -414,15 +415,12 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            if (action == ActionType.Create || action == ActionType.Update || action == ActionType.Delete || s_configuration.CompleteAuditTrail)
+            audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
             {
-                audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
-                {
-                    if (o is Bundle bundle)
-                        return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
-                    else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
-                }).ToList();
-            }
+                if (o is Bundle bundle)
+                    return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
+                else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
+            }).ToList();
 
             // Query performed
             if (!String.IsNullOrEmpty(queryPerformed))
