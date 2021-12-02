@@ -106,7 +106,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get all merge candidates
         /// </summary>
-        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates();
+        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates(int count, int offset, out int totalResults);
 
         /// <summary>
         /// Gets the ignore list for the specified master record

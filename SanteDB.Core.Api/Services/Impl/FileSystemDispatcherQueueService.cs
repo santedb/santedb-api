@@ -137,36 +137,44 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public Queue.DispatcherQueueEntry DequeueById(string queueName, string correlationId)
         {
-            if (String.IsNullOrEmpty(queueName))
-                throw new ArgumentNullException(nameof(queueName));
-
-            // Open the queue
-            this.Open(queueName);
-
-            String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
-
-            // Serialize
-            String queueFile = null;
-
-            if (String.IsNullOrEmpty(correlationId))
+            try
             {
-                queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
-            }
-            else
-            {
-                queueFile = Path.Combine(queueDirectory, correlationId);
-            }
+                if (String.IsNullOrEmpty(queueName))
+                    throw new ArgumentNullException(nameof(queueName));
 
-            if (queueFile == null || !File.Exists(queueFile)) return null;
+                // Open the queue
+                this.Open(queueName);
 
-            this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
-            QueueEntry retVal = null;
-            using (var fs = File.OpenRead(queueFile))
-            {
-                retVal = QueueEntry.Load(fs);
+                String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
+
+                // Serialize
+                String queueFile = null;
+
+                if (String.IsNullOrEmpty(correlationId))
+                {
+                    queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
+                }
+                else
+                {
+                    queueFile = Path.Combine(queueDirectory, correlationId);
+                }
+
+                if (queueFile == null || !File.Exists(queueFile)) return null;
+
+                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                QueueEntry retVal = null;
+                using (var fs = File.OpenRead(queueFile))
+                {
+                    retVal = QueueEntry.Load(fs);
+                }
+                File.Delete(queueFile);
+                return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
             }
-            File.Delete(queueFile);
-            return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error de-queueing {0} - {1}", queueName, e);
+                return null;
+            }
         }
 
         /// <summary>

@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
@@ -150,7 +151,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
         }
 
         /// <summary>
@@ -158,7 +159,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
         }
 
         /// <summary>
