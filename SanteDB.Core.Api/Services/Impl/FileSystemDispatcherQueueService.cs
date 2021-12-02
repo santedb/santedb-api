@@ -25,6 +25,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public string ServiceName => "File System Message Queue";
 
+        // Disposed already?
+        private bool m_disposed = false;
+
         /// <summary>
         /// Queue entry
         /// </summary>
@@ -219,10 +222,16 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            foreach (var itm in this.m_watchers)
+            if (!this.m_disposed)
             {
-                this.m_tracer.TraceInfo("Disposing queue {0}", itm.Key);
-                itm.Value.Dispose();
+                this.m_disposed = true;
+                foreach (var itm in this.m_watchers)
+                {
+                    this.m_tracer.TraceInfo("Disposing queue {0}", itm.Key);
+                    itm.Value.Dispose();
+                }
+                this.m_watchers.Clear();
+                this.m_watchers = null;
             }
         }
 

@@ -105,6 +105,11 @@ namespace SanteDB.Core.Services.Impl
             }
 
             /// <summary>
+            /// Get the created instance otherwise null
+            /// </summary>
+            internal object GetCreatedInstance() => this.m_singletonInstance;
+
+            /// <summary>
             /// Get an instance of the object
             /// </summary>
             public object GetInstance()
@@ -504,7 +509,7 @@ namespace SanteDB.Core.Services.Impl
 
             foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager)).ToArray())
             {
-                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetInstance() is IDaemonService daemon)
+                if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetCreatedInstance() is IDaemonService daemon)
                 {
                     this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
