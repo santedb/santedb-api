@@ -273,10 +273,10 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get global merge candidates
             /// </summary>
-            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates()
+            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates(int offset, int count, out int totalCount)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, count, out totalCount, AuthenticationContext.SystemPrincipal);
                 return candidate;
             }
 
