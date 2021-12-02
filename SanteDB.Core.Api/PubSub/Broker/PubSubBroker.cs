@@ -22,6 +22,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Queue;
@@ -148,17 +149,17 @@ namespace SanteDB.Core.PubSub.Broker
 
                                     case PubSubEventType.Merge:
                                         {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out IEnumerable<IdentifiedData> duplicates))
+                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
                                             {
-                                                dsptchr.NotifyMerged(survivor, duplicates);
+                                                dsptchr.NotifyMerged(survivor, duplicates.Item);
                                             }
                                             break;
                                         }
                                     case PubSubEventType.UnMerge:
                                         {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out IEnumerable<IdentifiedData> duplicates))
+                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
                                             {
-                                                dsptchr.NotifyUnMerged(survivor, duplicates);
+                                                dsptchr.NotifyUnMerged(survivor, duplicates.Item);
                                             }
                                             break;
                                         }
