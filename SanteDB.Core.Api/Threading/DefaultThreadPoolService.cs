@@ -45,7 +45,7 @@ namespace SanteDB.Core.Services.Impl
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         // Number of threads to keep alive
-        private int m_concurrencyLevel = System.Environment.ProcessorCount * 4;
+        private int m_concurrencyLevel = System.Environment.ProcessorCount * 16;
 
         // Queue of work items
         private ConcurrentQueue<WorkItem> m_queue = null;
@@ -244,7 +244,7 @@ namespace SanteDB.Core.Services.Impl
         public void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingQueue)
         {
             totalWorkers = this.m_threadPool.Length;
-            availableWorkers =  totalWorkers - (int)Interlocked.Read(ref m_busyWorkers);
+            availableWorkers = totalWorkers - (int)Interlocked.Read(ref m_busyWorkers);
             waitingQueue = this.m_queue.Count;
         }
     }
