@@ -78,6 +78,77 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
+    /// Load strategy
+    /// </summary>
+    public enum LoadMode
+    {
+        /// <summary>
+        /// Quick loading - No properties are loaded and the caller must load
+        /// </summary>
+        QuickLoad,
+
+        /// <summary>
+        /// Sync loading - only properties which are necessary for synchronization
+        /// </summary>
+        SyncLoad,
+
+        /// <summary>
+        /// Full loading - load all properties
+        /// </summary>
+        FullLoad
+    }
+
+    /// <summary>
+    /// A query context class that allows the caller to specify / override the load settings for the .Query() methods
+    /// </summary>
+    public class DataPersistenceQueryContext : IDisposable
+    {
+        // The current query context
+        [ThreadStatic]
+        private static DataPersistenceQueryContext m_current;
+
+        // Loading mode
+        private readonly LoadMode m_loadMode;
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceQueryContext(LoadMode loadingMode)
+        {
+            this.m_loadMode = loadingMode;
+        }
+
+        /// <summary>
+        /// Gets the current query context
+        /// </summary>
+        public static DataPersistenceQueryContext Current => m_current;
+
+        /// <summary>
+        /// Gets this context's load mode
+        /// </summary>
+        public LoadMode LoadMode => this.m_loadMode;
+
+        /// <summary>
+        /// Sets the current loading mode
+        /// </summary>
+        /// <param name="loadMode"></param>
+        /// <returns></returns>
+        public static DataPersistenceQueryContext Create(LoadMode loadMode)
+        {
+            m_current = new DataPersistenceQueryContext(loadMode);
+            return m_current;
+        }
+
+        /// <summary>
+        /// Unload the current
+        /// </summary>
+        public void Dispose()
+        {
+            m_current = null;
+        }
+    }
+
+    /// <summary>
     /// Represents a data persistence service which is capable of storing and retrieving data
     /// to/from a data store
     /// </summary>
