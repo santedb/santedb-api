@@ -139,13 +139,14 @@ namespace SanteDB.Core.Security.Configuration
             {
                 this.m_secret = null;
                 this.m_plainTextSecret = value;
+                
             }
         }
 
         /// <summary>
         /// SHould serialize the secret?
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => this.m_secret != null;
+        public bool ShouldSerializeHmacSecret() => this.m_secret == null;
 
         /// <summary>
         /// Get the HMAC secret

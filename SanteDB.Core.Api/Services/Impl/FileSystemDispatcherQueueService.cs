@@ -377,7 +377,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void UnSubscribe(string queueName, DispatcherQueueCallback callback)
         {
-            if (this.m_watchers.TryGetValue(queueName, out var queueWatcher))
+            if (this.m_watchers != null && this.m_watchers.TryGetValue(queueName, out var queueWatcher))
             {
                 queueWatcher.Dispose();
             }

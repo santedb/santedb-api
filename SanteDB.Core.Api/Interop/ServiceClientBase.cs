@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+
+using System.Diagnostics.CodeAnalysis;
 using SanteDB.Core.Http;
 using SanteDB.Core.Http.Description;
 
@@ -26,6 +28,7 @@ namespace SanteDB.Core.Interop.Clients
     /// <summary>
     /// Represents a basic service client
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public abstract class ServiceClientBase
     {
         // The configuration
