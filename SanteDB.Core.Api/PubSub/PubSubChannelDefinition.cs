@@ -38,13 +38,13 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Gets or sets the name
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlElement("name"), JsonProperty("name")]
         public String Name { get; set; }
 
         /// <summary>
         /// Gets or sets whether the channel is active
         /// </summary>
-        [XmlAttribute("active"), JsonProperty("active")]
+        [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
         /// <summary>
