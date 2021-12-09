@@ -114,13 +114,13 @@ namespace SanteDB.Core.PubSub
         /// Starts when
         /// </summary>
         [XmlElement("notBefore"), JsonProperty("notBefore")]
-        public DateTimeOffset? NotBefore { get; set; }
+        public DateTime? NotBefore { get; set; }
 
         /// <summary>
         /// Not after
         /// </summary>
         [XmlElement("notAfter"), JsonProperty("notAfter")]
-        public DateTimeOffset? NotAfter { get; set; }
+        public DateTime? NotAfter { get; set; }
 
         /// <summary>
         /// Gets or sets the channel

@@ -282,7 +282,8 @@ namespace SanteDB.Core.PubSub.Broker
             lock (this.m_lock)
             {
                 // If there are no further types subscribed then remove the listener
-                if (this.m_pubSubManager.FindSubscription(o => o.ResourceType == e.Data.ResourceType).Count() == 0)
+                var resourceXml = e.Data.ResourceType.GetSerializationName();
+                if (!this.m_pubSubManager.FindSubscription(o => o.ResourceTypeXml == resourceXml).Any())
                 {
                     var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
                     var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.GetType().Equals(o.GetType()));
