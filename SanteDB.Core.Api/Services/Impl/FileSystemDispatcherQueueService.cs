@@ -217,7 +217,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Open(string queueName)
         {
-            if (this.m_watchers.ContainsKey(queueName))
+            if (this.m_watchers?.ContainsKey(queueName) == true)
                 return; // already open
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
