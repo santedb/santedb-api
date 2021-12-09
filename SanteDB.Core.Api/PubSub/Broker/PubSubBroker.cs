@@ -185,7 +185,7 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
-                        .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -283,10 +283,10 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 // If there are no further types subscribed then remove the listener
                 var resourceXml = e.Data.ResourceType.GetSerializationName();
-                if (!this.m_pubSubManager.FindSubscription(o => o.ResourceTypeXml == resourceXml).Any())
+                if (!this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == resourceXml).Any())
                 {
                     var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
-                    var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.GetType().Equals(o.GetType()));
+                    var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.Equals(o.GetType()));
                     listener.Dispose();
                     this.m_repositoryListeners.Remove(listener);
                 }
