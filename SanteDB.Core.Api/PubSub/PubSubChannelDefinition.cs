@@ -60,15 +60,9 @@ namespace SanteDB.Core.PubSub
         public List<PubSubChannelSetting> Settings { get; set; }
 
         /// <summary>
-        /// Gets or sets the dispatcher type
+        /// Gets the dispatcher factory scheme
         /// </summary>
-        [XmlElement("dispatcherFactory"), JsonProperty("dispatcherFactory")]
-        public String DispatcherFactoryTypeXml { get; set; }
-
-        /// <summary>
-        /// Gets the dispatcher type
-        /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public Type DispatcherFactoryType => System.Type.GetType(this.DispatcherFactoryTypeXml);
+        [XmlElement("dispatcherFactoryId"), JsonProperty("dispatcherFactoryId")]
+        public String DispatcherFactoryId { get; set; }
     }
 }

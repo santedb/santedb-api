@@ -223,7 +223,7 @@ namespace SanteDB.Core.PubSub.Broker
                 foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
                 {
                     var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                    var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
+                    var factory = DispatcherFactoryUtil.FindDispatcherFactoryById(channelDef.DispatcherFactoryId);
                     yield return factory.CreateDispatcher(chnl.Key, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
                 }
             }
