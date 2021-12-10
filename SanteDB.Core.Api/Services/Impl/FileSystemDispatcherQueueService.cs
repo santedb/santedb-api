@@ -110,6 +110,12 @@ namespace SanteDB.Core.Services.Impl
         // Watchers
         private ConcurrentDictionary<String, List<DispatcherQueueCallback>> m_watchers = new ConcurrentDictionary<string, List<DispatcherQueueCallback>>();
 
+        // Notification queue
+        private ConcurrentQueue<DispatcherMessageEnqueuedInfo> m_notificationQueue = new ConcurrentQueue<DispatcherMessageEnqueuedInfo>();
+
+        // Reset event
+        private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
+
         /// <summary>
         /// Queue file
         /// </summary>
@@ -117,6 +123,9 @@ namespace SanteDB.Core.Services.Impl
 
         // Pep service
         private readonly IPolicyEnforcementService m_pepService;
+
+        // Listener thread
+        private Thread m_listenerThread = null;
 
         /// <summary>
         /// Initializes the file system queue
@@ -127,6 +136,29 @@ namespace SanteDB.Core.Services.Impl
             if (!Directory.Exists(this.m_configuration.QueuePath))
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
             this.m_pepService = pepService;
+
+            // Listener thread
+            this.m_listenerThread = new Thread(() =>
+            {
+                while (true)
+                {
+                    this.m_resetEvent.Wait();
+                    while (this.m_notificationQueue.TryDequeue(out var result))
+                    {
+                        if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
+                        {
+                            foreach (var cb in callbacks)
+                            {
+                                cb(result);
+                            }
+                        }
+                    }
+                }
+            });
+            this.m_listenerThread.IsBackground = true;
+            this.m_listenerThread.Name = "FileSystemListener";
+            this.m_listenerThread.Start();
+
         }
 
         /// <summary>
@@ -212,14 +244,17 @@ namespace SanteDB.Core.Services.Impl
             using (var fs = File.Create(filePath))
                 QueueEntry.Create(data).Save(fs);
 
-            if(this.m_watchers.TryGetValue(queueName, out var callbacks))
-            {
-                foreach(var cb in callbacks)
-                {
-                    cb.BeginInvoke(new DispatcherMessageEnqueuedInfo(queueName, filePath), null, null);
-                }
-            }
+            this.NotifyQueuePush(queueName, Path.GetFileNameWithoutExtension(filePath));
             this.m_tracer.TraceInfo("Successfully queued {0}", fname);
+        }
+
+        /// <summary>
+        /// Notify queue push
+        /// </summary>
+        private void NotifyQueuePush(string queueName, string correlationId)
+        {
+            this.m_notificationQueue.Enqueue(new DispatcherMessageEnqueuedInfo(queueName, correlationId));
+            this.m_resetEvent.Set();
         }
 
         /// <summary>
@@ -246,6 +281,8 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_watchers.Clear();
                 this.m_watchers = null;
+
+                this.m_listenerThread.Abort();
             }
         }
 
@@ -259,13 +296,7 @@ namespace SanteDB.Core.Services.Impl
             File.Move(oldEntryPath, newEntryPath);
 
             // Call callbacks
-            if(this.m_watchers.TryGetValue(toQueue, out var callbacks))
-            {
-                foreach(var itm in callbacks)
-                {
-                    itm.BeginInvoke(new DispatcherMessageEnqueuedInfo(toQueue, entry.CorrelationId), null, null);
-                }
-            }
+            this.NotifyQueuePush(toQueue, entry.CorrelationId);
             return new Core.Queue.DispatcherQueueEntry(entry.CorrelationId, toQueue, DateTime.Now, entry.Label, entry.Body);
         }
 
