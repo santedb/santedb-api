@@ -18,12 +18,15 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// A persistent queue service that uses the file system (use when there's no other infrastructure)
     /// </summary>
-    public class FileSystemQueueService : IDispatcherQueueManagerService, IDisposable
+    public class FileSystemDispatcherQueueService : IDispatcherQueueManagerService, IDisposable
     {
         /// <summary>
         /// Gets the service name
         /// </summary>
         public string ServiceName => "File System Message Queue";
+
+        // Disposed already?
+        private bool m_disposed = false;
 
         /// <summary>
         /// Queue entry
@@ -100,7 +103,7 @@ namespace SanteDB.Core.Services.Impl
         }
 
         // Queue root directory
-        private FileSystemQueueConfigurationSection m_configuration;
+        private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
         // Watchers
         private Dictionary<String, IDisposable> m_watchers = new Dictionary<string, IDisposable>();
@@ -108,7 +111,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Queue file
         /// </summary>
-        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemQueueService));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDispatcherQueueService));
 
         // Pep service
         private readonly IPolicyEnforcementService m_pepService;
@@ -116,9 +119,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Initializes the file system queue
         /// </summary>
-        public FileSystemQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
+        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
         {
-            this.m_configuration = configurationManager.GetSection<FileSystemQueueConfigurationSection>();
+            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>();
             if (!Directory.Exists(this.m_configuration.QueuePath))
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
             this.m_pepService = pepService;
@@ -137,36 +140,44 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public Queue.DispatcherQueueEntry DequeueById(string queueName, string correlationId)
         {
-            if (String.IsNullOrEmpty(queueName))
-                throw new ArgumentNullException(nameof(queueName));
-
-            // Open the queue
-            this.Open(queueName);
-
-            String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
-
-            // Serialize
-            String queueFile = null;
-
-            if (String.IsNullOrEmpty(correlationId))
+            try
             {
-                queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
-            }
-            else
-            {
-                queueFile = Path.Combine(queueDirectory, correlationId);
-            }
+                if (String.IsNullOrEmpty(queueName))
+                    throw new ArgumentNullException(nameof(queueName));
 
-            if (queueFile == null || !File.Exists(queueFile)) return null;
+                // Open the queue
+                this.Open(queueName);
 
-            this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
-            QueueEntry retVal = null;
-            using (var fs = File.OpenRead(queueFile))
-            {
-                retVal = QueueEntry.Load(fs);
+                String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
+
+                // Serialize
+                String queueFile = null;
+
+                if (String.IsNullOrEmpty(correlationId))
+                {
+                    queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
+                }
+                else
+                {
+                    queueFile = Path.Combine(queueDirectory, correlationId);
+                }
+
+                if (queueFile == null || !File.Exists(queueFile)) return null;
+
+                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                QueueEntry retVal = null;
+                using (var fs = File.OpenRead(queueFile))
+                {
+                    retVal = QueueEntry.Load(fs);
+                }
+                File.Delete(queueFile);
+                return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
             }
-            File.Delete(queueFile);
-            return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error de-queueing {0} - {1}", queueName, e);
+                return null;
+            }
         }
 
         /// <summary>
@@ -206,7 +217,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Open(string queueName)
         {
-            if (this.m_watchers.ContainsKey(queueName))
+            if (this.m_watchers?.ContainsKey(queueName) == true)
                 return; // already open
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
@@ -219,10 +230,16 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            foreach (var itm in this.m_watchers)
+            if (!this.m_disposed)
             {
-                this.m_tracer.TraceInfo("Disposing queue {0}", itm.Key);
-                itm.Value.Dispose();
+                this.m_disposed = true;
+                foreach (var itm in this.m_watchers)
+                {
+                    this.m_tracer.TraceInfo("Disposing queue {0}", itm.Key);
+                    itm.Value.Dispose();
+                }
+                this.m_watchers.Clear();
+                this.m_watchers = null;
             }
         }
 
@@ -360,7 +377,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void UnSubscribe(string queueName, DispatcherQueueCallback callback)
         {
-            if (this.m_watchers.TryGetValue(queueName, out var queueWatcher))
+            if (this.m_watchers != null && this.m_watchers.TryGetValue(queueName, out var queueWatcher))
             {
                 queueWatcher.Dispose();
             }

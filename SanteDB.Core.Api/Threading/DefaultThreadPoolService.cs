@@ -45,7 +45,7 @@ namespace SanteDB.Core.Services.Impl
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         // Number of threads to keep alive
-        private int m_concurrencyLevel = System.Environment.ProcessorCount * 4;
+        private int m_concurrencyLevel = System.Environment.ProcessorCount * 16;
 
         // Queue of work items
         private ConcurrentQueue<WorkItem> m_queue = null;
@@ -55,6 +55,9 @@ namespace SanteDB.Core.Services.Impl
 
         // True when the thread pool is being disposed
         private bool m_disposing = false;
+
+        // The number of busy workers
+        private long m_busyWorkers = 0;
 
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
@@ -182,7 +185,15 @@ namespace SanteDB.Core.Services.Impl
                     this.m_resetEvent.Wait();
                     while (this.m_queue.TryDequeue(out WorkItem wi))
                     {
-                        wi.Callback(wi.State);
+                        try
+                        {
+                            Interlocked.Increment(ref m_busyWorkers);
+                            wi.Callback(wi.State);
+                        }
+                        finally
+                        {
+                            Interlocked.Decrement(ref m_busyWorkers);
+                        }
                     }
                     this.m_resetEvent.Reset();
                 }
@@ -225,6 +236,16 @@ namespace SanteDB.Core.Services.Impl
                     m_threadPool[i] = null;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get worker status
+        /// </summary>
+        public void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingQueue)
+        {
+            totalWorkers = this.m_threadPool.Length;
+            availableWorkers = totalWorkers - (int)Interlocked.Read(ref m_busyWorkers);
+            waitingQueue = this.m_queue.Count;
         }
     }
 }

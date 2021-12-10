@@ -158,6 +158,9 @@ namespace SanteDB.Core.Security.Audit
         // Queue service
         private static IDispatcherQueueManagerService m_queueService = ApplicationServiceContext.Current.GetService<IDispatcherQueueManagerService>();
 
+        // Repository service
+        private static IRepositoryService<AuditData> m_repositoryService = ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>();
+
         // Dispatch service
         private static IAuditDispatchService m_dispatcher = ApplicationServiceContext.Current.GetService<IAuditDispatchService>();
 
@@ -182,26 +185,47 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         private static void AuditQueued(DispatcherMessageEnqueuedInfo e)
         {
-            if (e.QueueName == QueueName)
+            object queueObject = null;
+            while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditData auditData)
             {
-                object queueObject = null;
-                while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditEventData ad)
+                try
                 {
-                    try
+                    SendAuditInternal(auditData);
+                }
+                catch (Exception ex)
+                {
+                    traceSource.TraceError("Error dispatching audit - {0}", ex);
+                    m_queueService.Enqueue($"{QueueName}.dead", auditData);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Send audit internal logic
+        /// </summary>
+        private static void SendAuditInternal(AuditData auditData)
+        {
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                // Filter apply?
+                var filters = s_configuration?.AuditFilters.Where(f =>
+                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(auditData.Outcome)) &&
+                    (!f.ActionSpecified ^ f.Action.HasFlag(auditData.ActionCode)) &&
+                    (!f.EventSpecified ^ f.Event.HasFlag(auditData.EventIdentifier)));
+
+                if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
+                {
+                    m_repositoryService?.Insert(auditData); // insert into local AR
+                }
+                if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
+                {
+                    if (m_dispatcher == null)
                     {
-                        if (m_dispatcher == null)
-                        {
-                            traceSource.TraceWarning("Cannot dispatch audit to central server - no dispatcher is available");
-                        }
-                        else
-                        {
-                            m_dispatcher?.SendAudit(ad);
-                        }
+                        traceSource.TraceWarning("Cannot dispatch audit to central server - no dispatcher is available");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        traceSource.TraceError("Error dispatching audit - {0}", ex);
-                        m_queueService.Enqueue($"{QueueName}.dead", ad);
+                        m_dispatcher?.SendAudit(auditData);
                     }
                 }
             }
@@ -322,8 +346,9 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         /// <param name="targetOfMasking">The object which was masked</param>
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
+        /// <param name="maskedObject">The object that was masked</param>
         /// <param name="decision">The decision which caused the masking to occur</param>
-        public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved)
+        public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             where TModel : IdentifiedData
         {
             AuditUtil.AuditEventDataAction(new AuditCode("SecurityAuditCode-Masking", "SecurityAuditCode") { DisplayName = "Mask Sensitive Data" }, ActionType.Execute, AuditableObjectLifecycle.Deidentification, EventIdentifierType.ApplicationActivity, OutcomeIndicator.Success, null, decision, targetOfMasking);
@@ -415,15 +440,12 @@ namespace SanteDB.Core.Security.Audit
             AddUserActor(audit);
 
             // Objects
-            if (action == ActionType.Create || action == ActionType.Update || action == ActionType.Delete || s_configuration.CompleteAuditTrail)
+            audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
             {
-                audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
-                {
-                    if (o is Bundle bundle)
-                        return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
-                    else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
-                }).ToList();
-            }
+                if (o is Bundle bundle)
+                    return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
+                else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
+            }).ToList();
 
             // Query performed
             if (!String.IsNullOrEmpty(queryPerformed))
@@ -603,62 +625,40 @@ namespace SanteDB.Core.Security.Audit
         public static void SendAudit(AuditEventData audit)
         {
             // If the current principal is SYSTEM then we don't need to send an audit
-            Action<object> workitem = (o) =>
-            {
-                try
-                {
-                    dynamic metadata = o;
-                    var rc = metadata.rc as RemoteEndpointInfo;
-                    var principal = metadata.principal as IClaimsPrincipal;
-                    var auditData = metadata.audit as AuditEventData;
-                    traceSource.TraceInfo("Dispatching audit {0} - {1}", auditData.ActionCode, auditData.EventIdentifier);
 
-                    // Get audit metadata
-                    auditData.AddMetadata(AuditMetadataKey.PID, Process.GetCurrentProcess().Id.ToString());
-                    auditData.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
-                    auditData.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
-                    auditData.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
-                    auditData.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
-                    auditData.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
-                    auditData.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
-                    auditData.AddMetadata(AuditMetadataKey.ForwardInformation, rc?.ForwardInformation);
-                    auditData.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
-                    //audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? null)?.ToString());
-
-                    // Filter apply?
-                    var filters = s_configuration?.AuditFilters.Where(f =>
-                    (!f.OutcomeSpecified ^ f.Outcome.HasFlag(auditData.Outcome)) &&
-                        (!f.ActionSpecified ^ f.Action.HasFlag(auditData.ActionCode)) &&
-                        (!f.EventSpecified ^ f.Event.HasFlag(auditData.EventIdentifier)));
-
-                    using (AuthenticationContext.EnterSystemContext())
-                    {
-                        if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                            ApplicationServiceContext.Current.GetService<IRepositoryService<AuditEventData>>()?.Insert(auditData); // insert into local AR
-                        if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
-                        {
-                            if (m_queueService != null)
-                                m_queueService.Enqueue(QueueName, auditData);
-                            else
-                                ApplicationServiceContext.Current.GetService<IAuditDispatchService>()?.SendAudit(auditData); // Not ideal -
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    traceSource.TraceError("Error dispatching / saving audit: {0}", e);
-                }
-            };
-
-            // Action
-            var parm = new { rc = RemoteEndpointUtil.Current.GetRemoteClient(), principal = AuthenticationContext.Current.Principal, audit = audit };
             try
             {
-                ApplicationServiceContext.Current.GetService<IThreadPoolService>()?.QueueUserWorkItem(workitem, parm); // background
+                var rc = RemoteEndpointUtil.Current.GetRemoteClient();
+                var principal = AuthenticationContext.Current.Principal as IClaimsPrincipal;
+                traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
+
+                // Get audit metadata
+                audit.AddMetadata(AuditMetadataKey.PID, Process.GetCurrentProcess().Id.ToString());
+                audit.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
+                audit.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
+                audit.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
+                audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
+                audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
+                audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
+                audit.AddMetadata(AuditMetadataKey.ForwardInformation, rc?.ForwardInformation);
+                audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
+                //audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? null)?.ToString());
+
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    if (m_queueService != null)
+                    {
+                        m_queueService.Enqueue(QueueName, audit);
+                    }
+                    else
+                    {
+                        SendAuditInternal(audit);
+                    }
+                }
             }
-            catch
+            catch (Exception e)
             {
-                workitem(parm); // service is stopped
+                traceSource.TraceError("Error dispatching / saving audit: {0}", e);
             }
         }
 

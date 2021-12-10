@@ -103,7 +103,7 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Registers the specified pub-sub channel using the specified dispatcher
         /// </summary>
-        PubSubChannelDefinition RegisterChannel(String name, Uri endpoint, IDictionary<String, String> settings);
+        PubSubChannelDefinition RegisterChannel(String name, String dispatchFactoryId, Uri endpoint, IDictionary<String, String> settings);
 
         /// <summary>
         /// Updates the specified pub-sub channel

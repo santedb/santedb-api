@@ -141,11 +141,11 @@ namespace SanteDB.Core.Configuration
         /// <param name="dataStream">Data stream.</param>
         public void Save(Stream dataStream)
         {
-            this.SectionTypes = this.Sections.Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
-            var namespaces = this.Sections.Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
+            this.SectionTypes = this.Sections.OfType<IConfigurationSection>().Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
+            var namespaces = this.Sections.OfType<IConfigurationSection>().Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.OfType<TypeReferenceConfiguration>().Select(o => o.Type).Where(o => o != null).ToArray());
             xsz.Serialize(dataStream, this, xmlns);
         }
 
@@ -190,7 +190,7 @@ namespace SanteDB.Core.Configuration
         /// <param name="t">T.</param>
         public object GetSection(Type t)
         {
-            return this.Sections.Find(o => t.IsAssignableFrom(o.GetType()));
+            return this.Sections.OfType<IConfigurationSection>().FirstOrDefault(o => t.IsAssignableFrom(o.GetType()));
         }
 
         /// <summary>
@@ -198,6 +198,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public void AddSection<T>(T section)
         {
+            if(section == null)
+            {
+                throw new InvalidOperationException("Cannot add a null section");
+            }
             if (!this.SectionTypes.Any(o => o.Type == typeof(T)))
             {
                 this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(T)));

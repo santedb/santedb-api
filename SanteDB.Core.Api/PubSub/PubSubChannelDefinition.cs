@@ -38,13 +38,13 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Gets or sets the name
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlElement("name"), JsonProperty("name")]
         public String Name { get; set; }
 
         /// <summary>
         /// Gets or sets whether the channel is active
         /// </summary>
-        [XmlAttribute("active"), JsonProperty("active")]
+        [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
         /// <summary>
@@ -60,15 +60,9 @@ namespace SanteDB.Core.PubSub
         public List<PubSubChannelSetting> Settings { get; set; }
 
         /// <summary>
-        /// Gets or sets the dispatcher type
+        /// Gets the dispatcher factory scheme
         /// </summary>
-        [XmlElement("dispatcherFactory"), JsonProperty("dispatcherFactory")]
-        public String DispatcherFactoryTypeXml { get; set; }
-
-        /// <summary>
-        /// Gets the dispatcher type
-        /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public Type DispatcherFactoryType => System.Type.GetType(this.DispatcherFactoryTypeXml);
+        [XmlElement("dispatcherFactoryId"), JsonProperty("dispatcherFactoryId")]
+        public String DispatcherFactoryId { get; set; }
     }
 }

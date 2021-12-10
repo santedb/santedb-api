@@ -23,6 +23,8 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Queue;
@@ -40,7 +42,7 @@ namespace SanteDB.Core.PubSub.Broker
     /// Notification metadata which is placed in the persistence queue
     /// </summary>
     [XmlType(nameof(PubSubNotifyQueueEntry), Namespace = "http://santedb.org/pubsub")]
-    [ResourceCollection()]
+    [AddDependentSerializersAttribute]
     public class PubSubNotifyQueueEntry
     {
         /// <summary>
@@ -125,12 +127,12 @@ namespace SanteDB.Core.PubSub.Broker
         public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager)
         {
             this.m_pubSubManager = pubSubManager;
-            this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
+            this.m_repository = ApplicationServiceContext.Current.GetService<IRepositoryService<TModel>>() as INotifyRepositoryService<TModel>;
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
 
             if (this.m_repository == null)
-                throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
+                throw new InvalidOperationException($"Cannot actively subscribe to {typeof(TModel).FullName} as this repository does not raise events");
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
@@ -149,7 +151,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
         }
 
         /// <summary>
@@ -157,7 +159,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
         }
 
         /// <summary>

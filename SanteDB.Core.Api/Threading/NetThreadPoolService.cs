@@ -80,5 +80,15 @@ namespace SanteDB.Core.Services.Impl
                 }
             }, parm);
         }
+
+        /// <summary>
+        /// Get worker status
+        /// </summary>
+        public void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingInQueue)
+        {
+            ThreadPool.GetMaxThreads(out totalWorkers, out _);
+            ThreadPool.GetAvailableThreads(out availableWorkers, out _);
+            waitingInQueue = 0;
+        }
     }
 }

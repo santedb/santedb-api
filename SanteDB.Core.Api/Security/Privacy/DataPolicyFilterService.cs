@@ -72,6 +72,15 @@ namespace SanteDB.Core.Security.Privacy
         // Password Hashing
         private IPasswordHashingService m_hasher;
 
+        // Data caching service
+        private IDataCachingService m_dataCachingService;
+
+        // Subscription executor
+        private ISubscriptionExecutor m_subscriptionExecutor;
+
+        // Threadpool service
+        private IThreadPoolService m_threadPool;
+
         // Pip service
         private IPolicyInformationService m_pipService;
 
@@ -98,7 +107,7 @@ namespace SanteDB.Core.Security.Privacy
             if (this.m_configuration.Resources != null)
                 foreach (var t in this.m_configuration.Resources)
                 {
-                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type))
+                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(AssigningAuthority).IsAssignableFrom(t.ResourceType.Type))
                     {
                         this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
                         this.m_actions.TryAdd(t.ResourceType.Type, t.Action);
@@ -189,11 +198,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
-                            {
-                                AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true);
-                            }
-
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag("$pep.masked", "true");
@@ -222,10 +227,8 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
-                            {
-                                AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true);
-                            }
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag("$pep.masked", "true");
@@ -306,7 +309,7 @@ namespace SanteDB.Core.Security.Privacy
                             return null;
 
                         case ResourceDataPolicyActionType.Hide | ResourceDataPolicyActionType.Audit:
-                            AuditUtil.AuditMasking(result, decision, true);
+                            AuditUtil.AuditMasking(result, decision, true, result);
                             return null;
 
                         case ResourceDataPolicyActionType.Redact:
@@ -314,7 +317,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
-                                    AuditUtil.AuditMasking(result, decision, false);
+                                    AuditUtil.AuditMasking(result, decision, false, result);
                                 }
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
@@ -326,7 +329,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
-                                    AuditUtil.AuditMasking(result, decision, true);
+                                    AuditUtil.AuditMasking(result, decision, true, result);
                                 }
 
                                 var nResult = Activator.CreateInstance(result.GetType()) as IdentifiedData;

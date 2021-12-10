@@ -86,18 +86,22 @@ namespace SanteDB.Core.Configuration.Features
             var asms = AppDomain.CurrentDomain.GetAllTypes()
                 .Select(t => t.Assembly)
                 .Distinct();
-            foreach (var source in asms.SelectMany(a => a.GetCustomAttributes<PluginTraceSourceAttribute>()))
+            foreach (var source in asms.SelectMany(a => a.GetCustomAttributes<PluginTraceSourceAttribute>()).Select(o => o.TraceSourceName).Distinct())
             {
-                configFeature.Options.Add(source.TraceSourceName, () => Enum.GetValues(typeof(EventLevel)));
+                configFeature.Options.Add(source, () => Enum.GetValues(typeof(EventLevel)));
                 var src = config.Sources.FirstOrDefault(
-                    s => s.SourceName == source.TraceSourceName);
+                    s => s.SourceName == source);
+                if (configFeature.Values.ContainsKey(source))
+                {
+                    continue;
+                }
                 if (src != null)
                 {
-                    configFeature.Values.Add(source.TraceSourceName, src.Filter);
+                    configFeature.Values.Add(source, src.Filter);
                 }
                 else
                 {
-                    configFeature.Values.Add(source.TraceSourceName, EventLevel.Warning);
+                    configFeature.Values.Add(source, EventLevel.Warning);
                 }
             }
 

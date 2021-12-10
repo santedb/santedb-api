@@ -46,8 +46,9 @@ namespace SanteDB.Core.Matching
         /// <param name="input">The input record from which blocks should be returned</param>
         /// <param name="configurationId">The configuration that should be used for blocking</param>
         /// <param name="ignoreList">The list of keys which should be ignored (in addition to the IRecordMergingService instructions)</param>
+        /// <param name="collector">If the blocking is to be debugged this is the collector</param>
         /// <returns>The record which match the blocking configuration for type <typeparamref name="T"/></returns>
-        IQueryResultSet<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
+        IQueryResultSet<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList, IRecordMatchingDiagnosticSession collector = null) where T : IdentifiedData;
 
         /// <summary>
         /// Instructs the record matcher to run a detailed classification on the matching blocks in <paramref name="blocks"/>
@@ -56,8 +57,9 @@ namespace SanteDB.Core.Matching
         /// <param name="input">The input entity to be matched</param>
         /// <param name="blocks">The blocks which are to be classified as matches</param>
         /// <param name="configurationId">The name of the configuration to use for matching</param>
+        /// <param name="collector">The collector to use for diagnostics</param>
         /// <returns>True if the classification was successful</returns>
-        IEnumerable<IRecordMatchResult<T>> Classify<T>(T input, IEnumerable<T> blocks, string configurationId) where T : IdentifiedData;
+        IEnumerable<IRecordMatchResult<T>> Classify<T>(T input, IEnumerable<T> blocks, string configurationId, IRecordMatchingDiagnosticSession collector = null) where T : IdentifiedData;
 
         /// <summary>
         /// Instructs the record matcher to run a block and match operation against <paramref name="input"/>
@@ -66,12 +68,13 @@ namespace SanteDB.Core.Matching
         /// <param name="input">The record being compared to</param>
         /// <param name="configurationId">The name of the configuration to be used</param>
         /// <param name="ignoreList">A list of object to ignore for matching</param>
+        /// <param name="collector">The collector to use for diagnostics</param>
         /// <returns>True if classification was successful</returns>
         /// <remarks>
         /// The match method for some implementations of record matching may be equivalent to Block()/Classify() function calls, however
         /// some matching implementations may optimize database round-trips using a single pass.
         /// </remarks>
-        IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationId, IEnumerable<Guid> ignoreList) where T : IdentifiedData;
+        IEnumerable<IRecordMatchResult<T>> Match<T>(T input, string configurationId, IEnumerable<Guid> ignoreList, IRecordMatchingDiagnosticSession collector = null) where T : IdentifiedData;
 
         /// <summary>
         /// A non-generic method which uses the type of <paramref name="input"/> to call Match&lt;T>
@@ -79,8 +82,9 @@ namespace SanteDB.Core.Matching
         /// <param name="input">The record being compared</param>
         /// <param name="configurationId">The configuration to use</param>
         /// <param name="ignoreList">The list of data to ignore</param>
+        /// <param name="collector">The collector to use for diagnostics</param>
         /// <returns>The candidate match results</returns>
-        IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationId, IEnumerable<Guid> ignoreList);
+        IEnumerable<IRecordMatchResult> Match(IdentifiedData input, string configurationId, IEnumerable<Guid> ignoreList, IRecordMatchingDiagnosticSession collector = null);
 
         /// <summary>
         /// A non-generic method which uses the type of <paramref name="input"/> to call Classify&lt;T>
@@ -88,7 +92,13 @@ namespace SanteDB.Core.Matching
         /// <param name="input">The record being compared</param>
         /// <param name="configurationId">The configuration to use</param>
         /// <param name="blocks">The blocked data to classify</param>
+        /// <param name="collector">The collector to use for diagnostics</param>
         /// <returns>The candidate match results</returns>
-        IEnumerable<IRecordMatchResult> Classify(IdentifiedData input, IEnumerable<IdentifiedData> blocks, string configurationId);
+        IEnumerable<IRecordMatchResult> Classify(IdentifiedData input, IEnumerable<IdentifiedData> blocks, string configurationId, IRecordMatchingDiagnosticSession collector = null);
+
+        /// <summary>
+        /// Create a diagnostic session information object
+        /// </summary>
+        IRecordMatchingDiagnosticSession CreateDiagnosticSession();
     }
 }
