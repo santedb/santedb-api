@@ -6,11 +6,13 @@ using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services.Impl
@@ -27,9 +29,6 @@ namespace SanteDB.Core.Services.Impl
 
         // Disposed already?
         private bool m_disposed = false;
-
-        // Lockbox
-        private object m_locker = new object();
 
         /// <summary>
         /// Queue entry
@@ -109,7 +108,7 @@ namespace SanteDB.Core.Services.Impl
         private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
         // Watchers
-        private Dictionary<String, IDisposable> m_watchers = new Dictionary<string, IDisposable>();
+        private ConcurrentDictionary<String, List<DispatcherQueueCallback>> m_watchers = new ConcurrentDictionary<string, List<DispatcherQueueCallback>>();
 
         /// <summary>
         /// Queue file
@@ -169,12 +168,9 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
-                lock (this.m_locker)
+                using (var fs = File.OpenRead(queueFile))
                 {
-                    using (var fs = File.OpenRead(queueFile))
-                    {
-                        retVal = QueueEntry.Load(fs);
-                    }
+                    retVal = QueueEntry.Load(fs);
                 }
                 File.Delete(queueFile);
                 return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
@@ -213,12 +209,16 @@ namespace SanteDB.Core.Services.Impl
                 filePath = Path.Combine(queueDirectory, fname);
             }
 
-            lock (this.m_locker)
-            {
-                using (var fs = File.Create(filePath))
-                    QueueEntry.Create(data).Save(fs);
-            }
+            using (var fs = File.Create(filePath))
+                QueueEntry.Create(data).Save(fs);
 
+            if(this.m_watchers.TryGetValue(queueName, out var callbacks))
+            {
+                foreach(var cb in callbacks)
+                {
+                    cb.BeginInvoke(new DispatcherMessageEnqueuedInfo(queueName, filePath), null, null);
+                }
+            }
             this.m_tracer.TraceInfo("Successfulled queued {0}", fname);
         }
 
@@ -243,11 +243,7 @@ namespace SanteDB.Core.Services.Impl
             if (!this.m_disposed)
             {
                 this.m_disposed = true;
-                foreach (var itm in this.m_watchers)
-                {
-                    this.m_tracer.TraceInfo("Disposing queue {0}", itm.Key);
-                    itm.Value.Dispose();
-                }
+
                 this.m_watchers.Clear();
                 this.m_watchers = null;
             }
@@ -340,46 +336,13 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void SubscribeTo(string queueName, DispatcherQueueCallback callback)
         {
-            // Watchers
-            lock (this.m_watchers)
+            if (!this.m_watchers.TryGetValue(queueName, out var dispatcher))
             {
-                String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
-
-                var fsWatch = new FileSystemWatcher(queueDirectory, "*");
-                fsWatch.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime;
-                fsWatch.Created += (o, e) =>
-                {
-                    try
-                    {
-                        callback(new DispatcherMessageEnqueuedInfo(queueName, Path.GetFileNameWithoutExtension(e.FullPath)));
-                    }
-                    catch (Exception ex)
-                    {
-                        this.m_tracer.TraceEvent(EventLevel.Error, "FileSystem Watcher reported error on queue (Changed) -> {0}", ex);
-                    }
-                };
-                fsWatch.Changed += (o, e) =>
-                {
-                    try
-                    {
-                        callback(new DispatcherMessageEnqueuedInfo(queueName, Path.GetFileNameWithoutExtension(e.FullPath)));
-                    }
-                    catch (Exception ex)
-                    {
-                        this.m_tracer.TraceEvent(EventLevel.Error, "FileSystem Watcher reported error on queue (Changed) -> {0}", ex);
-                    }
-                };
-                fsWatch.EnableRaisingEvents = true;
-                this.m_watchers.Add(queueName, fsWatch);
-
-                this.m_tracer.TraceInfo("Opening queue {0}... Exhausing existing items...", queueDirectory);
-
-                // If there's anything in the directory notify
-                if (Directory.GetFiles(queueDirectory, "*").Any())
-                {
-                    callback(new DispatcherMessageEnqueuedInfo(queueName, Path.GetFileNameWithoutExtension("*")));
-                }
+                dispatcher = new List<DispatcherQueueCallback>();
+                this.m_watchers.TryAdd(queueName, dispatcher);
             }
+
+            dispatcher.Add(callback);
         }
 
         /// <summary>
@@ -389,7 +352,7 @@ namespace SanteDB.Core.Services.Impl
         {
             if (this.m_watchers != null && this.m_watchers.TryGetValue(queueName, out var queueWatcher))
             {
-                queueWatcher.Dispose();
+                queueWatcher.Remove(callback);
             }
         }
     }
