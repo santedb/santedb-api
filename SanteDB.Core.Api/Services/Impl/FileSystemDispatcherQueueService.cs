@@ -28,6 +28,9 @@ namespace SanteDB.Core.Services.Impl
         // Disposed already?
         private bool m_disposed = false;
 
+        // Lockbox
+        private object m_locker = new object();
+
         /// <summary>
         /// Queue entry
         /// </summary>
@@ -166,9 +169,12 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
-                using (var fs = File.OpenRead(queueFile))
+                lock (this.m_locker)
                 {
-                    retVal = QueueEntry.Load(fs);
+                    using (var fs = File.OpenRead(queueFile))
+                    {
+                        retVal = QueueEntry.Load(fs);
+                    }
                 }
                 File.Delete(queueFile);
                 return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
@@ -207,8 +213,12 @@ namespace SanteDB.Core.Services.Impl
                 filePath = Path.Combine(queueDirectory, fname);
             }
 
-            using (var fs = File.Create(filePath))
-                QueueEntry.Create(data).Save(fs);
+            lock (this.m_locker)
+            {
+                using (var fs = File.Create(filePath))
+                    QueueEntry.Create(data).Save(fs);
+            }
+
             this.m_tracer.TraceInfo("Successfulled queued {0}", fname);
         }
 
