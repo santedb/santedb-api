@@ -219,7 +219,7 @@ namespace SanteDB.Core.Services.Impl
                     cb.BeginInvoke(new DispatcherMessageEnqueuedInfo(queueName, filePath), null, null);
                 }
             }
-            this.m_tracer.TraceInfo("Successfulled queued {0}", fname);
+            this.m_tracer.TraceInfo("Successfully queued {0}", fname);
         }
 
         /// <summary>
@@ -257,6 +257,15 @@ namespace SanteDB.Core.Services.Impl
             var oldEntryPath = Path.Combine(this.m_configuration.QueuePath, entry.SourceQueue, entry.CorrelationId);
             var newEntryPath = Path.Combine(this.m_configuration.QueuePath, toQueue, entry.CorrelationId);
             File.Move(oldEntryPath, newEntryPath);
+
+            // Call callbacks
+            if(this.m_watchers.TryGetValue(toQueue, out var callbacks))
+            {
+                foreach(var itm in callbacks)
+                {
+                    itm.BeginInvoke(new DispatcherMessageEnqueuedInfo(toQueue, entry.CorrelationId), null, null);
+                }
+            }
             return new Core.Queue.DispatcherQueueEntry(entry.CorrelationId, toQueue, DateTime.Now, entry.Label, entry.Body);
         }
 
