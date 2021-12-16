@@ -45,7 +45,7 @@ namespace SanteDB.Core.Security.Privacy
     /// <summary>
     /// Local policy enforcement point service
     /// </summary>
-    [ServiceProvider("Default Policy Enforcement Service")]
+    [ServiceProvider("Data Privacy Filtering")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
         /// <summary>

@@ -32,6 +32,27 @@ namespace SanteDB.Core.Configuration
     public class ResourceTypeReferenceConfiguration
     {
 
+        // Binder instance
+        private static ModelSerializationBinder s_binder = new ModelSerializationBinder();
+
+        /// <summary>
+        /// Default ctor for serialization
+        /// </summary>
+        public ResourceTypeReferenceConfiguration()
+        {
+
+        }
+
+        /// <summary>
+        /// Constructor accepting the resource type
+        /// </summary>
+        /// <param name="resourceType">The resource type being set on this configuration object</param>
+        public ResourceTypeReferenceConfiguration(Type resourceType)
+        {
+            s_binder.BindToName(resourceType, out var asm, out var name);
+            this.TypeXml = name;
+        }
+
         /// <summary>
         /// Gets or sets the resource type
         /// </summary>
@@ -42,7 +63,7 @@ namespace SanteDB.Core.Configuration
         /// Gets the resource
         /// </summary>
         [XmlIgnore, JsonIgnore]
-        public Type Type => new ModelSerializationBinder().BindToType(null, this.TypeXml);
+        public Type Type => s_binder.BindToType(null, this.TypeXml);
 
         /// <summary>
         /// Gets as a string
