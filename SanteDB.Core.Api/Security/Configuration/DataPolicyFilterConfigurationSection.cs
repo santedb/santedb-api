@@ -57,6 +57,14 @@ namespace SanteDB.Core.Security.Configuration
     {
 
         /// <summary>
+        /// Resource data policy filter
+        /// </summary>
+        public ResourceDataPolicyFilter()
+        {
+            this.Fields = new List<ResourceDataFieldFilter>();
+        }
+
+        /// <summary>
         /// Gets or sets the action
         /// </summary>
         [XmlAttribute("action")]
@@ -68,6 +76,39 @@ namespace SanteDB.Core.Security.Configuration
         [XmlElement("resourceType")]
         [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
         public ResourceTypeReferenceConfiguration ResourceType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the individual fields on this resource and the policies that apply
+        /// </summary>
+        [XmlArray("fields"), XmlArrayItem("add")]
+        public List<ResourceDataFieldFilter> Fields { get; set; }
+    }
+
+    /// <summary>
+    /// Data field filter
+    /// </summary>
+    [XmlType(nameof(ResourceDataFieldFilter), Namespace = "http://santedb.org/configuration")]
+    public class ResourceDataFieldFilter
+    {
+
+        /// <summary>
+        /// The property which is taboo
+        /// </summary>
+        [XmlAttribute("property")]
+        public string Property { get; set; }
+
+        /// <summary>
+        /// The action to apply
+        /// </summary>
+        [XmlAttribute("action")]
+        public ResourceDataPolicyActionType Action { get; set; }
+
+        /// <summary>
+        /// The disclosure policy which must be obtained for this field
+        /// </summary>
+        [XmlAttribute("policy")]
+        public List<String> Policy { get; set; }
+
     }
 
     /// <summary>

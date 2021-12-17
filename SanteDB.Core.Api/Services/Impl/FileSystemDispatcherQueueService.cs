@@ -153,6 +153,7 @@ namespace SanteDB.Core.Services.Impl
                             }
                         }
                     }
+                    this.m_resetEvent.Reset();
                 }
             });
             this.m_listenerThread.IsBackground = true;
