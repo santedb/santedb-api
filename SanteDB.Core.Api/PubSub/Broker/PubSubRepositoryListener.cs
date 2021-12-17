@@ -127,12 +127,12 @@ namespace SanteDB.Core.PubSub.Broker
         public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager)
         {
             this.m_pubSubManager = pubSubManager;
-            this.m_repository = ApplicationServiceContext.Current.GetService<INotifyRepositoryService<TModel>>();
+            this.m_repository = ApplicationServiceContext.Current.GetService<IRepositoryService<TModel>>() as INotifyRepositoryService<TModel>;
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
 
             if (this.m_repository == null)
-                throw new InvalidOperationException($"Cannot subscribe to {typeof(TModel).FullName} as this repository does not raise events");
+                throw new InvalidOperationException($"Cannot actively subscribe to {typeof(TModel).FullName} as this repository does not raise events");
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;

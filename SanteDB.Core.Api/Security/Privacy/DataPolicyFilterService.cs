@@ -37,6 +37,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security;
 using System.Security.Principal;
 
@@ -45,7 +46,7 @@ namespace SanteDB.Core.Security.Privacy
     /// <summary>
     /// Local policy enforcement point service
     /// </summary>
-    [ServiceProvider("Default Policy Enforcement Service")]
+    [ServiceProvider("Data Privacy Filtering")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
         /// <summary>
@@ -60,7 +61,7 @@ namespace SanteDB.Core.Security.Privacy
         private DataPolicyFilterConfigurationSection m_configuration;
 
         // Actions
-        private ConcurrentDictionary<Type, ResourceDataPolicyActionType> m_actions = new ConcurrentDictionary<Type, ResourceDataPolicyActionType>();
+        private ConcurrentDictionary<Type, ResourceDataPolicyFilter> m_actions = new ConcurrentDictionary<Type, ResourceDataPolicyFilter>();
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;
@@ -108,7 +109,7 @@ namespace SanteDB.Core.Security.Privacy
                     if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(AssigningAuthority).IsAssignableFrom(t.ResourceType.Type))
                     {
                         this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
-                        this.m_actions.TryAdd(t.ResourceType.Type, t.Action);
+                        this.m_actions.TryAdd(t.ResourceType.Type, t);
                     }
                 }
         }
@@ -155,11 +156,11 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
-            if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out ResourceDataPolicyActionType action) && !this.m_actions.TryGetValue(result.GetType(), out action))
-                action = this.m_configuration.DefaultAction;
+            if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
+                policy = new ResourceDataPolicyFilter() { Action = this.m_configuration.DefaultAction };
             var domainsToFilter = this.GetFilterDomains(accessor);
 
-            switch (action)
+            switch (policy.Action)
             {
                 case ResourceDataPolicyActionType.Hide:
                 case ResourceDataPolicyActionType.Nullify:
@@ -244,6 +245,74 @@ namespace SanteDB.Core.Security.Privacy
         }
 
         /// <summary>
+        /// Validate that a query is not using restricted functions
+        /// </summary>
+        /// <typeparam name="TModel">The type of data being queried</typeparam>
+        /// <param name="query">The query expression</param>
+        /// <param name="accessor">The user which is running the query</param>
+        /// <returns>True if the user can execute the query, false if not</returns>
+        public bool ValidateQuery<TModel>(Expression<Func<TModel, bool>> query, IPrincipal accessor) where TModel: IdentifiedData
+        {
+            if (accessor == AuthenticationContext.SystemPrincipal)
+                return true;
+            else
+                return this.ValidateExpression(query, accessor, null);
+        }
+
+        /// <summary>
+        /// Validate a LINQ expression for execution using <paramref name="policy"/>
+        /// </summary>
+        /// <param name="accessor">The principal which is running the query in which the <paramref name="expression"/> exists</param>
+        /// <param name="expression">The expression which is being validated</param>
+        /// <param name="policy">The policy configuration in scope for the query</param>
+        /// <returns>True if <paramref name="accessor"/> can run the query part</returns>
+        private bool ValidateExpression(Expression expression, IPrincipal accessor, ResourceDataPolicyFilter policy)
+        {
+            if(expression== null)
+            {
+                return true;
+            }
+
+            switch (expression)
+            {
+                case LambdaExpression le:
+                    if (this.m_actions.TryGetValue(le.Parameters[0].Type, out var subPolicy))
+                        return this.ValidateExpression(le.Body, accessor, subPolicy);
+                    else
+                        return true;
+                case BinaryExpression be:
+                    return this.ValidateExpression(be.Left, accessor, policy) && 
+                        this.ValidateExpression(be.Right, accessor, policy);
+                case UnaryExpression ue:
+                    return this.ValidateExpression(ue.Operand, accessor, policy);
+                case MemberExpression me:
+                    
+                    switch(me.Member)
+                    {
+                        case System.Reflection.PropertyInfo pi:
+                            var serializationName = pi.GetSerializationName();
+                            var fieldPolicy = policy.Fields?.FirstOrDefault(o => o.Property == serializationName);
+
+                            if (fieldPolicy == null || fieldPolicy.Action == ResourceDataPolicyActionType.None)
+                                return true;
+                            else {
+                                return fieldPolicy.Policy.Any() ? fieldPolicy.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) == PolicyGrantType.Grant) :
+                                    fieldPolicy?.Action == ResourceDataPolicyActionType.None;
+                            }
+                        default:
+                            return false;
+                    }
+                case MethodCallExpression mce:
+                    return this.ValidateExpression(mce.Object, accessor, policy) &&
+                        mce.Arguments.All(a => this.ValidateExpression(a, accessor, policy));
+                case InvocationExpression ie:
+                    return this.ValidateExpression(ie.Expression, accessor, policy);
+                default:
+                    return true;
+            }
+        }
+
+        /// <summary>
         /// Returns true if updates to the record
         /// </summary>
         public bool ValidateWrite<TData>(TData record, IPrincipal accessor) where TData : IdentifiedData
@@ -253,8 +322,25 @@ namespace SanteDB.Core.Security.Privacy
                 return !bdl.Item.Any(o => !this.ValidateWrite(o, accessor)); // We do ! since we want the first FALSE to stop searching the bundle
 
             // Is this SYSTEM?
-            if (!this.m_actions.TryGetValue(record.GetType(), out ResourceDataPolicyActionType action) || accessor == AuthenticationContext.SystemPrincipal || action == ResourceDataPolicyActionType.None)
+            if (!this.m_actions.TryGetValue(record.GetType(), out var policy) || accessor == AuthenticationContext.SystemPrincipal)
                 return true;
+
+            // Validate fields can be stored
+            foreach (var itm in policy.Fields)
+            {
+                var value = record.GetType().GetQueryProperty(itm.Property)?.GetValue(record);
+                if (value == null) continue;
+                else
+                {
+                    return itm.Policy.Any() ? itm.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) != PolicyGrantType.Grant) :
+                        itm.Action == ResourceDataPolicyActionType.None;
+                }
+            }
+
+            if (policy.Action == ResourceDataPolicyActionType.None) // no enforcement
+            {
+                return true;
+            }
 
             var decision = this.m_pdpService.GetPolicyDecision(accessor, record);
             if (decision.Outcome != PolicyGrantType.Grant)
@@ -285,7 +371,7 @@ namespace SanteDB.Core.Security.Privacy
                 return result;
             }
 
-            if (!this.m_actions.TryGetValue(result.GetType(), out ResourceDataPolicyActionType action) || principal == AuthenticationContext.SystemPrincipal || action == ResourceDataPolicyActionType.None)
+            if (!this.m_actions.TryGetValue(result.GetType(), out var policy) || principal == AuthenticationContext.SystemPrincipal)
                 return result;
 
             var decision = this.m_pdpService.GetPolicyDecision(principal, result);
@@ -293,12 +379,15 @@ namespace SanteDB.Core.Security.Privacy
             // First, apply identity security as that is independent
             this.ApplyIdentifierFilter(result, principal);
 
+            // Apply the field filter
+            this.ApplyFieldFilter(result, principal, policy);
+
             // Next we base on decision
             switch (decision.Outcome)
             {
                 case PolicyGrantType.Elevate:
                 case PolicyGrantType.Deny:
-                    switch (action)
+                    switch (policy.Action)
                     {
                         case ResourceDataPolicyActionType.Audit:
                             AuditUtil.AuditSensitiveDisclosure(result, decision, true);
@@ -314,7 +403,7 @@ namespace SanteDB.Core.Security.Privacy
                         case ResourceDataPolicyActionType.Redact:
                         case ResourceDataPolicyActionType.Redact | ResourceDataPolicyActionType.Audit:
                             {
-                                if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
+                                if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
                                     AuditUtil.AuditMasking(result, decision, false, result);
                                 }
@@ -326,7 +415,7 @@ namespace SanteDB.Core.Security.Privacy
                         case ResourceDataPolicyActionType.Nullify:
                         case ResourceDataPolicyActionType.Nullify | ResourceDataPolicyActionType.Audit:
                             {
-                                if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
+                                if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
                                     AuditUtil.AuditMasking(result, decision, true, result);
                                 }
@@ -340,7 +429,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         case ResourceDataPolicyActionType.Error:
                         case ResourceDataPolicyActionType.Error | ResourceDataPolicyActionType.Audit:
-                            if ((action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
+                            if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                             {
                                 AuditUtil.AuditSensitiveDisclosure(result, decision, false);
                             }
@@ -358,6 +447,61 @@ namespace SanteDB.Core.Security.Privacy
 
                 default:
                     throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
+            }
+        }
+
+        /// <summary>
+        /// Filters any fields in the <paramref name="policy"/> according to their access information
+        /// </summary>
+        /// <typeparam name="TData">The type of data being filtered</typeparam>
+        /// <param name="result">The result being filtered</param>
+        /// <param name="principal">The principal being filtered</param>
+        /// <param name="policy">The policy being applied</param>
+        private void ApplyFieldFilter<TData>(TData result, IPrincipal principal, ResourceDataPolicyFilter policy) where TData : IdentifiedData
+        {
+            foreach (var itm in policy.Fields)
+            {
+                var property = result.GetType().GetQueryProperty(itm.Property);
+                var value = property?.GetValue(result);
+                if (value == null) continue;
+
+                var hasPolicy = itm.Policy?.Select(p => this.m_pdpService.GetPolicyDecision(principal, p)).OrderBy(o => o.Outcome).FirstOrDefault();
+                if (hasPolicy == null || hasPolicy.Outcome != PolicyGrantType.Grant)
+                {
+                    switch (policy.Action)
+                    {
+                        case ResourceDataPolicyActionType.Audit:
+                            AuditUtil.AuditSensitiveDisclosure(result, hasPolicy, true, itm.Property);
+                            break;
+                        case ResourceDataPolicyActionType.Error:
+                            if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
+                            {
+                                AuditUtil.AuditSensitiveDisclosure(result, hasPolicy, false, itm.Property);
+                            }
+                            throw new SecurityException($"Access denied");
+                        case ResourceDataPolicyActionType.Nullify:
+                        case ResourceDataPolicyActionType.Hide:
+                            {
+                                property.SetValue(result, null);
+                                if (result is ITaggable tag)
+                                    tag.AddTag("$pep.masked", "true");
+                                break;
+                            }
+                        case ResourceDataPolicyActionType.Redact:
+                        case ResourceDataPolicyActionType.Redact | ResourceDataPolicyActionType.Audit:
+                            {
+                                if (typeof(String).IsAssignableFrom(property.PropertyType))
+                                    property.SetValue(result, "XXXXX");
+                                else
+                                    property.SetValue(result, Activator.CreateInstance(property.PropertyType));
+                                if (result is ITaggable tag)
+                                    tag.AddTag("$pep.masked", "true");
+                                break;
+                            }
+                        default:
+                            throw new InvalidOperationException("Cannot determine how to handle property instruction");
+                    }
+                }
             }
         }
 

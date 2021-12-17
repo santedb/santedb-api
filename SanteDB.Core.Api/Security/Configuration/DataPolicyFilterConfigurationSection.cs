@@ -38,12 +38,14 @@ namespace SanteDB.Core.Security.Configuration
         /// Gets or sets the default action
         /// </summary>
         [XmlAttribute("action"), JsonProperty("action")]
+        [DisplayName("Default Action"), Description("The data filtering action to apply to any resource which has no explicit action")]
         public ResourceDataPolicyActionType DefaultAction { get; set; }
 
         /// <summary>
         /// Gets the list of resources
         /// </summary>
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
+        [DisplayName("Resources"), Description("The resource filters which should have special actions applied when data privacy is breached.")]
         public List<ResourceDataPolicyFilter> Resources { get; set; }
 
     }
@@ -57,6 +59,14 @@ namespace SanteDB.Core.Security.Configuration
     {
 
         /// <summary>
+        /// Resource data policy filter
+        /// </summary>
+        public ResourceDataPolicyFilter()
+        {
+            this.Fields = new List<ResourceDataFieldFilter>();
+        }
+
+        /// <summary>
         /// Gets or sets the action
         /// </summary>
         [XmlAttribute("action")]
@@ -68,6 +78,46 @@ namespace SanteDB.Core.Security.Configuration
         [XmlElement("resourceType")]
         [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
         public ResourceTypeReferenceConfiguration ResourceType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the individual fields on this resource and the policies that apply
+        /// </summary>
+        [XmlArray("fields"), XmlArrayItem("add")]
+        public List<ResourceDataFieldFilter> Fields { get; set; }
+
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string ToString() => $"{this.ResourceType?.TypeXml} / {this.Action}";
+    }
+
+    /// <summary>
+    /// Data field filter
+    /// </summary>
+    [XmlType(nameof(ResourceDataFieldFilter), Namespace = "http://santedb.org/configuration")]
+    public class ResourceDataFieldFilter
+    {
+
+        /// <summary>
+        /// The property which is taboo
+        /// </summary>
+        [XmlAttribute("property")]
+        public string Property { get; set; }
+
+        /// <summary>
+        /// The action to apply
+        /// </summary>
+        [XmlAttribute("action")]
+        public ResourceDataPolicyActionType Action { get; set; }
+
+        /// <summary>
+        /// The disclosure policy which must be obtained for this field
+        /// </summary>
+        [XmlAttribute("policy")]
+        public List<String> Policy { get; set; }
+
+        /// <inhertidoc/>
+        public override string ToString() => $"{this.Property} / {this.Action}";
     }
 
     /// <summary>

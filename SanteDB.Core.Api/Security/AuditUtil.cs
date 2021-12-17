@@ -545,7 +545,8 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="result">The result record which was disclosed</param>
         /// <param name="decision">The policy decision which resulted in the disclosure</param>
         /// <param name="disclosed">True if the record was actually disclosed (false if the audit is merely the access is being audited)</param>
-        public static void AuditSensitiveDisclosure(IdentifiedData result, PolicyDecision decision, bool disclosed)
+        /// <param name="properties">The properties which were disclosed</param>
+        public static void AuditSensitiveDisclosure(IdentifiedData result, PolicyDecision decision, bool disclosed, params string[] properties)
         {
             traceSource.TraceInfo("Create AuditDataAction audit");
 
@@ -562,6 +563,14 @@ namespace SanteDB.Core.Security.Audit
                 CreateAuditableObject(decision, AuditableObjectLifecycle.Verification)
             };
 
+            audit.AuditableObjects.Add(new AuditableObject()
+            {
+                IDTypeCode = AuditableObjectIdType.Custom,
+                CustomIdTypeCode = new AuditCode("SecurityAudit-MaskedFields", "SecurityAuditCodes"),
+                LifecycleType = AuditableObjectLifecycle.Access,
+                NameData = String.Join(";", properties),
+                Type = AuditableObjectType.SystemObject
+            });
             SendAudit(audit);
         }
 

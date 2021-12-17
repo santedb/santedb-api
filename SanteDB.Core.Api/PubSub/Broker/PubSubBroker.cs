@@ -185,7 +185,7 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
-                        .FindSubscription(o => o.ResourceTypeXml == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -223,7 +223,7 @@ namespace SanteDB.Core.PubSub.Broker
                 foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
                 {
                     var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                    var factory = this.m_serviceManager.CreateInjected(channelDef.DispatcherFactoryType) as IPubSubDispatcherFactory;
+                    var factory = DispatcherFactoryUtil.FindDispatcherFactoryById(channelDef.DispatcherFactoryId);
                     yield return factory.CreateDispatcher(chnl.Key, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
                 }
             }
@@ -282,10 +282,11 @@ namespace SanteDB.Core.PubSub.Broker
             lock (this.m_lock)
             {
                 // If there are no further types subscribed then remove the listener
-                if (this.m_pubSubManager.FindSubscription(o => o.ResourceType == e.Data.ResourceType).Count() == 0)
+                var resourceXml = e.Data.ResourceType.GetSerializationName();
+                if (!this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == resourceXml).Any())
                 {
                     var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
-                    var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.GetType().Equals(o.GetType()));
+                    var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.Equals(o.GetType()));
                     listener.Dispose();
                     this.m_repositoryListeners.Remove(listener);
                 }

@@ -47,7 +47,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified <paramref name="issues"/> 
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues, Exception cause) : this(issues, null, cause)
+        public DetectedIssueException(List<DetectedIssue> issues, Exception cause) : this(issues, "Business Rules Violation", cause)
         {
 
         }
@@ -63,7 +63,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified issue list
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues) : this(issues, null, null)
+        public DetectedIssueException(List<DetectedIssue> issues) : this(issues, "Business Rules Violation", null)
         {
         }
 
@@ -116,9 +116,5 @@ namespace SanteDB.Core.Exceptions
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Represent as a string
-        /// </summary>
-        public override string Message => this.ToString();
     }
 }

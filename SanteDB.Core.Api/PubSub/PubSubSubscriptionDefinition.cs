@@ -90,7 +90,7 @@ namespace SanteDB.Core.PubSub
         /// Gets or sets the resource type
         /// </summary>
         [XmlElement("resource"), JsonProperty("resource")]
-        public String ResourceTypeXml { get; set; }
+        public String ResourceTypeName { get; set; }
 
         /// <summary>
         /// Gets or sets the event
@@ -102,7 +102,7 @@ namespace SanteDB.Core.PubSub
         /// Gets the resource type
         /// </summary>
         [XmlIgnore, JsonIgnore]
-        public Type ResourceType => new ModelSerializationBinder().BindToType(String.Empty, this.ResourceTypeXml);
+        public Type ResourceType => new ModelSerializationBinder().BindToType(String.Empty, this.ResourceTypeName);
 
         /// <summary>
         /// Gets or sets the filters
@@ -114,13 +114,13 @@ namespace SanteDB.Core.PubSub
         /// Starts when
         /// </summary>
         [XmlElement("notBefore"), JsonProperty("notBefore")]
-        public DateTimeOffset? NotBefore { get; set; }
+        public DateTime? NotBefore { get; set; }
 
         /// <summary>
         /// Not after
         /// </summary>
         [XmlElement("notAfter"), JsonProperty("notAfter")]
-        public DateTimeOffset? NotAfter { get; set; }
+        public DateTime? NotAfter { get; set; }
 
         /// <summary>
         /// Gets or sets the channel
