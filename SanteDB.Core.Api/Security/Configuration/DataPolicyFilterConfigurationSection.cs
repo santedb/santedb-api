@@ -38,12 +38,14 @@ namespace SanteDB.Core.Security.Configuration
         /// Gets or sets the default action
         /// </summary>
         [XmlAttribute("action"), JsonProperty("action")]
+        [DisplayName("Default Action"), Description("The data filtering action to apply to any resource which has no explicit action")]
         public ResourceDataPolicyActionType DefaultAction { get; set; }
 
         /// <summary>
         /// Gets the list of resources
         /// </summary>
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
+        [DisplayName("Resources"), Description("The resource filters which should have special actions applied when data privacy is breached.")]
         public List<ResourceDataPolicyFilter> Resources { get; set; }
 
     }
@@ -82,6 +84,11 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         [XmlArray("fields"), XmlArrayItem("add")]
         public List<ResourceDataFieldFilter> Fields { get; set; }
+
+        /// <summary>
+        /// Represent as a string
+        /// </summary>
+        public override string ToString() => $"{this.ResourceType?.TypeXml} / {this.Action}";
     }
 
     /// <summary>
@@ -109,6 +116,8 @@ namespace SanteDB.Core.Security.Configuration
         [XmlAttribute("policy")]
         public List<String> Policy { get; set; }
 
+        /// <inhertidoc/>
+        public override string ToString() => $"{this.Property} / {this.Action}";
     }
 
     /// <summary>

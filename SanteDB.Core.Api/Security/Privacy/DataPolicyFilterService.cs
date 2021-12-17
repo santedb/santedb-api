@@ -247,7 +247,7 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Validate that a query is not using restricted functions
         /// </summary>
-        /// <typeparam name="TData">The type of data being queried</typeparam>
+        /// <typeparam name="TModel">The type of data being queried</typeparam>
         /// <param name="query">The query expression</param>
         /// <param name="accessor">The user which is running the query</param>
         /// <returns>True if the user can execute the query, false if not</returns>
