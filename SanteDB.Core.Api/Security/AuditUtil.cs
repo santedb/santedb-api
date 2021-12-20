@@ -153,16 +153,16 @@ namespace SanteDB.Core.Security.Audit
     {
         private static Tracer traceSource = Tracer.GetTracer(typeof(AuditUtil));
 
-        private static AuditAccountabilityConfigurationSection s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
+        private static AuditAccountabilityConfigurationSection s_configuration;
 
         // Queue service
-        private static IDispatcherQueueManagerService m_queueService = ApplicationServiceContext.Current.GetService<IDispatcherQueueManagerService>();
+        private static IDispatcherQueueManagerService m_queueService;
 
         // Repository service
-        private static IRepositoryService<AuditData> m_repositoryService = ApplicationServiceContext.Current.GetService<IRepositoryService<AuditData>>();
+        private static IRepositoryService<AuditEventData> m_repositoryService;
 
         // Dispatch service
-        private static IAuditDispatchService m_dispatcher = ApplicationServiceContext.Current.GetService<IAuditDispatchService>();
+        private static IAuditDispatchService m_dispatcher;
 
         // Queue name for audits
         private const string QueueName = "sys.audit";
@@ -172,11 +172,24 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         static AuditUtil()
         {
-            if (m_queueService != null)
+
+            try
             {
-                m_queueService.Open(QueueName);
-                m_queueService.SubscribeTo(QueueName, AuditQueued);
-                m_queueService.Open($"{QueueName}.dead");
+                m_dispatcher = ApplicationServiceContext.Current.GetService<IAuditDispatchService>();
+                m_repositoryService = ApplicationServiceContext.Current.GetService<IRepositoryService<AuditEventData>>();
+                m_queueService = ApplicationServiceContext.Current.GetService<IDispatcherQueueManagerService>();
+                s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
+                if (m_queueService != null)
+                {
+                    m_queueService.Open(QueueName);
+                    m_queueService.SubscribeTo(QueueName, AuditQueued);
+                    m_queueService.Open($"{QueueName}.dead");
+                }
+            }
+            catch(Exception e)
+            {
+                if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Test)
+                    throw;
             }
         }
 
@@ -186,16 +199,16 @@ namespace SanteDB.Core.Security.Audit
         private static void AuditQueued(DispatcherMessageEnqueuedInfo e)
         {
             object queueObject = null;
-            while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditData auditData)
+            while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditEventData AuditEventData)
             {
                 try
                 {
-                    SendAuditInternal(auditData);
+                    SendAuditInternal(AuditEventData);
                 }
                 catch (Exception ex)
                 {
                     traceSource.TraceError("Error dispatching audit - {0}", ex);
-                    m_queueService.Enqueue($"{QueueName}.dead", auditData);
+                    m_queueService.Enqueue($"{QueueName}.dead", AuditEventData);
                 }
             }
         }
@@ -203,19 +216,19 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Send audit internal logic
         /// </summary>
-        private static void SendAuditInternal(AuditData auditData)
+        private static void SendAuditInternal(AuditEventData AuditEventData)
         {
             using (AuthenticationContext.EnterSystemContext())
             {
                 // Filter apply?
                 var filters = s_configuration?.AuditFilters.Where(f =>
-                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(auditData.Outcome)) &&
-                    (!f.ActionSpecified ^ f.Action.HasFlag(auditData.ActionCode)) &&
-                    (!f.EventSpecified ^ f.Event.HasFlag(auditData.EventIdentifier)));
+                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(AuditEventData.Outcome)) &&
+                    (!f.ActionSpecified ^ f.Action.HasFlag(AuditEventData.ActionCode)) &&
+                    (!f.EventSpecified ^ f.Event.HasFlag(AuditEventData.EventIdentifier)));
 
                 if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
                 {
-                    m_repositoryService?.Insert(auditData); // insert into local AR
+                    m_repositoryService?.Insert(AuditEventData); // insert into local AR
                 }
                 if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
                 {
@@ -225,7 +238,7 @@ namespace SanteDB.Core.Security.Audit
                     }
                     else
                     {
-                        m_dispatcher?.SendAudit(auditData);
+                        m_dispatcher?.SendAudit(AuditEventData);
                     }
                 }
             }
