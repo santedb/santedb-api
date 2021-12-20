@@ -22,7 +22,9 @@
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security
@@ -51,5 +53,16 @@ namespace SanteDB.Core.Security
         /// shouldn't be sending such as masked identifiers or the record itself (due to access permission)
         /// </summary>
         bool ValidateWrite<TData>(TData data, IPrincipal principal) where TData : IdentifiedData;
+
+        /// <summary>
+        /// Validate that a query can be performed by <paramref name="principal"/>
+        /// </summary>
+        /// <typeparam name="TModel">The type of object being filtered</typeparam>
+        /// <param name="query">The query being executed</param>
+        /// <param name="principal">The principal</param>
+        /// <returns>True if the query can be executed</returns>
+        bool ValidateQuery<TModel>(Expression<Func<TModel, bool>> query, IPrincipal principal) where TModel : IdentifiedData;
+
+
     }
 }

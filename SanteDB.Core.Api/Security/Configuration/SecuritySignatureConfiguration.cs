@@ -118,8 +118,6 @@ namespace SanteDB.Core.Security.Configuration
         {
             get
             {
-                if (this.m_secret == null && !String.IsNullOrEmpty(this.m_plainTextSecret))
-                    this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
                 return this.m_secret;
             }
             set => this.m_secret = value;
@@ -167,12 +165,16 @@ namespace SanteDB.Core.Security.Configuration
                     return null;
             }
 
-            var cryptoService = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
-            var ivLength = this.Secret[0];
-            var iv = this.Secret.Skip(1).Take(ivLength).ToArray();
-            var data = this.Secret.Skip(1 + ivLength).ToArray();
-            this.m_decrypedSecret = cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+            if (this.m_decrypedSecret == null)
+            {
+                var cryptoService = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
+                var ivLength = this.Secret[0];
+                var iv = this.Secret.Skip(1).Take(ivLength).ToArray();
+                var data = this.Secret.Skip(1 + ivLength).ToArray();
+                this.m_decrypedSecret = cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+            }
             return this.m_decrypedSecret;
+
         }
 
         /// <summary>

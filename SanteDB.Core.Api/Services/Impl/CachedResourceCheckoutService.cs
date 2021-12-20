@@ -75,7 +75,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 throw new ObjectLockedException(resourceLock.UserIdentity);
             }
-            return false;
+            return true;
         }
 
         /// <summary>

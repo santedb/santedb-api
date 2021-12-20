@@ -202,6 +202,7 @@ namespace SanteDB.Core.Jobs
             jinfo.LastRun = DateTime.Now;
             try
             {
+                this.m_tracer.TraceInfo("Will run job - {0}", jinfo.Job.Id);
                 jinfo.Job.Run(this, EventArgs.Empty, jinfo.Parameters);
             }
             catch (Exception ex)
