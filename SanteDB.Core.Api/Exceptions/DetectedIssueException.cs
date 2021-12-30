@@ -21,6 +21,7 @@
 using SanteDB.Core.BusinessRules;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SanteDB.Core.Exceptions
@@ -35,6 +36,11 @@ namespace SanteDB.Core.Exceptions
         /// Gets the list of issues set by the BRE 
         /// </summary>
         public IEnumerable<DetectedIssue> Issues { get; private set; }
+
+        /// <summary>
+        /// Get the message for the error
+        /// </summary>
+        public override string Message => $"{base.Message} - [{String.Join(",", this.Issues.Select(i=>$"{i.Priority}: {i.Text}"))}]";
 
         /// <summary>
         /// Creates a new detected issue exception
