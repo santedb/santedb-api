@@ -85,17 +85,17 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Quick loading - No properties are loaded and the caller must load
         /// </summary>
-        QuickLoad,
+        QuickLoad = 0,
 
         /// <summary>
         /// Sync loading - only properties which are necessary for synchronization
         /// </summary>
-        SyncLoad,
+        SyncLoad = 1,
 
         /// <summary>
         /// Full loading - load all properties
         /// </summary>
-        FullLoad
+        FullLoad = 2
     }
 
     /// <summary>

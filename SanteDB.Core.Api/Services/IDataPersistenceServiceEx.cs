@@ -27,21 +27,11 @@ using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
-    /// <summary>
-    /// Extended data persistence service
-    /// </summary>
-    public interface IDataPersistenceServiceEx : IDataPersistenceService
-    {
-        /// <summary>
-        /// Touch the specified data
-        /// </summary>
-        void Touch(Guid key, TransactionMode mode, IPrincipal principal);
-    }
 
     /// <summary>
     /// Generic interface implementation
     /// </summary>
-    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceServiceEx, IDataPersistenceService<TModel>
+    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceService<TModel>
        where TModel : IdentifiedData
     {
         /// <summary>
@@ -54,5 +44,10 @@ namespace SanteDB.Core.Services
         /// Obsolete all matching data
         /// </summary>
         void DeleteAll(Expression<Func<TModel, bool>> matching, TransactionMode mode, IPrincipal principal, DeleteMode deletionMode);
+
+        /// <summary>
+        /// Touch the specified data
+        /// </summary>
+        TModel Touch(Guid key, TransactionMode mode, IPrincipal principal);
     }
 }
