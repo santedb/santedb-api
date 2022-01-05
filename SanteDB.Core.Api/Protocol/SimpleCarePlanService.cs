@@ -289,7 +289,7 @@ namespace SanteDB.Core.Protocol
                 if (asEncounters)
                 {
                     List<PatientEncounter> encounters = new List<PatientEncounter>();
-                    foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime.AddDays(7)) - o.StartTime))
+                    foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime))
                     {
                         act.StopTime = act.StopTime ?? act.ActTime;
                         // Is there a candidate encounter which is bound by start/end
@@ -353,8 +353,8 @@ namespace SanteDB.Core.Protocol
 
                 // TODO: Configure for days of week
                 foreach (var itm in protocolActs)
-                    while (itm.ActTime.DayOfWeek == DayOfWeek.Sunday || itm.ActTime.DayOfWeek == DayOfWeek.Saturday)
-                        itm.ActTime = itm.ActTime.AddDays(1);
+                    while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
+                        itm.ActTime = itm.ActTime?.AddDays(1);
 
                 return new CarePlan(p, protocolActs.ToList())
                 {
@@ -383,7 +383,7 @@ namespace SanteDB.Core.Protocol
             {
                 Participations = new List<ActParticipation>()
                         {
-                            new ActParticipation(ActParticipationKey.RecordTarget, recordTarget.Key)
+                            new ActParticipation(ActParticipationKeys.RecordTarget, recordTarget.Key)
                         },
                 ActTime = act.ActTime,
                 StartTime = act.StartTime,
@@ -393,7 +393,7 @@ namespace SanteDB.Core.Protocol
             };
             recordTarget.Participations.Add(new ActParticipation()
             {
-                ParticipationRoleKey = ActParticipationKey.RecordTarget,
+                ParticipationRoleKey = ActParticipationKeys.RecordTarget,
                 Act = retVal
             });
             return retVal;
