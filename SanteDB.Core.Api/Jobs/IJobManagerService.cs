@@ -65,6 +65,11 @@ namespace SanteDB.Core.Jobs
         void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
+        /// Schedule a job to start at a specific time
+        /// </summary>
+        void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime);
+
+        /// <summary>
         /// Returns true if the job is registered
         /// </summary>
         bool IsJobRegistered(Type jobType);
