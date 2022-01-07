@@ -46,12 +46,10 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Errored workers
         /// </summary>
-        private int m_erroredWorkers = 0;
+        private int m_activeWorkers = 0;
 
-        /// <summary>
-        /// Errored workers
-        /// </summary>
-        internal int ErroredWorkerCount => this.m_erroredWorkers;
+        // Dispatched workers
+        private int m_dispatchedWorkers = 0;
 
         /// <summary>
         /// Queue user work item to the .NET ThreadPool
@@ -67,16 +65,19 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void QueueUserWorkItem<TParm>(Action<TParm> action, TParm parm)
         {
+            Interlocked.Increment(ref this.m_dispatchedWorkers);
             ThreadPool.QueueUserWorkItem(o =>
             {
                 try
                 {
+                    Interlocked.Increment(ref this.m_activeWorkers);
                     action((TParm)o);
                 }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Unhandled ThreadPool Worker Error:  {0}", e);
-                    Interlocked.Increment(ref this.m_erroredWorkers);
+                    Interlocked.Decrement(ref this.m_activeWorkers);
+                    Interlocked.Decrement(ref this.m_dispatchedWorkers);
                 }
             }, parm);
         }
@@ -88,7 +89,8 @@ namespace SanteDB.Core.Services.Impl
         {
             ThreadPool.GetMaxThreads(out totalWorkers, out _);
             ThreadPool.GetAvailableThreads(out availableWorkers, out _);
-            waitingInQueue = 0;
+            availableWorkers = totalWorkers - this.m_activeWorkers;
+            waitingInQueue = this.m_dispatchedWorkers - this.m_activeWorkers;
         }
     }
 }

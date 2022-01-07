@@ -203,14 +203,21 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry retVal = null;
                 using (var fs = File.OpenRead(queueFile))
                 {
-                    retVal = QueueEntry.Load(fs);
+                    try
+                    {
+                        retVal = QueueEntry.Load(fs);
+                    }
+                    finally
+                    {
+                        File.Delete(queueFile);
+                    }
                 }
-                File.Delete(queueFile);
                 return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error de-queueing {0} - {1}", queueName, e);
+
                 return null;
             }
         }
