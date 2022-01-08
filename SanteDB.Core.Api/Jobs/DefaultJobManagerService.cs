@@ -64,7 +64,7 @@ namespace SanteDB.Core.Jobs
             {
                 this.Job = job;
                 this.StartType = startType;
-                this.Schedule = new JobItemSchedule[]
+                this.Schedule = new List<JobItemSchedule>
                 {
                     new JobItemSchedule()
                     {
@@ -83,7 +83,7 @@ namespace SanteDB.Core.Jobs
             public JobExecutionInfo(JobItemConfiguration configuration)
             {
                 this.Job = configuration.Type.CreateInjected() as IJob;
-                this.Schedule = configuration.Schedule?.ToArray();
+                this.Schedule = configuration.Schedule?.ToList();
                 this.StartType = configuration.StartType;
                 this.Parameters = configuration.Parameters;
             }
@@ -106,7 +106,7 @@ namespace SanteDB.Core.Jobs
             /// <summary>
             /// Days that the job should be run
             /// </summary>
-            public JobItemSchedule[] Schedule { get; }
+            public List<JobItemSchedule> Schedule { get; }
 
             /// <summary>
             /// Parameters for this object
@@ -174,6 +174,7 @@ namespace SanteDB.Core.Jobs
             foreach (var job in this.m_configuration.Jobs)
             {
                 var ji = new JobExecutionInfo(job);
+                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, job.StartType);
                 this.m_jobs.Add(ji);
 
                 if (job.StartType == JobStartType.Immediate)
@@ -322,6 +323,8 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public void StartJob(IJob job, object[] parameters)
         {
+            // TODO: Audit
+            this.m_tracer.TraceInfo("Manually starting job {0}", job.Name);
             this.m_threadPool.QueueUserWorkItem(this.RunJob,
                 new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters.Where(o => o != null).ToArray()));
         }
@@ -342,8 +345,30 @@ namespace SanteDB.Core.Jobs
             var job = this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType);
             if (job == null)
             {
+                // TODO: Audit
+                this.m_tracer.TraceInfo("Manually starting job {0}", job.Job.Name);
                 this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
             }
+        }
+
+        /// <summary>
+        /// Sets the job's schedule
+        /// </summary>
+        public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        {
+            var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
+            if(jobInfo == null)
+            {
+                throw new KeyNotFoundException($"Job {job.Id} not registered");
+            }
+
+            this.m_tracer.TraceInfo("Set job {0} schedule to {1} @ {2}", job, daysOfWeek, scheduleTime);
+            jobInfo.Schedule.Clear();
+            jobInfo.Schedule.Add(new JobItemSchedule()
+            {
+                RepeatOn = daysOfWeek,
+                StartDate = scheduleTime
+            });
         }
 
         #endregion ITimerService Members

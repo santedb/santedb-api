@@ -165,7 +165,7 @@ namespace SanteDB.Core.Configuration
             {
                 return true;
             }
-            else if (this.RepeatOn != null)
+            else if (this.RepeatOn != null && this.RepeatOn.Any())
             {
                 retVal &= this.RepeatOn.Any(r => r == refDate.DayOfWeek) &&
                     refDate.Hour >= this.StartDate.Hour &&

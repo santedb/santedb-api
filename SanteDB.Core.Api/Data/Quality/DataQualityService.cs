@@ -105,6 +105,7 @@ namespace SanteDB.Core.Data.Quality
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
+            // TODO: If the service is being run in non-realtime mode then provide a job to run these rules
             if (this.m_configuration != null)
             {
                 ApplicationServiceContext.Current.AddBusinessRule(typeof(DataQualityBundleRule));
