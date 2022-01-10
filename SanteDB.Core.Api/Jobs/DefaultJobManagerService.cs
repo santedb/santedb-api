@@ -174,6 +174,7 @@ namespace SanteDB.Core.Jobs
             foreach (var job in this.m_configuration.Jobs)
             {
                 var ji = new JobExecutionInfo(job);
+                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, job.StartType);
                 this.m_jobs.Add(ji);
 
                 if (job.StartType == JobStartType.Immediate)
@@ -321,6 +322,8 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public void StartJob(IJob job, object[] parameters)
         {
+            // TODO: Audit
+            this.m_tracer.TraceInfo("Manually starting job {0}", job.Name);
             this.m_threadPool.QueueUserWorkItem(this.RunJob,
                 new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters.Where(o => o != null).ToArray()));
         }
@@ -341,6 +344,8 @@ namespace SanteDB.Core.Jobs
             var job = this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType);
             if (job == null)
             {
+                // TODO: Audit
+                this.m_tracer.TraceInfo("Manually starting job {0}", job.Job.Name);
                 this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
             }
         }
@@ -356,6 +361,7 @@ namespace SanteDB.Core.Jobs
                 throw new KeyNotFoundException($"Job {job.Id} not registered");
             }
 
+            this.m_tracer.TraceInfo("Set job {0} schedule to {1} @ {2}", job, daysOfWeek, scheduleTime);
             jobInfo.Schedule.Clear();
             jobInfo.Schedule.Add(new JobItemSchedule()
             {

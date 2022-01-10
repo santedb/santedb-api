@@ -151,6 +151,11 @@ namespace SanteDB.Core.Services.Impl
             if (this.m_threadPool == null)
             {
                 this.m_concurrencyLevel = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<ApplicationServiceContextConfigurationSection>()?.ThreadPoolSize ?? this.m_concurrencyLevel;
+                if(this.m_concurrencyLevel == 0)
+                {
+                    this.m_concurrencyLevel = Environment.ProcessorCount * 16;
+                }
+
                 m_threadPool = new Thread[m_concurrencyLevel];
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
