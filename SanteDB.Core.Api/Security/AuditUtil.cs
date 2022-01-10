@@ -150,6 +150,11 @@ namespace SanteDB.Core.Security.Audit
     /// </summary>
     public static class AuditUtil
     {
+
+        // Process infor
+        private static readonly int s_processId = Process.GetCurrentProcess().Id;
+        private static readonly string s_processName = Process.GetCurrentProcess().ProcessName;
+
         private static Tracer traceSource = Tracer.GetTracer(typeof(AuditUtil));
 
         private static AuditAccountabilityConfigurationSection s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
@@ -641,8 +646,8 @@ namespace SanteDB.Core.Security.Audit
                 traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
 
                 // Get audit metadata
-                audit.AddMetadata(AuditMetadataKey.PID, Process.GetCurrentProcess().Id.ToString());
-                audit.AddMetadata(AuditMetadataKey.ProcessName, Process.GetCurrentProcess().ProcessName);
+                audit.AddMetadata(AuditMetadataKey.PID, s_processId.ToString());
+                audit.AddMetadata(AuditMetadataKey.ProcessName, s_processName);
                 audit.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
                 audit.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
                 audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
