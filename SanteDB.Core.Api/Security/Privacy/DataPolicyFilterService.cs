@@ -299,6 +299,8 @@ namespace SanteDB.Core.Security.Privacy
                                 return fieldPolicy.Policy.Any() ? fieldPolicy.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) == PolicyGrantType.Grant) :
                                     fieldPolicy?.Action == ResourceDataPolicyActionType.None;
                             }
+                        case System.Reflection.FieldInfo fi:
+                            return true;
                         default:
                             return false;
                     }

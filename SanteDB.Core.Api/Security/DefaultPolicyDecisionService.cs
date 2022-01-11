@@ -336,5 +336,13 @@ namespace SanteDB.Core.Security
                 return retVal;
             }
         }
+
+        /// <summary>
+        /// Clear cache by principal name
+        /// </summary>
+        public void ClearCache(string principalName)
+        {
+            this.m_adhocCacheService?.Remove($"pdp.{this.m_hasher.ComputeHash(principalName)}");
+        }
     }
 }

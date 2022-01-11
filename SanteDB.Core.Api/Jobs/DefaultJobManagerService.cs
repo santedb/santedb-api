@@ -64,7 +64,7 @@ namespace SanteDB.Core.Jobs
             {
                 this.Job = job;
                 this.StartType = startType;
-                this.Schedule = new List<JobItemSchedule>
+                this.Schedule = new List<IJobSchedule>
                 {
                     new JobItemSchedule()
                     {
@@ -83,7 +83,7 @@ namespace SanteDB.Core.Jobs
             public JobExecutionInfo(JobItemConfiguration configuration)
             {
                 this.Job = configuration.Type.CreateInjected() as IJob;
-                this.Schedule = configuration.Schedule?.ToList();
+                this.Schedule = configuration.Schedule?.OfType<IJobSchedule>().ToList();
                 this.StartType = configuration.StartType;
                 this.Parameters = configuration.Parameters;
             }
@@ -106,7 +106,7 @@ namespace SanteDB.Core.Jobs
             /// <summary>
             /// Days that the job should be run
             /// </summary>
-            public List<JobItemSchedule> Schedule { get; }
+            public List<IJobSchedule> Schedule { get; }
 
             /// <summary>
             /// Parameters for this object
@@ -353,7 +353,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Sets the job's schedule
         /// </summary>
-        public void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
+        public IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
         {
             var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
             if(jobInfo == null)
@@ -363,11 +363,53 @@ namespace SanteDB.Core.Jobs
 
             this.m_tracer.TraceInfo("Set job {0} schedule to {1} @ {2}", job, daysOfWeek, scheduleTime);
             jobInfo.Schedule.Clear();
-            jobInfo.Schedule.Add(new JobItemSchedule()
+
+            var retVal = new JobItemSchedule()
             {
                 RepeatOn = daysOfWeek,
                 StartDate = scheduleTime
-            });
+            };
+            jobInfo.Schedule.Add(retVal);
+            return retVal;
+        }
+
+        /// <summary>
+        /// Set the job to repeat on an interval
+        /// </summary>
+        /// <param name="job">The job to set repeat schedule for</param>
+        /// <param name="interval">The interval to set</param>
+        /// <returns>The created schedule</returns>
+        public IJobSchedule SetJobSchedule(IJob job, TimeSpan interval)
+        {
+            var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
+            if (jobInfo == null)
+            {
+                throw new KeyNotFoundException($"Job {job.Id} not registered");
+            }
+
+            this.m_tracer.TraceInfo("Set job {0} schedule to repeat {1} ", job, interval);
+            jobInfo.Schedule.Clear();
+
+            var retVal = new JobItemSchedule()
+            {
+                Interval = (int)interval.TotalSeconds,
+                IntervalSpecified = true,
+            };
+            jobInfo.Schedule.Add(retVal);
+            return retVal;
+        }
+
+        /// <summary>
+        /// Get schedules for the specified job
+        /// </summary>
+        public IEnumerable<IJobSchedule> GetJobSchedules(IJob job)
+        {
+            var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
+            if (jobInfo == null)
+            {
+                throw new KeyNotFoundException($"Job {job.Id} not registered");
+            }
+            return jobInfo.Schedule;
         }
 
         #endregion ITimerService Members

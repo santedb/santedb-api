@@ -110,7 +110,7 @@ namespace SanteDB.Core.Configuration
     /// Job item schedule
     /// </summary>
     [XmlType(nameof(JobItemSchedule), Namespace = "http://santedb.org/configuration")]
-    public class JobItemSchedule
+    public class JobItemSchedule : IJobSchedule
     {
 
         /// <summary>
@@ -146,16 +146,39 @@ namespace SanteDB.Core.Configuration
         public int Interval { get; set; }
 
         /// <summary>
-        /// The inteval was specified
+        /// The interval was specified
         /// </summary>
         [XmlIgnore, JsonIgnore, DisplayName("Use Interval"), Description("When set to true, the job should be run on a regular interval rather than a schedule")]
         public bool IntervalSpecified { get; set; }
 
+        /// <summary>
+        /// Gets the interval of time for the job
+        /// </summary>
+        [XmlIgnore,JsonIgnore]
+        TimeSpan? IJobSchedule.Interval => this.IntervalSpecified ? (TimeSpan?)new TimeSpan(0, 0, this.Interval) : null;
+
+        /// <summary>
+        /// Gets the start time
+        /// </summary>
+        [XmlIgnore,JsonIgnore]
+        DateTime IJobSchedule.StartTime => this.StartDate;
+
+        /// <summary>
+        /// Gets the stop time
+        /// </summary>
+        [XmlIgnore,JsonIgnore]
+        DateTime? IJobSchedule.StopTime => this.StopDateSpecified ? (DateTime?)this.StopDate : null;
+
+        /// <summary>
+        /// Days this repeats on
+        /// </summary>
+        [XmlIgnore,JsonIgnore]
+        DayOfWeek[] IJobSchedule.Days => this.RepeatOn;
 
         /// <summary>
         /// Returns true if the schedule applies to <paramref name="refDate"/>
         /// </summary>
-        internal bool AppliesTo(DateTime refDate, DateTime? lastRun)
+        public bool AppliesTo(DateTime refDate, DateTime? lastRun)
         {
             var retVal = refDate >= this.StartDate; // The reference date is in valid bounds for start
             retVal &= !this.StopDateSpecified || refDate < this.StopDate; // The reference date is in valid bounds of stop (if specified)
