@@ -44,12 +44,16 @@ namespace SanteDB.Core.Jobs
         // Thread pool
         private IThreadPoolService m_threadPool;
 
+        // Job schedule manager
+        private readonly IJobScheduleManager m_jobScheduleManager;
+
         /// <summary>
         /// Create a new job manager service
         /// </summary>
-        public DefaultJobManagerService(IThreadPoolService threadPool)
+        public DefaultJobManagerService(IThreadPoolService threadPool, IJobScheduleManager cronTabManager = null)
         {
             this.m_threadPool = threadPool;
+            this.m_jobScheduleManager = cronTabManager ?? new XmlFileJobScheduleManager();
         }
 
         /// <summary>
@@ -60,32 +64,10 @@ namespace SanteDB.Core.Jobs
             /// <summary>
             /// Start the job
             /// </summary>
-            public JobExecutionInfo(IJob job, JobStartType startType, TimeSpan interval, Object[] parameters)
+            public JobExecutionInfo(IJob job, JobStartType startType, Object[] parameters)
             {
                 this.Job = job;
                 this.StartType = startType;
-                this.Schedule = new List<IJobSchedule>
-                {
-                    new JobItemSchedule()
-                    {
-                        Interval = interval.Milliseconds,
-                        IntervalSpecified = true,
-                        StartDate = DateTime.Now
-                    }
-                };
-                this.Parameters = parameters;
-            }
-
-            /// <summary>
-            /// Create a new job execution schedule
-            /// </summary>
-            /// <param name="configuration"></param>
-            public JobExecutionInfo(JobItemConfiguration configuration)
-            {
-                this.Job = configuration.Type.CreateInjected() as IJob;
-                this.Schedule = configuration.Schedule?.OfType<IJobSchedule>().ToList();
-                this.StartType = configuration.StartType;
-                this.Parameters = configuration.Parameters;
             }
 
             /// <summary>
@@ -104,14 +86,9 @@ namespace SanteDB.Core.Jobs
             public DateTime? LastFinish { get; set; }
 
             /// <summary>
-            /// Days that the job should be run
-            /// </summary>
-            public List<IJobSchedule> Schedule { get; }
-
-            /// <summary>
             /// Parameters for this object
             /// </summary>
-            public object[] Parameters { get; }
+            public object[] DefaultParameters { get; }
 
             /// <summary>
             /// The start type of the job
@@ -171,13 +148,20 @@ namespace SanteDB.Core.Jobs
             // Invoke the starting event handler
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            foreach (var job in this.m_configuration.Jobs)
+            foreach (var configuration in this.m_configuration.Jobs)
             {
-                var ji = new JobExecutionInfo(job);
-                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, job.StartType);
+                var job = configuration.Type.CreateInjected() as IJob;
+                var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
+                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
                 this.m_jobs.Add(ji);
 
-                if (job.StartType == JobStartType.Immediate)
+                if(configuration.Schedule?.Any() == true)
+                {
+                    this.m_jobScheduleManager.Clear(job);
+                    configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
+                }
+
+                if (configuration.StartType == JobStartType.Immediate)
                 {
                     this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
                 }
@@ -204,7 +188,7 @@ namespace SanteDB.Core.Jobs
             try
             {
                 this.m_tracer.TraceInfo("Will run job - {0}", jinfo.Job.Id);
-                jinfo.Job.Run(this, EventArgs.Empty, jinfo.Parameters);
+                jinfo.Job.Run(this, EventArgs.Empty, jinfo.DefaultParameters);
             }
             catch (Exception ex)
             {
@@ -220,17 +204,19 @@ namespace SanteDB.Core.Jobs
             // Iterate through our jobs
             foreach (var itm in this.m_jobs)
             {
+                var schedule = this.m_jobScheduleManager.Get(itm.Job);
+
                 // Does the job have a schedule?
-                if (itm.Schedule == null || !itm.Schedule.Any() || itm.StartType == JobStartType.Never)
+                if (!schedule.Any() || itm.StartType == JobStartType.Never)
                 {
                     continue;
                 }
 
                 // Do any of the schedules fit with the current system time?
-                var scheduleHits = itm.Schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
+                var scheduleHits = schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
                 if (scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
                 {
-                    this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", itm.Schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
+                    this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
                     if (itm.Job.CurrentState != JobStateType.Running)
                     {
                         this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
@@ -239,7 +225,7 @@ namespace SanteDB.Core.Jobs
                 }
                 else
                 {
-                    this.m_tracer.TraceVerbose("Job {0} scheduled {1} not applicable", itm.Job.Name, String.Join(";", itm.Schedule.Select(o => o.ToString())));
+                    this.m_tracer.TraceVerbose("Job {0} scheduled {1} not applicable", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())));
                 }
             }
         }
@@ -269,15 +255,20 @@ namespace SanteDB.Core.Jobs
             return true;
         }
 
-        /// <summary>
-        /// Add a job
-        /// </summary>
-        public void AddJob(IJob jobObject, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate)
+        /// <inheritdoc/>
+        public void AddJob(IJob jobObject, TimeSpan interval, JobStartType startType = JobStartType.Immediate)
+        {
+            this.AddJob(jobObject, startType);
+            this.SetJobSchedule(jobObject, interval);
+        }
+
+        /// <inheritdoc/>
+        public void AddJob(IJob jobObject, JobStartType startType = JobStartType.Immediate)
         {
             if (this.IsJobRegistered(jobObject.GetType()))
                 return; // Job is already added
 
-            var ji = new JobExecutionInfo(jobObject, startType, elapseTime, new object[0]);
+            var ji = new JobExecutionInfo(jobObject, startType, new object[0]);
             this.m_jobs.Add(ji);
             if (startType == JobStartType.Immediate)
             {
@@ -325,7 +316,7 @@ namespace SanteDB.Core.Jobs
             // TODO: Audit
             this.m_tracer.TraceInfo("Manually starting job {0}", job.Name);
             this.m_threadPool.QueueUserWorkItem(this.RunJob,
-                new JobExecutionInfo(job, JobStartType.Immediate, TimeSpan.MinValue, parameters.Where(o => o != null).ToArray()));
+                new JobExecutionInfo(job, JobStartType.Immediate, parameters.Where(o => o != null).ToArray()));
         }
 
         /// <summary>
@@ -362,14 +353,13 @@ namespace SanteDB.Core.Jobs
             }
 
             this.m_tracer.TraceInfo("Set job {0} schedule to {1} @ {2}", job, daysOfWeek, scheduleTime);
-            jobInfo.Schedule.Clear();
-
+            this.m_jobScheduleManager.Clear(job);
             var retVal = new JobItemSchedule()
             {
                 RepeatOn = daysOfWeek,
                 StartDate = scheduleTime
             };
-            jobInfo.Schedule.Add(retVal);
+            this.m_jobScheduleManager.Add(job, retVal);
             return retVal;
         }
 
@@ -388,14 +378,14 @@ namespace SanteDB.Core.Jobs
             }
 
             this.m_tracer.TraceInfo("Set job {0} schedule to repeat {1} ", job, interval);
-            jobInfo.Schedule.Clear();
+            this.m_jobScheduleManager.Clear(job);
 
             var retVal = new JobItemSchedule()
             {
                 Interval = (int)interval.TotalSeconds,
                 IntervalSpecified = true,
             };
-            jobInfo.Schedule.Add(retVal);
+            this.m_jobScheduleManager.Add(job, retVal);
             return retVal;
         }
 
@@ -409,7 +399,7 @@ namespace SanteDB.Core.Jobs
             {
                 throw new KeyNotFoundException($"Job {job.Id} not registered");
             }
-            return jobInfo.Schedule;
+            return this.m_jobScheduleManager.Get(job);
         }
 
         #endregion ITimerService Members

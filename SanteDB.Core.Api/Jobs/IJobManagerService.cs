@@ -62,7 +62,15 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Add a job
         /// </summary>
+        [Obsolete("Use AddJob(IJob, JobStartType) and then SetJobSchedule() instead", true)]
         void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
+
+        /// <summary>
+        /// Add a job to the execution manager
+        /// </summary>
+        /// <param name="jobType">The type of job to add</param>
+        /// <param name="startType">The type of start the job should take</param>
+        void AddJob(IJob jobType, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
         /// Returns true if the job is registered
