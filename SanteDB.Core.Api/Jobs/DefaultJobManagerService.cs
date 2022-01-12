@@ -68,6 +68,7 @@ namespace SanteDB.Core.Jobs
             {
                 this.Job = job;
                 this.StartType = startType;
+                this.Parameters = parameters;
             }
 
             /// <summary>
@@ -88,7 +89,7 @@ namespace SanteDB.Core.Jobs
             /// <summary>
             /// Parameters for this object
             /// </summary>
-            public object[] DefaultParameters { get; }
+            public object[] Parameters { get; }
 
             /// <summary>
             /// The start type of the job
@@ -168,8 +169,9 @@ namespace SanteDB.Core.Jobs
             }
 
             // Setup timers based on the jobs
-            this.m_systemTimer = new System.Timers.Timer(600000); // timer runs every 10 minutes
+            this.m_systemTimer = new System.Timers.Timer(300000); // timer runs every 5 minutes
             this.m_systemTimer.Elapsed += SystemJobTimer;
+            this.m_systemTimer.Enabled = true;
 
             this.Started?.Invoke(this, EventArgs.Empty);
 
@@ -188,7 +190,7 @@ namespace SanteDB.Core.Jobs
             try
             {
                 this.m_tracer.TraceInfo("Will run job - {0}", jinfo.Job.Id);
-                jinfo.Job.Run(this, EventArgs.Empty, jinfo.DefaultParameters);
+                jinfo.Job.Run(this, EventArgs.Empty, jinfo.Parameters);
             }
             catch (Exception ex)
             {
@@ -201,32 +203,39 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         private void SystemJobTimer(object sender, ElapsedEventArgs e)
         {
-            // Iterate through our jobs
-            foreach (var itm in this.m_jobs)
+            try
             {
-                var schedule = this.m_jobScheduleManager.Get(itm.Job);
-
-                // Does the job have a schedule?
-                if (!schedule.Any() || itm.StartType == JobStartType.Never)
+                // Iterate through our jobs
+                foreach (var itm in this.m_jobs)
                 {
-                    continue;
-                }
+                    var schedule = this.m_jobScheduleManager.Get(itm.Job);
 
-                // Do any of the schedules fit with the current system time?
-                var scheduleHits = schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
-                if (scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
-                {
-                    this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
-                    if (itm.Job.CurrentState != JobStateType.Running)
+                    // Does the job have a schedule?
+                    if (!schedule.Any() || itm.StartType == JobStartType.Never)
                     {
-                        this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
-                        this.m_threadPool.QueueUserWorkItem(this.RunJob, itm);
+                        continue;
+                    }
+
+                    // Do any of the schedules fit with the current system time?
+                    var scheduleHits = schedule.Where(s => s.AppliesTo(DateTime.Now, itm.LastRun));
+                    if (scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
+                    {
+                        this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
+                        if (itm.Job.CurrentState != JobStateType.Running)
+                        {
+                            this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
+                            this.m_threadPool.QueueUserWorkItem(this.RunJob, itm);
+                        }
+                    }
+                    else
+                    {
+                        this.m_tracer.TraceVerbose("Job {0} scheduled {1} not applicable", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())));
                     }
                 }
-                else
-                {
-                    this.m_tracer.TraceVerbose("Job {0} scheduled {1} not applicable", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())));
-                }
+            }
+            catch(Exception ex)
+            {
+                this.m_tracer.TraceWarning("Could not automatically run jobs : {0}", e);
             }
         }
 
@@ -316,7 +325,7 @@ namespace SanteDB.Core.Jobs
             // TODO: Audit
             this.m_tracer.TraceInfo("Manually starting job {0}", job.Name);
             this.m_threadPool.QueueUserWorkItem(this.RunJob,
-                new JobExecutionInfo(job, JobStartType.Immediate, parameters.Where(o => o != null).ToArray()));
+                new JobExecutionInfo(job, JobStartType.Immediate, parameters));
         }
 
         /// <summary>
@@ -337,7 +346,7 @@ namespace SanteDB.Core.Jobs
             {
                 // TODO: Audit
                 this.m_tracer.TraceInfo("Manually starting job {0}", job.Job.Name);
-                this.m_threadPool.QueueUserWorkItem(this.RunJob, job);
+                this.m_threadPool.QueueUserWorkItem(this.RunJob, new JobExecutionInfo(job.Job, JobStartType.Immediate, parameters));
             }
         }
 

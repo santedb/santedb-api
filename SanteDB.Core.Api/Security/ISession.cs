@@ -61,6 +61,15 @@ namespace SanteDB.Core.Security
     /// </summary>
     public class GenericSession : ISession
     {
+
+        /// <summary>
+        /// Serialization ctor
+        /// </summary>
+        public GenericSession()
+        {
+
+        }
+
         /// <summary>
         /// Creates a generic session for the user
         /// </summary>
