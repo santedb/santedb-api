@@ -235,7 +235,7 @@ namespace SanteDB.Core.Jobs
             }
             catch(Exception ex)
             {
-                this.m_tracer.TraceWarning("Could not automatically run jobs : {0}", e);
+                this.m_tracer.TraceWarning("Could not automatically run jobs : {0}", ex);
             }
         }
 
