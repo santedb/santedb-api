@@ -119,7 +119,7 @@ namespace SanteDB.Core.Configuration.Features
             configFeature.Categories.Add("Writers", new[] { "writer", "initializationData", "filter" });
             configFeature.Values.Add("writer", config.TraceWriter.FirstOrDefault()?.TraceWriter ?? tw.FirstOrDefault());
             configFeature.Values.Add("initializationData", config.TraceWriter.FirstOrDefault()?.InitializationData ?? "santedb.log");
-            configFeature.Values.Add("filter", config.Mode);
+            configFeature.Values.Add("filter", config.TraceWriter.FirstOrDefault()?.Filter);
             this.Configuration = configFeature;
             return FeatureInstallState.Installed;
         }
@@ -169,7 +169,7 @@ namespace SanteDB.Core.Configuration.Features
                     TraceWriterClassXml = (featureConfig.Values["writer"] as Type).AssemblyQualifiedName,
                     Filter = (EventLevel)featureConfig.Values["filter"]
                 });
-                config.Mode = EventLevel.LogAlways;
+                config.Mode = (EventLevel)featureConfig.Values["filter"];
 
                 // Configure sources
                 foreach (var k in featureConfig.Categories["Sources"])
