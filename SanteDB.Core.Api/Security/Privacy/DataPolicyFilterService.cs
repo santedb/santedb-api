@@ -44,9 +44,20 @@ using System.Security.Principal;
 namespace SanteDB.Core.Security.Privacy
 {
     /// <summary>
-    /// Local policy enforcement point service
+    /// Privacy enforcement service that uses the local <see cref="IPolicyInformationService"/> and takes
+    /// default behaviors (as described in the <see href="https://help.santesuite.org/santedb/privacy-architecture">SanteDB Privacy Architecture</see>
     /// </summary>
-    [ServiceProvider("Data Privacy Filtering")]
+    /// <remarks>
+    /// <para>This privacy enforcement service provides a baseline implementation of a privacy filter in SanteDB. The service supports:</para>
+    /// <list type="bullet">
+    ///     <item>Hiding, Masking, Hashing, Redacting data which is about to be disclosed according to the <see cref="DataPolicyFilterConfigurationSection"/></item>
+    ///     <item>Removing any forbidden / restricted fields from disclosure based on policy (or global removal)</item>
+    ///     <item>Ensuring that inbound messages do not contain masked or partial data</item>
+    ///     <item>Validating that queries are not performed against forbidden fields</item>
+    ///     <item>Ensuring that inbound data does not contain forbidden field data</item>
+    /// </list>
+    /// </remarks>
+    [ServiceProvider("Default Privacy Enforcement")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
         /// <summary>

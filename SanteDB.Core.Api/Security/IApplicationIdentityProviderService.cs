@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
@@ -25,8 +26,18 @@ using System.Security.Principal;
 namespace SanteDB.Core.Security.Services
 {
     /// <summary>
-    /// Represents a service which retrieves IPrincipal objects for applications.
+    /// Represents a service which retrieves <see cref="IApplicationIdentity"/> and can authenticate to an <see cref="IPrincipal"/> for applications.
     /// </summary>
+    /// <remarks>
+    /// <para>In SanteDB, a security session is comprised of up to three security identities/principals:</para>
+    /// <list type="bullet">
+    ///     <item>(Optional) User identity representing the human using the application</item>
+    ///     <item>(Optional) Device identity representing the device running the application, and</item>
+    ///     <item>An <see cref="IApplicationIdentity"/> representing the application</item>
+    /// </list>
+    /// <para>This service is what is used to authenticate the application identity from a central credential store of registered applications.</para>
+    /// <para>See: <see href="https://help.santesuite.org/santedb/security-architecture#principals-and-identities">SanteDB authentication architecture</see></para>
+    /// </remarks>
     [System.ComponentModel.Description("Application Identity Provider")]
     public interface IApplicationIdentityProviderService : IServiceImplementation
     {

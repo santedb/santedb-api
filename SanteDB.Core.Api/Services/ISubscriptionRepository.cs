@@ -23,8 +23,15 @@ using SanteDB.Core.Model.Subscription;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents an implementation of a repository which loads subscription definitions
+    /// Represents a repository which maintains subscription definitions
     /// </summary>
+    /// <remarks>
+    /// <para>This service is used to maintain instances of <see cref="SubscriptionDefinition"/> which 
+    /// contain SQL (or other query grammar) to allow dCDR instances to easily query data on the HDSI interface
+    /// using the <c>_subscription</c> parameter. The HDSI maps the subscription ID with the local data provider
+    /// and then executes the appopriate query against the persistence layer to ensure fast synchronization of
+    /// new data.</para>
+    /// </remarks>
     [System.ComponentModel.Description("dCDR Subscription Definition Provider")]
     public interface ISubscriptionRepository : IRepositoryService<SubscriptionDefinition>
     {

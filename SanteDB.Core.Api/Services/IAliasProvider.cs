@@ -53,8 +53,15 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Represents a provider for aliases
+    /// Provider for name and place aliasing
     /// </summary>
+    /// <remarks>
+    /// Some implementations of the SanteDB engine allow for searching of data based on aliases. This aliasing
+    /// allows SanteDB to map an inbound query parameter like 'Bob' to 'Robert' or 'Will' to 'Bill' and 'William'.
+    /// The service is responsible for providing the known aliases for each name into the SanteDB infrastructure, and
+    /// these can be accessed using the HDSI extended query filter: <code>name.component.value=:(alias|Bob)&gt;=1.0</code>
+    /// which indicates that the aliases of the stored name should match Bob.
+    /// </remarks>
     [System.ComponentModel.Description("Name Alias Provider")]
     public interface IAliasProvider : IServiceImplementation
     {

@@ -28,8 +28,12 @@ using System.Linq;
 namespace SanteDB.Core.Data.Quality
 {
     /// <summary>
-    /// Represents a bundle data quality rule
+    /// Business rule that calls other <see cref="DataQualityBusinessRule{TModel}"/> based on the contents of a bundle
     /// </summary>
+    /// <remarks>
+    /// This business rule wraps the insertion or update of a <see cref="Bundle"/> and calls individual data quality validation 
+    /// rules for each of the objects contained withing the bundle provided.
+    /// </remarks>
     public class DataQualityBundleRule : BaseBusinessRulesService<Bundle>
     {
 
