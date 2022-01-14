@@ -36,8 +36,13 @@ using System.Linq;
 namespace SanteDB.Core.Data.Quality
 {
     /// <summary>
-    /// Represents a single data quality business rule
+    /// A business rule that applies user defined data quality rules from the <see cref="IDataQualityConfigurationProviderService"/>
     /// </summary>
+    /// <remarks>
+    /// <para>This business rule template allows users to describe data quality rules (for example, using <see href="https://help.santesuite.org/operations/server-administration/host-configuration-file/data-quality-services#configuring-data-quality-rules">the application configuration for data quality rules</see>) 
+    /// to be applied to incoming data. This service uses the data quality extension to then flag any warnings or informational issues (error issues result in the object being rejected). 
+    /// These extensions are cleaned by the <see cref="DataQualityExtensionCleanJob"/> if the object no longer fails the quality rules.</para>
+    /// </remarks>
     public class DataQualityBusinessRule<TModel> : BaseBusinessRulesService<TModel>
         where TModel : IdentifiedData
     {

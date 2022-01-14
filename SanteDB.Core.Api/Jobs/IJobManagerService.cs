@@ -62,12 +62,15 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Add a job
         /// </summary>
+        [Obsolete("Use AddJob(IJob, JobStartType) and then SetJobSchedule() instead", true)]
         void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
-        /// Schedule a job to start at a specific time
+        /// Add a job to the execution manager
         /// </summary>
-        void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime);
+        /// <param name="jobType">The type of job to add</param>
+        /// <param name="startType">The type of start the job should take</param>
+        void AddJob(IJob jobType, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
         /// Returns true if the job is registered
@@ -100,5 +103,21 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         /// <param name="jobKey">The job type to fetch</param>
         IJob GetJobInstance(Guid jobKey);
+
+        /// <summary>
+        /// Get the schedule for the specified job
+        /// </summary>
+        IEnumerable<IJobSchedule> GetJobSchedules(IJob job);
+
+        /// <summary>
+        /// Schedule a job to start at a specific time
+        /// </summary>
+        IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime);
+
+        /// <summary>
+        /// Schedule a job to repeat on an interval
+        /// </summary>
+        IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan);
+
     }
 }

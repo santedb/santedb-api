@@ -73,6 +73,7 @@ namespace SanteDB.Core.Jobs
         /// Gets the time the job last finished
         /// </summary>
         DateTime? LastFinished { get; }
+
     }
 
 

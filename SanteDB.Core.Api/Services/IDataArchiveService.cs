@@ -18,35 +18,49 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using System;
 
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Data Archive service
+    /// Service contract for data archival and purging
     /// </summary>
+    /// <remarks>
+    /// <para>The data archive service is used by various jobs throughout SanteDB iCDR (such as the <see cref="DataRetentionJob"/>) to 
+    /// copy records which are past their retention rules to a secondary data storage facility. This service can be used for long-term
+    /// archival of old (non-clinically relevant data) data and supports the purging of data which is no longer needed.</para>
+    /// </remarks>
     [System.ComponentModel.Description("Data Archiving Service")]
     public interface IDataArchiveService : IServiceImplementation
     {
         /// <summary>
         /// Push the specified records to the archive
         /// </summary>
+        /// <param name="keysToBeArchived">The identifiers of the objects in the primary <see cref="IDataPersistenceService"/> which are to be copied to the archive</param>
+        /// <param name="modelType">The type of data that is being archived</param>
         void Archive(Type modelType, params Guid[] keysToBeArchived);
 
         /// <summary>
         /// Retrieve a record from the archive by key and type
         /// </summary>
+        /// <param name="modelType">The type of data which is being retrieved from the archive</param>
+        /// <param name="keyToRetrieve">The key of the data to be retrieved from the archive</param>
         IdentifiedData Retrieve(Type modelType, Guid keyToRetrieve);
 
         /// <summary>
         /// Validates whether the specified key exists in the archive
         /// </summary>
+        /// <param name="modelType">The type of data to determine existence for</param>
+        /// <param name="keyToCheck">The key to check for existence</param>
         bool Exists(Type modelType, Guid keyToCheck);
 
         /// <summary>
         /// Purge the specified object from the archive
         /// </summary>
+        /// <param name="modelType">The type of data to be purged</param>
+        /// <param name="keysToBePurged">The keys of the data to be purged</param>
         void Purge(Type modelType, params Guid[] keysToBePurged);
 
     }

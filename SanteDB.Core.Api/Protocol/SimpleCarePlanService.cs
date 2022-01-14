@@ -35,10 +35,15 @@ using System.Linq;
 namespace SanteDB.Core.Protocol
 {
     /// <summary>
-    /// Represents a care plan service that can bundle protocol acts together
-    /// based on their start/stop times
+    /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
     /// </summary>
-    [ServiceProvider("Simple Care Planning Service")]
+    /// <remarks>
+    /// <para>This implementation of the care plan service is capable of calling <see cref="IClinicalProtocol"/> instances
+    /// registered from the clinical protocol manager to construct <see cref="Act"/> instances representing the proposed
+    /// actions to take for the patient. The care planner is also capable of simple interval hull functions to group 
+    /// these acts together into <see cref="PatientEncounter"/> instances based on safe time for grouping.</para>
+    /// </remarks>
+    [ServiceProvider("Default Care Planning Service")]
     public class SimpleCarePlanService : ICarePlanService
     {
         /// <summary>
@@ -127,7 +132,7 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Gets the protocols
         /// </summary>
-        public List<IClinicalProtocol> Protocols
+        public IList<IClinicalProtocol> Protocols
         {
             get
             {

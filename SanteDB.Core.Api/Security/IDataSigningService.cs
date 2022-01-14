@@ -26,8 +26,14 @@ namespace SanteDB.Core.Security
 {
 
     /// <summary>
-    /// Represents a service which can sign arbitrary data 
+    /// Contract for services which can sign data using configured digital signature algorithms
     /// </summary>
+    /// <remarks>
+    /// <para>Implementers of this service contract are responsible for computing and validating
+    /// digital signatures against arbitrary data streams. Implementers of this service are responsible for 
+    /// maintaining (or acquiring) a master list of keys which can be used for data signing, and validating 
+    /// digital signatures.</para>
+    /// </remarks>
     [System.ComponentModel.Description("Data Signing Service")]
     public interface IDataSigningService : IServiceImplementation
     {
