@@ -39,8 +39,19 @@ using System.Linq;
 namespace SanteDB.Core.Data
 {
     /// <summary>
-    /// Represents a daemon service that registers a series of merge services which can merge records together
+    /// Represents a <see cref="IDataManagementPattern"/> which uses destructive merge and matching in order
+    /// to contain a single instance.
     /// </summary>
+    /// <remarks>
+    /// <para>The SIM data management service implements the <see href="https://help.santesuite.org/santedb/data-storage-patterns#single-instance-mode">Single Instance Mode</see> of
+    /// storage pattern. The single instance mode:</para>
+    /// <list type="bullet">
+    ///     <item>Maintains a single copy of a record in the CDR</item>
+    ///     <item>Attempts to perform duplicate detection between these single instances</item>
+    ///     <item>When a merge occurs, the subsumed record is obsoleted (and later purged)</item>
+    ///     <item>Unmerge is not possible</item>
+    /// </list>
+    /// </remarks>
     public class SimDataManagementService : IDaemonService, IDataManagementPattern
     {
         /// <summary>

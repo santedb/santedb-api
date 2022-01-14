@@ -33,8 +33,11 @@ using System.Timers;
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// Represents the default implementation of the timer
+    /// SanteDB's default implementation of the <see cref="IJobManagerService"/>
     /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
     public class DefaultJobManagerService : IJobManagerService
     {

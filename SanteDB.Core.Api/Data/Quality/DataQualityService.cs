@@ -30,7 +30,8 @@ using System.Linq;
 namespace SanteDB.Core.Data.Quality
 {
     /// <summary>
-    /// The data quality service handler
+    /// A <see cref="IDaemonService"/> which registers <see cref="DataQualityBusinessRule{TModel}"/> against
+    /// configured targets
     /// </summary>
     public class DataQualityService : IDaemonService
     {

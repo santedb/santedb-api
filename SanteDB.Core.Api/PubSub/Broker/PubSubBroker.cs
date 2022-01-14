@@ -31,15 +31,26 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.PubSub.Broker
 {
     /// <summary>
-    /// A pub-sub broker which is responsible for actually facilitating the publish/subscribe
-    /// logic
+    /// An implementation of the <see cref="IDaemonService"/> which is responsible for monitoring
+    /// the <see cref="IPubSubManagerService"/> for new subscription events
     /// </summary>
+    /// <remarks>
+    /// <para>The Pub/Sub broker is the central daemon which is responsible for coordinating outbound notifications based on 
+    /// filters established by subscribers. The broker:</para>
+    /// <list type="number">
+    ///     <item>Listens to the <c>Subscribe</c> event on the <see cref="IPubSubManagerService"/> and creates a callback for the data event</item>
+    ///     <item>Enqueues any new data to the <see cref="IDispatcherQueueManagerService"/> for sending to outbound recipients</item>
+    ///     <item>When a <see cref="IDispatcherQueueManagerService"/> message is enqueued, loads the appropriate <see cref="IPubSubDispatcherFactory"/> and publishes the notification</item>
+    /// </list>
+    /// </remarks>
+    [Description("Publish Subscribe Broker")]
     public class PubSubBroker : IDaemonService, IDisposable
     {
         /// <summary>
