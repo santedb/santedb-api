@@ -20,6 +20,7 @@
  */
 
 using System;
+using System.ComponentModel;
 
 namespace SanteDB.Core.Services
 {
@@ -66,6 +67,7 @@ namespace SanteDB.Core.Services
     /// ]]>
     /// </code>
     /// </example>
+    [Description("Daemon Service")]
     public interface IDaemonService : IServiceImplementation
     {
         /// <summary>

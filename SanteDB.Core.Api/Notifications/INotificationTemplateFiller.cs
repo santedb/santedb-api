@@ -26,7 +26,7 @@ namespace SanteDB.Core.Notifications
     /// <summary>
     /// Represents a service that can fill the template
     /// </summary>
-    [System.ComponentModel.Description("User Notification Template Provider")]
+    [System.ComponentModel.Description("User Notification Template Filler")]
     public interface INotificationTemplateFiller : IServiceImplementation
     {
 

@@ -38,9 +38,21 @@ using System.Threading;
 namespace SanteDB.Core.Services.Impl
 {
     /// <summary>
-    /// Represents a service manager and provider that supports DI
+    /// The core implementation of <see cref="IServiceProvider"/> and <see cref="IServiceManager"/> 
+    /// that supports SanteDB's <see href="https://help.santesuite.org/developers/server-plugins/service-definitions#dependency-injection">dependency injection</see>
+    /// technology.
     /// </summary>
-    /// <remarks>You must have an IConfigurationManager instance registered in order to use this service</remarks>
+    /// <remarks>
+    /// <para>The dependency injection service manager is responsible for:</para>
+    /// <list type="bullet">
+    ///     <item>Maintaining singleton or per-call instances registered in the <see cref="ApplicationServiceContextConfigurationSection"/></item>
+    ///     <item>Determining the dependencies of each service via <c>CreateInjected()</c> and ensuring they exist and are constructed for injection</item>
+    ///     <item>Validating the digital signatures on assembly files which are used by the SanteDB system (see: <see href="https://help.santesuite.org/developers/server-plugins/digital-signing-requirements">Digital Signing Requirements</see>)</item>
+    ///     <item>Calling any <see cref="IServiceFactory"/> instance to attempt to construct missing services</item>
+    ///     <item>Coordinating the lifecycle of <see cref="IDaemonService"/> instances</item>
+    /// </list>
+    /// <para>Note: You must have an <see cref="IConfigurationManager"/> instance registered in the application service context prior to calling the <c>Start()</c> method on this class</para>
+    /// </remarks>
     public class DependencyServiceManager : IServiceManager, IServiceProvider, IDaemonService, IDisposable
     {
         // DI Stack
