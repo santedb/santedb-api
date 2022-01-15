@@ -31,7 +31,8 @@ using System.Linq;
 namespace SanteDB.Core.Data.Quality
 {
     /// <summary>
-    /// The data quality service handler
+    /// A <see cref="IDaemonService"/> which registers <see cref="DataQualityBusinessRule{TModel}"/> against
+    /// configured targets
     /// </summary>
     public class DataQualityService : IDaemonService
     {
@@ -105,6 +106,7 @@ namespace SanteDB.Core.Data.Quality
         {
             this.Starting?.Invoke(this, EventArgs.Empty);
 
+            // TODO: If the service is being run in non-realtime mode then provide a job to run these rules
             if (this.m_configuration != null)
             {
                 ApplicationServiceContext.Current.AddBusinessRule(typeof(DataQualityBundleRule));
@@ -126,10 +128,10 @@ namespace SanteDB.Core.Data.Quality
                 }
             }
 
-            ApplicationServiceContext.Current.Started += (o, e) =>
-            {
-                ApplicationServiceContext.Current.GetService<IJobManagerService>().AddJob(new DataQualityExtensionCleanJob(), new TimeSpan(1, 0, 0));
-            };
+            var job = new DataQualityExtensionCleanJob();
+            var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
+            jms.AddJob(job, JobStartType.DelayStart);
+            jms.SetJobSchedule(job, new TimeSpan(12, 0, 0)); 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }

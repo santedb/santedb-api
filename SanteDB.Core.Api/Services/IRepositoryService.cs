@@ -21,9 +21,11 @@
 
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
@@ -91,19 +93,28 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Represents a repository service base
+    /// Represents a repository service
     /// </summary>
+    /// <remarks>
+    /// <para>In the <see href="https://help.santesuite.org/santedb/software-architecture#repository-services">SanteDB Software Architecture</see> the repository service 
+    /// layer is the layer responsible for coordinating business rules, privacy, auditing, and other activities from the messaging or other 
+    /// services in the SanteDB iCDR or dCDR.</para>
+    /// <para>Repository services should be the primary method of interacting with the SanteDB server infrastructure, as it indicates a user, application or
+    /// device process is not intending to modify underlying persistence data directly (as would be the case for a system process), rather it wishes SanteDB
+    /// to execute all validation and rules as normal.</para>
+    /// </remarks>
+    [Description("Repository Service")]
     public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
     {
         /// <summary>
-        /// Gets the specified model.
+        /// Gets the specified model data
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns>Returns the model.</returns>
         TModel Get(Guid key);
 
         /// <summary>
-        /// Gets the specified model.
+        /// Gets the specified model data at the specified version
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="versionKey">The key of the version.</param>
@@ -111,66 +122,72 @@ namespace SanteDB.Core.Services
         TModel Get(Guid key, Guid versionKey);
 
         /// <summary>
-        /// Finds the specified data.
+        /// Finds the specified data where the current version matches the query provided
         /// </summary>
-        /// <param name="query">The query.</param>
-        /// <returns>Returns a list of identified data.</returns>
+        /// <param name="query">The query to be executed</param>
+        /// <returns>Returns a list of <typeparamref name="TModel"/> matching the <paramref name="query"/>.</returns>
         IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query);
 
         /// <summary>
-        /// Finds the specified data.
+        /// Finds the specified data with the specified control parameters
         /// </summary>
-        /// <param name="query">The query.</param>
-        /// <param name="offset">The offset.</param>
-        /// <param name="count">The count.</param>
-        /// <param name="totalResults">The total results.</param>
+        /// <param name="query">The query to be executed</param>
+        /// <param name="offset">The offset of the first record</param>
+        /// <param name="count">The count of records to be returned</param>
+        /// <param name="totalResults">The total results matching <paramref name="query"/></param>
         /// <param name="orderBy">The ordering instructions that are to be appended to the query</param>
         /// <returns>Returns a list of identified data.</returns>
         [Obsolete("Use Find(Expression<Func<TModel, bool>>)", true)]
         IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
 
         /// <summary>
-        /// Inserts the specified data.
+        /// Inserts the specified model information
         /// </summary>
-        /// <param name="data">The data.</param>
-        /// <returns>TModel.</returns>
+        /// <param name="data">The data to be inserted</param>
+        /// <returns>The inserted data (including any generated properties like ID, timestamps, etc.)</returns>
         TModel Insert(TModel data);
 
         /// <summary>
-        /// Saves the specified data.
+        /// Inserts or updates the specified data
         /// </summary>
-        /// <param name="data">The data.</param>
-        /// <returns>Returns the model.</returns>
+        /// <param name="data">The data to be saved to/from the data persistence layer</param>
+        /// <returns>The current version of <paramref name="data"/></returns>
         TModel Save(TModel data);
 
         /// <summary>
-        /// Obsoletes the specified data.
+        /// Obsoletes the specified object
         /// </summary>
-        /// <param name="key">The key.</param>
-        /// <returns>Returns the model.</returns>
+        /// <param name="key">The key of the object to be obsoleted</param>
+        /// <returns>The obsoleted data (including obsoletion time and provenance data)</returns>
         TModel Obsolete(Guid key);
     }
 
     /// <summary>
-    /// Represents a repository service wrapping an extended persistence service
+    /// Represents a <see cref="IRepositoryService"/> service which has extended functionality
     /// </summary>
+    [Description("Repository Service with Extended Functions")]
     public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
         /// <summary>
-        /// Touch the specified object
+        /// Touch the specified object by updating its last modified time (forcing a re-synchronization) however 
+        /// not modifying the data in the object
         /// </summary>
+        /// <param name="key">The key of the <typeparamref name="TModel"/> to be touched</param>
         void Touch(Guid key);
 
         /// <summary>
-        /// Nullifies a specific instance
+        /// Nullifies the specified object (mark as "Entered in Error")
         /// </summary>
+        /// <param name="id">The identifier of the <typeparamref name="TModel"/> to be nullified</param>
+        /// <returns>The nullified object</returns>
         TModel Nullify(Guid id);
     }
 
     /// <summary>
-    /// Repreents a repository which notifies of changes
+    /// A <see cref="IRepositoryService"/> which can notify other classes of changes to data
     /// </summary>
+    [Description("Repository Service with Notification Support")]
     public interface INotifyRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
@@ -226,14 +243,17 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
-    /// Represents a repository that can cancel an act
+    /// Represents a repository that can cancel an <see cref="Act"/> that is in progress
     /// </summary>
+    [Description("Repository Service with Cancellation Support")]
     public interface ICancelRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
         /// <summary>
-        /// Cancels the specified object
+        /// Cancels the specified <see cref="Act"/>
         /// </summary>
+        /// <param name="id">The identifier of the act to be cancelled</param>
+        /// <returns>The cancelled act</returns>
         TModel Cancel(Guid id);
     }
 

@@ -51,8 +51,20 @@ namespace SanteDB.Core.Security.Services
     }
 
     /// <summary>
-	/// Represents an identity service which authenticates devices.
-	/// </summary>
+    /// Represents a service which retrieves <see cref="IDeviceIdentity"/> and can authenticate to an <see cref="IPrincipal"/> for devices.
+    /// </summary>
+    /// <remarks>
+    /// <para>In SanteDB, a security session is comprised of up to three security identities/principals:</para>
+    /// <list type="bullet">
+    ///     <item>(Optional) User identity representing the human using the application</item>
+    ///     <item>(Optional) A <see cref="IDeviceIdentity"/> representing the device running the application, and</item>
+    ///     <item>An <see cref="IApplicationIdentity"/> representing the application</item>
+    /// </list>
+    /// <para>This service is what is used to authenticate the device identity from a central credential store of registered devices. This service may be 
+    /// called with a shared device id/secret (like a user name and password), or may be called with a device ID and x509 certificate (if used for authenticating
+    /// sessions with a client certificate)</para>
+    /// <para>See: <see href="https://help.santesuite.org/santedb/security-architecture#principals-and-identities">SanteDB authentication architecture</see></para>
+    /// </remarks>
     [System.ComponentModel.Description("Device Identity Provider")]
     public interface IDeviceIdentityProviderService : IServiceImplementation
     {
@@ -108,6 +120,9 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Change the device secret
         /// </summary>
-        void ChangeSecret(string name, string deviceSecret, IPrincipal systemPrincipal);
+        /// <param name="deviceSecret">The new secret (or thumbprint of certificate to be used)</param>
+        /// <param name="name">The device identifier for which the secret is being changed</param>
+        /// <param name="principal">The principal which is changing the secret</param>
+        void ChangeSecret(string name, string deviceSecret, IPrincipal principal);
     }
 }

@@ -28,9 +28,10 @@ using System;
 namespace SanteDB.Core.Security.Audit
 {
     /// <summary>
-    /// A daemon service which listens to audit sources and forwards them to the auditor
+    /// An implementation of <see cref="IDaemonService"/> which monitors instances of <see cref="IIdentityProviderService"/>
+    /// and <see cref="ISessionIdentityProviderService"/> to audit login and logout events in the audit repository
     /// </summary>
-    [ServiceProvider("SECURITY AUDIT SERVICE")]
+    [ServiceProvider("Security Audit Service")]
     public class AuditDaemonService : IDaemonService
     {
         /// <summary>

@@ -53,7 +53,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Debug\SanteDB.Core.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Debug\SanteDB.Core.Api.xml</DocumentationFile>
     <NoWarn>CS0067</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

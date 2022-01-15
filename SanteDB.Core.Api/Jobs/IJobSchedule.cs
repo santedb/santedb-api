@@ -18,46 +18,41 @@
  * User: fyfej
  * Date: 2021-8-5
  */
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Security.Principal;
 
-namespace SanteDB.Core.Security.Services
+namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// Represents a policy decision service
+    /// Job schedule - defines the 
     /// </summary>
-    [System.ComponentModel.Description("Policy Decision Provider (PDP)")]
-    public interface IPolicyDecisionService : IServiceImplementation
+    public interface IJobSchedule
     {
+        /// <summary>
+        /// Get the interval on which the job runs
+        /// </summary>
+        TimeSpan? Interval { get; }
 
         /// <summary>
-        /// Get all active policies for the specified securable type
+        /// Get the start or termination time
         /// </summary>
-        IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal securable);
+        DateTime StartTime { get; }
 
         /// <summary>
-        /// Make a simple policy decision for a specific securable
+        /// Get the stop or termination time
         /// </summary>
-        PolicyDecision GetPolicyDecision(IPrincipal principal, Object securable);
+        DateTime? StopTime { get; }
 
         /// <summary>
-        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// Gets the days that the schedule runs
         /// </summary>
-        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
+        DayOfWeek[] Days { get; }
 
         /// <summary>
-        /// Clear the policy cache for the specified principal
+        /// Returns true if the job schedule applies at <paramref name="checkTime"/> given the <paramref name="lastExecutionTime"/>
         /// </summary>
-        void ClearCache(IPrincipal principal);
-
-        /// <summary>
-        /// Clear the policy cache for the specified principal
-        /// </summary>
-        void ClearCache(String principalName);
-
+        /// <param name="checkTime">The time that the system is checking if the job execution applies</param>
+        /// <param name="lastExecutionTime">The last known run time / check time of the job. Null if never run</param>
+        /// <returns>True if the schedule applies</returns>
+        bool AppliesTo(DateTime checkTime, DateTime? lastExecutionTime);
     }
 }
-

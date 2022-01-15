@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-5
  */
+using SanteDB.Core.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -25,8 +26,14 @@ using System.Linq.Expressions;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents a service that can do clinical protocols
+    /// Contract for service implementations which store and manage definitions of <see cref="SanteDB.Core.Model.Acts.Protocol"/> 
     /// </summary>
+    /// <remarks>
+    /// <para>Each protocol definition (stored in an instance of <see cref="SanteDB.Core.Model.Acts.Protocol"/>) should be backed
+    /// by an implementation of the <see cref="IClinicalProtocol"/> interface. The primary responsibility of the <see cref="IClinicalProtocolRepositoryService"/>
+    /// is to load these definitions from a user defined format (such as FHIR activity definitions, or the SanteDB XML CDSS format) and 
+    /// generate the structured data which can be stored in the primary SanteDB database.</para>
+    /// </remarks>
     [System.ComponentModel.Description("CDSS Clinical Protocol Repository")]
     public interface IClinicalProtocolRepositoryService : IServiceImplementation
     {

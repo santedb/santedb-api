@@ -26,6 +26,9 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository service for managing assigning authorities.
     /// </summary>
+    /// <remarks>This specialized <see cref="IRepositoryService"/> is intended to add functionality 
+    /// to make the management of identity domains (<see cref="AssigningAuthority"/>) objects simpler by including 
+    /// methods for getting domains by name and URI</remarks>
     [System.ComponentModel.Description("Identity Domain Provider")]
     public interface IAssigningAuthorityRepositoryService : IRepositoryService<AssigningAuthority>
     {

@@ -201,16 +201,24 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
-                using (var fs = File.OpenRead(queueFile))
+                try
                 {
-                    retVal = QueueEntry.Load(fs);
+                    using (var fs = File.OpenRead(queueFile))
+                    {
+                        retVal = QueueEntry.Load(fs);
+                    }
                 }
-                File.Delete(queueFile);
+                finally
+                {
+                    File.Delete(queueFile);
+                }
+
                 return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(queueFile), queueName, retVal.CreationTime, retVal.Type, retVal.ToObject());
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error de-queueing {0} - {1}", queueName, e);
+
                 return null;
             }
         }

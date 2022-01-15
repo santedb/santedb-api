@@ -25,7 +25,21 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that dispatches audits to a central repository
     /// </summary>
-    [System.ComponentModel.Description("Audit Dispatch Provider")]
+    /// <remarks>
+    /// <para>The auditing of access to clinical data is of the utmost importance. SanteDB generates 
+    /// and stores audits locally using an <see cref="IRepositoryService"/> for <see cref="AuditData"/>. However, 
+    /// many implementations will have centralized audit repositories for collecting audits from various health
+    /// systems in a central place. Such collection is useful to establishing overall patterns of access
+    /// across systems in an HIE (for example)</para>
+    /// <para>The audit dispatching service is responsible for sending <see cref="AuditData"/> instances to remote
+    /// audit repositories. The service's responsibilities are:</para>
+    /// <list type="number">
+    ///     <item>Ensure that the <see cref="AuditData"/> instance is complete and contains relevant information for this node</item>
+    ///     <item>Transform the <see cref="AuditData"/> class into the appropriate format (IETF RFC3881, FHIR, etc.)</item>
+    ///     <item>Ensure the delivery of the audit to the central repository</item>
+    /// </list>
+    /// </remarks>
+    [System.ComponentModel.Description("Audit Dispatch Service")]
     public interface IAuditDispatchService : IServiceImplementation
     {
         /// <summary>
