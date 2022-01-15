@@ -22,6 +22,10 @@ namespace SanteDB.Core.Services.Impl
     /// </summary>
     public class FileSystemDispatcherQueueService : IDispatcherQueueManagerService, IDisposable
     {
+
+        // Ticks for system time
+        private long m_ctr = DateTime.Now.Ticks;
+        
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -239,7 +243,7 @@ namespace SanteDB.Core.Services.Impl
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
 
             // Serialize
-            long tick = DateTime.Now.Ticks;
+            var tick = Interlocked.Increment(ref m_ctr);
             String fname = tick.ToString("00000000000000000000"),
                 filePath = Path.Combine(queueDirectory, fname);
             // Prevent dups
