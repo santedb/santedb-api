@@ -50,15 +50,5 @@ namespace SanteDB.Core.Services
         /// <typeparam name="TEntity">The type of entity being searched</typeparam>
         IQueryResultSet<TEntity> SearchEntity<TEntity>(String[] term) where TEntity : Entity, new();
 
-        /// <summary>
-        /// Fired when the freetext engine is querying data
-        /// </summary>
-        event EventHandler<FreeTextQueryEventArgsBase> Querying;
-        
-
-        /// <summary>
-        /// Fired when the freetext engine is querying data
-        /// </summary>
-        event EventHandler<FreeTextQueryEventArgsBase> Queried;
     }
 }
