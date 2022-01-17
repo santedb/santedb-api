@@ -101,41 +101,67 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// A query context class that allows the caller to specify / override the load settings for the .Query() methods
     /// </summary>
-    public class DataPersistenceQueryContext : IDisposable
+    public class DataPersistenceControlContext : IDisposable
     {
         // The current query context
         [ThreadStatic]
-        private static DataPersistenceQueryContext m_current;
+        private static DataPersistenceControlContext m_current;
 
         // Loading mode
-        private readonly LoadMode m_loadMode;
+        private readonly LoadMode? m_loadMode;
+
+        // Delete mode
+        private readonly DeleteMode? m_deleteMode;
 
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceQueryContext(LoadMode loadingMode)
+        private DataPersistenceControlContext(LoadMode loadingMode)
         {
             this.m_loadMode = loadingMode;
         }
 
         /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(DeleteMode deleteMode)
+        {
+            this.m_deleteMode = deleteMode;
+        }
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(LoadMode loadMode, DeleteMode deleteMode)
+        {
+            this.m_deleteMode = deleteMode;
+            this.m_loadMode = loadMode;
+        }
+
+        /// <summary>
         /// Gets the current query context
         /// </summary>
-        public static DataPersistenceQueryContext Current => m_current;
+        public static DataPersistenceControlContext Current => m_current;
 
         /// <summary>
         /// Gets this context's load mode
         /// </summary>
-        public LoadMode LoadMode => this.m_loadMode;
+        public LoadMode? LoadMode => this.m_loadMode;
+
+
+        /// <summary>
+        /// Gets this context's deletion mode
+        /// </summary>
+        public DeleteMode? DeleteMode => this.m_deleteMode;
 
         /// <summary>
         /// Sets the current loading mode
         /// </summary>
         /// <param name="loadMode"></param>
         /// <returns></returns>
-        public static DataPersistenceQueryContext Create(LoadMode loadMode)
+        public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceQueryContext(loadMode);
+            m_current = new DataPersistenceControlContext(loadMode);
             return m_current;
         }
 
@@ -359,6 +385,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Query the specified expression
         /// </summary>
-        IEnumerable Query(Expression query);
+        IQueryResultSet Query(Expression query);
     }
 }
