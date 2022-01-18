@@ -191,7 +191,7 @@ namespace SanteDB.Core.Security.Audit
                     m_queueService.Open($"{QueueName}.dead");
                 }
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Test)
                     throw;

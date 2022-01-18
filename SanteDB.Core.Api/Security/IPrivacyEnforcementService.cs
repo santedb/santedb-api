@@ -20,6 +20,8 @@
  */
 
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
@@ -99,7 +101,7 @@ namespace SanteDB.Core.Security
         ///     <item>The query is not using fields which have been configured as forbidden by the jurisdiction</item>
         ///     <item>The query does not contain explicit queries for data which, when masked, would indicate the condition. For example,
         ///     if records contain a policy "HIDE HIV programme identifiers", the disclosure of the identifier would be protected via
-        ///     the <see cref="Apply{TData}(IEnumerable{TData}, IPrincipal)"/> method, however, if a principal explicitly queried
+        ///     the <see cref="Apply{TData}(IQueryResultSet{TData}, IPrincipal)"/> method, however, if a principal explicitly queried
         ///     for <c>identifier[HIV_PROGRAM].value=!null</c> they would still be disclosed patients which have an HIV program identifier. This method
         ///     should search the <paramref name="query"/> provided and ensure that <paramref name="principal"/> is not violating such conditions.</item>
         /// </list>

@@ -171,7 +171,6 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="query">The query about to be executed</param>
         /// <param name="principal">The principal which is executing the query</param>
-        /// <param name="tag">A query tag object</param>
         public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal) : base(query, principal)
         {
         }

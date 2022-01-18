@@ -84,14 +84,6 @@ namespace SanteDB.Core.Security.Privacy
         // Password Hashing
         private IPasswordHashingService m_hasher;
 
-        // Data caching service
-        private IDataCachingService m_dataCachingService;
-
-        // Subscription executor
-        private ISubscriptionExecutor m_subscriptionExecutor;
-
-        // Threadpool service
-        private IThreadPoolService m_threadPool;
 
         // Pip service
         private IPolicyInformationService m_pipService;

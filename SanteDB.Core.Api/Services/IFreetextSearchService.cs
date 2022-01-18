@@ -20,6 +20,7 @@
  */
 
 using SanteDB.Core.Event;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
