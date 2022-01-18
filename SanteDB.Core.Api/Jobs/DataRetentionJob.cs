@@ -57,6 +57,9 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public string Name => "Data Retention Policy Job";
 
+        /// <inheritdoc/>
+        public string Description => "Runs the configured data retention policy rules and moves data to the archival service";
+
         /// <summary>
         /// Can cancel the job
         /// </summary>
