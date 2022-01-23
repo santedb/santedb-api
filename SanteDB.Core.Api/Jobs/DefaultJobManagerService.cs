@@ -175,7 +175,7 @@ namespace SanteDB.Core.Jobs
             this.m_systemTimer = new System.Timers.Timer(300000); // timer runs every 5 minutes
             this.m_systemTimer.Elapsed += SystemJobTimer;
             this.m_systemTimer.Enabled = true;
-
+            this.m_systemTimer.Start();
             this.Started?.Invoke(this, EventArgs.Empty);
 
             Trace.TraceInformation("Timer service started successfully");
