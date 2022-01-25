@@ -184,7 +184,7 @@ namespace SanteDB.Core.Configuration
             retVal &= !this.StopDateSpecified || refDate < this.StopDate; // The reference date is in valid bounds of stop (if specified)
 
             // Are there week days specified
-            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalMilliseconds > this.Interval))
+            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalSeconds > this.Interval))
             {
                 return true;
             }
