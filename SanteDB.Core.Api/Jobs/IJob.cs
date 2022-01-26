@@ -90,6 +90,11 @@ namespace SanteDB.Core.Jobs
         String Name { get; }
 
         /// <summary>
+        /// Gets the description of the job
+        /// </summary>
+        String Description { get; }
+
+        /// <summary>
         /// True if the job can be cancelled
         /// </summary>
         bool CanCancel { get; }

@@ -49,6 +49,9 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public string Name => "Data Quality Extension Clean";
 
+        /// <inheritdoc/>
+        public string Description => "Cleans obsolete or otherwise amended data quality extension tags";
+
         /// <summary>
         /// True if can cancel
         /// </summary>
