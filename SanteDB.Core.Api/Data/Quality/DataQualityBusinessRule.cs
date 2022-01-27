@@ -111,7 +111,7 @@ namespace SanteDB.Core.Data.Quality
                 throw new DetectedIssueException(ruleViolations);
             else if (data is IExtendable extendable)
             {
-                this.m_tracer.TraceWarning("Object {0} contains {1} data quality issues", data, ruleViolations.Count);
+                //this.m_tracer.TraceWarning("Object {0} contains {1} data quality issues", data, ruleViolations.Count);
 
                 if (extendable.Extensions.Any(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension))
                     extendable.RemoveExtension(ExtensionTypeKeys.DataQualityExtension);

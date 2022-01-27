@@ -70,14 +70,17 @@ namespace SanteDB.Core.Services.Impl
             {
                 try
                 {
+                    Interlocked.Decrement(ref this.m_dispatchedWorkers);
                     Interlocked.Increment(ref this.m_activeWorkers);
                     action((TParm)o);
                 }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Unhandled ThreadPool Worker Error:  {0}", e);
+                }
+                finally
+                {
                     Interlocked.Decrement(ref this.m_activeWorkers);
-                    Interlocked.Decrement(ref this.m_dispatchedWorkers);
                 }
             }, parm);
         }
@@ -89,8 +92,8 @@ namespace SanteDB.Core.Services.Impl
         {
             ThreadPool.GetMaxThreads(out totalWorkers, out _);
             ThreadPool.GetAvailableThreads(out availableWorkers, out _);
-            availableWorkers = totalWorkers - this.m_activeWorkers;
-            waitingInQueue = this.m_dispatchedWorkers - this.m_activeWorkers;
+            //availableWorkers = totalWorkers - availableWorkers; // totalWorkers - this.m_activeWorkers;
+            waitingInQueue = this.m_dispatchedWorkers ;
         }
     }
 }

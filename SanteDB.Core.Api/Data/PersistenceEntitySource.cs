@@ -46,7 +46,7 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value, null, false, AuthenticationContext.Current.Principal);
+                return persistenceService.Get(key.Value, null, true, AuthenticationContext.Current.Principal);
             return default(TObject);
         }
 
