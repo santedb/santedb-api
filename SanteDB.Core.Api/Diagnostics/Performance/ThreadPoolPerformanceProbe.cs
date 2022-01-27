@@ -61,7 +61,7 @@ namespace SanteDB.Core.Diagnostics.Performance
             {
                 get
                 {
-                    this.m_threadPool.GetWorkerStatus(out int workerCount, out int availableWorkers, out int waitingInQueue);
+                    this.m_threadPool.GetWorkerStatus(out _, out _, out int waitingInQueue);
                     return waitingInQueue;
                 }
             }
@@ -128,7 +128,7 @@ namespace SanteDB.Core.Diagnostics.Performance
                 get
                 {
                     //ThreadPool.GetMaxThreads(out int workerCount, out int completionPort);
-                    m_threadPool.GetWorkerStatus(out int workerCount, out _, out _);
+                    this.m_threadPool.GetWorkerStatus(out int workerCount, out _, out _);
                     return workerCount;
                 }
             }
