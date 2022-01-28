@@ -85,7 +85,7 @@ namespace SanteDB.Core.Services.Impl
             }
             else
             {
-                this.m_maxConcurrencyLevel = Environment.ProcessorCount * 8;
+                this.m_maxConcurrencyLevel = Environment.ProcessorCount * 12;
             }
             this.EnsureStarted(); // Ensure thread pool threads are started
             this.m_queue = new ConcurrentQueue<WorkItem>();
