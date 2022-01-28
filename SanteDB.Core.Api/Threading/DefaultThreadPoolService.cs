@@ -44,7 +44,9 @@ namespace SanteDB.Core.Services.Impl
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
-        // Maximum concurrency
+        /// <summary>
+        /// Maximum concurrency for the thread pool
+        /// </summary>
         public const string MAX_CONCURRENCY = "SDB_THREADS_PER_CPU";
 
         // Last time the thread pool was resized
