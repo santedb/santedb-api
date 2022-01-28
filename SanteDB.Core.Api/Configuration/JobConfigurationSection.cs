@@ -193,7 +193,7 @@ namespace SanteDB.Core.Configuration
                 retVal &= this.RepeatOn.Any(r => r == refDate.DayOfWeek) &&
                     refDate.Hour >= this.StartDate.Hour &&
                     refDate.Minute >= this.StartDate.Minute;
-                retVal &= !lastRun.HasValue || (lastRun.Value.Date <= refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
+                retVal &= !lastRun.HasValue || (lastRun.Value.Date < refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
             }
             else // This is an exact time
             {
