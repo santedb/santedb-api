@@ -43,11 +43,6 @@ namespace SanteDB.Core.Services.Impl
         // Tracer for thread pool
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
-        /// <summary>
-        /// Errored workers
-        /// </summary>
-        private int m_activeWorkers = 0;
-
         // Dispatched workers
         private int m_dispatchedWorkers = 0;
 
