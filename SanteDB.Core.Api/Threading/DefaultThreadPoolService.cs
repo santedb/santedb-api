@@ -44,8 +44,14 @@ namespace SanteDB.Core.Services.Impl
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
+        // Maximum concurrency
+        public const string MAX_CONCURRENCY = "SDB_THREADS_PER_CPU";
+
+        // Last time the thread pool was resized
+        private long m_lastGrowTick = 0;
+
         // Number of threads to keep alive
-        private int m_concurrencyLevel = System.Environment.ProcessorCount * 16;
+        private readonly int m_maxConcurrencyLevel;
 
         // Queue of work items
         private ConcurrentQueue<WorkItem> m_queue = null;
@@ -72,6 +78,15 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public DefaultThreadPoolService()
         {
+            var envMaxThreads = Environment.GetEnvironmentVariable(MAX_CONCURRENCY);
+            if (!String.IsNullOrEmpty(envMaxThreads) && int.TryParse(envMaxThreads, out var maxThreadsPerCpu))
+            {
+                this.m_maxConcurrencyLevel = Environment.ProcessorCount * maxThreadsPerCpu;
+            }
+            else
+            {
+                this.m_maxConcurrencyLevel = Environment.ProcessorCount * 8;
+            }
             this.EnsureStarted(); // Ensure thread pool threads are started
             this.m_queue = new ConcurrentQueue<WorkItem>();
         }
@@ -130,6 +145,27 @@ namespace SanteDB.Core.Services.Impl
                 };
 
                 m_queue.Enqueue(wd);
+
+
+                // Is there insufficient threads allocated?
+                if (!this.m_queue.IsEmpty && this.m_queue.Count > Environment.ProcessorCount && this.m_threadPool.Length < this.m_maxConcurrencyLevel) // allocate a new thread
+                {
+                    lock (s_lock)
+                    {
+                        if (DateTime.Now.Ticks - this.m_lastGrowTick > TimeSpan.TicksPerSecond * 30)
+                        {
+                            var currentSize = this.m_threadPool.Length;
+                            Array.Resize(ref this.m_threadPool, this.m_threadPool.Length + Environment.ProcessorCount); // allocate processor count threads
+                            for (var i = currentSize; i < this.m_threadPool.Length; i++)
+                            {
+                                this.m_threadPool[i] = this.CreateThreadPoolThread();
+                                this.m_threadPool[i].Start();
+                            }
+                            this.m_lastGrowTick = DateTime.Now.Ticks;
+                        }
+                    }
+                }
+
                 this.m_resetEvent.Set();
             }
             catch (Exception e)
@@ -150,13 +186,7 @@ namespace SanteDB.Core.Services.Impl
             // Load configuration
             if (this.m_threadPool == null)
             {
-                this.m_concurrencyLevel = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<ApplicationServiceContextConfigurationSection>()?.ThreadPoolSize ?? this.m_concurrencyLevel;
-                if(this.m_concurrencyLevel == 0)
-                {
-                    this.m_concurrencyLevel = Environment.ProcessorCount * 16;
-                }
-
-                m_threadPool = new Thread[m_concurrencyLevel];
+                m_threadPool = new Thread[Environment.ProcessorCount * 2];
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
                     m_threadPool[i] = this.CreateThreadPoolThread();

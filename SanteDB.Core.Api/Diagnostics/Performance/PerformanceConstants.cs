@@ -57,5 +57,7 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// Gets the thread pooling performance counter for queue depth
         /// </summary>
         public static readonly Guid ThreadPoolDepthCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A485");
+
+
     }
 }

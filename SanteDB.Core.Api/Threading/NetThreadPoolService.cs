@@ -65,23 +65,17 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void QueueUserWorkItem<TParm>(Action<TParm> action, TParm parm)
         {
-            Interlocked.Increment(ref this.m_dispatchedWorkers);
             ThreadPool.QueueUserWorkItem(o =>
             {
                 try
                 {
-                    Interlocked.Decrement(ref this.m_dispatchedWorkers);
-                    Interlocked.Increment(ref this.m_activeWorkers);
                     action((TParm)o);
                 }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceError("Unhandled ThreadPool Worker Error:  {0}", e);
                 }
-                finally
-                {
-                    Interlocked.Decrement(ref this.m_activeWorkers);
-                }
+               
             }, parm);
         }
 
