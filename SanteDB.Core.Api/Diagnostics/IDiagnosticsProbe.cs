@@ -58,6 +58,11 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         Type Type { get; }
 
+        /// <summary>
+        /// Gets the units of the value
+        /// </summary>
+        String Unit { get; }
+
     }
 
     /// <summary>

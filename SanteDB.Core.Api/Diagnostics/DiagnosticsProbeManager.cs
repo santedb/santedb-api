@@ -36,7 +36,7 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Counters
         /// </summary>
-        private IEnumerable<IDiagnosticsProbe> m_probes;
+        private IList<IDiagnosticsProbe> m_probes;
 
         // Lock object
         private static object m_lockObject = new object();
@@ -88,6 +88,20 @@ namespace SanteDB.Core.Diagnostics
             var matches = this.m_probes.Where(query);
             totalResults = matches.Count();
             return matches.Skip(offset).Take(count ?? 100);
+        }
+
+        /// <summary>
+        /// Add the specified probe
+        /// </summary>
+        public void Add(IDiagnosticsProbe probe)
+        {
+            lock(m_lockObject)
+            {
+                if(!this.m_probes.Any(p=>p.Uuid == probe.Uuid))
+                {
+                    this.m_probes.Add(probe);
+                }
+            }
         }
     }
 }
