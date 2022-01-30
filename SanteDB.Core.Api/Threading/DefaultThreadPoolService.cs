@@ -67,9 +67,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public const string MAX_CONCURRENCY = "SDB_THREADS_PER_CPU";
 
-        // Last time the thread pool was resized
-        private long m_lastGrowTick = 0;
-
         // Number of threads to keep alive
         private readonly int m_maxConcurrencyLevel;
 
