@@ -32,9 +32,27 @@ namespace SanteDB.Core.Services.Impl
     /// threadpool, this is to reduce the load on the .net framework thread pool
     /// </summary>
     /// <remarks>
-    /// This class is a remnant / adaptation of the original thread pool service from OpenIZ because OpenIZ used PCL which
-    /// didn't have a thread pool. Additionally it provided statistics on the thread pool load, etc. This has been
-    /// refactored.
+    /// <para>
+    /// Many SanteDB jobs use threads to perform background tasks such as refreshes, matching,
+    /// job execution, etc. Because we don't want uncontrolled explosion of threads, we use a thread pool 
+    /// in order to control the number of active threads which are being used.
+    /// </para>
+    /// <para>
+    /// Implementers may choose to register a <see cref="IThreadPoolService"/> which uses the .NET <see cref="ThreadPool"/> (see: <see cref="NetThreadPoolService"/>), 
+    /// or they can choose to use this separate thread pool service. There are several advantages to using the SanteDB thread pool rather than the 
+    /// .NET thread pool including:
+    /// </para>
+    /// <list type="bullet">
+    ///     <item>The default .NET thread pool can bounce work between threads when the thread enters a wait state, this can cause issues with the REDIS connection multiplexer</item>
+    ///     <item>SanteDB plugins may use PLINQ or other TPL libraries which require using .NET thread pool - and we don't want longer running processess consuming those threads</item>
+    ///     <item>Implementers may wish to have more control over how the Thread pool uses resources</item>
+    /// </list>
+    /// <para>This thread pool works by spinning up a pool of threads which wait for <see cref="QueueUserWorkItem(Action{object})"/> which initiates (or queues) a request to 
+    /// perform background work. When an available thread in the pool can execute the task, the task will be run and the thread will work on the next work item.</para>
+    /// <para>If the thread pool needs additional threads (i.e. there are a lot of items in the backlog) it will spin up new reserved threads at a rate of 
+    /// number of CPUs on the machine. This continues until the environment variable SDB_MAX_THREADS_PER_CPU is hit.</para>
+    /// <para>Conversely, if the thread pool threads remain idle for too long (1 minute) they are destroyed and removed from the thread pool. This ensures over-threading
+    /// is not done on the host machine.</para>
     /// </remarks>
     public class DefaultThreadPoolService : IThreadPoolService, IDisposable
     {
@@ -67,6 +85,9 @@ namespace SanteDB.Core.Services.Impl
         // The number of busy workers
         private long m_busyWorkers = 0;
 
+        // Min pool workers
+        private readonly int m_minPoolWorkers = Environment.ProcessorCount < 4 ? Environment.ProcessorCount * 2 : Environment.ProcessorCount;
+
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
 
@@ -91,6 +112,7 @@ namespace SanteDB.Core.Services.Impl
             }
             this.EnsureStarted(); // Ensure thread pool threads are started
             this.m_queue = new ConcurrentQueue<WorkItem>();
+
         }
 
         /// <summary>
@@ -147,27 +169,7 @@ namespace SanteDB.Core.Services.Impl
                 };
 
                 m_queue.Enqueue(wd);
-
-
-                // Is there insufficient threads allocated?
-                if (!this.m_queue.IsEmpty && this.m_queue.Count > Environment.ProcessorCount && this.m_threadPool.Length < this.m_maxConcurrencyLevel) // allocate a new thread
-                {
-                    lock (s_lock)
-                    {
-                        if (DateTime.Now.Ticks - this.m_lastGrowTick > TimeSpan.TicksPerSecond * 30)
-                        {
-                            var currentSize = this.m_threadPool.Length;
-                            Array.Resize(ref this.m_threadPool, this.m_threadPool.Length + Environment.ProcessorCount); // allocate processor count threads
-                            for (var i = currentSize; i < this.m_threadPool.Length; i++)
-                            {
-                                this.m_threadPool[i] = this.CreateThreadPoolThread();
-                                this.m_threadPool[i].Start();
-                            }
-                            this.m_lastGrowTick = DateTime.Now.Ticks;
-                        }
-                    }
-                }
-
+                this.GrowPoolSize();
                 this.m_resetEvent.Set();
             }
             catch (Exception e)
@@ -181,6 +183,34 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Grow the pool if needed
+        /// </summary>
+        private void GrowPoolSize()
+        {
+            if (!this.m_queue.IsEmpty &&  // This method is fast
+                        this.m_queue.Count > Environment.ProcessorCount && // This requires a lock so only do if not empty
+                        this.m_threadPool.Length < this.m_maxConcurrencyLevel) // we have room to allocate new threads
+            {
+                lock (s_lock)
+                {
+                    if (this.m_queue.Count > Environment.ProcessorCount &&
+                        this.m_threadPool.Length < this.m_maxConcurrencyLevel)  // Re-check after lock taken
+                    {
+                        Array.Resize(ref this.m_threadPool, this.m_threadPool.Length + Environment.ProcessorCount); // allocate processor count threads
+                        for (var i = 0; i < this.m_threadPool.Length; i++)
+                        {
+                            if (this.m_threadPool[i] == null)
+                            {
+                                this.m_threadPool[i] = this.CreateThreadPoolThread();
+                                this.m_threadPool[i].Start();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Ensure the thread pool threads are started
         /// </summary>
         private void EnsureStarted()
@@ -188,7 +218,7 @@ namespace SanteDB.Core.Services.Impl
             // Load configuration
             if (this.m_threadPool == null)
             {
-                m_threadPool = new Thread[Environment.ProcessorCount * 2];
+                m_threadPool = new Thread[this.m_minPoolWorkers];
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
                     m_threadPool[i] = this.CreateThreadPoolThread();
@@ -215,21 +245,41 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void DispatchLoop()
         {
+            long lastActivityJobTime = DateTime.Now.Ticks;
+            int threadPoolIndex = Array.IndexOf(this.m_threadPool, Thread.CurrentThread);
+
             while (!this.m_disposing)
             {
                 try
                 {
-                    this.m_resetEvent.Wait();
-                    while (this.m_queue.TryDequeue(out WorkItem wi))
+                    this.m_resetEvent.Wait(30000);
+
+                    if (threadPoolIndex >= this.m_minPoolWorkers &&
+                        this.m_queue.IsEmpty &&
+                        DateTime.Now.Ticks - lastActivityJobTime > TimeSpan.TicksPerMinute) // shrink the pool
                     {
-                        try
+                        lock (s_lock)
                         {
-                            Interlocked.Increment(ref m_busyWorkers);
-                            wi.Callback(wi.State);
+                            threadPoolIndex = Array.IndexOf(this.m_threadPool, Thread.CurrentThread);
+                            this.m_threadPool[threadPoolIndex] = this.m_threadPool[this.m_threadPool.Length - 1];
+                            Array.Resize(ref this.m_threadPool, this.m_threadPool.Length - 1);
                         }
-                        finally
+                        return;
+                    }
+                    else
+                    {
+                        while (this.m_queue.TryDequeue(out WorkItem wi))
                         {
-                            Interlocked.Decrement(ref m_busyWorkers);
+                            try
+                            {
+                                lastActivityJobTime = DateTime.Now.Ticks;
+                                Interlocked.Increment(ref m_busyWorkers);
+                                wi.Callback(wi.State);
+                            }
+                            finally
+                            {
+                                Interlocked.Decrement(ref m_busyWorkers);
+                            }
                         }
                     }
                     this.m_resetEvent.Reset();
@@ -269,7 +319,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
-                    m_threadPool[i].Abort();
+                    m_threadPool[i]?.Abort();
                     m_threadPool[i] = null;
                 }
             }
