@@ -64,6 +64,11 @@ namespace SanteDB.Core.Diagnostics
         public Type Type => typeof(TMeasure);
 
         /// <summary>
+        /// Gets the unit of measure
+        /// </summary>
+        public abstract String Unit { get; }
+
+        /// <summary>
         /// Gets the value
         /// </summary>
         object IDiagnosticsProbe.Value => this.Value;

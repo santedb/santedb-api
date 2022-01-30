@@ -36,6 +36,11 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Gets the thread pooling performance counter
         /// </summary>
+        public static readonly Guid NetThreadPoolPerformanceCounter = new Guid("9E77D692-1F71-4442-BDA1-956D3DB1A480");
+
+        /// <summary>
+        /// Gets the thread pooling performance counter
+        /// </summary>
         public static readonly Guid ThreadPoolConcurrencyCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A481");
 
         /// <summary>
@@ -46,16 +51,19 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Gets the thread pooling performance counter
         /// </summary>
-        public static readonly Guid ThreadPoolNonQueuedWorkerCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A483");
+        public static readonly Guid NetIoThreads = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A483");
 
         /// <summary>
         /// Gets the thread pooling performance counter
         /// </summary>
-        public static readonly Guid ThreadPoolErrorWorkerCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A484");
+        public static readonly Guid NetPoolWorkerCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A484");
+
 
         /// <summary>
         /// Gets the thread pooling performance counter for queue depth
         /// </summary>
         public static readonly Guid ThreadPoolDepthCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A485");
+
+
     }
 }
