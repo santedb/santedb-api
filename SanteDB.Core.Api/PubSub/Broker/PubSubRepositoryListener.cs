@@ -89,6 +89,30 @@ namespace SanteDB.Core.PubSub.Broker
         /// Notification date (note: we use datetime instead of datetimeoffset because XML serialization issues)
         /// </summary>
         [XmlAttribute("date")]
+        public string NotificationDateXml
+        {
+            get => this.NotificationDate.ToString("o");
+            set
+            {
+                if(String.IsNullOrEmpty(value))
+                {
+                    this.NotificationDate = DateTimeOffset.MinValue;
+                }
+                else if(DateTimeOffset.TryParse(value, out var result))
+                {
+                    this.NotificationDate = result;
+                }
+                else
+                {
+                    throw new FormatException($"Cannot parse {value} as datetime");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the notification date
+        /// </summary>
+        [XmlIgnore]
         public DateTimeOffset NotificationDate { get; set; }
 
         /// <summary>
