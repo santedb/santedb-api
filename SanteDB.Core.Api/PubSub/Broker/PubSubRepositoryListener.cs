@@ -60,7 +60,7 @@ namespace SanteDB.Core.PubSub.Broker
             this.TargetType = tmodelType;
             this.EventType = eventType;
             this.Data = data;
-            this.NotificationDate = DateTime.Now;
+            this.NotificationDate = DateTimeOffset.Now;
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// Notification date (note: we use datetime instead of datetimeoffset because XML serialization issues)
         /// </summary>
         [XmlAttribute("date")]
-        public DateTime NotificationDate { get; set; }
+        public DateTimeOffset NotificationDate { get; set; }
 
         /// <summary>
         /// Gets or sets the payload of the data

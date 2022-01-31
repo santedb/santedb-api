@@ -98,24 +98,14 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static DateTime AsDateTime(this IClaim me)
         {
-            DateTime value = DateTime.MinValue;
-            if (!DateTime.TryParse(me.Value, out value))
+            if (!DateTime.TryParse(me.Value, out var value))
             {
-                int offset = 0;
-                if (Int32.TryParse(me.Value, out offset))
+                if (Int32.TryParse(me.Value, out int offset))
                     value = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(offset).ToLocalTime();
                 else
                     throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
             }
             return value;
-        }
-
-        /// <summary>
-        /// To Epoch time
-        /// </summary>
-        public static Int32 ToUnixEpoch(this DateTime me)
-        {
-            return (Int32)me.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
         }
 
         /// <summary>

@@ -142,7 +142,7 @@ namespace SanteDB.Core.Services.Impl
 
             var domainList = new
             {
-                iat = DateTime.Now.ToUnixEpoch(),
+                iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
                 id = identifers.Select(o => new
                 {
                     value = o.Value,
