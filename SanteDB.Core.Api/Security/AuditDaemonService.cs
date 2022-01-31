@@ -106,7 +106,7 @@ namespace SanteDB.Core.Security.Audit
                         ApplicationServiceContext.Current.GetService<ISessionProviderService>().Abandoned += (so, se) => AuditUtil.AuditSessionStop(se.Session, se.Principal, se.Success);
                     }
                     // Audit that Audits are now being recorded
-                    var audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
+                    var audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted));
                     AuditUtil.AddLocalDeviceActor(audit);
                     AuditUtil.SendAudit(audit);
 
@@ -132,14 +132,14 @@ namespace SanteDB.Core.Security.Audit
             // Audit tool should never stop!!!!!
             if (!this.m_safeToStop)
             {
-                AuditData securityAlertData = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
+                AuditData securityAlertData = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
                 AuditUtil.AddLocalDeviceActor(securityAlertData);
                 AuditUtil.SendAudit(securityAlertData);
             }
             else
             {
                 // Audit that audits are no longer being recorded
-                var audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
+                var audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped));
                 AuditUtil.AddLocalDeviceActor(audit);
                 AuditUtil.SendAudit(audit);
             };

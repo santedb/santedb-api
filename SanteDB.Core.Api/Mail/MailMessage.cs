@@ -54,7 +54,7 @@ namespace SanteDB.Core.Mail
         /// <param name="flags">The flags of the alert.</param>
         public MailMessage(String from, String to, String subject, String body, MailMessageFlags flags = MailMessageFlags.None)
         {
-            this.TimeStamp = DateTime.Now;
+            this.TimeStamp = DateTimeOffset.Now;
             this.From = from;
             this.Subject = subject;
             this.Body = body;

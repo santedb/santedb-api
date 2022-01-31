@@ -245,7 +245,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
             traceSource.TraceInfo("Create AuditLogUsed audit");
-            AuditData audit = new AuditData(DateTime.Now, action, outcome, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AuditLogUsed));
+            AuditData audit = new AuditData(DateTimeOffset.Now, action, outcome, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AuditLogUsed));
 
             // User actors
             AddLocalDeviceActor(audit);
@@ -282,7 +282,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditSynchronization(AuditableObjectLifecycle lifecycle, String remoteTarget, OutcomeIndicator outcome, params IdentifiedData[] objects)
         {
             AuditCode eventTypeId = new AuditCode("Synchronization", "SecurityAuditCode");
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export, eventTypeId);
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, outcome, lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export, eventTypeId);
 
             AddLocalDeviceActor(audit);
             if (lifecycle == AuditableObjectLifecycle.Export) // me to remote
@@ -325,7 +325,7 @@ namespace SanteDB.Core.Security.Audit
                 return; // don't audit successful ACS
             }
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.AccessControlDecision));
 
             // User actors
             AddLocalDeviceActor(audit);
@@ -407,7 +407,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create SecurityCreationAction audit");
 
-            var audit = new AuditData(DateTime.Now, ActionType.Create, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
+            var audit = new AuditData(DateTimeOffset.Now, ActionType.Create, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
 
@@ -438,7 +438,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create AuditDataAction audit");
 
-            AuditData audit = new AuditData(DateTime.Now, action, outcome, eventType, typeCode);
+            AuditData audit = new AuditData(DateTimeOffset.Now, action, outcome, eventType, typeCode);
 
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
@@ -555,7 +555,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create AuditDataAction audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Read, disclosed ? OutcomeIndicator.Success : OutcomeIndicator.MinorFail, EventIdentifierType.SecurityAlert, new AuditCode("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditDataEvent")
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Read, disclosed ? OutcomeIndicator.Success : OutcomeIndicator.MinorFail, EventIdentifierType.SecurityAlert, new AuditCode("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditDataEvent")
             {
                 DisplayName = "Sensitive Data Was Disclosed to User"
             });
@@ -586,7 +586,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create SecurityDeletionAction audit");
 
-            var audit = new AuditData(DateTime.Now, ActionType.Delete, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
+            var audit = new AuditData(DateTimeOffset.Now, ActionType.Delete, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityObjectChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
 
@@ -609,7 +609,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create SecurityAttributeAction audit");
 
-            var audit = new AuditData(DateTime.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
+            var audit = new AuditData(DateTimeOffset.Now, ActionType.Update, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.SecurityAttributesChanged));
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
 
@@ -779,7 +779,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create Override audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.EmergencyOverrideStarted));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, CreateAuditActionCode(EventTypeCodes.EmergencyOverrideStarted));
             AddUserActor(audit, principal);
             AddLocalDeviceActor(audit);
 
@@ -829,7 +829,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create ApplicationStart audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, CreateAuditActionCode(eventType));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, CreateAuditActionCode(eventType));
             AddLocalDeviceActor(audit);
             SendAudit(audit);
         }
@@ -841,7 +841,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create Login audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
             AddLocalDeviceActor(audit);
             AddUserActor(audit, principal);
             audit.AuditableObjects.Add(new AuditableObject()
@@ -865,7 +865,7 @@ namespace SanteDB.Core.Security.Audit
 
             traceSource.TraceInfo("Create Logout audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Logout));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Logout));
             AddLocalDeviceActor(audit);
             AddUserActor(audit, principal);
 
@@ -887,7 +887,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create Network Request Failure audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkActivity, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.MinorFail, EventIdentifierType.NetworkActivity, CreateAuditActionCode(EventTypeCodes.NetworkActivity));
             AddUserActor(audit);
             AddLocalDeviceActor(audit);
             audit.AuditableObjects.Add(new AuditableObject()
@@ -959,7 +959,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("Create session audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStarted));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStarted));
             AddLocalDeviceActor(audit);
             AddUserActor(audit, principal);
 
@@ -1011,7 +1011,7 @@ namespace SanteDB.Core.Security.Audit
         {
             traceSource.TraceInfo("End session audit");
 
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStopped));
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, success ? OutcomeIndicator.Success : OutcomeIndicator.EpicFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.SessionStopped));
 
             AddLocalDeviceActor(audit);
             AddUserActor(audit, principal);
@@ -1060,7 +1060,7 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditDataExport(params object[] exportedData)
         {
             AuditCode eventTypeId = CreateAuditActionCode(EventTypeCodes.Export);
-            AuditData audit = new AuditData(DateTime.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, eventTypeId);
+            AuditData audit = new AuditData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.SecurityAlert, eventTypeId);
 
             AddLocalDeviceActor(audit);
             AddUserActor(audit);
