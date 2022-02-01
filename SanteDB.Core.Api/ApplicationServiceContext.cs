@@ -36,7 +36,7 @@ namespace SanteDB.Core
         /// <returns>The fetched / registered service implementation</returns>
         public static T GetService<T>(this IServiceProvider me)
         {
-            return (T)me.GetService(typeof(T));
+            return (T)me?.GetService(typeof(T));
         }
 
         /// <summary>

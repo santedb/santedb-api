@@ -50,8 +50,15 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         private DiagnosticsProbeManager()
         {
-            var serviceManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
-            this.m_probes = serviceManager.CreateInjectedOfAll<IDiagnosticsProbe>().ToList();
+            var serviceManager = ApplicationServiceContext.Current?.GetService<IServiceManager>();
+            if (serviceManager == null)
+            {
+                this.m_probes = new List<IDiagnosticsProbe>();
+            }
+            else
+            {
+                this.m_probes = serviceManager.CreateInjectedOfAll<IDiagnosticsProbe>().ToList();
+            }
         }
 
         /// <summary>
