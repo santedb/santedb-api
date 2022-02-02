@@ -52,7 +52,7 @@ namespace SanteDB.Core.Services.Impl
         public string ServiceName => "File System Message Queue";
 
         // Disposed already?
-        private bool m_disposed = false;
+        private volatile bool m_disposed = false;
 
         /// <summary>
         /// Queue entry
