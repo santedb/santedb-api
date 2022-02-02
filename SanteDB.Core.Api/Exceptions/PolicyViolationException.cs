@@ -50,7 +50,7 @@ namespace SanteDB.Core.Exceptions
             this.Principal = principal;
             try
             {
-                this.m_policyName = ApplicationServiceContext.Current.GetService<IPolicyInformationService>().GetPolicy(policyId)?.Name;
+                this.m_policyName = ApplicationServiceContext.Current.GetService<IPolicyInformationService>()?.GetPolicy(policyId)?.Name;
             }
             catch { }
         }
