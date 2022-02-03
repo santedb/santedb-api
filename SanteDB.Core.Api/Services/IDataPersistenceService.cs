@@ -72,9 +72,14 @@ namespace SanteDB.Core.Services
         NullifyDelete = 2,
 
         /// <summary>
+        /// The record should be marked as PURGED or marked in a state which it won't be returned from the datamodel
+        /// </summary>
+        VersionedDelete = 3,
+
+        /// <summary>
         /// Permanently delete - it should be purged from the database
         /// </summary>
-        PermanentDelete = 3
+        PermanentDelete = 4
     }
 
     /// <summary>
@@ -113,29 +118,36 @@ namespace SanteDB.Core.Services
         // Delete mode
         private readonly DeleteMode? m_deleteMode;
 
+        // Wrapped
+        private readonly DataPersistenceControlContext m_wrapped;
+
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode loadingMode)
+        private DataPersistenceControlContext(LoadMode loadingMode, DataPersistenceControlContext wrapped)
         {
             this.m_loadMode = loadingMode;
+            this.m_wrapped = wrapped;
         }
 
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(DeleteMode deleteMode)
+        private DataPersistenceControlContext(DeleteMode deleteMode, DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
+            this.m_wrapped = wrapped;
+
         }
 
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode loadMode, DeleteMode deleteMode)
+        private DataPersistenceControlContext(LoadMode loadMode, DeleteMode deleteMode, DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
             this.m_loadMode = loadMode;
+            this.m_wrapped = wrapped;
         }
 
         /// <summary>
@@ -161,7 +173,17 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceControlContext(loadMode);
+            m_current = new DataPersistenceControlContext(loadMode, m_current);
+            return m_current;
+        }
+
+        /// <summary>
+        /// Sets the current deletion mode for all persistence requests on this thread (or until a wrapped context is done)
+        /// </summary>
+        /// <param name="deleteMode">The mode of deletion</param>
+        public static DataPersistenceControlContext Create(DeleteMode deleteMode)
+        {
+            m_current = new DataPersistenceControlContext(deleteMode, m_current);
             return m_current;
         }
 
@@ -170,7 +192,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public void Dispose()
         {
-            m_current = null;
+            m_current = m_wrapped;
         }
     }
 

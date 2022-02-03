@@ -24,6 +24,7 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -55,6 +56,7 @@ namespace SanteDB.Core.Data
             return default(TObject);
         }
 
+
         /// <summary>
         /// Get the specified version
         /// </summary>
@@ -82,6 +84,17 @@ namespace SanteDB.Core.Data
         public IEnumerable<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             return this.Query<TObject>(o => sourceKey.Contains(o.SourceEntityKey));
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable GetRelations(Type relatedType, params Guid?[] sourceKey)
+        {
+            var persistenceService = ApplicationServiceContext.Current.GetService(typeof(IRepositoryService<>).MakeGenericType(relatedType)) as IRepositoryService;
+            var parm = Expression.Parameter(relatedType);
+            var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid?) }) as System.Reflection.MethodInfo;
+
+            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey)))), parm);
+            return persistenceService.Find(expr);
         }
 
         /// <summary>
