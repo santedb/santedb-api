@@ -16,11 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-1-28
  */
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 
 namespace SanteDB.Core.Diagnostics.Performance
@@ -28,7 +28,7 @@ namespace SanteDB.Core.Diagnostics.Performance
     /// <summary>
     /// Represents a thread pool performance counter
     /// </summary>
-    public class ThreadPoolPerformanceProbe : ICompositeDiagnosticsProbe
+    public class NetThreadPoolPerformanceProbe : ICompositeDiagnosticsProbe
     {
         // Performance counters
         private readonly IDiagnosticsProbe[] m_performanceCounters;
@@ -36,22 +36,19 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Generic performance counter
         /// </summary>
-        private class QueueDepthProbe : DiagnosticsProbeBase<int>
+        private class NetIoPooledWorkersProbe : DiagnosticsProbeBase<int>
         {
-            private readonly IThreadPoolService m_threadPool;
-
             /// <summary>
-            /// Non pooled workers counter
+            /// .NET pool workers counter
             /// </summary>
-            public QueueDepthProbe(IThreadPoolService threadPool) : base("Queue Depth", "Shows the number of tasks waiting to be executed")
+            public NetIoPooledWorkersProbe() : base(".NET I/O Threads", "Shows the number of .NET I/O threads in the pool")
             {
-                this.m_threadPool = threadPool;
             }
 
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => PerformanceConstants.ThreadPoolDepthCounter;
+            public override Guid Uuid => PerformanceConstants.NetIoThreads;
 
             /// <summary>
             /// Gets the value
@@ -60,8 +57,9 @@ namespace SanteDB.Core.Diagnostics.Performance
             {
                 get
                 {
-                    this.m_threadPool.GetWorkerStatus(out _, out _, out int waitingInQueue);
-                    return waitingInQueue;
+                    ThreadPool.GetMaxThreads(out _, out var worker);
+                    ThreadPool.GetAvailableThreads(out _, out var available);
+                    return worker - available;
                 }
             }
 
@@ -74,22 +72,19 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Generic performance counter
         /// </summary>
-        private class PooledWorkersProbe : DiagnosticsProbeBase<int>
+        private class NetPooledWorkersProbe : DiagnosticsProbeBase<int>
         {
-            private readonly IThreadPoolService m_threadPool;
-
             /// <summary>
-            /// Non pooled workers counter
+            /// .NET pool workers counter
             /// </summary>
-            public PooledWorkersProbe(IThreadPoolService threadPool) : base("Pool Use", "Shows the number of busy worker threads")
+            public NetPooledWorkersProbe() : base(".NET Pool", "Shows the number of busy worker threads in the .NET worker pool")
             {
-                this.m_threadPool = threadPool;
             }
 
             /// <summary>
             /// Gets the identifier for the pool
             /// </summary>
-            public override Guid Uuid => PerformanceConstants.ThreadPoolWorkerCounter;
+            public override Guid Uuid => PerformanceConstants.NetPoolWorkerCounter;
 
             /// <summary>
             /// Gets the value
@@ -98,47 +93,9 @@ namespace SanteDB.Core.Diagnostics.Performance
             {
                 get
                 {
-                    this.m_threadPool.GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingInQueue);
-                    return totalWorkers - availableWorkers;
-                }
-            }
-
-            /// <summary>
-            /// Units for the probe
-            /// </summary>
-            public override String Unit => null;
-        }
-
-        /// <summary>
-        /// Generic performance counter
-        /// </summary>
-        private class PoolConcurrencyProbe : DiagnosticsProbeBase<int>
-        {
-            private readonly IThreadPoolService m_threadPool;
-
-            /// <summary>
-            /// Non pooled workers counter
-            /// </summary>
-            public PoolConcurrencyProbe(IThreadPoolService threadPool) : base("Thread pool size", "Shows the total number of threads which are allocated to the thread pool")
-            {
-                this.m_threadPool = threadPool;
-            }
-
-            /// <summary>
-            /// Gets the identifier for the pool
-            /// </summary>
-            public override Guid Uuid => PerformanceConstants.ThreadPoolConcurrencyCounter;
-
-            /// <summary>
-            /// Gets the value
-            /// </summary>
-            public override int Value
-            {
-                get
-                {
-                    //ThreadPool.GetMaxThreads(out int workerCount, out int completionPort);
-                    this.m_threadPool.GetWorkerStatus(out int workerCount, out _, out _);
-                    return workerCount;
+                    ThreadPool.GetMaxThreads(out var worker, out _);
+                    ThreadPool.GetAvailableThreads(out var available, out _);
+                    return worker - available;
                 }
             }
 
@@ -151,20 +108,19 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Thread pool performance probe
         /// </summary>
-        public ThreadPoolPerformanceProbe(IThreadPoolService threadPoolService)
+        public NetThreadPoolPerformanceProbe()
         {
             this.m_performanceCounters = new IDiagnosticsProbe[]
             {
-                new PoolConcurrencyProbe(threadPoolService),
-                new PooledWorkersProbe(threadPoolService),
-                new QueueDepthProbe(threadPoolService)
+                new NetPooledWorkersProbe(),
+                new NetIoPooledWorkersProbe()
             };
         }
 
         /// <summary>
         /// Get the UUID of the thread pool
         /// </summary>
-        public Guid Uuid => PerformanceConstants.ThreadPoolPerformanceCounter;
+        public Guid Uuid => PerformanceConstants.NetThreadPoolPerformanceCounter;
 
         /// <summary>
         /// Gets the value of the
@@ -174,12 +130,12 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <summary>
         /// Gets thename of hte composite
         /// </summary>
-        public string Name => "Thread Pool";
+        public string Name => ".NET Thread Pool";
 
         /// <summary>
         /// Gets the description
         /// </summary>
-        public string Description => "The primary SanteDB thread pool performance monitor";
+        public string Description => "Shows the current characteristics of the .NET thread pool";
 
         /// <summary>
         /// Gets the type of the performance counter
@@ -190,7 +146,6 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// Gets the value
         /// </summary>
         object IDiagnosticsProbe.Value => this.Value;
-
 
         /// <summary>
         /// Units for the probe

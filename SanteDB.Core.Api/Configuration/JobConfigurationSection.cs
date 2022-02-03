@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Jobs;
@@ -76,7 +76,7 @@ namespace SanteDB.Core.Configuration
         public Type Type
         {
             get => !String.IsNullOrEmpty(this.TypeXml) ? Type.GetType(this.TypeXml) : null;
-            set => this.TypeXml = value?.AssemblyQualifiedName;
+            set => this.TypeXml = value != null ? $"{value.FullName}, {value.Assembly.GetName().Name}" : null;
         }
 
         /// <summary>
@@ -154,25 +154,25 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Gets the interval of time for the job
         /// </summary>
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore, JsonIgnore]
         TimeSpan? IJobSchedule.Interval => this.IntervalSpecified ? (TimeSpan?)new TimeSpan(0, 0, this.Interval) : null;
 
         /// <summary>
         /// Gets the start time
         /// </summary>
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore, JsonIgnore]
         DateTime IJobSchedule.StartTime => this.StartDate;
 
         /// <summary>
         /// Gets the stop time
         /// </summary>
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore, JsonIgnore]
         DateTime? IJobSchedule.StopTime => this.StopDateSpecified ? (DateTime?)this.StopDate : null;
 
         /// <summary>
         /// Days this repeats on
         /// </summary>
-        [XmlIgnore,JsonIgnore]
+        [XmlIgnore, JsonIgnore]
         DayOfWeek[] IJobSchedule.Days => this.RepeatOn;
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace SanteDB.Core.Configuration
             retVal &= !this.StopDateSpecified || refDate < this.StopDate; // The reference date is in valid bounds of stop (if specified)
 
             // Are there week days specified
-            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalMilliseconds > this.Interval))
+            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalSeconds > this.Interval))
             {
                 return true;
             }
@@ -192,8 +192,9 @@ namespace SanteDB.Core.Configuration
             {
                 retVal &= this.RepeatOn.Any(r => r == refDate.DayOfWeek) &&
                     refDate.Hour >= this.StartDate.Hour &&
-                    refDate.Minute >= this.StartDate.Minute;
-                retVal &= !lastRun.HasValue || (lastRun.Value.Date <= refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
+                    refDate.Minute >= this.StartDate.Minute &&
+                    refDate.Date > this.StartDate;
+                retVal &= !lastRun.HasValue ? DateTime.Now.Hour == this.StartDate.Hour : (lastRun.Value.Date < refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
             }
             else // This is an exact time
             {

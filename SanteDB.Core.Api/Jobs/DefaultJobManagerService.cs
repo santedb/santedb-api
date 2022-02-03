@@ -1,24 +1,23 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You may
- * obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
  * the License.
- *
+ * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
-
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -175,7 +174,7 @@ namespace SanteDB.Core.Jobs
             this.m_systemTimer = new System.Timers.Timer(300000); // timer runs every 5 minutes
             this.m_systemTimer.Elapsed += SystemJobTimer;
             this.m_systemTimer.Enabled = true;
-
+            this.m_systemTimer.Start();
             this.Started?.Invoke(this, EventArgs.Empty);
 
             Trace.TraceInformation("Timer service started successfully");
@@ -214,7 +213,7 @@ namespace SanteDB.Core.Jobs
                     var schedule = this.m_jobScheduleManager.Get(itm.Job);
 
                     // Does the job have a schedule?
-                    if (!schedule.Any() || itm.StartType == JobStartType.Never)
+                    if (schedule?.Any()  != true|| itm.StartType == JobStartType.Never)
                     {
                         continue;
                     }

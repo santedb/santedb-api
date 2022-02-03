@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using SanteDB.Core.Data.Quality.Configuration;
@@ -130,8 +130,11 @@ namespace SanteDB.Core.Data.Quality
 
             var job = new DataQualityExtensionCleanJob();
             var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
-            jms.AddJob(job, JobStartType.DelayStart);
-            jms.SetJobSchedule(job, new TimeSpan(12, 0, 0)); 
+            jms?.AddJob(job, JobStartType.DelayStart);
+            if (jms?.GetJobSchedules(job)?.Any() != true)
+            {
+                jms?.SetJobSchedule(job, new TimeSpan(12, 0, 0));
+            }
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
         }

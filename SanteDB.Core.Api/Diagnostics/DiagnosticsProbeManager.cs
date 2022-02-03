@@ -1,24 +1,23 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You may
- * obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
  * the License.
- *
+ * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
-
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
@@ -37,7 +36,7 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Counters
         /// </summary>
-        private MemoryQueryResultSet<IDiagnosticsProbe> m_probes;
+        private IList<IDiagnosticsProbe> m_probes;
 
         // Lock object
         private static object m_lockObject = new object();
@@ -52,8 +51,15 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         private DiagnosticsProbeManager()
         {
-            var serviceManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
-            this.m_probes = new MemoryQueryResultSet<IDiagnosticsProbe>(serviceManager.CreateInjectedOfAll<IDiagnosticsProbe>());
+            var serviceManager = ApplicationServiceContext.Current?.GetService<IServiceManager>();
+            if (serviceManager == null)
+            {
+                this.m_probes = new List<IDiagnosticsProbe>();
+            }
+            else
+            {
+                this.m_probes = serviceManager.CreateInjectedOfAll<IDiagnosticsProbe>().ToList();
+            }
         }
 
         /// <summary>
@@ -88,6 +94,20 @@ namespace SanteDB.Core.Diagnostics
         {
             var matches = this.m_probes.Where(query);
             return matches;
+        }
+
+        /// <summary>
+        /// Add the specified probe
+        /// </summary>
+        public void Add(IDiagnosticsProbe probe)
+        {
+            lock(m_lockObject)
+            {
+                if(!this.m_probes.Any(p=>p.Uuid == probe.Uuid))
+                {
+                    this.m_probes.Add(probe);
+                }
+            }
         }
     }
 }
