@@ -322,18 +322,13 @@ namespace SanteDB.Core.Http
             }
             catch (WebException e)
             {
-                switch (this.CategorizeResponse(e.Response))
-                {
-                    case ServiceClientErrorType.Ok:
-                        return this.Get(url);
 
-                    default:
-                        throw new RestClientException<byte[]>(
-                                            null,
-                                            e,
-                                            e.Status,
-                                            e.Response);
-                }
+                throw new RestClientException<byte[]>(
+                                    null,
+                                    e,
+                                    e.Status,
+                                    e.Response);
+
             }
             catch (Exception e)
             {
@@ -520,99 +515,6 @@ namespace SanteDB.Core.Http
         public IRestClientDescription Description { get { return this.m_configuration; } set { this.m_configuration = value; } }
 
         #endregion IRestClient implementation
-
-        /// <summary>
-        /// Validate the response
-        /// </summary>
-        /// <returns>The type of error that was categorized</returns>
-        /// <param name="response">The WebResponse from the server</param>
-        protected virtual ServiceClientErrorType CategorizeResponse(WebResponse response)
-        {
-            if (response is HttpWebResponse)
-            {
-                var httpResponse = response as HttpWebResponse;
-                switch (httpResponse.StatusCode)
-                {
-                    case HttpStatusCode.Unauthorized:
-                        {
-                            if (response.Headers["WWW-Authenticate"]?.StartsWith(this.Description.Binding.Security.Mode.ToString(), StringComparison.CurrentCultureIgnoreCase) == false)
-                                return ServiceClientErrorType.AuthenticationSchemeMismatch;
-                            else
-                            {
-                                // Validate the realm
-                                // TODO: Refactor this to use REGEX
-                                string wwwAuth = response.Headers["WWW-Authenticate"];
-                                int realmStart = wwwAuth.IndexOf("realm=\"");
-                                if (realmStart < 0)
-                                    return ServiceClientErrorType.SecurityError; // No realm
-                                realmStart += 7;// skip realm
-                                string realm = wwwAuth.Substring(realmStart, wwwAuth.IndexOf('"', realmStart) - realmStart);
-
-                                if (!String.IsNullOrEmpty(this.Description.Binding.Security.AuthRealm) &&
-                                    !this.Description.Binding.Security.AuthRealm.Equals(realm))
-                                {
-                                    s_tracer.TraceWarning("Warning: REALM mismatch, authentication may fail. Server reports {0} but client configured for {1}", realm, this.Description.Binding.Security.AuthRealm);
-                                }
-
-                                int errorStart = wwwAuth.IndexOf("error=\"");
-                                if (errorStart > -1)
-                                { // Error is provided
-                                    errorStart += 7;// skip realm
-                                    string errorCode = wwwAuth.Substring(errorStart, wwwAuth.IndexOf('"', errorStart) - errorStart);
-                                    if (errorCode.Equals("insufficient_scope", StringComparison.OrdinalIgnoreCase)) // We have invalid scope, we need to challenge
-                                    {
-                                        var scopeStart = wwwAuth.IndexOf("scope=\"");
-                                        if (scopeStart > -1) // Scope is declared
-                                        {
-                                            scopeStart += 7;// skip realm
-                                            string scope = wwwAuth.Substring(scopeStart, wwwAuth.IndexOf('"', scopeStart) - scopeStart);
-                                            throw new PolicyViolationException(this.Credentials.Principal, scope, Model.Security.PolicyGrantType.Elevate);
-                                        }
-                                    }
-                                }
-
-                                // Credential provider
-                                if (this.Description.Binding.Security.CredentialProvider != null)
-                                {
-                                    try
-                                    {
-                                        this.Credentials = this.Description.Binding.Security.CredentialProvider?.Authenticate(this);
-                                        if (this.Credentials != null) // We have authentication, just needs elevation?
-                                        {
-                                            return ServiceClientErrorType.Ok;
-                                        }
-                                        else
-                                            return ServiceClientErrorType.SecurityError;
-                                    }
-                                    catch
-                                    {
-                                        return ServiceClientErrorType.SecurityError;
-                                    }
-                                }
-                                else
-                                    return ServiceClientErrorType.SecurityError;
-                            }
-                        }
-                    case HttpStatusCode.ServiceUnavailable:
-                        return ServiceClientErrorType.NotReady;
-
-                    case HttpStatusCode.OK:
-                    case HttpStatusCode.NoContent:
-                    case HttpStatusCode.NotModified:
-                    case HttpStatusCode.Created:
-                    case HttpStatusCode.Redirect:
-                    case HttpStatusCode.Moved:
-                    case HttpStatusCode.RedirectKeepVerb:
-                    case HttpStatusCode.RedirectMethod:
-                        return ServiceClientErrorType.Ok;
-
-                    default:
-                        return ServiceClientErrorType.GenericError;
-                }
-            }
-            else
-                return ServiceClientErrorType.GenericError;
-        }
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
