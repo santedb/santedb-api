@@ -116,7 +116,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Clear the schedule for the specified job
         /// </summary>
-        public IEnumerable<IJobSchedule> Clear(IJob job)
+        public void Clear(IJob job)
         {
             lock (this.m_lock)
             {
@@ -126,7 +126,6 @@ namespace SanteDB.Core.Jobs
                     this.m_jobSchedules.Remove(scheduleReg);
                     this.SaveCron();
                 }
-                return scheduleReg?.Schedule;
             }
         }
 

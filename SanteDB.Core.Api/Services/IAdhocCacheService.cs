@@ -103,5 +103,10 @@ namespace SanteDB.Core.Services
         /// Removes the specified object from the adhoc
         /// </summary>
         bool Remove(string key);
+
+        /// <summary>
+        /// Returns true if <paramref name="key"/> exists in the cache
+        /// </summary>
+        bool Exists(String key);
     }
 }

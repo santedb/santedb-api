@@ -107,11 +107,36 @@ namespace SanteDB.Core.Configuration
     }
 
     /// <summary>
+    /// Job schedule information type
+    /// </summary>
+    [XmlType(nameof(JobScheduleType), Namespace = "http://santedb.org/configuration")]
+    public enum JobScheduleType
+    {
+        /// <summary>
+        /// The job is scheduled (on days at a time)
+        /// </summary>
+        [XmlEnum("scheduled")]
+        Scheduled,
+        /// <summary>
+        /// The job is fired on an interval
+        /// </summary>
+        [XmlEnum("interval")]
+        Interval
+    }
+
+
+    /// <summary>
     /// Job item schedule
     /// </summary>
     [XmlType(nameof(JobItemSchedule), Namespace = "http://santedb.org/configuration")]
     public class JobItemSchedule : IJobSchedule
     {
+
+        /// <summary>
+        /// Gets the type of job schedule
+        /// </summary>
+        [XmlAttribute("type"),JsonProperty("type"), DisplayName("Type"),Description("Gets or sets the type of job schedule")]
+        public JobScheduleType Type { get; set; }
 
         /// <summary>
         /// The days on which this schedule applies
@@ -174,38 +199,6 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlIgnore, JsonIgnore]
         DayOfWeek[] IJobSchedule.Days => this.RepeatOn;
-
-        /// <summary>
-        /// Returns true if the schedule applies to <paramref name="refDate"/>
-        /// </summary>
-        public bool AppliesTo(DateTime refDate, DateTime? lastRun)
-        {
-            var retVal = refDate >= this.StartDate; // The reference date is in valid bounds for start
-            retVal &= !this.StopDateSpecified || refDate < this.StopDate; // The reference date is in valid bounds of stop (if specified)
-
-            // Are there week days specified
-            if (this.IntervalSpecified && (!lastRun.HasValue || refDate.Subtract(lastRun.Value).TotalSeconds > this.Interval))
-            {
-                return true;
-            }
-            else if (this.RepeatOn != null && this.RepeatOn.Any())
-            {
-                retVal &= this.RepeatOn.Any(r => r == refDate.DayOfWeek) &&
-                    refDate.Hour >= this.StartDate.Hour &&
-                    refDate.Minute >= this.StartDate.Minute &&
-                    refDate.Date > this.StartDate;
-                retVal &= !lastRun.HasValue ? DateTime.Now.Hour == this.StartDate.Hour : (lastRun.Value.Date < refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
-            }
-            else // This is an exact time
-            {
-                retVal &= refDate.Date == this.StartDate.Date &&
-                    refDate.Hour >= this.StartDate.Hour &&
-                    refDate.Minute >= this.StartDate.Minute &&
-                    !lastRun.HasValue;
-            }
-
-            return retVal;
-        }
 
         /// <summary>
         /// Represent the schedule as string
