@@ -44,6 +44,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
         /// </summary>
+        /// <param name="me">The job schedule to determine applicability</param>
         /// <param name="refDate">The time that the system is checking if the job execution applies</param>
         /// <param name="lastRun">The last known run time / check time of the job. Null if never run</param>
         /// <returns>True if the schedule applies</returns>
