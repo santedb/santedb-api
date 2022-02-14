@@ -367,6 +367,7 @@ namespace SanteDB.Core.Jobs
             this.m_jobScheduleManager.Clear(job);
             var retVal = new JobItemSchedule()
             {
+                Type = JobScheduleType.Scheduled,
                 RepeatOn = daysOfWeek,
                 StartDate = scheduleTime
             };
@@ -393,6 +394,7 @@ namespace SanteDB.Core.Jobs
 
             var retVal = new JobItemSchedule()
             {
+                Type = JobScheduleType.Interval,
                 Interval = (int)interval.TotalSeconds,
                 IntervalSpecified = true,
             };
