@@ -19,9 +19,11 @@
  * Date: 2021-11-5
  */
 using SanteDB.Core.Interfaces;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SanteDB.Core
@@ -37,6 +39,45 @@ namespace SanteDB.Core
         public static object CreateInjected(this Type me)
         {
             return ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected(me);
+        }
+
+        /// <summary>
+        /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
+        /// </summary>
+        /// <param name="refDate">The time that the system is checking if the job execution applies</param>
+        /// <param name="lastRun">The last known run time / check time of the job. Null if never run</param>
+        /// <returns>True if the schedule applies</returns>
+        public static bool AppliesTo(this IJobSchedule me, DateTime refDate, DateTime? lastRun)
+        {
+            var retVal = refDate >= me.StartTime; // The reference date is in valid bounds for start
+            retVal &= !me.StopTime.HasValue || refDate < me.StopTime.Value; // The reference date is in valid bounds of stop (if specified)
+
+            // Are there week days specified
+            if (me.Type == Configuration.JobScheduleType.Interval && (!lastRun.HasValue || refDate.Subtract(lastRun.Value) > me.Interval))
+            {
+                return true;
+            }
+            else if (me.Type == Configuration.JobScheduleType.Scheduled)
+            {
+                if (me.Days != null && me.Days.Any())
+                {
+                    retVal &= me.Days.Any(r => r == refDate.DayOfWeek) &&
+                        refDate.Hour >= me.StartTime.Hour &&
+                        refDate.Minute >= me.StartTime.Minute &&
+                        refDate.Date > me.StartTime;
+                    retVal &= !lastRun.HasValue ? DateTime.Now.Hour == me.StartTime.Hour : (lastRun.Value.Date < refDate.Date); // Last run does not cover this calculation - i.e. have we not already run this repeat?
+                }
+                else // This is an exact time
+                {
+                    retVal &= refDate.Date == me.StartTime.Date &&
+                        refDate.Hour >= me.StartTime.Hour &&
+                        refDate.Minute >= me.StartTime.Minute &&
+                        !lastRun.HasValue;
+                }
+            }
+
+            return retVal;
+
         }
     }
 }
