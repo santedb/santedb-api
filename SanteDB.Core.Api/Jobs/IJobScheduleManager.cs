@@ -41,8 +41,7 @@ namespace SanteDB.Core.Jobs
         /// Clear all schedules for <paramref name="job"/>
         /// </summary>
         /// <param name="job">The job to clear schedules for</param>
-        /// <returns>The cleared job schedule</returns>
-        IEnumerable<IJobSchedule> Clear(IJob job);
+        void Clear(IJob job);
 
         /// <summary>
         /// Add <paramref name="jobSchedule"/> to <paramref name="job"/>
