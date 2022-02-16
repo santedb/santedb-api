@@ -80,5 +80,13 @@ namespace SanteDB.Core
             return retVal;
 
         }
+
+        /// <summary>
+        /// Determine if the <see cref="IJobState"/> is running
+        /// </summary>
+        /// <param name="me">The job state structure</param>
+        /// <returns>True if the status of the job state implies the job is running</returns>
+        public static bool IsRunning(this IJobState me) => me.CurrentState == JobStateType.Running || me.CurrentState == JobStateType.Starting;
+
     }
 }
