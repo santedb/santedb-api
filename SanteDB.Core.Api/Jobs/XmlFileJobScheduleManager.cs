@@ -101,6 +101,7 @@ namespace SanteDB.Core.Jobs
                 }
                 scheduleReg.Schedule.Add(new JobItemSchedule()
                 {
+                    Type = jobSchedule.Type,
                     Interval = (int)jobSchedule.Interval.GetValueOrDefault().TotalSeconds,
                     IntervalSpecified = jobSchedule.Interval.HasValue,
                     RepeatOn = jobSchedule.Days,

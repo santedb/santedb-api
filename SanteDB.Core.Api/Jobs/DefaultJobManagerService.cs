@@ -38,7 +38,7 @@ namespace SanteDB.Core.Jobs
     /// 
     /// </remarks>
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
-    public class DefaultJobManagerService : IJobManagerService
+    public class DefaultJobManagerService : IJobManagerService, IServiceFactory
     {
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
@@ -49,13 +49,22 @@ namespace SanteDB.Core.Jobs
         // Job schedule manager
         private readonly IJobScheduleManager m_jobScheduleManager;
 
+        // Job state manager
+        private readonly IJobStateManagerService m_jobStateManager;
+
+        // Service manager
+        private readonly IServiceManager m_serviceManager;
+
         /// <summary>
         /// Create a new job manager service
         /// </summary>
-        public DefaultJobManagerService(IThreadPoolService threadPool, IJobScheduleManager cronTabManager = null)
+        public DefaultJobManagerService(IThreadPoolService threadPool, IServiceManager serviceManager, IJobStateManagerService jobStateManager = null, IJobScheduleManager cronTabManager = null)
         {
             this.m_threadPool = threadPool;
             this.m_jobScheduleManager = cronTabManager ?? new XmlFileJobScheduleManager();
+            this.m_jobStateManager = jobStateManager ?? new XmlFileJobStateManager();
+            this.m_serviceManager = serviceManager;
+
         }
 
         /// <summary>
@@ -223,7 +232,7 @@ namespace SanteDB.Core.Jobs
                     if (scheduleHits.Any() || itm.StartType == JobStartType.DelayStart && !itm.LastRun.HasValue)
                     {
                         this.m_tracer.TraceVerbose("Job {0} schedule {1} hits {2} scheduled times", itm.Job.Name, String.Join(";", schedule.Select(o => o.ToString())), string.Join(";", scheduleHits.Select(o => o.ToString())));
-                        if (itm.Job.CurrentState != JobStateType.Running)
+                        if (!this.m_jobStateManager.GetJobState(itm.Job).IsRunning())
                         {
                             this.m_tracer.TraceInfo("Starting job {0}", itm.Job.Name);
                             this.m_threadPool.QueueUserWorkItem(this.RunJob, itm);
@@ -367,6 +376,7 @@ namespace SanteDB.Core.Jobs
             this.m_jobScheduleManager.Clear(job);
             var retVal = new JobItemSchedule()
             {
+                Type = JobScheduleType.Scheduled,
                 RepeatOn = daysOfWeek,
                 StartDate = scheduleTime
             };
@@ -393,6 +403,7 @@ namespace SanteDB.Core.Jobs
 
             var retVal = new JobItemSchedule()
             {
+                Type = JobScheduleType.Interval,
                 Interval = (int)interval.TotalSeconds,
                 IntervalSpecified = true,
             };
@@ -411,6 +422,40 @@ namespace SanteDB.Core.Jobs
                 throw new KeyNotFoundException($"Job {job.Id} not registered");
             }
             return this.m_jobScheduleManager.Get(job);
+        }
+
+        /// <inheritdoc/>
+        public bool TryCreateService<TService>(out TService serviceInstance)
+        {
+            if(this.TryCreateService(typeof(TService), out object tmpService) && tmpService is TService tService)
+            {
+                serviceInstance = tService;
+                return true;
+            }
+            else {
+                serviceInstance = default(TService);
+                return false;
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool TryCreateService(Type serviceType, out object serviceInstance)
+        {
+            if(typeof(IJobStateManagerService).IsAssignableFrom(serviceType))
+            {
+                serviceInstance = this.m_serviceManager.CreateInjected<XmlFileJobStateManager>();
+                return true;
+            }
+            else if(typeof(IJobScheduleManager).IsAssignableFrom(serviceType))
+            {
+                serviceInstance = this.m_serviceManager.CreateInjected<XmlFileJobScheduleManager>();
+                return true;
+            }
+            else
+            {
+                serviceInstance = null;
+                return false;
+            }
         }
 
         #endregion ITimerService Members

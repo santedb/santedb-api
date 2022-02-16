@@ -38,6 +38,8 @@ namespace SanteDB.Core.Data.Quality
 
         // Clean obsolete tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
+        // State manager
+        private readonly IJobStateManagerService m_stateManagerService;
 
         /// <summary>
         /// Gets the id of the job
@@ -53,29 +55,22 @@ namespace SanteDB.Core.Data.Quality
         public string Description => "Cleans obsolete or otherwise amended data quality extension tags";
 
         /// <summary>
+        /// DI constructor
+        /// </summary>
+        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService)
+        {
+            this.m_stateManagerService = stateManagerService;
+        }
+
+        /// <summary>
         /// True if can cancel
         /// </summary>
         public bool CanCancel => false;
 
         /// <summary>
-        /// Gets the current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameters for this job
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// Gets the time that the job was last run
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Gets the time that the job was last finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
 
         /// <summary>
         /// Cancel the job
@@ -94,8 +89,7 @@ namespace SanteDB.Core.Data.Quality
             this.m_tracer.TraceInfo("Starting clean of data quality extensions...");
             try
             {
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
+                this.m_stateManagerService.SetState(this, JobStateType.Running);
 
                 var entityService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityExtension>>();
                 var actService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActExtension>>();
@@ -123,13 +117,14 @@ namespace SanteDB.Core.Data.Quality
 
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
-                this.CurrentState = JobStateType.Completed;
-                this.LastFinished = DateTime.Now;
+                this.m_stateManagerService.SetState(this, JobStateType.Completed);
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceInfo("Error cleaning data quality extensions: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
+                this.m_stateManagerService.SetProgress(this, ex.Message, 0.0f);
+                this.m_stateManagerService.SetState(this, JobStateType.Aborted);
+
             }
         }
     }
