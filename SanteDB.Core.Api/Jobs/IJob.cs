@@ -110,41 +110,12 @@ namespace SanteDB.Core.Jobs
         void Cancel();
 
         /// <summary>
-        /// Gets the current status of the job
-        /// </summary>
-        JobStateType CurrentState { get; }
-
-        /// <summary>
         /// Get the parameter definitions
         /// </summary>
         IDictionary<String, Type> Parameters { get; }
 
-        /// <summary>
-        /// Gets the time the job last started
-        /// </summary>
-        DateTime? LastStarted { get; }
-
-        /// <summary>
-        /// Gets the time the job last finished
-        /// </summary>
-        DateTime? LastFinished { get; }
 
     }
 
 
-    /// <summary>
-    /// Job which reports progress
-    /// </summary>
-    public interface IReportProgressJob : IJob
-    {
-        /// <summary>
-        /// Gets the progress of the job
-        /// </summary>
-        float Progress { get; }
-
-        /// <summary>
-        /// Get the status text of the job
-        /// </summary>
-        string StatusText { get; }
-    }
 }
