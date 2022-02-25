@@ -35,7 +35,7 @@ namespace SanteDB.Core.Data.Quality
     /// <summary>
     /// Represents a job that will prune the data quality extensions
     /// </summary>
-    public class DataQualityExtensionCleanJob : IReportProgressJob
+    public class DataQualityExtensionCleanJob : IJob
     {
         // Clean obsolete tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
