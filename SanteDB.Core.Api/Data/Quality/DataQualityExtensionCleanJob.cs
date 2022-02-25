@@ -35,10 +35,12 @@ namespace SanteDB.Core.Data.Quality
     /// <summary>
     /// Represents a job that will prune the data quality extensions
     /// </summary>
-    public class DataQualityExtensionCleanJob : IJob
+    public class DataQualityExtensionCleanJob : IReportProgressJob
     {
         // Clean obsolete tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
+        private readonly IDataPersistenceServiceEx<EntityExtension> m_entityExtensionPersistence;
+        private readonly IDataPersistenceServiceEx<ActExtension> m_actExtensionPersistence;
 
         /// <summary>
         /// Gets the id of the job
@@ -79,6 +81,43 @@ namespace SanteDB.Core.Data.Quality
         public DateTime? LastFinished { get; private set; }
 
         /// <summary>
+        /// Gets the progress
+        /// </summary>
+        public float Progress { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the status text
+        /// </summary>
+        public string StatusText { get; private set; }
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public DataQualityExtensionCleanJob(IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence, IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
+        {
+            this.m_entityExtensionPersistence = entityExtensionPersistence;
+            this.m_actExtensionPersistence = actExtensionPersistence;
+            if(entityExtensionPersistence is IReportProgressChanged irp)
+            {
+                irp.ProgressChanged += (o, e) =>
+                {
+                    this.StatusText = "Clearing data quality extensions";
+                    this.Progress = e.Progress * 0.5f;
+                };
+            }
+
+            if (actExtensionPersistence is IReportProgressChanged irp2)
+            {
+                irp2.ProgressChanged += (o, e) =>
+                {
+                    this.StatusText = "Clearing data quality extensions";
+                    this.Progress = (e.Progress * 0.5f) + 0.5f;
+                };
+            }
+        }
+
+
+        /// <summary>
         /// Cancel the job
         /// </summary>
         public void Cancel()
@@ -97,24 +136,14 @@ namespace SanteDB.Core.Data.Quality
                 this.CurrentState = JobStateType.Running;
                 this.LastStarted = DateTime.Now;
 
-                var entityService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityExtension>>();
-                var actService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActExtension>>();
+
 
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
-                IQueryResultSet results = entityService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, AuthenticationContext.SystemPrincipal);
-                foreach (EntityExtension r in results)
+                using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
                 {
-                    entityService.Delete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                    this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
-
-                this.m_tracer.TraceInfo("Cleaning Act extensions...");
-                results = actService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, AuthenticationContext.SystemPrincipal);
-
-                foreach (ActExtension r in results)
-                {
-                    actService.Delete(r.Key.Value, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
-                }
-
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
                 this.CurrentState = JobStateType.Completed;

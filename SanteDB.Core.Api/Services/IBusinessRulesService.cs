@@ -127,7 +127,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">The data which was obsoleted</param>
         /// <returns>The data which is to be returned to the caller</returns>
-        TModel AfterObsolete(TModel data);
+        TModel AfterDelete(TModel data);
 
         /// <summary>
         /// Called after a query has been executed
@@ -168,7 +168,7 @@ namespace SanteDB.Core.Services
         /// <returns>The data object to be passed to the persistence layer for obsoletion</returns>
         /// <remarks>Implementers can use this method to change tags, states, extensions or notes on the object prior to the object being 
         /// committed to the data persistence layer.</remarks>
-        TModel BeforeObsolete(TModel data);
+        TModel BeforeDelete(TModel data);
 
         /// <summary>
         /// Called before an update occurs

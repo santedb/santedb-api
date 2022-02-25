@@ -125,9 +125,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// After obsolete
         /// </summary>
-        public virtual TModel AfterObsolete(TModel data)
+        public virtual TModel AfterDelete(TModel data)
         {
-            return this.Next?.AfterObsolete(data) ?? data;
+            return this.Next?.AfterDelete(data) ?? data;
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public object AfterObsolete(object data)
         {
-            return this.AfterObsolete((TModel)data);
+            return this.AfterDelete((TModel)data);
         }
 
         /// <summary>
@@ -207,9 +207,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Before obselete
         /// </summary>
-        public virtual TModel BeforeObsolete(TModel data)
+        public virtual TModel BeforeDelete(TModel data)
         {
-            return this.Next?.BeforeObsolete(data) ?? data;
+            return this.Next?.BeforeDelete(data) ?? data;
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public object BeforeObsolete(object data)
         {
-            return this.BeforeObsolete((TModel)data);
+            return this.BeforeDelete((TModel)data);
         }
 
         /// <summary>

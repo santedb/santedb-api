@@ -22,6 +22,8 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
@@ -89,7 +91,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns>Returns the model.</returns>
-        IdentifiedData Obsolete(Guid key);
+        IdentifiedData Delete(Guid key);
     }
 
     /// <summary>
@@ -155,11 +157,12 @@ namespace SanteDB.Core.Services
         TModel Save(TModel data);
 
         /// <summary>
-        /// Obsoletes the specified object
+        /// Delete the object according to the current <see cref="DataPersistenceControlContext.DeleteMode"/> or 
+        /// according to server configuration
         /// </summary>
-        /// <param name="key">The key of the object to be obsoleted</param>
-        /// <returns>The obsoleted data (including obsoletion time and provenance data)</returns>
-        TModel Obsolete(Guid key);
+        /// <param name="key">The key of the object to delete</param>
+        /// <returns>The key to delete</returns>
+        TModel Delete(Guid key);
     }
 
     /// <summary>
@@ -176,12 +179,6 @@ namespace SanteDB.Core.Services
         /// <param name="key">The key of the <typeparamref name="TModel"/> to be touched</param>
         void Touch(Guid key);
 
-        /// <summary>
-        /// Nullifies the specified object (mark as "Entered in Error")
-        /// </summary>
-        /// <param name="id">The identifier of the <typeparamref name="TModel"/> to be nullified</param>
-        /// <returns>The nullified object</returns>
-        TModel Nullify(Guid id);
     }
 
     /// <summary>
@@ -214,12 +211,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Fired before obsoleting
         /// </summary>
-        event EventHandler<DataPersistingEventArgs<TModel>> Obsoleting;
+        event EventHandler<DataPersistingEventArgs<TModel>> Deleting;
 
         /// <summary>
         /// Fired after data was obsoleted
         /// </summary>
-        event EventHandler<DataPersistedEventArgs<TModel>> Obsoleted;
+        event EventHandler<DataPersistedEventArgs<TModel>> Deleted;
 
         /// <summary>
         /// Retrieving the data

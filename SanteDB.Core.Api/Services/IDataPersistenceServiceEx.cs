@@ -34,16 +34,11 @@ namespace SanteDB.Core.Services
     public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceService<TModel>
        where TModel : IdentifiedData
     {
-        /// <summary>
-        /// Obsolete all matching data
-        /// </summary>
-        [Obsolete("Use DeleteAll(matching, mode, principal, DeleteMode.Obsolete) instead", true)]
-        void ObsoleteAll(Expression<Func<TModel, bool>> matching, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Obsolete all matching data
         /// </summary>
-        void DeleteAll(Expression<Func<TModel, bool>> matching, TransactionMode mode, IPrincipal principal, DeleteMode deletionMode);
+        void DeleteAll(Expression<Func<TModel, bool>> matching, TransactionMode mode, IPrincipal principal);
 
         /// <summary>
         /// Touch the specified data

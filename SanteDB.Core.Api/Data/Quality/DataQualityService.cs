@@ -128,7 +128,7 @@ namespace SanteDB.Core.Data.Quality
                 }
             }
 
-            var job = new DataQualityExtensionCleanJob();
+            var job = this.m_serviceManager.CreateInjected<DataQualityExtensionCleanJob>();
             var jms = ApplicationServiceContext.Current.GetService<IJobManagerService>();
             jms?.AddJob(job, JobStartType.DelayStart);
             if (jms?.GetJobSchedules(job)?.Any() != true)

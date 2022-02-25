@@ -103,7 +103,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add timestamp
         /// </summary>
-        public static AuditData WithTimestamp(this AuditData me, DateTimeOffset? timestamp = null)
+        public static AuditEventData WithTimestamp(this AuditEventData me, DateTimeOffset? timestamp = null)
         {
             me.Timestamp = timestamp ?? DateTimeOffset.Now;
             return me;

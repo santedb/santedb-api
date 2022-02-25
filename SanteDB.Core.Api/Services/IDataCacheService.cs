@@ -136,6 +136,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Returns true if the specified cache item exists
         /// </summary>
-        bool Exists<T>(Guid id);
+        bool Exists<TData>(Guid id) where TData : IdentifiedData; 
     }
 }

@@ -85,7 +85,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Notify obsoleted
         /// </summary>
-        protected override void OnObsoleted(object sender, DataPersistedEventArgs<Bundle> evt)
+        protected override void OnDeleted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
             this.OnInserted(sender, evt);
         }

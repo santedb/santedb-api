@@ -325,13 +325,16 @@ namespace SanteDB.Core.Data
                 {
                     var classKeys = typeof(TModel).GetClassKeys();
 
-                    if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete).WithName("Clearing Merge Candidiates"))
                     {
-                        exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
-                    }
-                    else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
-                    {
-                        exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                        if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                        {
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                        {
+                            exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -367,15 +370,18 @@ namespace SanteDB.Core.Data
                 {
                     var classKeys = typeof(TModel).GetClassKeys();
 
-                    if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete).WithName("Clearing Candidiates"))
                     {
-                        exEntityRel.DeleteAll(o => classKeys.Contains(o.TargetEntity.ClassConceptKey.Value) && o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
-                        exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
-                    }
-                    else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
-                    {
-                        exActRel.DeleteAll(o => classKeys.Contains(o.TargetAct.ClassConceptKey.Value) && o.TargetActKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
-                        exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal, DeleteMode.PermanentDelete);
+                        if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
+                        {
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.TargetEntity.ClassConceptKey.Value) && o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
+                        else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                        {
+                            exActRel.DeleteAll(o => classKeys.Contains(o.TargetAct.ClassConceptKey.Value) && o.TargetActKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
                 catch (Exception e)

@@ -21,6 +21,8 @@
 
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections;
@@ -56,30 +58,16 @@ namespace SanteDB.Core.Services
     /// </summary>
     public enum DeleteMode
     {
+
         /// <summary>
-        /// Logically delete the record - it should not appear in query results as the data is not accurate - it should be marked as inactive
+        /// The record is logically deleted meaning the obsolete time is set and (if <see cref="IVersionedData"/> no new version is created
         /// </summary>
         LogicalDelete = 0,
 
         /// <summary>
-        /// The data is no longer active - it should be set to obsolete
-        /// </summary>
-        ObsoleteDelete = 1,
-
-        /// <summary>
-        /// Nullify the record - it never should have existed in the first place
-        /// </summary>
-        NullifyDelete = 2,
-
-        /// <summary>
-        /// The record should be marked as PURGED or marked in a state which it won't be returned from the datamodel
-        /// </summary>
-        VersionedDelete = 3,
-
-        /// <summary>
         /// Permanently delete - it should be purged from the database
         /// </summary>
-        PermanentDelete = 4
+        PermanentDelete = 1
     }
 
     /// <summary>
@@ -143,7 +131,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode loadMode, DeleteMode deleteMode, DataPersistenceControlContext wrapped)
+        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
             this.m_loadMode = loadMode;
@@ -156,10 +144,14 @@ namespace SanteDB.Core.Services
         public static DataPersistenceControlContext Current => m_current;
 
         /// <summary>
+        /// Get the name
+        /// </summary>
+        public String Name { get; private set; }
+
+        /// <summary>
         /// Gets this context's load mode
         /// </summary>
         public LoadMode? LoadMode => this.m_loadMode;
-
 
         /// <summary>
         /// Gets this context's deletion mode
@@ -173,7 +165,10 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceControlContext(loadMode, m_current);
+            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current)
+            {
+                Name = m_current?.Name
+            };
             return m_current;
         }
 
@@ -183,7 +178,19 @@ namespace SanteDB.Core.Services
         /// <param name="deleteMode">The mode of deletion</param>
         public static DataPersistenceControlContext Create(DeleteMode deleteMode)
         {
-            m_current = new DataPersistenceControlContext(deleteMode, m_current);
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current)
+            {
+                Name = m_current?.Name
+            };
+            return m_current;
+        }
+
+        /// <summary>
+        /// Add name to the current value
+        /// </summary>
+        public DataPersistenceControlContext WithName(String name)
+        {
+            m_current.Name = name;
             return m_current;
         }
 
@@ -221,18 +228,6 @@ namespace SanteDB.Core.Services
         /// Occurs when updating.
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TData>> Updating;
-
-        /// <summary>
-        /// Occurs when obsoleted.
-        /// </summary>
-        [Obsolete("Use Deleted Event", true)]
-        event EventHandler<DataPersistedEventArgs<TData>> Obsoleted;
-
-        /// <summary>
-        /// Occurs when obsoleting.
-        /// </summary>
-        [Obsolete("Use Deleting Event", true)]
-        event EventHandler<DataPersistingEventArgs<TData>> Obsoleting;
 
         /// <summary>
         /// Occurs when obsoleted.
@@ -281,15 +276,8 @@ namespace SanteDB.Core.Services
         TData Update(TData data, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
-        /// Obsolete the specified identified data
-        /// </summary>
-        [Obsolete("Use Delete(key, mode, principal, DeleteMode.Obsolete) instead", true)]
-        TData Obsolete(Guid key, TransactionMode transactionMode, IPrincipal principal);
-
-        /// <summary>
         /// Delete the specified identified data
         /// </summary>
-        /// <param name="deletionMode">How the persistence service should attempt to remove data</param>
         /// <param name="key">The identifier/key of the data to be deleted</param>
         /// <param name="principal">The principal which is deleting the data</param>
         /// <param name="transactionMode">The transaction mode</param>
@@ -300,15 +288,7 @@ namespace SanteDB.Core.Services
         /// <list type="table">
         ///     <item>
         ///         <term>LogicalDelete</term>
-        ///         <description>The perssitence layer should attempt to logically delete the record. This means that the record should not appear in queries, nor in direct retrieves unless specifically asked for</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>ObsoleteDelete</term>
-        ///         <description>The persistence layer should mark the record as obsolete.</description>
-        ///     </item>
-        ///     <item>
-        ///         <term>NullifyDelete</term>
-        ///         <description>The persistence layer should mark the record as nullified (i.e. entered in error)</description>
+        ///         <description>The persistence layer should attempt to logically delete the record. This means that the record should not appear in queries, nor direct retrieves</description>
         ///     </item>
         ///     <item>
         ///         <term>PermanentDelete</term>
@@ -316,7 +296,7 @@ namespace SanteDB.Core.Services
         ///     </item>
         /// </list>
         /// <para>
-        /// The <paramref name="deletionMode"/> parameter is a suggestion to the persistence layer, generally the closest, most appropriate value
+        /// The <see cref="DataPersistenceControlContext.DeleteMode"/> is a suggestion to the persistence layer, generally the closest, most appropriate value
         /// is chosen based on:
         /// </para>
         /// <list type="bullet">
@@ -325,7 +305,7 @@ namespace SanteDB.Core.Services
         ///     <item>Whether the configuration for the persistence layer permits logical deletion</item>
         /// </list>
         /// </remarks>
-        TData Delete(Guid key, TransactionMode transactionMode, IPrincipal principal, DeleteMode deletionMode);
+        TData Delete(Guid key, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
         /// Get the object with identifier <paramref name="key"/>.
@@ -364,7 +344,7 @@ namespace SanteDB.Core.Services
         /// <param name="count">The count of results to include in the response set</param>
         /// <param name="offset">The offset of the first result</param>
         /// <param name="principal">The security principal under which the query is occurring</param>
-        [Obsolete("Use Query(query, principal) instead", false)]
+        [Obsolete("Use Query(query, principal) instead", true)]
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
 
         /// <summary>
@@ -392,7 +372,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Obsoletes the specified data
         /// </summary>
-        Object Obsolete(Guid id);
+        Object Delete(Guid id);
 
         /// <summary>
         /// Gets the specified data

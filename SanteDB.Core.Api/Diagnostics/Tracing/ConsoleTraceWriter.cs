@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-11-17
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
