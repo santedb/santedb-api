@@ -128,7 +128,7 @@ namespace SanteDB.Core.Services
         /// only if the <see cref="ReferenceTerm"/> is the same in scope as the <see cref="Concept"/>
         /// </summary>
         /// <returns></returns>
-        ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem, bool exact = true);
+        ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem);
 
         /// <summary>
         /// Finds all reference terms for the concept with <paramref name="conceptId"/> in the specified <paramref name="codeSystem"/> system.

@@ -21,6 +21,7 @@
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
@@ -72,7 +73,7 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
+        public IQueryResultSet<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
         {
             return this.Query<TObject>(o => o.SourceEntityKey == sourceKey && o.ObsoleteVersionSequenceId != null);
         }
@@ -80,13 +81,13 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
+        public IQueryResultSet<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             return this.Query<TObject>(o => sourceKey.Contains(o.SourceEntityKey));
         }
 
         /// <inheritdoc/>
-        public IEnumerable GetRelations(Type relatedType, params Guid?[] sourceKey)
+        public IQueryResultSet GetRelations(Type relatedType, params Guid?[] sourceKey)
         {
             var persistenceService = ApplicationServiceContext.Current.GetService(typeof(IRepositoryService<>).MakeGenericType(relatedType)) as IRepositoryService;
             var parm = Expression.Parameter(relatedType);
@@ -99,14 +100,14 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Query the specified object
         /// </summary>
-        public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
+        public IQueryResultSet<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IRepositoryService<TObject>>();
             if (persistenceService != null)
             {
                 return persistenceService.Find(query);
             }
-            return new List<TObject>();
+            return new MemoryQueryResultSet<TObject>(new TObject[0]);
         }
 
         #endregion IEntitySourceProvider implementation
