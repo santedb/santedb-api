@@ -52,6 +52,11 @@ namespace SanteDB.Core.Protocol
         String Name { get; }
 
         /// <summary>
+        /// Gets the version of the protocol
+        /// </summary>
+        String Version { get; }
+
+        /// <summary>
         /// Calculate the clinical protocol for the given patient
         /// </summary>
         List<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
