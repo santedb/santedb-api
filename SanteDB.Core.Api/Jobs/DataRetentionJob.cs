@@ -36,9 +36,11 @@ namespace SanteDB.Core.Jobs
     /// the IDataArchive service to retain data
     /// </summary>
     [DisplayName("Data Retention Job")]
-    public class DataRetentionJob : IReportProgressJob
+    public class DataRetentionJob : IJob
     {
-        // Tracer
+        private readonly IJobStateManagerService m_stateManager;
+
+        // Tracer 
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataRetentionJob));
 
         // Cancel flag
@@ -46,6 +48,14 @@ namespace SanteDB.Core.Jobs
 
         // Configuration
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
+
+        /// <summary>
+        /// Data retention job DI constructor
+        /// </summary>
+        public DataRetentionJob(IJobStateManagerService stateManager)
+        {
+            this.m_stateManager = stateManager;
+        }
 
         /// <summary>
         /// Gets the identifier of this job
@@ -66,34 +76,9 @@ namespace SanteDB.Core.Jobs
         public bool CanCancel => true;
 
         /// <summary>
-        /// Gets or sets the current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameters
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// Last time the job started
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Last time the job finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
-
-        /// <summary>
-        /// Get the current progress
-        /// </summary>
-        public float Progress { get; private set; }
-
-        /// <summary>
-        /// Gets the current status
-        /// </summary>
-        public string StatusText { get; private set; }
 
         /// <summary>
         /// Cancel the current job
@@ -101,7 +86,7 @@ namespace SanteDB.Core.Jobs
         public void Cancel()
         {
             this.m_cancelFlag = true;
-            this.CurrentState = JobStateType.Cancelled;
+            this.m_stateManager.SetState(this, JobStateType.Cancelled);
         }
 
         /// <summary>
@@ -111,8 +96,13 @@ namespace SanteDB.Core.Jobs
         {
             try
             {
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
+
+                if (this.m_stateManager.GetJobState(this).IsRunning())
+                {
+                    return;
+                }
+
+                this.m_stateManager.SetState(this, JobStateType.Running);
                 float ruleProgress = 1.0f / this.m_configuration.RetentionRules.Count;
 
                 var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
@@ -122,8 +112,7 @@ namespace SanteDB.Core.Jobs
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
                     this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.TypeXml);
-                    this.StatusText = $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})";
-                    this.Progress = ruleIdx * ruleProgress;
+                    this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", ruleIdx * ruleProgress);
 
                     var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType.Type);
                     var persistenceService = ApplicationServiceContext.Current.GetService(pserviceType) as IBulkDataPersistenceService;
@@ -135,7 +124,7 @@ namespace SanteDB.Core.Jobs
                     for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Length; inclIdx++)
                     {
                         var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
-                        this.Progress = (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress);
+                        this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress));
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
                         {
@@ -148,7 +137,7 @@ namespace SanteDB.Core.Jobs
                     for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Length; exclIdx++)
                     {
                         var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
-                        this.Progress = (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress);
+                        this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress));
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
                         {
@@ -157,7 +146,14 @@ namespace SanteDB.Core.Jobs
                         }
                     }
 
-                    this.StatusText = $"Executing {rule.Action} {rule.ResourceType.TypeXml} ({rule.Name})";
+
+                    
+                    EventHandler<Services.ProgressChangedEventArgs> callback = (o,ev ) => this.m_stateManager.SetProgress(this, $"Executing {rule.Action} {rule.ResourceType.TypeXml} ({rule.Name})", ev.Progress);
+
+                    if (persistenceService is IReportProgressChanged irpc)
+                    {
+                        irpc.ProgressChanged += callback;
+                    }
 
                     // Now we want to execute the specified action
                     switch (rule.Action)
@@ -194,14 +190,20 @@ namespace SanteDB.Core.Jobs
                             }
                             break;
                     }
+
+                    if (persistenceService is IReportProgressChanged irpc2)
+                    {
+                        irpc2.ProgressChanged -= callback;
+                    }
                 }
 
-                this.LastFinished = DateTime.Now;
+                this.m_stateManager.SetState(this, JobStateType.Completed);
             }
             catch (Exception ex) // Absolute failure
             {
                 this.m_tracer.TraceError("Failure running retention job: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
+                this.m_stateManager.SetProgress(this, ex.Message, 0.0f);
+                this.m_stateManager.SetState(this, JobStateType.Aborted);
             }
             finally
             {

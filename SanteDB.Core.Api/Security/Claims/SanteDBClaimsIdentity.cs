@@ -75,7 +75,8 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         protected void AddClaim(IClaim claim)
         {
-            this.m_claims.Add(claim);
+            if(!this.m_claims.Any(c=>c.Type == claim.Type && c.Value == claim.Value))
+                this.m_claims.Add(claim);
         }
 
         /// <summary>
@@ -83,7 +84,11 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         protected void AddClaims(IEnumerable<IClaim> claims)
         {
-            this.m_claims.AddRange(claims);
+            foreach (var claim in claims)
+            {
+                if (!this.m_claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
+                    this.m_claims.Add(claim);
+            }
         }
 
         /// <summary>

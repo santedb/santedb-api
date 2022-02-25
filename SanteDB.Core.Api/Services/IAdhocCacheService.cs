@@ -105,8 +105,8 @@ namespace SanteDB.Core.Services
         bool Remove(string key);
 
         /// <summary>
-        /// True if the specified key exists
+        /// Returns true if <paramref name="key"/> exists in the cache
         /// </summary>
-        bool Exists(string key);
+        bool Exists(String key);
     }
 }

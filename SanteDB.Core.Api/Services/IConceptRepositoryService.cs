@@ -137,5 +137,11 @@ namespace SanteDB.Core.Services
         /// <param name="conceptId">The identifier of the concept</param>
         /// <returns>All <see cref="ReferenceTerm"/> instances (and their relationship strength)</returns>
         IEnumerable<ConceptReferenceTerm> FindReferenceTermsByConcept(Guid conceptId, String codeSystem);
+
+
+        /// <summary>
+        /// Get the specified concept name
+        /// </summary>
+        string GetName(Guid conceptId, string twoLetterISOLanguageName);
     }
 }

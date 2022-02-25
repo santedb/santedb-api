@@ -38,7 +38,9 @@ namespace SanteDB.Core.Data.Quality
     public class DataQualityExtensionCleanJob : IReportProgressJob
     {
         // Clean obsolete tracer
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
+        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
+        // State manager
+        private readonly IJobStateManagerService m_stateManagerService;
         private readonly IDataPersistenceServiceEx<EntityExtension> m_entityExtensionPersistence;
         private readonly IDataPersistenceServiceEx<ActExtension> m_actExtensionPersistence;
 
@@ -56,66 +58,24 @@ namespace SanteDB.Core.Data.Quality
         public string Description => "Cleans obsolete or otherwise amended data quality extension tags";
 
         /// <summary>
+        /// DI constructor
+        /// </summary>
+        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService, IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence, IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
+        {
+            this.m_entityExtensionPersistence = entityExtensionPersistence;
+            this.m_actExtensionPersistence = actExtensionPersistence;
+            this.m_stateManagerService = stateManagerService;
+        }
+
+        /// <summary>
         /// True if can cancel
         /// </summary>
         public bool CanCancel => false;
 
         /// <summary>
-        /// Gets the current state
-        /// </summary>
-        public JobStateType CurrentState { get; private set; }
-
-        /// <summary>
         /// Gets the parameters for this job
         /// </summary>
         public IDictionary<string, Type> Parameters => null;
-
-        /// <summary>
-        /// Gets the time that the job was last run
-        /// </summary>
-        public DateTime? LastStarted { get; private set; }
-
-        /// <summary>
-        /// Gets the time that the job was last finished
-        /// </summary>
-        public DateTime? LastFinished { get; private set; }
-
-        /// <summary>
-        /// Gets the progress
-        /// </summary>
-        public float Progress { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the status text
-        /// </summary>
-        public string StatusText { get; private set; }
-
-        /// <summary>
-        /// DI constructor
-        /// </summary>
-        public DataQualityExtensionCleanJob(IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence, IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
-        {
-            this.m_entityExtensionPersistence = entityExtensionPersistence;
-            this.m_actExtensionPersistence = actExtensionPersistence;
-            if(entityExtensionPersistence is IReportProgressChanged irp)
-            {
-                irp.ProgressChanged += (o, e) =>
-                {
-                    this.StatusText = "Clearing data quality extensions";
-                    this.Progress = e.Progress * 0.5f;
-                };
-            }
-
-            if (actExtensionPersistence is IReportProgressChanged irp2)
-            {
-                irp2.ProgressChanged += (o, e) =>
-                {
-                    this.StatusText = "Clearing data quality extensions";
-                    this.Progress = (e.Progress * 0.5f) + 0.5f;
-                };
-            }
-        }
-
 
         /// <summary>
         /// Cancel the job
@@ -133,8 +93,7 @@ namespace SanteDB.Core.Data.Quality
             this.m_tracer.TraceInfo("Starting clean of data quality extensions...");
             try
             {
-                this.CurrentState = JobStateType.Running;
-                this.LastStarted = DateTime.Now;
+                this.m_stateManagerService.SetState(this, JobStateType.Running);
 
 
 
@@ -146,13 +105,14 @@ namespace SanteDB.Core.Data.Quality
                 }
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
-                this.CurrentState = JobStateType.Completed;
-                this.LastFinished = DateTime.Now;
+                this.m_stateManagerService.SetState(this, JobStateType.Completed);
             }
             catch (Exception ex)
             {
                 this.m_tracer.TraceInfo("Error cleaning data quality extensions: {0}", ex);
-                this.CurrentState = JobStateType.Aborted;
+                this.m_stateManagerService.SetProgress(this, ex.Message, 0.0f);
+                this.m_stateManagerService.SetState(this, JobStateType.Aborted);
+
             }
         }
     }

@@ -101,6 +101,7 @@ namespace SanteDB.Core.Jobs
                 }
                 scheduleReg.Schedule.Add(new JobItemSchedule()
                 {
+                    Type = jobSchedule.Type,
                     Interval = (int)jobSchedule.Interval.GetValueOrDefault().TotalSeconds,
                     IntervalSpecified = jobSchedule.Interval.HasValue,
                     RepeatOn = jobSchedule.Days,
@@ -116,7 +117,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Clear the schedule for the specified job
         /// </summary>
-        public IEnumerable<IJobSchedule> Clear(IJob job)
+        public void Clear(IJob job)
         {
             lock (this.m_lock)
             {
@@ -126,7 +127,6 @@ namespace SanteDB.Core.Jobs
                     this.m_jobSchedules.Remove(scheduleReg);
                     this.SaveCron();
                 }
-                return scheduleReg?.Schedule;
             }
         }
 

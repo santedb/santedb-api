@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-1-11
  */
+using SanteDB.Core.Configuration;
 using System;
 
 namespace SanteDB.Core.Jobs
@@ -27,6 +28,12 @@ namespace SanteDB.Core.Jobs
     /// </summary>
     public interface IJobSchedule
     {
+
+        /// <summary>
+        /// Gets the type of schedule
+        /// </summary>
+        JobScheduleType Type { get;  }
+
         /// <summary>
         /// Get the interval on which the job runs
         /// </summary>
@@ -47,12 +54,5 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         DayOfWeek[] Days { get; }
 
-        /// <summary>
-        /// Returns true if the job schedule applies at <paramref name="checkTime"/> given the <paramref name="lastExecutionTime"/>
-        /// </summary>
-        /// <param name="checkTime">The time that the system is checking if the job execution applies</param>
-        /// <param name="lastExecutionTime">The last known run time / check time of the job. Null if never run</param>
-        /// <returns>True if the schedule applies</returns>
-        bool AppliesTo(DateTime checkTime, DateTime? lastExecutionTime);
     }
 }
