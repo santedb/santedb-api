@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using SanteDB.Core.Security.Configuration;
@@ -27,8 +27,14 @@ using System.Collections.Generic;
 namespace SanteDB.Core.Security
 {
     /// <summary>
-    /// Represents a service which can sign arbitrary data
+    /// Contract for services which can sign data using configured digital signature algorithms
     /// </summary>
+    /// <remarks>
+    /// <para>Implementers of this service contract are responsible for computing and validating
+    /// digital signatures against arbitrary data streams. Implementers of this service are responsible for 
+    /// maintaining (or acquiring) a master list of keys which can be used for data signing, and validating 
+    /// digital signatures.</para>
+    /// </remarks>
     [System.ComponentModel.Description("Data Signing Service")]
     public interface IDataSigningService : IServiceImplementation
     {

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.Model.Audit;
 
@@ -25,7 +25,21 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service that dispatches audits to a central repository
     /// </summary>
-    [System.ComponentModel.Description("Audit Dispatch Provider")]
+    /// <remarks>
+    /// <para>The auditing of access to clinical data is of the utmost importance. SanteDB generates 
+    /// and stores audits locally using an <see cref="IRepositoryService"/> for <see cref="AuditEventData"/>. However, 
+    /// many implementations will have centralized audit repositories for collecting audits from various health
+    /// systems in a central place. Such collection is useful to establishing overall patterns of access
+    /// across systems in an HIE (for example)</para>
+    /// <para>The audit dispatching service is responsible for sending <see cref="AuditEventData"/> instances to remote
+    /// audit repositories. The service's responsibilities are:</para>
+    /// <list type="number">
+    ///     <item>Ensure that the <see cref="AuditEventData"/> instance is complete and contains relevant information for this node</item>
+    ///     <item>Transform the <see cref="AuditEventData"/> class into the appropriate format (IETF RFC3881, FHIR, etc.)</item>
+    ///     <item>Ensure the delivery of the audit to the central repository</item>
+    /// </list>
+    /// </remarks>
+    [System.ComponentModel.Description("Audit Dispatch Service")]
     public interface IAuditDispatchService : IServiceImplementation
     {
         /// <summary>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Jobs
@@ -54,24 +55,49 @@ namespace SanteDB.Core.Jobs
     }
 
     /// <summary>
-    /// Job manager service
+    /// Job Management Service
     /// </summary>
+    /// <remarks>
+    /// <para>In SanteDB, developers can create <see cref="IJob"/> implementations which represent background jobs for the system. Uses of these classes involve:</para>
+    /// <list type="bullet">
+    ///     <item>Performing routine maintenance tasks like compression, backup, etc.</item>
+    ///     <item>Performing indexing tasks or managing long-running tasks</item>
+    ///     <item>Exposing packaged batch operations to users (who can run them manually from the UI)</item>
+    /// </list>
+    /// <para>The job manager is the service which manages the master list of <see cref="IJob"/> instances and allows other plugins
+    /// to register new jobs, start jobs, and even schedule job execution based on a schedule or interval.</para>
+    /// </remarks>
+    /// <seealso cref="IJob"/>
+    /// <seealso cref="IJobScheduleManager"/>
+    [Description("Job Management Service")]
     public interface IJobManagerService : IDaemonService
     {
 
         /// <summary>
-        /// Add a job
+        /// Add a job to the job manager
         /// </summary>
+        [Obsolete("Use AddJob(IJob, JobStartType) and then SetJobSchedule() instead", true)]
         void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
-        /// Schedule a job to start at a specific time
+        /// Add a job to the execution manager
         /// </summary>
-        void SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime);
+        /// <param name="jobType">The type of job to add</param>
+        /// <param name="startType">The type of start the job should take</param>
+        /// <example>
+        /// <code language="cs">
+        /// <![CDATA[
+        ///     var jobManager = ApplicationServiceContext.Current.GetService&lt;IJobManager>();
+        ///     jobManager.AddJob(new HelloWorldJob(), startType = JobStartType.Never); 
+        /// ]]>
+        /// </code>
+        /// </example>
+        void AddJob(IJob jobType, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
         /// Returns true if the job is registered
         /// </summary>
+        /// <param name="jobType">The type of job to check for</param>
         bool IsJobRegistered(Type jobType);
 
         /// <summary>
@@ -80,25 +106,49 @@ namespace SanteDB.Core.Jobs
         IEnumerable<IJob> Jobs { get; }
 
         /// <summary>
-        /// Start a job
+        /// Starts the specified <paramref name="job"/>
         /// </summary>
-        /// <param name="job">The job to start</param>
+        /// <param name="job">The job instance to start</param>
         /// <param name="parameters">The parameters to pass to the job</param>
-        /// <returns>True if the job started successfully</returns>
         void StartJob(IJob job, object[] parameters);
 
         /// <summary>
-        /// Start a job
+        /// Start a job by registered type
         /// </summary>
-        /// <param name="jobType">The job to start</param>
+        /// <param name="jobType">The type of job to start</param>
         /// <param name="parameters">The parameters to pass to the job</param>
-        /// <returns>True if the job started successfully</returns>
         void StartJob(Type jobType, object[] parameters);
 
         /// <summary>
         /// Get this manager's instance of a job
         /// </summary>
         /// <param name="jobKey">The job type to fetch</param>
+        /// <returns>The job instance that matches the job key</returns>
         IJob GetJobInstance(Guid jobKey);
+
+        /// <summary>
+        /// Get the schedule for the specified job
+        /// </summary>
+        /// <param name="job">The job to gather schedules for</param>
+        /// <returns>The schedules registered for the job</returns>
+        IEnumerable<IJobSchedule> GetJobSchedules(IJob job);
+
+        /// <summary>
+        /// Schedule a job to start at a specific time with a specific repetition
+        /// </summary>
+        /// <param name="job">The job to set the schedule for</param>
+        /// <param name="daysOfWeek">The days of the week that the job should start on</param>
+        /// <param name="scheduleTime">The start date of the schedule (note: if <paramref name="daysOfWeek"/> is empty then this is the only run time, otherwise the schedule starts on the <c>Date</c> in the date time at the <c>Time</c> on the date time every day of week)</param>
+        /// <returns>The job schedule that has been set</returns>
+        IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime);
+
+        /// <summary>
+        /// Schedule a job to repeat on an interval
+        /// </summary>
+        /// <param name="job">The job which to set the interval on</param>
+        /// <param name="intervalSpan">The repeat interval of the job</param>
+        /// <returns>The schedule of the job</returns>
+        IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan);
+
     }
 }

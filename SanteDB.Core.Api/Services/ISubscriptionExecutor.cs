@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
@@ -28,24 +28,31 @@ using System.Collections.Generic;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents a subscription executor
+    /// Contract which defines a dCDR subscription executor
     /// </summary>
+    /// <remarks>
+    /// <para>The subscription executor is responsible for the translation of a dCDR <see cref="SubscriptionDefinition"/>
+    /// from the <see cref="ISubscriptionRepository"/> to the appropriate database technology. The subscription executor
+    /// gathers any new records requested by the dCDR and prepares them for download by the dCDR.</para>
+    /// </remarks>
     [System.ComponentModel.Description("dCDR Subscription Execution Provider")]
     public interface ISubscriptionExecutor : IServiceImplementation
     {
 
         /// <summary>
-        /// Occurs when queried.
+        /// Occurs after a subscription has been executed, and allows subscribers to modify the data being
+        /// sent back to the dCDR
         /// </summary>
         event EventHandler<QueryResultEventArgs<IdentifiedData>> Executed;
 
         /// <summary>
-        /// Occurs when querying.
+        /// Occurs prior to a subscription being executed, and allows subscribers to modify the query being
+        /// executed.
         /// </summary>
         event EventHandler<QueryRequestEventArgs<IdentifiedData>> Executing;
 
         /// <summary>
-        /// Executes the specified subscription mechanism
+        /// Executes the identified subscription agianst the persistence layer.
         /// </summary>
         /// <param name="subscriptionKey">The key of the subscription to run</param>
         /// <param name="parameters">The parameters from the query</param>

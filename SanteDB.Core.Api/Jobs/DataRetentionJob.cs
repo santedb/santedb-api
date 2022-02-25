@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using SanteDB.Core.Configuration;
@@ -56,6 +56,9 @@ namespace SanteDB.Core.Jobs
         /// Gets the name of the service
         /// </summary>
         public string Name => "Data Retention Policy Job";
+
+        /// <inheritdoc/>
+        public string Description => "Runs the configured data retention policy rules and moves data to the archival service";
 
         /// <summary>
         /// Can cancel the job

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using SanteDB.Core.Model;
@@ -171,7 +171,6 @@ namespace SanteDB.Core.Event
         /// </summary>
         /// <param name="query">The query about to be executed</param>
         /// <param name="principal">The principal which is executing the query</param>
-        /// <param name="tag">A query tag object</param>
         public QueryRequestEventArgs(Expression<Func<TData, bool>> query, IPrincipal principal) : base(query, principal)
         {
         }

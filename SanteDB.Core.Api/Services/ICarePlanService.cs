@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Roles;
@@ -28,34 +28,55 @@ namespace SanteDB.Core.Services
 {
 
     /// <summary>
-    /// Represents a class which can create care plans
+    /// Service contract for service implementations which generate <see cref="CarePlan"/> instances
     /// </summary>
-    [System.ComponentModel.Description("Care Plan/CDSS Engine")]
+    /// <remarks>
+    /// <para>The care plan generator is responsible for using the <see cref="IClinicalProtocolRepositoryService"/> (which 
+    /// stores and manages <see cref="IClinicalProtocol"/> instances) to generate instances of patient <see cref="CarePlan"/>
+    /// objects which can then be conveyed to the caller and/or stored in the primary CDR.</para>
+    /// </remarks>
+    [System.ComponentModel.Description("Care Plan Generation Service")]
     public interface ICarePlanService : IServiceImplementation
     {
         /// <summary>
         /// Gets the list of protocols which can be or should be used to create the care plans
         /// </summary>
-        List<IClinicalProtocol> Protocols { get; }
+        IList<IClinicalProtocol> Protocols { get; }
 
         /// <summary>
-        /// Create a care plam
+        /// Create a new care plan (using all available protocols for which the patient is eligible)
         /// </summary>
-        CarePlan CreateCarePlan(Patient p);
+        /// <param name="patient">The patient for which the care plan should be generated</param>
+        /// <returns>The generated care plan</returns>
+        /// <see cref="CreateCarePlan(Patient, bool)"/>
+        CarePlan CreateCarePlan(Patient patient);
 
         /// <summary>
-        /// Create a care plan controlling the creation of encounters
+        /// Create a new care plan (using all available protocols which the patient is eligible) and group
+        /// the instructions as <see cref="PatientEncounter"/> instances
         /// </summary>
-        CarePlan CreateCarePlan(Patient p, bool asEncounters);
+        /// <param name="groupAsEncounters">True if the produced care plan instructions should be grouped into encounters</param>
+        /// <param name="patient">The patient for which the care plan is being generated</param>
+        /// <returns>The generated care plan</returns>
+        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters);
 
         /// <summary>
-        /// Creates a care plan for the patient with the specified protocolsonly
+        /// Creates a care plan for the patient providing custom parameters (such as reference data)
         /// </summary>
-        CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters);
+        /// <param name="patient">The patient for which the care plan is being generated</param>
+        /// <param name="groupAsEncounters">When true, instructs the care plan service to group suggested actions into <see cref="PatientEncounter"/></param>
+        /// <param name="parameters">Custom parameters which the caller wishes to pass to the planner</param>
+        /// <returns>The generated care plan</returns>
+        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters);
 
         /// <summary>
-        /// Creates a care plan for the patient with the specified protocolsonly
+        /// Creates a care plan for the specified patient, using only the protocols provided
         /// </summary>
-        CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, params Guid[] protocols);
+        /// <param name="parameters">The custom parameters that the caller is passing to the care-planner</param>
+        /// <param name="groupAsEncounters">True if the suggested actions are to be grouped into <see cref="PatientEncounter"/> instances</param>
+        /// <param name="patient">The patient for which the care plan is being generated</param>
+        /// <param name="protocols">The protocols which the care plan should be restricted to</param>
+        /// <returns>The generated care plan</returns>
+        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters, params Guid[] protocols);
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.Security.Services;
 using System;
@@ -48,7 +48,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
-                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
+                
             }
 
             /// <summary>
@@ -177,7 +177,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterSystemContext()
         {
-
             // TODO: Validate the caller can enter the system context
             return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
@@ -187,7 +186,14 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterContext(IPrincipal principal)
         {
-            return new WrappedContext(principal, AuthenticationContext.Current);
+            try
+            {
+                return new WrappedContext(principal, AuthenticationContext.Current);
+            }
+            finally
+            {
+                ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
+            }
         }
     }
 }

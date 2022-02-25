@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using System;
 using System.Collections.Generic;
@@ -24,8 +24,58 @@ using System.Collections.Generic;
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// Represents a timer job
+    /// Defines a regular schedule system background task
     /// </summary>
+    /// <example>
+    /// <code language="cs">
+    /// <![CDATA[
+    ///     public class HelloWorldJob : IJob {
+    ///         
+    ///         private bool m_cancelRequested = false;
+    ///         
+    ///         public Guid Id => Guid.NewGuid();
+    ///         
+    ///         public string Name => "Hello World Job!";
+    ///         
+    ///         public bool CanCancel => true;
+    ///         
+    ///         public IDictionary<String, Type> Parameters => null;
+    ///         
+    ///         public JobStateType CurrentState { get; private set; }
+    ///         
+    ///         public DateTime? LastStarted { get; private set; }
+    ///         
+    ///         public DateTime? LastFinished { get; private set; }
+    ///         
+    ///         public void Cancel() {
+    ///             this.m_cancelRequested = true;
+    ///         }
+    ///         
+    ///         public void Run(object sender, EventArgs e, object[] parameters) {
+    ///             try {
+    ///                 this.CurrentState = JobStateType.Running;
+    ///                 this.LastStart = DateTime.Now;
+    ///                 this.m_cancelRequested = false;
+    ///                 while(!this.m_cancelRequested) {
+    ///                     Console.Writeline("Hello World!");
+    ///                 }
+    ///                 if(this.m_cancelRequested) {
+    ///                     this.CurrentState = JobStateType.Cancelled;
+    ///                 }
+    ///                 else {
+    ///                     this.CurrentState = JobStateTime.Complete;
+    ///                 }
+    ///                 this.LastFinished = DateTime.Now;
+    ///             }
+    ///             catch(Exception e) {
+    ///                 this.CurrentState = JobStateType.Aborted;
+    ///             }
+    ///         }
+    ///     }
+    ///     
+    /// ]]>
+    /// </code>
+    /// </example>
     public interface IJob
     {
 
@@ -38,6 +88,11 @@ namespace SanteDB.Core.Jobs
         /// The name of the job
         /// </summary>
         String Name { get; }
+
+        /// <summary>
+        /// Gets the description of the job
+        /// </summary>
+        String Description { get; }
 
         /// <summary>
         /// True if the job can be cancelled
@@ -73,6 +128,7 @@ namespace SanteDB.Core.Jobs
         /// Gets the time the job last finished
         /// </summary>
         DateTime? LastFinished { get; }
+
     }
 
 

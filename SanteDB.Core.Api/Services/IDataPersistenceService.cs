@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using SanteDB.Core.Event;
@@ -72,9 +72,14 @@ namespace SanteDB.Core.Services
         NullifyDelete = 2,
 
         /// <summary>
+        /// The record should be marked as PURGED or marked in a state which it won't be returned from the datamodel
+        /// </summary>
+        VersionedDelete = 3,
+
+        /// <summary>
         /// Permanently delete - it should be purged from the database
         /// </summary>
-        PermanentDelete = 3
+        PermanentDelete = 4
     }
 
     /// <summary>
@@ -101,41 +106,84 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// A query context class that allows the caller to specify / override the load settings for the .Query() methods
     /// </summary>
-    public class DataPersistenceQueryContext : IDisposable
+    public class DataPersistenceControlContext : IDisposable
     {
         // The current query context
         [ThreadStatic]
-        private static DataPersistenceQueryContext m_current;
+        private static DataPersistenceControlContext m_current;
 
         // Loading mode
-        private readonly LoadMode m_loadMode;
+        private readonly LoadMode? m_loadMode;
+
+        // Delete mode
+        private readonly DeleteMode? m_deleteMode;
+
+        // Wrapped
+        private readonly DataPersistenceControlContext m_wrapped;
 
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceQueryContext(LoadMode loadingMode)
+        private DataPersistenceControlContext(LoadMode loadingMode, DataPersistenceControlContext wrapped)
         {
             this.m_loadMode = loadingMode;
+            this.m_wrapped = wrapped;
+        }
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(DeleteMode deleteMode, DataPersistenceControlContext wrapped)
+        {
+            this.m_deleteMode = deleteMode;
+            this.m_wrapped = wrapped;
+
+        }
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(LoadMode loadMode, DeleteMode deleteMode, DataPersistenceControlContext wrapped)
+        {
+            this.m_deleteMode = deleteMode;
+            this.m_loadMode = loadMode;
+            this.m_wrapped = wrapped;
         }
 
         /// <summary>
         /// Gets the current query context
         /// </summary>
-        public static DataPersistenceQueryContext Current => m_current;
+        public static DataPersistenceControlContext Current => m_current;
 
         /// <summary>
         /// Gets this context's load mode
         /// </summary>
-        public LoadMode LoadMode => this.m_loadMode;
+        public LoadMode? LoadMode => this.m_loadMode;
+
+
+        /// <summary>
+        /// Gets this context's deletion mode
+        /// </summary>
+        public DeleteMode? DeleteMode => this.m_deleteMode;
 
         /// <summary>
         /// Sets the current loading mode
         /// </summary>
         /// <param name="loadMode"></param>
         /// <returns></returns>
-        public static DataPersistenceQueryContext Create(LoadMode loadMode)
+        public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceQueryContext(loadMode);
+            m_current = new DataPersistenceControlContext(loadMode, m_current);
+            return m_current;
+        }
+
+        /// <summary>
+        /// Sets the current deletion mode for all persistence requests on this thread (or until a wrapped context is done)
+        /// </summary>
+        /// <param name="deleteMode">The mode of deletion</param>
+        public static DataPersistenceControlContext Create(DeleteMode deleteMode)
+        {
+            m_current = new DataPersistenceControlContext(deleteMode, m_current);
             return m_current;
         }
 
@@ -144,7 +192,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public void Dispose()
         {
-            m_current = null;
+            m_current = m_wrapped;
         }
     }
 
@@ -322,6 +370,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Performs a fast count
         /// </summary>
+        [Obsolete("Use Query(Expression).Count()", true)]
         long Count(Expression<Func<TData, bool>> query, IPrincipal authContext = null);
     }
 
@@ -359,6 +408,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Query the specified expression
         /// </summary>
-        IEnumerable Query(Expression query);
+        IQueryResultSet Query(Expression query);
     }
 }

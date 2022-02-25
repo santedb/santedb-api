@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  *
@@ -16,7 +16,7 @@
  * the License.
  *
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 
 using Newtonsoft.Json;
@@ -104,8 +104,8 @@ namespace SanteDB.Core.Services.Impl
                 // First, test that we're updating the right object
                 retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}id", existing.Key));
 
-                if (existing is IVersionedEntity)
-                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", (existing as IVersionedEntity).VersionKey));
+                if (existing is IVersionedData)
+                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", (existing as IVersionedData).VersionKey));
 
                 // Iterate through properties and determine changes
                 foreach (var pi in properties)
@@ -150,7 +150,7 @@ namespace SanteDB.Core.Services.Impl
                         else if (existingValue is IList && !existingValue.GetType().IsArray)
                         {
                             // Simple or complex list?
-                            if (typeof(IIdentifiedEntity).IsAssignableFrom(existingValue.GetType().StripGeneric()))
+                            if (typeof(IIdentifiedData).IsAssignableFrom(existingValue.GetType().StripGeneric()))
                             {
                                 IEnumerable<IdentifiedData> updatedList = (updatedValue as IEnumerable).OfType<IdentifiedData>(),
                                     existingList = (existingValue as IEnumerable).OfType<IdentifiedData>();
@@ -232,16 +232,16 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private IEnumerable<PatchOperation> GenerateTests(object existingValue, string path)
         {
-            if (existingValue is IVersionedEntity)
+            if (existingValue is IVersionedData)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.version", (existingValue as IVersionedEntity).VersionKey),
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IVersionedEntity).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.version", (existingValue as IVersionedData).VersionKey),
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IVersionedData).Key)
                 };
-            else if (existingValue is IIdentifiedEntity)
+            else if (existingValue is IIdentifiedData)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IIdentifiedEntity).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IIdentifiedData).Key)
                 };
             else if (existingValue is IList && !existingValue.GetType().IsArray)
             {

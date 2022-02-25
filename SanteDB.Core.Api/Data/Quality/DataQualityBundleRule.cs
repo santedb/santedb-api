@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
@@ -28,8 +28,12 @@ using System.Linq;
 namespace SanteDB.Core.Data.Quality
 {
     /// <summary>
-    /// Represents a bundle data quality rule
+    /// Business rule that calls other <see cref="DataQualityBusinessRule{TModel}"/> based on the contents of a bundle
     /// </summary>
+    /// <remarks>
+    /// This business rule wraps the insertion or update of a <see cref="Bundle"/> and calls individual data quality validation 
+    /// rules for each of the objects contained withing the bundle provided.
+    /// </remarks>
     public class DataQualityBundleRule : BaseBusinessRulesService<Bundle>
     {
 

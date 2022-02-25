@@ -1,24 +1,23 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You may
- * obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
  * the License.
- *
+ * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2021-8-27
  */
-
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -45,9 +44,20 @@ using System.Security.Principal;
 namespace SanteDB.Core.Security.Privacy
 {
     /// <summary>
-    /// Local policy enforcement point service
+    /// Privacy enforcement service that uses the local <see cref="IPolicyInformationService"/> and takes
+    /// default behaviors (as described in the <see href="https://help.santesuite.org/santedb/privacy-architecture">SanteDB Privacy Architecture</see>
     /// </summary>
-    [ServiceProvider("Data Privacy Filtering")]
+    /// <remarks>
+    /// <para>This privacy enforcement service provides a baseline implementation of a privacy filter in SanteDB. The service supports:</para>
+    /// <list type="bullet">
+    ///     <item>Hiding, Masking, Hashing, Redacting data which is about to be disclosed according to the <see cref="DataPolicyFilterConfigurationSection"/></item>
+    ///     <item>Removing any forbidden / restricted fields from disclosure based on policy (or global removal)</item>
+    ///     <item>Ensuring that inbound messages do not contain masked or partial data</item>
+    ///     <item>Validating that queries are not performed against forbidden fields</item>
+    ///     <item>Ensuring that inbound data does not contain forbidden field data</item>
+    /// </list>
+    /// </remarks>
+    [ServiceProvider("Default Privacy Enforcement")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
         /// <summary>
@@ -73,14 +83,6 @@ namespace SanteDB.Core.Security.Privacy
         // Password Hashing
         private IPasswordHashingService m_hasher;
 
-        // Data caching service
-        private IDataCachingService m_dataCachingService;
-
-        // Subscription executor
-        private ISubscriptionExecutor m_subscriptionExecutor;
-
-        // Threadpool service
-        private IThreadPoolService m_threadPool;
 
         // Pip service
         private IPolicyInformationService m_pipService;
@@ -300,6 +302,8 @@ namespace SanteDB.Core.Security.Privacy
                                 return fieldPolicy.Policy.Any() ? fieldPolicy.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) == PolicyGrantType.Grant) :
                                     fieldPolicy?.Action == ResourceDataPolicyActionType.None;
                             }
+                        case System.Reflection.FieldInfo fi:
+                            return true;
                         default:
                             return false;
                     }
