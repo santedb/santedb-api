@@ -722,20 +722,27 @@ namespace SanteDB.Core.Security.Audit
                         {
                             UserName = uid.Name,
                             UserIsRequestor = true,
+                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation.Replace(",", " via "),
+                            NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             ActorRoleCode = new List<AuditCode>()
                             {
                                 new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
                             },
                             AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.Sid)?.Value
-                        });
+                        }) ;
                     }
+                }
+
+                if(!audit.Actors.Any(a=>a.ActorRoleCode.Any(r=>r.Code == "110153")))
+                {
+                    audit.Actors.LastOrDefault()?.ActorRoleCode.Add(new AuditCode("110153", "DCM") { DisplayName = "Source" });
                 }
             }
             else
             {
                 var actor = new AuditActorData()
                 {
-                    NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
+                    NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation ?? RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                     NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                     UserName = principal.Identity.Name
                 };

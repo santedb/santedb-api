@@ -21,6 +21,7 @@
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -83,6 +84,10 @@ namespace SanteDB.Core.Security.Services
         /// <returns>Returns the authenticated device principal.</returns>
         IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any);
 
+        /// <summary>
+        /// Authenticate the device using a certificate
+        /// </summary>
+        IPrincipal Authenticate(X509Certificate2 authenticationToken);
 
         /// <summary>
         /// Gets the specified identity for an device.
