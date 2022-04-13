@@ -38,6 +38,29 @@ namespace SanteDB.Core.Security.Configuration
         private X509Certificate2 m_certificate;
 
         /// <summary>
+        /// Create from X509 certificate
+        /// </summary>
+        public X509ConfigurationElement(X509Certificate2 certificate)
+        {
+            this.m_certificate = certificate;
+            this.FindType = X509FindType.FindByThumbprint;
+            this.StoreLocation = StoreLocation.LocalMachine;
+            this.StoreName = StoreName.My;
+            this.FindTypeSpecified = this.StoreLocationSpecified = true;
+        }
+
+        /// <summary>
+        /// Initialize certificate settings
+        /// </summary>
+        public X509ConfigurationElement(StoreLocation storeLocation, StoreName storeName, X509FindType findType, String findValue)
+        {
+            this.StoreName = storeName;
+            this.StoreLocation = storeLocation;
+            this.FindType = findType;
+            this.FindValue = findValue;
+        }
+
+        /// <summary>
         /// Initialize certificate settings
         /// </summary>
         public X509ConfigurationElement()

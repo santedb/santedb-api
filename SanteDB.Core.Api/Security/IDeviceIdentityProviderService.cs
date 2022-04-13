@@ -21,6 +21,7 @@
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -86,7 +87,6 @@ namespace SanteDB.Core.Security.Services
         /// <param name="authMethod">Identifies the allowed authentication methods</param>
         /// <returns>Returns the authenticated device principal.</returns>
         IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any);
-
 
         /// <summary>
         /// Create a basic identity in the provider
