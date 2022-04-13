@@ -85,11 +85,6 @@ namespace SanteDB.Core.Security.Services
         IPrincipal Authenticate(string deviceId, string deviceSecret, AuthenticationMethod authMethod = AuthenticationMethod.Any);
 
         /// <summary>
-        /// Authenticate the device using a certificate
-        /// </summary>
-        IPrincipal Authenticate(X509Certificate2 authenticationToken);
-
-        /// <summary>
         /// Gets the specified identity for an device.
         /// </summary>
         /// <param name="name">The name of the application for which to retrieve the identity.</param>
