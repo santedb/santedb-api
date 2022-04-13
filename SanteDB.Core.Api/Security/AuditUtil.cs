@@ -463,7 +463,7 @@ namespace SanteDB.Core.Security.Audit
                 if (o is Bundle bundle)
                     return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
                 else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
-            }).ToList();
+            }).ToList() ?? new List<AuditableObject>();
 
             // Query performed
             if (!String.IsNullOrEmpty(queryPerformed))
