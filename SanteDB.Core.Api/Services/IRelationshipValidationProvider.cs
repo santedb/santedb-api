@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a class which can manage the valid relationship types between two objects
     /// </summary>
-    public interface IRelationshipValidationProvider : IServiceProvider
+    public interface IRelationshipValidationProvider : IServiceImplementation
     {
 
         /// <summary>
@@ -67,8 +67,7 @@ namespace SanteDB.Core.Services
         /// <param name="sourceClassKey">The source classification key type</param>
         /// <param name="targetClassKey">The target classification key</param>
         /// <param name="relationshipTypeKey">The relationship type key</param>
-        /// <returns>The removed validation rule</returns>
-        IRelationshipValidationRule RemoveValidRelationship(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey);
+        void RemoveValidRelationship(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey);
 
     }
 }
