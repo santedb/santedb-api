@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -42,14 +43,16 @@ namespace SanteDB.Core.Services
         /// Get all valid relationships
         /// </summary>
         /// <returns>All valid relationships</returns>
-        IEnumerable<IRelationshipValidationRule> GetValidRelationships();
+        IEnumerable<IRelationshipValidationRule> GetValidRelationships<TRelationship>()
+            where TRelationship : ITargetedAssociation;
 
         /// <summary>
         /// Get all valid relationship types between <paramref name="sourceClassKey"/> and all targets
         /// </summary>
         /// <param name="sourceClassKey">The classification of the source on the valid relationship</param>
         /// <returns>The list of validation rules for the applicable source class key</returns>
-        IEnumerable<IRelationshipValidationRule> GetValidRelationships(Guid sourceClassKey);
+        IEnumerable<IRelationshipValidationRule> GetValidRelationships<TRelationship>(Guid sourceClassKey)
+            where TRelationship : ITargetedAssociation;
 
         /// <summary>
         /// Add a valid relationship between <paramref name="sourceClassKey"/> and <paramref name="targetClassKey"/>
@@ -59,7 +62,8 @@ namespace SanteDB.Core.Services
         /// <param name="relationshipTypeKey">The relationship type key</param>
         /// <param name="description">The textual description of the validation rule</param>
         /// <returns>The created / configured relationship type</returns>
-        IRelationshipValidationRule AddValidRelationship(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey, String description);
+        IRelationshipValidationRule AddValidRelationship<TRelationship>(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey, String description)
+            where TRelationship : ITargetedAssociation;
 
         /// <summary>
         /// Remove the valid relationship type key between 
@@ -67,7 +71,8 @@ namespace SanteDB.Core.Services
         /// <param name="sourceClassKey">The source classification key type</param>
         /// <param name="targetClassKey">The target classification key</param>
         /// <param name="relationshipTypeKey">The relationship type key</param>
-        void RemoveValidRelationship(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey);
+        void RemoveValidRelationship<TRelationship>(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey)
+            where TRelationship : ITargetedAssociation;
 
     }
 }
