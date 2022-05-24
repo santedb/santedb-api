@@ -171,6 +171,7 @@ namespace SanteDB.Core.Services.Impl
         public DependencyServiceManager()
         {
             this.AddServiceProvider(this);
+            this.AddServiceFactory(new DefaultServiceFactory(this));
         }
 
         // Disposed?

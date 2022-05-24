@@ -158,6 +158,21 @@ namespace SanteDB.Core.Security
         public const string ActivateMatchConfiguration = UnrestrictedMatchConfiguration + ".2";
 
         /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string UnrestrictedClinicalProtocolConfiguration = AlterSystemConfiguration + ".2";
+
+        /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string AlterClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".1";
+
+        /// <summary>
+        /// Delete clinical protocol configurations
+        /// </summary>
+        public const string DeleteClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".2";
+
+        /// <summary>
         /// Manage all dispatcher / persistent queues
         /// </summary>
         public const string ManageDispatcherQueues = UnrestrictedAdministration + ".16";

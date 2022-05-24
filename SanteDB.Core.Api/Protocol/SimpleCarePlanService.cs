@@ -114,9 +114,7 @@ namespace SanteDB.Core.Protocol
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
-
-        // Protocols
-        private List<IClinicalProtocol> m_protocols = new List<IClinicalProtocol>();
+        private readonly IClinicalProtocolRepositoryService m_protocolRepository;
 
         // Care plan loading promise dictionary (prevents double-loading of patients)
         private Dictionary<Guid, Patient> m_patientPromise = new Dictionary<Guid, Patient>();
@@ -124,32 +122,9 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
-        public SimpleCarePlanService()
+        public SimpleCarePlanService(IClinicalProtocolRepositoryService protocolRepository)
         {
-        }
-
-        /// <summary>
-        /// Gets the protocols
-        /// </summary>
-        public IList<IClinicalProtocol> Protocols
-        {
-            get
-            {
-                int c;
-                var repo = ApplicationServiceContext.Current.GetService(typeof(IClinicalProtocolRepositoryService)) as IClinicalProtocolRepositoryService;
-                var protos = repo.FindProtocol(o => !o.ObsoletionTime.HasValue, 0, null, out c).ToArray();
-                foreach (var proto in protos)
-                {
-                    // First , do we already have this?
-                    if (!this.m_protocols.Any(p => p.Id == proto.Key))
-                    {
-                        var protocolClass = Activator.CreateInstance(proto.HandlerClass) as IClinicalProtocol;
-                        protocolClass.Load(proto);
-                        this.m_protocols.Add(protocolClass);
-                    }
-                }
-                return this.m_protocols;
-            }
+            this.m_protocolRepository = protocolRepository;
         }
 
         /// <summary>
@@ -165,10 +140,9 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         /// <param name="p">The patient to calculate the care plan for</param>
         /// <param name="asEncounters">True if the data should be grouped as an encounter</param>
-        /// <returns></returns>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.Protocols.Select(o => o.Id).ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.FindProtocol(o => true).ToArray());
         }
 
         /// <summary>
@@ -176,13 +150,13 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.Protocols.Select(o => o.Id).ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(o => true).ToArray());
         }
 
         /// <summary>
         /// Create a care plan with the specified protocols only
         /// </summary>
-        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, params Guid[] protocols)
+        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
         {
             if (p == null) return null;
 
@@ -194,7 +168,7 @@ namespace SanteDB.Core.Protocol
                         parmDict.Add(itm.Key, itm.Value);
 
                 // Allow each protocol to initialize itself
-                var execProtocols = this.Protocols.Where(o => protocols.Contains(o.Id)).OrderBy(o => o.Name).Distinct().ToList();
+                var execProtocols = protocols.OrderBy(o => o.Name).Distinct().ToList();
 
                 Patient currentProcessing = null;
                 bool isCurrentProcessing = false;
@@ -264,7 +238,10 @@ namespace SanteDB.Core.Protocol
                 // Initialize for protocol execution
                 parmDict.Add("runProtocols", execProtocols.Distinct());
                 if (!this.IgnoreViewModelInitializer)
-                    foreach (var o in this.Protocols.Distinct()) o.Initialize(currentProcessing, parmDict);
+                    foreach (var o in execProtocols)
+                    {
+                        o.Prepare(currentProcessing, parmDict);
+                    }
 
                 parmDict.Remove("runProtocols");
 

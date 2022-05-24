@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2021-8-27
  */
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Protocol;
 using System;
 using System.Collections.Generic;
@@ -38,13 +39,21 @@ namespace SanteDB.Core.Services
     public interface IClinicalProtocolRepositoryService : IServiceImplementation
     {
         /// <summary>
-        /// Find protocols in the repository service
+        /// Find protocols in the repository
         /// </summary>
-        IEnumerable<Core.Model.Acts.Protocol> FindProtocol(Expression<Func<Core.Model.Acts.Protocol, bool>> predicate, int offset, int? count, out int totalResults);
+        IQueryResultSet<IClinicalProtocol> FindProtocol(Expression<Func<IClinicalProtocol, bool>> predicate);
 
         /// <summary>
         /// Find protocols in the repository service
         /// </summary>
-        Core.Model.Acts.Protocol InsertProtocol(Core.Model.Acts.Protocol data);
+        IClinicalProtocol InsertProtocol(IClinicalProtocol data);
+
+        /// <summary>
+        /// Get a clinical protocol by uuid
+        /// </summary>
+        /// <param name="protocolUuid">The uuid of the protocol</param>
+        /// <returns>The constructed clinical protocol</returns>
+        IClinicalProtocol GetProtocol(Guid protocolUuid);
+
     }
 }

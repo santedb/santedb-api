@@ -15,12 +15,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// The source class key
         /// </summary>
-        Guid SourceClassKey { get; }
+        Guid? SourceClassKey { get; }
 
         /// <summary>
         /// The target class key
         /// </summary>
-        Guid TargetClassKey { get; }
+        Guid? TargetClassKey { get; }
 
         /// <summary>
         /// The relationship which can exist between <see cref="SourceClassKey"/> and <see cref="TargetClassKey"/>
@@ -62,7 +62,7 @@ namespace SanteDB.Core.Services
         /// <param name="relationshipTypeKey">The relationship type key</param>
         /// <param name="description">The textual description of the validation rule</param>
         /// <returns>The created / configured relationship type</returns>
-        IRelationshipValidationRule AddValidRelationship<TRelationship>(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey, String description)
+        IRelationshipValidationRule AddValidRelationship<TRelationship>(Guid? sourceClassKey, Guid? targetClassKey, Guid relationshipTypeKey, String description)
             where TRelationship : ITargetedAssociation;
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace SanteDB.Core.Services
         /// <param name="sourceClassKey">The source classification key type</param>
         /// <param name="targetClassKey">The target classification key</param>
         /// <param name="relationshipTypeKey">The relationship type key</param>
-        void RemoveValidRelationship<TRelationship>(Guid sourceClassKey, Guid targetClassKey, Guid relationshipTypeKey)
+        void RemoveValidRelationship<TRelationship>(Guid? sourceClassKey, Guid? targetClassKey, Guid relationshipTypeKey)
             where TRelationship : ITargetedAssociation;
 
     }

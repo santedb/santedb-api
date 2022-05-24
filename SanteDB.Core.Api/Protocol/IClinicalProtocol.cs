@@ -34,7 +34,7 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Load the specified protocol data
         /// </summary>
-        void Load(Core.Model.Acts.Protocol protocolData);
+        IClinicalProtocol Load(Core.Model.Acts.Protocol protocolData);
 
         /// <summary>
         /// Get the protocol data
@@ -70,6 +70,6 @@ namespace SanteDB.Core.Protocol
         /// Called prior to performing calculation of the care protocol allowing the object to prepare the object for whatever 
         /// pre-requisite data is needed for the protocol
         /// </summary>
-        void Initialize(Patient p, IDictionary<String, Object> parameters);
+        void Prepare(Patient p, IDictionary<String, Object> parameters);
     }
 }
