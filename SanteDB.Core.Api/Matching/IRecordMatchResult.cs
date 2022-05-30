@@ -73,6 +73,6 @@ namespace SanteDB.Core.Matching
         /// <summary>
         /// Gets the configuration name
         /// </summary>
-        string ConfigurationName { get; }
+        IRecordMatchingConfiguration Configuration { get; }
     }
 }
