@@ -41,7 +41,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Find protocols in the repository
         /// </summary>
-        IQueryResultSet<IClinicalProtocol> FindProtocol(Expression<Func<IClinicalProtocol, bool>> predicate);
+        IQueryResultSet<IClinicalProtocol> FindProtocol(String protocolName = null, String protocolOid = null);
 
         /// <summary>
         /// Find protocols in the repository service

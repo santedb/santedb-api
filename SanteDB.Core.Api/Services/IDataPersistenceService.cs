@@ -283,7 +283,7 @@ namespace SanteDB.Core.Services
         /// <param name="transactionMode">The transaction mode</param>
         /// <remarks>
         /// <para>
-        /// This method will attempt to delete data according to the <paramref name="deletionMode"/> specified by the caller.
+        /// This method will attempt to delete data according to the currently scoped <see cref="DataPersistenceControlContext"/>.
         /// </para>
         /// <list type="table">
         ///     <item>

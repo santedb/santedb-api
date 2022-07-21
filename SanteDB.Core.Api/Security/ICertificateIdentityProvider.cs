@@ -15,6 +15,17 @@ namespace SanteDB.Core.Security
     public interface ICertificateIdentityProvider
     {
 
+
+        /// <summary>
+        /// Fired after an authentication request has been made.
+        /// </summary>
+        event EventHandler<AuthenticatedEventArgs> Authenticated;
+
+        /// <summary>
+        /// Fired prior to an authentication request being made.
+        /// </summary>
+        event EventHandler<AuthenticatingEventArgs> Authenticating;
+
         /// <summary>
         /// Authenticates a <see cref="IPrincipal"/> instance based on the certificate mapping 
         /// for <paramref name="authenticationCertificate"/>

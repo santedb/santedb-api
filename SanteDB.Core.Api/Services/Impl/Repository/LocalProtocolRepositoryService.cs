@@ -57,13 +57,38 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Find protocol
         /// </summary>
-        public IQueryResultSet<IClinicalProtocol> FindProtocol(Expression<Func<IClinicalProtocol, bool>> predicate)
-        => new TransformQueryResultSet<Model.Acts.Protocol, IClinicalProtocol>(this.Find(o => o.ObsoletionTime == null), (a) =>
-              {
-                  var proto = Activator.CreateInstance(a.HandlerClass) as IClinicalProtocol;
-                  proto.Load(a);
-                  return proto;
-              }).Where(predicate);
+        public IQueryResultSet<IClinicalProtocol> FindProtocol(String protocolName = null, String protocolOid = null)
+        {
+            Expression<Func<Model.Acts.Protocol, bool>> expression = o => o.ObsoletionTime == null;
+            var expressionBody = expression.Body;
+            var expressionParameter = expression.Parameters[0];
+
+            if(!String.IsNullOrEmpty(protocolName))
+            {
+                expressionBody = Expression.And(Expression.MakeBinary(
+                    ExpressionType.Equal,
+                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.Name))),
+                    Expression.Constant(protocolName)
+                ), expressionBody);
+            }
+            if(!String.IsNullOrEmpty(protocolOid))
+            {
+                expressionBody = Expression.And(Expression.MakeBinary(
+                    ExpressionType.Equal,
+                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.Oid))),
+                    Expression.Constant(protocolOid)
+                ), expressionBody);
+            }
+
+            expression = Expression.Lambda<Func<Model.Acts.Protocol, bool>>(expressionBody, expressionParameter);
+
+            return new TransformQueryResultSet<Model.Acts.Protocol, IClinicalProtocol>(this.Find(expression), (a) =>
+                  {
+                      var proto = Activator.CreateInstance(a.HandlerClass) as IClinicalProtocol;
+                      proto.Load(a);
+                      return proto;
+                  });
+        }
 
         /// <summary>
         /// Get clinical protocol by identifier

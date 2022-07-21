@@ -19,7 +19,8 @@ namespace SanteDB.Core.Services.Impl
         private readonly Type[] m_defaultServices = new Type[]
         {
             typeof(DefaultPolicyEnforcementService),
-
+            typeof(LocalTagPersistenceService),
+            typeof(LocalProtocolRepositoryService),
             typeof(DefaultJobManagerService),
             typeof(XmlFileJobScheduleManager),
             typeof(XmlFileJobStateManager),

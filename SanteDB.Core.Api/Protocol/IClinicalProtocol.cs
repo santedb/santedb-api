@@ -59,12 +59,12 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Calculate the clinical protocol for the given patient
         /// </summary>
-        List<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
+        IEnumerable<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
 
         /// <summary>
         /// Update the care plan based on new data
         /// </summary>
-        List<Act> Update(Patient p, List<Act> existingPlan);
+        IEnumerable<Act> Update(Patient p, IEnumerable<Act> existingPlan);
 
         /// <summary>
         /// Called prior to performing calculation of the care protocol allowing the object to prepare the object for whatever 

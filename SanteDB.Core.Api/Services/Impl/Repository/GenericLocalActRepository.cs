@@ -20,6 +20,7 @@
  */
 
 using SanteDB.Core;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Query;
@@ -36,7 +37,6 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// Represents an act repository service.
     /// </summary>
-    /// <seealso cref="IActRepositoryService" />
     /// <seealso cref="Services.IRepositoryService{Act}" />
     /// <seealso cref="Services.IRepositoryService{SubstanceAdministration}" />
     /// <seealso cref="Services.IRepositoryService{QuantityObservation}" />
@@ -66,9 +66,8 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Validates an act.
         /// </summary>
-        /// <typeparam name="TAct">The type of the act.</typeparam>
         /// <param name="data">The data.</param>
-        /// <returns>TAct.</returns>
+        /// <returns>The validated act data.</returns>
         /// <exception cref="DetectedIssueException">If there are any validation errors detected.</exception>
         /// <exception cref="System.InvalidOperationException">If the data is null.</exception>
         public override TAct Validate(TAct data)

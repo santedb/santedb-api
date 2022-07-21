@@ -142,7 +142,7 @@ namespace SanteDB.Core.Protocol
         /// <param name="asEncounters">True if the data should be grouped as an encounter</param>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.FindProtocol(o => true).ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.FindProtocol().ToArray());
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(o => true).ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol().ToArray());
         }
 
         /// <summary>

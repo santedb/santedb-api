@@ -79,6 +79,11 @@ namespace SanteDB.Core.Security.Claims
         public const string DefaultRoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
         /// <summary>
+        /// The x509 thumbprint used to authentication
+        /// </summary>
+        public const string AuthenticationCertificate = "x509sub";
+
+        /// <summary>
         /// Granted policy claim
         /// </summary>
         public const string SanteDBGrantedPolicyClaim = "scope";

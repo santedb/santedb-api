@@ -65,7 +65,17 @@ namespace SanteDB.Core.Configuration
         /// Maximum time to refresh session
         /// </summary>
         [XmlEnum("auth.session.refresh")]
-        RefreshLength
+        RefreshLength,
+        /// <summary>
+        /// The place where authentication certificates should be stored
+        /// </summary>
+        [XmlEnum("auth.cert.location")]
+        AuthenticationCertificateLocation,
+        /// <summary>
+        /// The place where authentication certificates should be stored
+        /// </summary>
+        [XmlEnum("auth.cert.store")]
+        AuthenticationCertificateStore,
     }
 
     /// <summary>

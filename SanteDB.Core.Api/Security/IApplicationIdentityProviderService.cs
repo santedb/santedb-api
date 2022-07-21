@@ -100,7 +100,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get the secure key for the specified application (can be used for symmetric encryption)
         /// </summary>
-        byte[] GetPublicKey(String name);
+        byte[] GetPublicSigningKey(String name);
 
         /// <summary>
         /// Set the public key for the object

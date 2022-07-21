@@ -39,8 +39,6 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// <summary>
         /// CTOR for diagnostics
         /// </summary>
-        /// <param name="filter"></param>
-        /// <param name="fileName"></param>
         public DebugDiagnosticsTraceWriter(EventLevel filter, string fileName, IDictionary<String, EventLevel> sources) : base(filter, fileName, sources)
         {
         }
