@@ -56,7 +56,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="locale"></param>
         /// <returns></returns>
-        KeyValuePair<String, String>[] GetStrings(String locale);
+        IEnumerable<KeyValuePair<String, String>> GetStrings(String locale);
 
         /// <summary>
         /// Reload string definitions

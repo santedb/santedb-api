@@ -19,6 +19,7 @@
  * Date: 2021-8-27
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
@@ -156,9 +157,12 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Create a care plan with the specified protocols only
         /// </summary>
-        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
+        public CarePlan CreateCarePlan(Patient patient, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
         {
-            if (p == null) return null;
+            if (patient == null)
+            {
+                return null;
+            }
 
             try
             {
@@ -172,19 +176,19 @@ namespace SanteDB.Core.Protocol
 
                 Patient currentProcessing = null;
                 bool isCurrentProcessing = false;
-                if (p.Key.HasValue)
-                    isCurrentProcessing = this.m_patientPromise.TryGetValue(p.Key.Value, out currentProcessing);
-                if (p.Key.HasValue && !isCurrentProcessing)
+                if (patient.Key.HasValue)
+                    isCurrentProcessing = this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing);
+                if (patient.Key.HasValue && !isCurrentProcessing)
                 {
                     lock (this.m_patientPromise)
-                        if (!this.m_patientPromise.TryGetValue(p.Key.Value, out currentProcessing))
+                        if (!this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing))
                         {
-                            currentProcessing = p.Copy() as Patient;
+                            currentProcessing = patient.DeepCopy() as Patient;
 
                             // Are the participations of the patient null?
-                            if (p.Participations.Count == 0 && p.VersionKey.HasValue)
+                            if (patient.LoadProperty(o=>o.Participations).IsNullOrEmpty() && patient.VersionKey.HasValue)
                             {
-                                p.Participations = EntitySource.Current.Provider.Query<Act>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key) &&
+                                patient.Participations = EntitySource.Current.Provider.Query<Act>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key) &&
                                     StatusKeys.ActiveStates.Contains(o.StatusConceptKey.Value)).OfType<Act>()
                                     .Select(a =>
                                     new ActParticipation()
@@ -200,9 +204,9 @@ namespace SanteDB.Core.Protocol
                                 //    .Union(EntitySource.Current.Provider.Query<TextObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
                                 //    .Union(EntitySource.Current.Provider.Query<PatientEncounter>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
 
-                                (ApplicationServiceContext.Current.GetService(typeof(IDataCachingService)) as IDataCachingService)?.Add(p);
+                                (ApplicationServiceContext.Current.GetService(typeof(IDataCachingService)) as IDataCachingService)?.Add(patient);
                             }
-                            currentProcessing.Participations = new List<ActParticipation>(p.Participations);
+                            currentProcessing.Participations = new List<ActParticipation>(patient.LoadProperty(o=>o.Participations));
 
                             // The record target here is also a record target for any /relationships
                             // TODO: I think this can be removed no?
@@ -229,11 +233,11 @@ namespace SanteDB.Core.Protocol
                             //})).ToList();
 
                             // Add to the promised patient
-                            this.m_patientPromise.Add(p.Key.Value, currentProcessing);
+                            this.m_patientPromise.Add(patient.Key.Value, currentProcessing);
                         }
                 }
-                else if (!p.Key.HasValue) // Not persisted
-                    currentProcessing = p.Clone() as Patient;
+                else if (!patient.Key.HasValue) // Not persisted
+                    currentProcessing = patient.Clone() as Patient;
 
                 // Initialize for protocol execution
                 parmDict.Add("runProtocols", execProtocols.Distinct());
@@ -248,7 +252,7 @@ namespace SanteDB.Core.Protocol
                 List<Act> protocolActs = new List<Act>();
                 lock (currentProcessing)
                 {
-                    var thdPatient = currentProcessing.Copy() as Patient;
+                    var thdPatient = currentProcessing.DeepCopy() as Patient;
                     thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)));
 
                     // Let's ensure that there are some properties loaded eh?
@@ -306,7 +310,7 @@ namespace SanteDB.Core.Protocol
                         }
 
                         // Add the protocol act
-                        candidate.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
+                        candidate.LoadProperty(o=>o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
 
                         // Remove so we don't have duplicates
                         protocolActs.Remove(act);
@@ -337,7 +341,7 @@ namespace SanteDB.Core.Protocol
                     while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
                         itm.ActTime = itm.ActTime?.AddDays(1);
 
-                return new CarePlan(p, protocolActs.ToList())
+                return new CarePlan(patient, protocolActs.ToList())
                 {
                     CreatedByKey = Guid.Parse("fadca076-3690-4a6e-af9e-f1cd68e8c7e8")
                 };
@@ -345,13 +349,13 @@ namespace SanteDB.Core.Protocol
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw;
+                throw new CdssException(protocols, patient, e);
             }
             finally
             {
                 lock (m_patientPromise)
-                    if (p.Key.HasValue && this.m_patientPromise.ContainsKey(p.Key.Value))
-                        m_patientPromise.Remove(p.Key.Value);
+                    if (patient.Key.HasValue && this.m_patientPromise.ContainsKey(patient.Key.Value))
+                        m_patientPromise.Remove(patient.Key.Value);
             }
         }
 

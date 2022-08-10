@@ -134,6 +134,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             else
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Authority == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
 
+            retVal = retVal.ToArray();
             this.m_adhocCacheService?.Add(cacheKey, retVal);
             return retVal;
         }
@@ -236,6 +237,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             else
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
 
+            refTermEnt = refTermEnt.ToArray();
             this.m_adhocCacheService?.Add(cacheKey, refTermEnt);
             return refTermEnt;
         }

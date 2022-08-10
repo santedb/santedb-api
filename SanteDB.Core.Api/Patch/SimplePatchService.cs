@@ -104,8 +104,8 @@ namespace SanteDB.Core.Services.Impl
                 // First, test that we're updating the right object
                 retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}id", existing.Key));
 
-                if (existing is IVersionedData)
-                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", (existing as IVersionedData).VersionKey));
+                if (existing is IVersionedData ivd)
+                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", ivd.VersionKey));
 
                 // Iterate through properties and determine changes
                 foreach (var pi in properties)
@@ -113,11 +113,8 @@ namespace SanteDB.Core.Services.Impl
                     var serializationName = pi.GetCustomAttribute<JsonPropertyAttribute>().PropertyName;
                     if (ignoreProperties?.Contains($"{path}{serializationName}") == true) continue;
 
-                    object existingValue = pi.GetValue(existing),
-                        updatedValue = pi.GetValue(updated);
-
-                    if (existingValue == null && typeof(IdentifiedData).IsAssignableFrom(pi.PropertyType))
-                        existingValue = existing.LoadProperty(pi.Name);
+                    object existingValue = existing.LoadProperty(pi.Name),
+                        updatedValue = updated.LoadProperty(pi.Name);
 
                     // Skip ignore properties
                     if (ignoreProperties.Contains(serializationName)) continue;
@@ -147,30 +144,37 @@ namespace SanteDB.Core.Services.Impl
                                 retVal.Add(new PatchOperation(PatchOperationType.Replace, $"{path}{serializationName}", updatedValue));
                             }
                         }
-                        else if (existingValue is IList && !existingValue.GetType().IsArray)
+                        else if (typeof(IList).IsAssignableFrom(pi.PropertyType) && !pi.PropertyType.IsArray)
                         {
                             // Simple or complex list?
-                            if (typeof(IIdentifiedData).IsAssignableFrom(existingValue.GetType().StripGeneric()))
+                            if (typeof(IIdentifiedData).IsAssignableFrom(pi.PropertyType.StripGeneric()))
                             {
                                 IEnumerable<IdentifiedData> updatedList = (updatedValue as IEnumerable).OfType<IdentifiedData>(),
-                                    existingList = (existingValue as IEnumerable).OfType<IdentifiedData>();
+                                    existingList = (existingValue as IEnumerable)?.OfType<IdentifiedData>();
+
 
                                 // Removals
-                                retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.SemanticEquals(u))).Select(c => this.BuildRemoveQuery(path + serializationName, c)));
+                                if (existingList != null)
+                                {
+                                    retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.SemanticEquals(u))).Select(c => this.BuildRemoveQuery(path + serializationName, c)));
+                                }
 
                                 // Additions
-                                retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.SemanticEquals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
+                                retVal.AddRange(updatedList.Where(u => existingList?.Any(e => u.SemanticEquals(e)) != true).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
                             }
                             else
                             {
                                 IEnumerable<Object> updatedList = (updatedValue as IEnumerable).OfType<Object>(),
-                                    existingList = (existingValue as IEnumerable).OfType<Object>();
+                                    existingList = (existingValue as IEnumerable)?.OfType<Object>();
 
                                 // Removals
-                                retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.Equals(u))).Select(c => new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", c)));
+                                if (existingList != null)
+                                {
+                                    retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.Equals(u))).Select(c => new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", c)));
+                                }
 
                                 // Additions
-                                retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.Equals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
+                                retVal.AddRange(updatedList.Where(u => existingList?.Any(e => u.Equals(e)) != true).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
                             }
                         }
                         else if (updatedValue?.Equals(existingValue) == false)// simple value has changed
@@ -232,18 +236,18 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private IEnumerable<PatchOperation> GenerateTests(object existingValue, string path)
         {
-            if (existingValue is IVersionedData)
+            if (existingValue is IVersionedData ivd)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.version", (existingValue as IVersionedData).VersionKey),
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IVersionedData).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.version", ivd.VersionKey),
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ivd.Key)
                 };
-            else if (existingValue is IIdentifiedData)
+            else if (existingValue is IIdentifiedData ide)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IIdentifiedData).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ide.Key)
                 };
-            else if (existingValue is IList && !existingValue.GetType().IsArray)
+            else if ((existingValue as IList)?.IsNullOrEmpty() == false && typeof(IdentifiedData).IsAssignableFrom(existingValue.GetType().StripGeneric()))
             {
                 var values = existingValue as IList;
                 var retVal = new List<PatchOperation>(values.Count);
@@ -251,7 +255,7 @@ namespace SanteDB.Core.Services.Impl
                     retVal.AddRange(this.GenerateTests(itm, path));
                 return retVal;
             }
-            else
+            else 
                 return new PatchOperation[]
                 {
                     new PatchOperation(PatchOperationType.Test, path, existingValue)
@@ -294,7 +298,12 @@ namespace SanteDB.Core.Services.Impl
                     {
                         applyParent = applyTo;
                         applyTo = subProperty.GetValue(applyTo);
-                        if (applyTo is IList)
+                        if(applyTo == null && subProperty.PropertyType.GetConstructor(Type.EmptyTypes) != null)
+                        {
+                            applyTo = Activator.CreateInstance(subProperty.PropertyType);
+                            subProperty.SetValue(applyParent, applyTo);
+                        }
+                        else if (applyTo is IList)
                         {
                             applyTo = Activator.CreateInstance(subProperty.PropertyType, applyTo);
                             subProperty.SetValue(applyParent, applyTo);
@@ -311,8 +320,8 @@ namespace SanteDB.Core.Services.Impl
                 {
                     case PatchOperationType.Add:
                         // We add the value!!! Yay!
-                        if (applyTo is IList)
-                            (applyTo as IList).Add(op.Value);
+                        if (applyTo is IList ile)
+                            ile.Add(op.Value);
                         else
                             throw new PatchException("Add can only be applied to an IList instance");
                         break;

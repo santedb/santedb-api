@@ -21,6 +21,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
@@ -135,7 +136,7 @@ namespace SanteDB.Core.Http
         protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
-            if (this.Description.Endpoint.Count == 0)
+            if (this.Description.Endpoint.IsNullOrEmpty())
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
