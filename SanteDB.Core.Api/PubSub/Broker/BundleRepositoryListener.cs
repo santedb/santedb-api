@@ -49,7 +49,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected override void OnInserted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
-            foreach (var itm in evt.Data.Item.Where(i => evt.Data.FocalObjects.Contains(i.Key.Value)))
+            foreach (var itm in evt.Data.Item.Where(i => !evt.Data.FocalObjects.Any() || evt.Data.FocalObjects.Contains(i.Key.Value)))
             {
                 PubSubNotifyQueueEntry queueEntry = null;
 

@@ -190,7 +190,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnDeleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, evt.Data));
+            this.EnqueueObject(evt.Data, PubSubEventType.Delete);
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnSaved(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, evt.Data));
+            this.EnqueueObject(evt.Data, PubSubEventType.Update);
         }
 
         /// <summary>
@@ -206,9 +206,31 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, evt.Data));
+            this.EnqueueObject(evt.Data, PubSubEventType.Create);
         }
 
+        /// <summary>
+        /// Enqueue object
+        /// </summary>
+        private void EnqueueObject(IdentifiedData dataToQueue, PubSubEventType defaultEventType)
+        {
+            switch (dataToQueue.BatchOperation)
+            {
+                case Model.DataTypes.BatchOperationType.Update:
+                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, dataToQueue));
+                    break;
+                case Model.DataTypes.BatchOperationType.Delete:
+                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, dataToQueue));
+                    break;
+                case Model.DataTypes.BatchOperationType.Insert:
+                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, dataToQueue));
+                    break;
+                case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                case Model.DataTypes.BatchOperationType.Auto:
+                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), defaultEventType, dataToQueue));
+                    break;
+            }
+        }
         /// <summary>
         /// Dispose of this
         /// </summary>
