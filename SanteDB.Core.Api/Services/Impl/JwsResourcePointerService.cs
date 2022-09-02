@@ -145,7 +145,7 @@ namespace SanteDB.Core.Services.Impl
                 id = identifers.Select(o => new
                 {
                     value = o.Value,
-                    ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName
+                    ns = o.LoadProperty<IdentityDomain>("Authority").DomainName
                 }).ToList()
             };
 

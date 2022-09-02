@@ -110,7 +110,7 @@ namespace SanteDB.Core.Security.Privacy
             if (this.m_configuration.Resources != null)
                 foreach (var t in this.m_configuration.Resources)
                 {
-                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(AssigningAuthority).IsAssignableFrom(t.ResourceType.Type))
+                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(IdentityDomain).IsAssignableFrom(t.ResourceType.Type))
                     {
                         this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
                         this.m_actions.TryAdd(t.ResourceType.Type, t);
@@ -133,7 +133,7 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Gets the domains that <paramref name="principal"/> should be filtered
         /// </summary>
-        private IEnumerable<AssigningAuthority> GetFilterDomains(IPrincipal principal)
+        private IEnumerable<IdentityDomain> GetFilterDomains(IPrincipal principal)
         {
             String key = null;
             if (principal is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
@@ -141,13 +141,13 @@ namespace SanteDB.Core.Security.Privacy
             else
                 key = this.m_hasher.ComputeHash($"$aa.filter.{principal.Identity.Name}");
 
-            var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
+            var domainsToFilter = this.m_adhocCache?.Get<IdentityDomain[]>(key);
             if (domainsToFilter == null)
             {
-                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
+                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<IdentityDomain>>();
                 var protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
                 domainsToFilter = protectedAuthorities
-                        .Where(aa => this.m_pdpService.GetPolicyOutcome(principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
+                        .Where(aa => this.m_pdpService.GetPolicyOutcome(principal, aa.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid) != PolicyGrantType.Grant)
                         .ToArray();
                 this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
             }
@@ -159,7 +159,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
-            if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
+            if (!this.m_actions.TryGetValue(typeof(IdentityDomain), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
                 policy = new ResourceDataPolicyFilter() { Action = this.m_configuration.DefaultAction };
             var domainsToFilter = this.GetFilterDomains(accessor);
 
@@ -201,7 +201,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag("$pep.masked", "true");
@@ -230,7 +230,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
 
                             if (result is ITaggable tag)
                             {

@@ -463,7 +463,7 @@ namespace SanteDB.Core.Api.Test
             // Should not update source
             Assert.AreEqual(2, a.Names.Count);
             Assert.AreEqual(2, a.Identifiers.Count);
-            Assert.IsNull(a.Addresses);
+            Assert.IsEmpty(a.Addresses);
             Assert.AreEqual(1, a.Tags.Count);
             Assert.AreEqual("VALUE", a.Tags[0].Value);
             Assert.AreEqual(a.VersionKey, patch.Operation[1].Value);

@@ -37,7 +37,8 @@ namespace SanteDB.Core.Services.Impl
             typeof(CachedResourceCheckoutService),
             typeof(JwsResourcePointerService),
             typeof(FileSystemDispatcherQueueService),
-            typeof(LocalRepositoryFactory)
+            typeof(LocalRepositoryFactory),
+            typeof(RegexPasswordValidator)
         };
         private readonly IServiceManager m_serviceManager;
 

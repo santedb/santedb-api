@@ -300,7 +300,8 @@ namespace SanteDB.Core.Services.Impl
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
-                                    this.m_cachedServices.TryAdd(serviceType, candidateService);
+                                    this.AddCacheServices(candidateService);
+
                                     break;
                                 }
                             }
@@ -311,10 +312,23 @@ namespace SanteDB.Core.Services.Impl
                         }
                     }
                     if (candidateService != null)
-                        this.m_cachedServices.TryAdd(serviceType, candidateService);
+                    {
+                        this.AddServiceProvider(candidateService);
+                    }
                 }
             }
             return candidateService?.GetInstance();
+        }
+
+        /// <summary>
+        /// Add service <paramref name="candidateService"/> to cached services
+        /// </summary>
+        private void AddCacheServices(ServiceInstanceInformation candidateService)
+        {
+            foreach(var itm in candidateService.ImplementedServices)
+            {
+                this.m_cachedServices.TryAdd(itm, candidateService);
+            }
         }
 
         /// <summary>

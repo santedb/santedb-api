@@ -49,7 +49,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobScheduleManager()
         {
-            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "xcron.xml");
+            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xcron.xml");
             if (File.Exists(this.m_cronTabLocation))
             {
                 try

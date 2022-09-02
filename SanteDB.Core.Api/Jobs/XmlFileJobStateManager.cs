@@ -108,7 +108,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobStateManager()
         {
-            this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "xstate.xml");
+            this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xstate.xml");
             if (File.Exists(this.m_jobStateLocation))
             {
                 try

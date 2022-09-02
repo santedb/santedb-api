@@ -109,10 +109,10 @@ namespace SanteDB.Core
         /// Gets the assigning authority repository service.
         /// </summary>
         /// <param name="me">The current application context.</param>
-        /// <returns>Returns an instance of the <see cref="IAssigningAuthorityRepositoryService"/>.</returns>
-        public static IAssigningAuthorityRepositoryService GetAssigningAuthorityService(this IApplicationServiceContext me)
+        /// <returns>Returns an instance of the <see cref="IIdentityDomainRepositoryService"/>.</returns>
+        public static IIdentityDomainRepositoryService GetAssigningAuthorityService(this IApplicationServiceContext me)
         {
-            return me.GetService<IAssigningAuthorityRepositoryService>();
+            return me.GetService<IIdentityDomainRepositoryService>();
         }
 
         /// <summary>

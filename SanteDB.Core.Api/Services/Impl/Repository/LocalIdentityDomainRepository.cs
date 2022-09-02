@@ -31,21 +31,21 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// Represents a repository service for managing assigning authorities.
     /// </summary>
-    public class LocalAssigningAuthorityRepository :
-        GenericLocalMetadataRepository<AssigningAuthority>,
-        IAssigningAuthorityRepositoryService
+    public class LocalIdentityDomainRepository :
+        GenericLocalMetadataRepository<IdentityDomain>,
+        IIdentityDomainRepositoryService
     {
         /// <summary>
         /// Local AA
         /// </summary>
-        public LocalAssigningAuthorityRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<AssigningAuthority> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public LocalIdentityDomainRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<IdentityDomain> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
         {
         }
 
         /// <summary>
         /// Get the specified assigning authority
         /// </summary>
-        public AssigningAuthority Get(Uri assigningAutUri)
+        public IdentityDomain Get(Uri assigningAutUri)
         {
             int tr = 0;
 
@@ -61,7 +61,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Get assigning authority
         /// </summary>
-        public AssigningAuthority Get(string domain)
+        public IdentityDomain Get(string domain)
         {
             int tr = 0;
             return base.Find(o => o.DomainName == domain, 0, 1, out tr).FirstOrDefault();

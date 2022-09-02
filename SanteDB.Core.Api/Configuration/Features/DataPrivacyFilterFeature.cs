@@ -50,7 +50,7 @@ namespace SanteDB.Core.Configuration.Features
                 {
                     new Security.Configuration.ResourceDataPolicyFilter()
                     {
-                        ResourceType = new ResourceTypeReferenceConfiguration(typeof(AssigningAuthority)),
+                        ResourceType = new ResourceTypeReferenceConfiguration(typeof(IdentityDomain)),
                         Action = Security.Configuration.ResourceDataPolicyActionType.Redact
                     }
                 }
