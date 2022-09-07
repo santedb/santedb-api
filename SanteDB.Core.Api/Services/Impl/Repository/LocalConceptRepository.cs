@@ -323,16 +323,17 @@ namespace SanteDB.Core.Services.Impl.Repository
         public string GetName(Guid conceptId, string twoLetterISOLanguageName)
         {
             var cacheKey = $"concept.name.{conceptId}";
-            var retVal = this.m_adhocCacheService?.Get<IEnumerable<ConceptName>>(cacheKey);
+            var retVal = this.m_adhocCacheService?.Get<ConceptName[]>(cacheKey);
 
-            if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
-                return retVal.FirstOrDefault(o => o.Language == twoLetterISOLanguageName)?.Name;
+            if (retVal == null || this.m_adhocCacheService?.Exists(cacheKey) == false)
+            {
+                retVal = this.m_conceptNameService.Query(o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal).ToArray();
+                this.m_adhocCacheService?.Add(cacheKey, retVal);
+            }
 
-            retVal = this.m_conceptNameService.Query(o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal) ;
+            return retVal?.FirstOrDefault(o => o.Language == twoLetterISOLanguageName)?.Name;
 
-            this.m_adhocCacheService?.Add(cacheKey, retVal);
-
-            return retVal.FirstOrDefault(o=>o.Language == twoLetterISOLanguageName)?.Name;
+            
         }
     }
 }

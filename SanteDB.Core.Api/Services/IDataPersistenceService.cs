@@ -56,6 +56,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Specified the method of deletion
     /// </summary>
+    [Flags]
     public enum DeleteMode
     {
 
@@ -68,6 +69,7 @@ namespace SanteDB.Core.Services
         /// Permanently delete - it should be purged from the database
         /// </summary>
         PermanentDelete = 1
+
     }
 
     /// <summary>
