@@ -267,7 +267,7 @@ namespace SanteDB.Core.Http
                                 switch (o.Result.Headers["Content-Encoding"])
                                 {
                                     case "deflate":
-                                        using (var dfs = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var dfs = new DeflateStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             dfs.CopyTo(oms);
@@ -276,7 +276,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "gzip":
-                                        using (var gzs = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var gzs = new GZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             gzs.CopyTo(oms);
@@ -285,7 +285,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "bzip2":
-                                        using (var lzmas = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                        using (var lzmas = new BZip2Stream(NonDisposingStream.Create(ms), CompressionMode.Decompress, false))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
@@ -294,7 +294,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "lzma":
-                                        using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var lzmas = new LZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
