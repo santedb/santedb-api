@@ -397,14 +397,7 @@ namespace SanteDB.Core.Services.Impl
                             this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                         else
                         {
-                            if (svc.Type == null)
-                                this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
-                            else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
-                                this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                            else
-                            {
-                                this.AddServiceProvider(svc.Type);
-                            }
+                            this.AddServiceProvider(svc.Type);
                         }
                     }
 
