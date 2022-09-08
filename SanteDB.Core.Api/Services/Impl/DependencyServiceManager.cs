@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -325,7 +325,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void AddCacheServices(ServiceInstanceInformation candidateService)
         {
-            foreach(var itm in candidateService.ImplementedServices)
+            foreach (var itm in candidateService.ImplementedServices)
             {
                 this.m_cachedServices.TryAdd(itm, candidateService);
             }
@@ -411,16 +411,7 @@ namespace SanteDB.Core.Services.Impl
                         else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
                             this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
                         else
-                        {
-                            if (svc.Type == null)
-                                this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
-                            else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
-                                this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                            else
-                            {
-                                this.AddServiceProvider(svc.Type);
-                            }
-                        }
+                            this.AddServiceProvider(svc.Type);
                     }
 
                     using (AuthenticationContext.EnterSystemContext())
