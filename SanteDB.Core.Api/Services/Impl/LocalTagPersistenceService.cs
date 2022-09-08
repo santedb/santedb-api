@@ -83,7 +83,6 @@ namespace SanteDB.Server.Core.Services.Impl
                 else if (tag is ActTag)
                 {
                     var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActTag>>();
-                    int tr = 0;
                     var existing = idp.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tag.TagKey, AuthenticationContext.Current.Principal).FirstOrDefault();
                     tag.SourceEntityKey = tag.SourceEntityKey ?? sourceKey;
                     if (existing != null)

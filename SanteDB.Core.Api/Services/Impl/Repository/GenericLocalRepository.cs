@@ -150,7 +150,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         protected IPolicyEnforcementService m_policyService;
 
-        // Data persistence service
+        /// <summary>
+        /// Data persistence services
+        /// </summary>
         protected IDataPersistenceService<TEntity> m_dataPersistenceService;
 
         /// <summary>
@@ -422,7 +424,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             var preQueryEventArgs = new QueryRequestEventArgs<TEntity>(query, AuthenticationContext.Current.Principal);
             this.Querying?.Invoke(this, preQueryEventArgs);
             IQueryResultSet<TEntity> results = null;
-            if (preQueryEventArgs.Cancel) /// Cancel the request
+            if (preQueryEventArgs.Cancel) // Cancel the request
             {
                 results = preQueryEventArgs.Results;
             }

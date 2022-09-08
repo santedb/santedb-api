@@ -20,15 +20,15 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
         }
 
-        /// <summary>
-        /// Gets the service name
-        /// </summary>
-        public string ServiceName => "Clinical Protocol Definition Service";
-
+        /// <inheritdoc/>
         protected override string DeletePolicy => PermissionPolicyIdentifiers.DeleteClinicalProtocolConfigurationDefinition;
+        /// <inheritdoc/>
         protected override string AlterPolicy => PermissionPolicyIdentifiers.AlterClinicalProtocolConfigurationDefinition;
+        /// <inheritdoc/>
         protected override string WritePolicy => PermissionPolicyIdentifiers.AlterClinicalProtocolConfigurationDefinition;
+        /// <inheritdoc/>
         protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadMetadata;
+        /// <inheritdoc/>
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
 
 

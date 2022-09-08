@@ -12,18 +12,24 @@ namespace SanteDB.Core.Exceptions
     public class CdssException : Exception
     {
 
-        public const string ProtocolDataProperty = "protocols";
-        public const string TargetDataProperty = "target";
+        /// <summary>
+        /// The name of the protocol data element 
+        /// </summary>
+        public const string ProtocolDataName = "protocols";
+        /// <summary>
+        /// The name of the target data element
+        /// </summary>
+        public const string TargetDataName = "target";
 
         /// <summary>
         /// Gets the protocols which caused the exception
         /// </summary>
-        public IEnumerable<IClinicalProtocol> Protocols => this.Data[ProtocolDataProperty] as IEnumerable<IClinicalProtocol>;
+        public IEnumerable<IClinicalProtocol> Protocols => this.Data[ProtocolDataName] as IEnumerable<IClinicalProtocol>;
 
         /// <summary>
         /// Gets the target which caused the exception
         /// </summary>
-        public String Target => this.Data[TargetDataProperty].ToString();
+        public String Target => this.Data[TargetDataName].ToString();
 
         /// <summary>
         /// CDSS exception
@@ -33,8 +39,8 @@ namespace SanteDB.Core.Exceptions
         /// <param name="cause">The cause of the exception</param>
         public CdssException(IEnumerable<IClinicalProtocol> protocols, IdentifiedData target, Exception cause) : base($"Error executing CDSS rules against {target}", cause)
         {
-            this.Data.Add(ProtocolDataProperty, protocols);
-            this.Data.Add(TargetDataProperty, target.ToString());
+            this.Data.Add(ProtocolDataName, protocols);
+            this.Data.Add(TargetDataName, target.ToString());
         }
 
         /// <summary>

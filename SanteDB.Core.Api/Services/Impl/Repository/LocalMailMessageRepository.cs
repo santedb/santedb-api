@@ -140,11 +140,6 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Searches for alerts.
         /// </summary>
-        /// <param name="predicate">The predicate to use to search for alerts.</param>
-        /// <param name="offset">The offset of the search.</param>
-        /// <param name="count">The count of the search results.</param>
-        /// <param name="totalCount">The total count of the alerts.</param>
-        /// <returns>Returns a list of alerts.</returns>
         [Obsolete("Use Find(Expression<Func<MailMessage, bool>>)", true)]
         public IEnumerable<MailMessage> Find(Expression<Func<MailMessage, bool>> predicate, int offset, int? count, out int totalCount, params ModelSort<MailMessage>[] orderBy)
         {

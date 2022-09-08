@@ -81,7 +81,6 @@ namespace SanteDB.Core.Services.Impl.Repository
             var id = iids.CreateIdentity(data.UserName, data.Password, AuthenticationContext.Current.Principal);
 
             // Now ensure local db record exists
-            int tr = 0;
             var retVal = this.Find(o => o.UserName == data.UserName).FirstOrDefault();
             if (retVal == null)
             {

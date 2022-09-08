@@ -47,7 +47,6 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public IdentityDomain Get(Uri assigningAutUri)
         {
-            int tr = 0;
 
             if (assigningAutUri.Scheme == "urn" && assigningAutUri.LocalPath.StartsWith("oid:"))
             {
