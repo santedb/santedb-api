@@ -42,5 +42,6 @@ namespace SanteDB.Core.Http
         /// Gets credentials for the specified principal
         /// </summary>
         Credentials GetCredentials(IPrincipal principal);
+
     }
 }

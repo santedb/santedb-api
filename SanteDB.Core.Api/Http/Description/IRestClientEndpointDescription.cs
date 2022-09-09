@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using System;
+
 namespace SanteDB.Core.Http.Description
 {
     /// <summary>
@@ -33,6 +35,6 @@ namespace SanteDB.Core.Http.Description
         /// <summary>
         /// Gets or sets the timeouts
         /// </summary>
-        int Timeout { get; set; }
+        TimeSpan Timeout { get; set; }
     }
 }

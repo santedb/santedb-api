@@ -80,7 +80,7 @@ namespace SanteDB.Core.Configuration
     /// <summary>
     /// Application key/value pair setting
     /// </summary>
-    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/mobile/configuration")]
+    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/configuration")]
     public class AppSettingKeyValuePair
     {
 

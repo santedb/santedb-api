@@ -46,5 +46,10 @@ namespace SanteDB.Core.Http.Description
         /// Gets whether a tracing is enabled.
         /// </summary>
         bool Trace { get; }
+
+        /// <summary>
+        /// Gets the proxy address
+        /// </summary>
+        string ProxyAddress { get; }
     }
 }

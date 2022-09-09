@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using System;
+
 namespace SanteDB.Core.Http.Description
 {
     /// <summary>
@@ -42,5 +44,11 @@ namespace SanteDB.Core.Http.Description
         /// </summary>
         /// <value>The security.</value>
         IRestClientSecurityDescription Security { get; }
+
+        /// <summary>
+        /// Gets the optimization method
+        /// </summary>
+        HttpOptimizationMethod OptimizationMethod { get; }
+
     }
 }

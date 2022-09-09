@@ -23,7 +23,6 @@ using SanteDB.Core.Notifications;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services.Impl.Repository;
-using SanteDB.Server.Core.Services.Impl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +57,9 @@ namespace SanteDB.Core.Services.Impl
             typeof(JwsResourcePointerService),
             typeof(FileSystemDispatcherQueueService),
             typeof(LocalRepositoryFactory),
-            typeof(RegexPasswordValidator)
+            typeof(RegexPasswordValidator),
+            typeof(DefaultOperatingSystemInfoService),
+            typeof(DefaultNetworkInformationService)
         };
         private readonly IServiceManager m_serviceManager;
 

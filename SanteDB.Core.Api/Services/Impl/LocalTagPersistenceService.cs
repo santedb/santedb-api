@@ -27,7 +27,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Linq;
 
-namespace SanteDB.Server.Core.Services.Impl
+namespace SanteDB.Core.Services.Impl
 {
     /// <summary>
     /// Tag persistence service for act
@@ -47,6 +47,7 @@ namespace SanteDB.Server.Core.Services.Impl
         /// </summary>
         public LocalTagPersistenceService(IDataCachingService cacheService = null)
         {
+            
             this.m_cacheService = cacheService;
         }
 
