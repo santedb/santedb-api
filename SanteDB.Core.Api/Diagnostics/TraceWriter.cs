@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Concurrent;
@@ -102,6 +102,11 @@ namespace SanteDB.Core.Diagnostics
         /// Write data to the event
         /// </summary>
         protected abstract void WriteTrace(EventLevel level, String source, String format, params Object[] args);
+
+        /// <summary>
+        /// Trace an event with data to the log
+        /// </summary>
+        public abstract void TraceEventWithData(EventLevel level, string source, string message, object[] data);
 
         /// <summary>
         /// Trace an error

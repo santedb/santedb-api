@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Services.Impl
         };
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SimplePatchService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimplePatchService));
 
         // Property information
         private Dictionary<Type, IEnumerable<PropertyInfo>> m_properties = new Dictionary<Type, IEnumerable<PropertyInfo>>();
@@ -103,8 +103,8 @@ namespace SanteDB.Core.Services.Impl
                 // First, test that we're updating the right object
                 retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}id", existing.Key));
 
-                if (existing is IVersionedEntity)
-                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", (existing as IVersionedEntity).VersionKey));
+                if (existing is IVersionedData ivd)
+                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", ivd.VersionKey));
 
                 // Iterate through properties and determine changes
                 foreach (var pi in properties)
@@ -112,18 +112,15 @@ namespace SanteDB.Core.Services.Impl
                     var serializationName = pi.GetCustomAttribute<JsonPropertyAttribute>().PropertyName;
                     if (ignoreProperties?.Contains($"{path}{serializationName}") == true) continue;
 
-                    object existingValue = pi.GetValue(existing),
-                        updatedValue = pi.GetValue(updated);
-
-                    if (existingValue == null && typeof(IdentifiedData).IsAssignableFrom(pi.PropertyType))
-                        existingValue = existing.LoadProperty(pi.Name);
+                    object existingValue = existing.LoadProperty(pi.Name),
+                        updatedValue = updated.LoadProperty(pi.Name);
 
                     // Skip ignore properties
                     if (ignoreProperties.Contains(serializationName)) continue;
 
                     // Test
                     if (existingValue == updatedValue)
-                        continue; // same 
+                        continue; // same
                     else
                     {
                         if (existingValue != null && updatedValue == null) // remove
@@ -146,33 +143,37 @@ namespace SanteDB.Core.Services.Impl
                                 retVal.Add(new PatchOperation(PatchOperationType.Replace, $"{path}{serializationName}", updatedValue));
                             }
                         }
-                        else if (existingValue is IList && !existingValue.GetType().IsArray)
+                        else if (typeof(IList).IsAssignableFrom(pi.PropertyType) && !pi.PropertyType.IsArray)
                         {
-
                             // Simple or complex list?
-                            if (typeof(IIdentifiedEntity).IsAssignableFrom(existingValue.GetType().StripGeneric()))
+                            if (typeof(IIdentifiedData).IsAssignableFrom(pi.PropertyType.StripGeneric()))
                             {
                                 IEnumerable<IdentifiedData> updatedList = (updatedValue as IEnumerable).OfType<IdentifiedData>(),
-                                    existingList = (existingValue as IEnumerable).OfType<IdentifiedData>();
+                                    existingList = (existingValue as IEnumerable)?.OfType<IdentifiedData>();
+
 
                                 // Removals
-                                retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.SemanticEquals(u))).Select(c => this.BuildRemoveQuery(path + serializationName, c)));
+                                if (existingList != null)
+                                {
+                                    retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.SemanticEquals(u))).Select(c => this.BuildRemoveQuery(path + serializationName, c)));
+                                }
 
-                                // Additions 
-                                retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.SemanticEquals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
-
+                                // Additions
+                                retVal.AddRange(updatedList.Where(u => existingList?.Any(e => u.SemanticEquals(e)) != true).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
                             }
                             else
                             {
                                 IEnumerable<Object> updatedList = (updatedValue as IEnumerable).OfType<Object>(),
-                                    existingList = (existingValue as IEnumerable).OfType<Object>();
+                                    existingList = (existingValue as IEnumerable)?.OfType<Object>();
 
                                 // Removals
-                                retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.Equals(u))).Select(c => new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", c)));
+                                if (existingList != null)
+                                {
+                                    retVal.AddRange(existingList.Where(e => !updatedList.Any(u => e.Equals(u))).Select(c => new PatchOperation(PatchOperationType.Remove, $"{path}{serializationName}", c)));
+                                }
 
-                                // Additions 
-                                retVal.AddRange(updatedList.Where(u => !existingList.Any(e => u.Equals(e))).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
-
+                                // Additions
+                                retVal.AddRange(updatedList.Where(u => existingList?.Any(e => u.Equals(e)) != true).Select(c => new PatchOperation(PatchOperationType.Add, $"{path}{serializationName}", c)));
                             }
                         }
                         else if (updatedValue?.Equals(existingValue) == false)// simple value has changed
@@ -184,7 +185,6 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
-
 
             return retVal;
         }
@@ -235,18 +235,18 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private IEnumerable<PatchOperation> GenerateTests(object existingValue, string path)
         {
-            if (existingValue is IVersionedEntity)
+            if (existingValue is IVersionedData ivd)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.version", (existingValue as IVersionedEntity).VersionKey),
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IVersionedEntity).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.version", ivd.VersionKey),
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ivd.Key)
                 };
-            else if (existingValue is IIdentifiedEntity)
+            else if (existingValue is IIdentifiedData ide)
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", (existingValue as IIdentifiedEntity).Key)
+                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ide.Key)
                 };
-            else if (existingValue is IList && !existingValue.GetType().IsArray)
+            else if ((existingValue as IList)?.IsNullOrEmpty() == false && typeof(IdentifiedData).IsAssignableFrom(existingValue.GetType().StripGeneric()))
             {
                 var values = existingValue as IList;
                 var retVal = new List<PatchOperation>(values.Count);
@@ -254,7 +254,7 @@ namespace SanteDB.Core.Services.Impl
                     retVal.AddRange(this.GenerateTests(itm, path));
                 return retVal;
             }
-            else
+            else 
                 return new PatchOperation[]
                 {
                     new PatchOperation(PatchOperationType.Test, path, existingValue)
@@ -266,7 +266,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IdentifiedData Patch(Patch patch, IdentifiedData data, bool force = false)
         {
-
             this.m_tracer.TraceVerbose("-->> {0} patch with:\r\n{1}", data, patch);
 
             var retVal = Activator.CreateInstance(data.GetType());
@@ -298,7 +297,12 @@ namespace SanteDB.Core.Services.Impl
                     {
                         applyParent = applyTo;
                         applyTo = subProperty.GetValue(applyTo);
-                        if (applyTo is IList)
+                        if(applyTo == null && subProperty.PropertyType.GetConstructor(Type.EmptyTypes) != null)
+                        {
+                            applyTo = Activator.CreateInstance(subProperty.PropertyType);
+                            subProperty.SetValue(applyParent, applyTo);
+                        }
+                        else if (applyTo is IList)
                         {
                             applyTo = Activator.CreateInstance(subProperty.PropertyType, applyTo);
                             subProperty.SetValue(applyParent, applyTo);
@@ -315,11 +319,12 @@ namespace SanteDB.Core.Services.Impl
                 {
                     case PatchOperationType.Add:
                         // We add the value!!! Yay!
-                        if (applyTo is IList)
-                            (applyTo as IList).Add(op.Value);
+                        if (applyTo is IList ile)
+                            ile.Add(op.Value);
                         else
                             throw new PatchException("Add can only be applied to an IList instance");
                         break;
+
                     case PatchOperationType.Remove:
                         // We add the value!!! Yay!
                         if (applyTo is IList)
@@ -342,6 +347,7 @@ namespace SanteDB.Core.Services.Impl
                             throw new PatchException("Remove can only be applied to an IList instance or to remove a value");
 
                         break;
+
                     case PatchOperationType.Replace:
                         {
                             Object val = null;
@@ -372,7 +378,6 @@ namespace SanteDB.Core.Services.Impl
                             }
                             else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
                                 throw new PatchAssertionException($"Assertion failed: {op.Value} could not be found in list {applyTo} at {op}");
-
                         }
                         else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
                             throw new PatchAssertionException(op.Value, applyTo, op);
@@ -387,7 +392,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private object ExecuteLambda(string action, object source, PropertyInfo property, string pathName, PatchOperation op)
         {
-            var mi = typeof(QueryExpressionParser).GetGenericMethod("BuildLinqExpression", new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(NameValueCollection) });
 
             // Does this have a selector?
             var classAtt = source.GetType().StripGeneric().GetCustomAttribute<ClassifierAttribute>();
@@ -399,14 +403,14 @@ namespace SanteDB.Core.Services.Impl
                 {
                     var classProp = op.GetType().GetRuntimeProperty(classAtt.ClassifierProperty);
                     var classAttValue = classProp.GetValue(op.Value);
-                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}[{classAttValue}]") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}[{classAttValue}]".ParseQueryString());
                 }
                 else
-                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}={op.Value}") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}={op.Value}".ParseQueryString());
 
             }
             else
-                lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}={op.Value}".ParseQueryString());
 
             lambda = lambda.GetType().GetRuntimeMethod("Compile", new Type[] { }).Invoke(lambda, new object[] { });
             var filterMethod = typeof(Enumerable).GetGenericMethod(action, new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(IEnumerable<>).MakeGenericType(property.PropertyType.StripGeneric()), lambda.GetType() });
@@ -420,7 +424,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public bool Test(Patch patch, IdentifiedData data)
         {
-
             this.m_tracer.TraceVerbose("-->> {0} test with:\r\n{1}", data, patch);
             bool retVal = true;
 
@@ -473,6 +476,7 @@ namespace SanteDB.Core.Services.Impl
                             retVal &= instance != null;
                         }
                         break;
+
                     case PatchOperationType.Test:
                         // We test the value! Also pretty cool
                         if (applyTo is IdentifiedData && !(applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData))
@@ -488,7 +492,6 @@ namespace SanteDB.Core.Services.Impl
                             }
                             else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
                                 retVal = false;
-
                         }
                         else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
                             retVal = false;

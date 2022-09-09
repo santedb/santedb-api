@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-2
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -36,7 +36,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyEnforcementService : IPolicyEnforcementService
     {
         // Default policy decision service
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;

@@ -16,21 +16,22 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security.Services
 {
-
     /// <summary>
     /// Event arguments for session establishment
     /// </summary>
     public class SessionEstablishedEventArgs : EventArgs
     {
-
         /// <summary>
         /// Gets the principal which was used to establish sessions
         /// </summary>
@@ -64,6 +65,13 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Creates a new session establishement args
         /// </summary>
+        public SessionEstablishedEventArgs(ISession session, bool success, bool elevated, String purpose, String[] policies) : this(null, session, success, elevated, purpose, policies)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new session establishement args
+        /// </summary>
         public SessionEstablishedEventArgs(IPrincipal principal, ISession session, bool success, bool elevated, String purpose, String[] policies)
         {
             this.Success = success;
@@ -81,7 +89,6 @@ namespace SanteDB.Core.Services
     [System.ComponentModel.Description("Session Storage Provider")]
     public interface ISessionProviderService : IServiceImplementation
     {
-
         /// <summary>
         /// Fired when the session provider service has established
         /// </summary>
@@ -91,6 +98,11 @@ namespace SanteDB.Core.Services
         /// Fired when the session provider service has ended by the user's decision
         /// </summary>
         event EventHandler<SessionEstablishedEventArgs> Abandoned;
+
+        /// <summary>
+        /// Fired when the session provider service has been extended
+        /// </summary>
+        event EventHandler<SessionEstablishedEventArgs> Extended;
 
         /// <summary>
         /// Establishes a session for the specified principal
@@ -120,10 +132,8 @@ namespace SanteDB.Core.Services
         ISession Extend(byte[] refreshToken);
 
         /// <summary>
-        /// Abandons the session 
+        /// Abandons the session
         /// </summary>
         void Abandon(ISession session);
-
-
     }
 }

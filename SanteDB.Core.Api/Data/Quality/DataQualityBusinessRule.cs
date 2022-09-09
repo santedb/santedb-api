@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Quality.Configuration;
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Quality
         private IDataQualityConfigurationProviderService m_configurationProvider;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
 
         /// <summary>
         /// Creates a new data quality business rule
@@ -148,7 +148,7 @@ namespace SanteDB.Core.Data.Quality
                 {
                     foreach (var expression in assert.Expressions)
                     {
-                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(expression), null, safeNullable: true, forceLoad: true);
+                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(expression.ParseQueryString(), null, safeNullable: true, forceLoad: true);
                         var linqResult = (bool)linq.Compile().DynamicInvoke(data);
                         switch (assert.Evaluation)
                         {

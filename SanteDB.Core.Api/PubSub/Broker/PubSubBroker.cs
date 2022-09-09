@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -61,7 +61,7 @@ namespace SanteDB.Core.PubSub.Broker
         private ConcurrentDictionary<Guid, Func<Object, bool>> m_filterCriteria = new ConcurrentDictionary<Guid, Func<Object, bool>>();
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
 
         // Lock
         private object m_lock = new object();
@@ -196,6 +196,7 @@ namespace SanteDB.Core.PubSub.Broker
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
                         .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .ToList()
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -207,7 +208,7 @@ namespace SanteDB.Core.PubSub.Broker
 
                                 foreach (var itm in s.Filter)
                                 {
-                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), NameValueCollection.ParseQueryString(itm), "p", forceLoad: true, lazyExpandVariables: true);
+                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), itm.ParseQueryString(), "p", forceLoad: true, lazyExpandVariables: true);
                                     if (dynFn is LambdaExpression le)
                                         dynFn = Expression.Lambda(
                                             Expression.And(

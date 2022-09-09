@@ -16,12 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace SanteDB.Core.Http
 {
@@ -44,6 +45,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <typeparam name="TResult">The type of model item to retrieve</typeparam>
         TResult Get<TResult>(String url);
+
 
         /// <summary>
         /// Gets a inumerable result set of type T

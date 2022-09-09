@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 namespace SanteDB.Core.Security
 {
@@ -156,6 +156,21 @@ namespace SanteDB.Core.Security
         /// Activate match configuration
         /// </summary>
         public const string ActivateMatchConfiguration = UnrestrictedMatchConfiguration + ".2";
+
+        /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string UnrestrictedClinicalProtocolConfiguration = AlterSystemConfiguration + ".2";
+
+        /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string AlterClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".1";
+
+        /// <summary>
+        /// Delete clinical protocol configurations
+        /// </summary>
+        public const string DeleteClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".2";
 
         /// <summary>
         /// Manage all dispatcher / persistent queues

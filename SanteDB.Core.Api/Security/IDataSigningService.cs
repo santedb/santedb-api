@@ -16,15 +16,15 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Security
 {
-
     /// <summary>
     /// Contract for services which can sign data using configured digital signature algorithms
     /// </summary>
@@ -37,7 +37,6 @@ namespace SanteDB.Core.Security
     [System.ComponentModel.Description("Data Signing Service")]
     public interface IDataSigningService : IServiceImplementation
     {
-
         /// <summary>
         /// Get the keys identifiers registered for the signature service
         /// </summary>
@@ -46,15 +45,15 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the siganture algorithm this service would use to sign w/the specified key
         /// </summary>
-        string GetSignatureAlgorithm(String keyId = null);
+        SignatureAlgorithm? GetSignatureAlgorithm(String keyId = null);
 
         /// <summary>
         /// Register a key with the provider
         /// </summary>
         /// <param name="keyId">The key identifier to register</param>
-        /// <param name="keyData">The key data (passphrase, or any other structured key data)</param>
+        /// <param name="keyData">The key data (passphrase, or the signature of the certificate in the certificate store)</param>
         /// <param name="signatureAlgorithm">The signature algorithm</param>
-        void AddSigningKey(string keyId, byte[] keyData, String signatureAlgorithm);
+        void AddSigningKey(string keyId, byte[] keyData, SignatureAlgorithm signatureAlgorithm);
 
         /// <summary>
         /// Signs the specified data using the service's configured signing key

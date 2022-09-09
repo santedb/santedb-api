@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
@@ -131,7 +131,7 @@ namespace SanteDB.Core.Security
         {
             try
             {
-                using (var store = new X509Store(StoreLocation.LocalMachine))
+                using (var store = new X509Store(StoreLocation.CurrentUser))
                 {
                     store.Open(OpenFlags.ReadOnly);
                     // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
@@ -149,7 +149,7 @@ namespace SanteDB.Core.Security
 
                                 if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust"))
                                 {
-                                    storeName = StoreName.Root;
+                                    storeName = StoreName.AuthRoot;
                                 }
                                 else if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Inter"))
                                 {

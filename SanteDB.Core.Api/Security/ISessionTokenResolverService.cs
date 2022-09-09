@@ -16,32 +16,33 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-7-25
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Query;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
+using System.Text;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security
 {
     /// <summary>
-    /// Persistable query provider is an extensable interface which can perform a query with state
+    /// Session token resolver service
     /// </summary>
-    public interface IPersistableQueryRepositoryService<TEntity> : IRepositoryService<TEntity>
-        where TEntity : IdentifiedData
+    public interface ISessionTokenResolverService : IServiceImplementation
     {
-        /// <summary>
-        /// Performs a query which
-        /// </summary>
-        /// <param name="query">The query to be executed</param>
-        /// <param name="orderBy">The order instructions to append to the query</param>
-        /// <param name="offset">The offset</param>
-        /// <param name="count">The number of results</param>
-        /// <param name="totalResults">The total results in the query</param>
-        /// <param name="queryId">The unique identifier for the query</param>
-        IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<TEntity>[] orderBy);
 
+        /// <summary>
+        /// Resolve an <see cref="ISession"/> instance from the provided token
+        /// </summary>
+        /// <param name="token">The token which contains the session information</param>
+        /// <returns>The resolved session</returns>
+        ISession Resolve(String token);
+
+        /// <summary>
+        /// Serialize the <paramref name="session"/> to a byte format
+        /// </summary>
+        /// <param name="session">The session which is to be serialized</param>
+        /// <returns>The serialized session</returns>
+        String Serialize(ISession session);
     }
 }

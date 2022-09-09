@@ -16,14 +16,21 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-5
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.Core
@@ -88,5 +95,94 @@ namespace SanteDB.Core
         /// <returns>True if the status of the job state implies the job is running</returns>
         public static bool IsRunning(this IJobState me) => me.CurrentState == JobStateType.Running || me.CurrentState == JobStateType.Starting;
 
+        /// <summary>
+		/// Get application provider service
+		/// </summary>
+		/// <param name="me">The current application context.</param>
+		/// <returns>Returns an instance of the <see cref="IApplicationIdentityProviderService"/>.</returns>
+		public static IApplicationIdentityProviderService GetApplicationProviderService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IApplicationIdentityProviderService>();
+        }
+
+        /// <summary>
+        /// Gets the assigning authority repository service.
+        /// </summary>
+        /// <param name="me">The current application context.</param>
+        /// <returns>Returns an instance of the <see cref="IIdentityDomainRepositoryService"/>.</returns>
+        public static IIdentityDomainRepositoryService GetAssigningAuthorityService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IIdentityDomainRepositoryService>();
+        }
+
+        /// <summary>
+        /// Gets the business rules service for a specific information model.
+        /// </summary>
+        /// <typeparam name="T">The type of information for which to retrieve the business rules engine instance.</typeparam>
+        /// <param name="me">The application context.</param>
+        /// <returns>Returns an instance of the business rules service.</returns>
+        public static IBusinessRulesService<T> GetBusinessRulesService<T>(this IApplicationServiceContext me) where T : IdentifiedData
+        {
+            return me.GetService<IBusinessRulesService<T>>();
+        }
+
+        /// <summary>
+        /// Get the concept service.
+        /// </summary>
+        /// <param name="me">The current application context.</param>
+        /// <returns>Returns an instance of the <see cref="IConceptRepositoryService"/>.</returns>
+        public static IConceptRepositoryService GetConceptService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IConceptRepositoryService>();
+        }
+
+        /// <summary>
+        /// Gets the user identifier for a given identity.
+        /// </summary>
+        /// <returns>Returns a string which represents the users identifier, or null if unable to retrieve the users identifier.</returns>
+        public static string GetUserId(IIdentity source)
+        {
+            return GetUserId<string>(source);
+        }
+
+        /// <summary>
+        /// Gets the user identifier for a given identity.
+        /// </summary>
+        /// <typeparam name="T">The type of the identifier of the user.</typeparam>
+        /// <returns>Returns the users identifier, or null if unable to retrieve the users identifier.</returns>
+        public static T GetUserId<T>(IIdentity source) where T : IConvertible
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source), "Value cannot be null");
+            }
+
+            var userId = default(T);
+
+            var nameIdentifierClaimValue = (source as IClaimsIdentity)?.Claims.FirstOrDefault(c => c.Type == SanteDBClaimTypes.NameIdentifier)?.Value;
+
+            if (nameIdentifierClaimValue != null)
+            {
+                userId = (T)Convert.ChangeType(nameIdentifierClaimValue, typeof(T), CultureInfo.InvariantCulture);
+            }
+
+            return userId;
+        }
+
+        /// <summary>
+        /// Convert to policy instance
+        /// </summary>
+        public static SecurityPolicyInstance ToPolicyInstance(this IPolicyInstance me)
+        {
+            return new SecurityPolicyInstance(
+                new SecurityPolicy()
+                {
+                    CanOverride = me.Policy.CanOverride,
+                    Oid = me.Policy.Oid,
+                    Name = me.Policy.Name
+                },
+                (PolicyGrantType)(int)me.Rule
+            );
+        }
     }
 }

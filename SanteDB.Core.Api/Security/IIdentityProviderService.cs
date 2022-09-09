@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
@@ -50,6 +50,14 @@ namespace SanteDB.Core.Security.Services
             get;
             set;
         }
+
+        /// <summary>
+        /// Gets or sets whether the override was successful
+        /// </summary>
+        public new bool Success {
+            get => base.Success;
+            set => base.Success = value; 
+        }
     }
 
     /// <summary>
@@ -74,7 +82,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Indicates success
         /// </summary>
-        public bool Success { get; private set; }
+        public bool Success { get; protected set; }
 
         /// <summary>
         /// Gets or sets the name of the user.
@@ -206,10 +214,6 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         IPrincipal Authenticate(String userName, String password, String tfaSecret);
 
-        /// <summary>
-        /// Perform a re-authentication of the principal
-        /// </summary>
-        IPrincipal ReAuthenticate(IPrincipal principal);
 
         /// <summary>
         /// Change user password
@@ -236,29 +240,10 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         void RemoveClaim(String userName, String claimType, IPrincipal principal);
 
-    }
-
-    /// <summary>
-    /// Represents an identity provider that allows for elevation
-    /// </summary>
-    [Obsolete("Use the ISessionProvider.Establish method")]
-    public interface IElevatableIdentityProviderService : IIdentityProviderService
-    {
-
         /// <summary>
-        /// The caller has requested an override
+        /// Get the SID for the named user
         /// </summary>
-        event EventHandler<SecurityOverrideEventArgs> OverrideRequested;
-
-        /// <summary>
-        /// Requests the currently established principal to be elevated
-        /// </summary>
-        /// <param name="userName">The principal to be elevated</param>
-        /// <param name="password">The password for the principal</param>
-        /// <param name="purpose">The reason for the elevation</param>
-        /// <param name="policies">One or more policies which the principal is seeking override</param>
-        /// <param name="tfaSecret">The TFA secret to include in elevation authentication request</param>
-        IPrincipal ElevatedAuthenticate(String userName, String password, String tfaSecret, String purpose, params String[] policies);
+        Guid GetSid(String name);
     }
 
 }

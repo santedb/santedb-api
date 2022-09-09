@@ -16,10 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Security.Principal;
+using System.Linq;
+using System.Text;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -77,6 +81,11 @@ namespace SanteDB.Core.Security.Claims
         /// Default role claim
         /// </summary>
         public const string DefaultRoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+        /// <summary>
+        /// The x509 thumbprint used to authentication
+        /// </summary>
+        public const string AuthenticationCertificate = "x509sub";
 
         /// <summary>
         /// Granted policy claim
@@ -169,6 +178,32 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public const string Language = "http://santedb.org/claims/language";
 
+        /// <summary>
+        /// Patient identifier claim
+        /// </summary>
+        public const string XUAPatientIdentifierClaim = "urn:oasis:names:tc:xacml:2.0:resource:resource-id";
+        /// <summary>
+        /// Purpose of use claim
+        /// </summary>
+        public const string XspaPurposeOfUseClaim = "urn:oasis:names:tc:xacml:2.0:action:purpose";
+        /// <summary>
+        /// Purpose of use claim
+        /// </summary>
+        public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
+      
+        /// <summary>
+        /// Organization name claim
+        /// </summary>
+        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        /// <summary>
+        /// User identifier claim
+        /// </summary>
+        public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+
+        /// <summary>
+        /// HTTP header for client claims
+        /// </summary>
+        public const string BasicHttpClientClaimHeaderName = "X-SanteDBClient-Claim";
 
     }
 }

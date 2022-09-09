@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Interfaces;
@@ -159,7 +159,7 @@ namespace SanteDB.Core.PubSub.Broker
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
-            this.m_repository.Obsoleted += OnObsoleted;
+            this.m_repository.Deleted += OnDeleted;
 
             this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
             if (this.m_mergeService != null)
@@ -188,7 +188,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// When obsoleted
         /// </summary>
-        protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
+        protected virtual void OnDeleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
             this.EnqueueObject(evt.Data, PubSubEventType.Delete);
         }
@@ -239,7 +239,7 @@ namespace SanteDB.Core.PubSub.Broker
             if (this.m_repository != null)
             {
                 this.m_repository.Inserted -= this.OnInserted;
-                this.m_repository.Obsoleted -= this.OnObsoleted;
+                this.m_repository.Deleted -= this.OnDeleted;
                 this.m_repository.Saved -= this.OnSaved;
                 this.m_repository = null;
             }

@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SanteDB.Core.Exceptions
@@ -34,7 +35,12 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Gets the list of issues set by the BRE 
         /// </summary>
-        public List<DetectedIssue> Issues { get; private set; }
+        public IEnumerable<DetectedIssue> Issues { get; private set; }
+
+        /// <summary>
+        /// Get the message for the error
+        /// </summary>
+        public override string Message => $"{base.Message} - [{String.Join(",", this.Issues.Select(i=>$"{i.Priority}: {i.Text}"))}]";
 
         /// <summary>
         /// Creates a new detected issue exception
@@ -47,7 +53,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified <paramref name="issues"/> 
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues, Exception cause) : this(issues, "Business Rules Violation", cause)
+        public DetectedIssueException(IEnumerable<DetectedIssue> issues, Exception cause) : this(issues, "Business Rules Violation", cause)
         {
 
         }
@@ -55,7 +61,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified <paramref name="issues"/> <paramref name="message"/> and causal exception (<paramref name="innerException"/>)
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues, String message, Exception innerException) : base(message, innerException)
+        public DetectedIssueException(IEnumerable<DetectedIssue> issues, String message, Exception innerException) : base(message, innerException)
         {
             this.Issues = issues;
         }
@@ -63,7 +69,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Creates a new detected issue exception with the specified issue list
         /// </summary>
-        public DetectedIssueException(List<DetectedIssue> issues) : this(issues, "Business Rules Violation", null)
+        public DetectedIssueException(IEnumerable<DetectedIssue> issues) : this(issues, "Business Rules Violation", null)
         {
         }
 

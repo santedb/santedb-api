@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-19
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -214,7 +214,7 @@ namespace SanteDB.Core.Services.Impl
 
                 if (String.IsNullOrEmpty(correlationId))
                 {
-                    queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
+                    queueFile = Directory.EnumerateFiles(queueDirectory).FirstOrDefault();
                 }
                 else
                 {
@@ -341,7 +341,7 @@ namespace SanteDB.Core.Services.Impl
             foreach (var d in Directory.GetDirectories(this.m_configuration.QueuePath))
             {
                 var di = new DirectoryInfo(d);
-                yield return new DispatcherQueueInfo() { Id = Path.GetFileName(d), Name = Path.GetFileName(d), QueueSize = di.GetFiles().Length, CreationTime = di.CreationTime };
+                yield return new DispatcherQueueInfo() { Id = Path.GetFileName(d), Name = Path.GetFileName(d), QueueSize = di.EnumerateFiles().Count(), CreationTime = di.CreationTime };
             }
         }
 
@@ -350,7 +350,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<Queue.DispatcherQueueEntry> GetQueueEntries(string queueName)
         {
-            foreach (var f in Directory.GetFiles(Path.Combine(this.m_configuration.QueuePath, queueName)))
+            foreach (var f in Directory.EnumerateFiles(Path.Combine(this.m_configuration.QueuePath, queueName)))
             {
                 QueueEntry entry = null;
                 try
@@ -375,7 +375,7 @@ namespace SanteDB.Core.Services.Impl
 
             try
             {
-                var filesToRemove = Directory.GetFiles(Path.Combine(this.m_configuration.QueuePath, queueName));
+                var filesToRemove = Directory.EnumerateFiles(Path.Combine(this.m_configuration.QueuePath, queueName));
                 foreach (var f in filesToRemove)
                     File.Delete(f);
             }

@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Runtime.Serialization;
 
 namespace SanteDB.Core.Services
 {
@@ -43,19 +44,19 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Format a <paramref name="stringKey"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String stringKey, dynamic parameters);
+        String GetString(String stringKey, dynamic parameters);
 
         /// <summary>
         /// Format a <paramref name="stringKey"/> from <paramref name="locale"/> with <paramref name="parameters"/>
         /// </summary>
-        String FormatString(String locale, String stringKey, dynamic parameters);
+        String GetString(String locale, String stringKey, dynamic parameters);
 
         /// <summary>
         /// Get all strings in the specified locale
         /// </summary>
         /// <param name="locale"></param>
         /// <returns></returns>
-        KeyValuePair<String, String>[] GetStrings(String locale);
+        IEnumerable<KeyValuePair<String, String>> GetStrings(String locale);
 
         /// <summary>
         /// Reload string definitions

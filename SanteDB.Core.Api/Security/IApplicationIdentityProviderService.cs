@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
@@ -60,15 +61,28 @@ namespace SanteDB.Core.Security.Services
         IPrincipal Authenticate(String applicationId, String applicationSecret);
 
         /// <summary>
+        /// Create a basic identity in the provider
+        /// </summary>
+        /// <param name="applicationName">The username of the identity</param>
+        /// <param name="password">The intitial password of the identity</param>
+        /// <returns>The created identity</returns>
+        /// <param name="principal">The principal that was created</param>
+        IApplicationIdentity CreateIdentity(String applicationName, String password, IPrincipal principal);
+
+        /// <summary>
         /// Gets the specified identity for an application.
         /// </summary>
         /// <param name="name">The name of the application for which to retrieve the identity.</param>
         /// <returns>Returns the identity of the application.</returns>
-        IIdentity GetIdentity(string name);
-
+        IApplicationIdentity GetIdentity(string name);
 
         /// <summary>
-        /// Set the lockout status 
+        /// Gets the SID for the specified identity
+        /// </summary>
+        Guid GetSid(string name);
+
+        /// <summary>
+        /// Set the lockout status
         /// </summary>
         /// <param name="name">The name of the device</param>
         /// <param name="lockoutState">The status of the lockout</param>
@@ -86,6 +100,11 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get the secure key for the specified application (can be used for symmetric encryption)
         /// </summary>
-        byte[] GetSecureKey(String name);
+        byte[] GetPublicSigningKey(String name);
+
+        /// <summary>
+        /// Set the public key for the object
+        /// </summary>
+        void SetPublicKey(string name, byte[] key, IPrincipal principal);
     }
 }

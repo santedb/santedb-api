@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -35,7 +35,6 @@ namespace SanteDB.Core.Data.Quality
     /// </summary>
     public class DataQualityService : IDaemonService
     {
-
         // Configuration
         private DataQualityConfigurationSection m_configuration;
 
@@ -62,7 +61,7 @@ namespace SanteDB.Core.Data.Quality
         }
 
         // Data quality service
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityService));
 
         /// <summary>
         /// Ruleset evaluators
@@ -83,14 +82,17 @@ namespace SanteDB.Core.Data.Quality
         /// Daemon is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Daemon has started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Daemon is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Daemon has stopped
         /// </summary>

@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Serialization;
 using System;
@@ -131,8 +132,87 @@ namespace SanteDB.Core.Configuration
                         throw new ConfigurationException($"Include {fileName} was not found", retVal);
                 }
 
+            // Validate the configuration 
+            var errors = retVal.Sections.OfType<IValidatableConfigurationSection>().SelectMany(o => o.Validate()).Where(d => d.Priority == DetectedIssuePriorityType.Error);
+            if(errors.Any())
+            {
+                throw new ConfigurationException($"Error validating configuration: {String.Join("\r\n", errors.Select(o => o.Text))}", retVal);
+            }
+           
             return retVal;
         }
+
+        /// <summary>
+        /// Validate the specified configuration stream
+        /// </summary>
+        /// <param name="dataStream">The stream which contains the configuration data</param>
+        /// <returns>The list of configuration issues with the stream</returns>
+        public static IEnumerable<DetectedIssue> Validate(Stream dataStream)
+        {
+
+            var configStream = dataStream;
+            if (!configStream.CanSeek)
+            {
+                configStream = new MemoryStream();
+                dataStream.CopyTo(configStream);
+                configStream.Seek(0, SeekOrigin.Begin);
+            }
+
+            // Load the base types
+            var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
+            // Validate the section types
+            foreach (var sct in tbaseConfig.SectionTypes)
+            {
+                if (!sct.IsValid())
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "section", $"Section {sct.TypeXml} is not valid", Guid.Empty);
+                }
+            }
+
+            configStream.Seek(0, SeekOrigin.Begin);
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Where(o=>o.IsValid()).Select(o => o.Type).ToArray());
+
+            // Re-load
+            var config =  xsz.Deserialize(configStream) as SanteDBConfiguration;
+
+            foreach(var xn in config.Sections.OfType<XmlNode[]>().Select(o=>o.First().Value))
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Error, "unknown", $"Section {xn} is unknown", Guid.Empty);
+            }
+
+            if (config.Includes != null)
+            {
+                foreach(var inc in config.Includes)
+                {
+                    if(!File.Exists(inc))
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "include", $"Include {inc} is missing", Guid.Empty);
+                    }
+                    else
+                    {
+                        using(var fs = File.OpenRead(inc))
+                        {
+                            foreach(var itm in SanteDBConfiguration.Validate(fs))
+                            {
+                                yield return new DetectedIssue(itm.Priority, $"include.{itm.Id}", $"({inc}): {itm.Text}", Guid.Empty);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Validate the main section
+            foreach(var sc in config.Sections.OfType<IValidatableConfigurationSection>())
+            {
+                foreach(var itm in sc.Validate())
+                {
+                    yield return new DetectedIssue(itm.Priority, $"section.{itm.Id}", $"(#{sc.GetType().Name}) - {itm.Text}", Guid.Empty);
+                }
+            }
+
+            
+        }
+
 
         /// <summary>
         /// Save the configuration to the specified data stream
@@ -197,7 +277,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public void AddSection<T>(T section)
         {
-            if(section == null)
+            if (section == null)
             {
                 throw new InvalidOperationException("Cannot add a null section");
             }

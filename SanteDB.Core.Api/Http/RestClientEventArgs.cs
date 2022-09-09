@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Net;
 
 namespace SanteDB.Core.Http

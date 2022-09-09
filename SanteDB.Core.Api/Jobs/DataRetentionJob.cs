@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -31,7 +31,7 @@ using System.Linq;
 namespace SanteDB.Core.Jobs
 {
     /// <summary>
-    /// A generic data retention job that reads from the IDataPersistence service and uses 
+    /// A generic data retention job that reads from the IDataPersistence service and uses
     /// the IDataArchive service to retain data
     /// </summary>
     [DisplayName("Data Retention Job")]
@@ -40,12 +40,12 @@ namespace SanteDB.Core.Jobs
         private readonly IJobStateManagerService m_stateManager;
 
         // Tracer 
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataRetentionJob));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataRetentionJob));
 
         // Cancel flag
         private bool m_cancelFlag = false;
 
-        // Configuration 
+        // Configuration
         private DataRetentionConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<DataRetentionConfigurationSection>();
 
         /// <summary>
@@ -106,10 +106,8 @@ namespace SanteDB.Core.Jobs
 
                 var variables = this.m_configuration.Variables.ToDictionary(o => o.Name, o => o.CompileFunc());
 
-
                 for (var ruleIdx = 0; ruleIdx < this.m_configuration.RetentionRules.Count && !this.m_cancelFlag; ruleIdx++)
                 {
-
                     var rule = this.m_configuration.RetentionRules[ruleIdx];
 
                     this.m_tracer.TraceInfo("Running retention rule {0} ({1} {2})", rule.Name, rule.Action, rule.ResourceType.TypeXml);
@@ -120,12 +118,11 @@ namespace SanteDB.Core.Jobs
                     if (persistenceService == null)
                         throw new InvalidOperationException("Cannot locate appropriate persistence service");
 
-
                     // Included keys for retention
                     IEnumerable<Guid> keys = new Guid[0];
                     for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Length; inclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, rule.IncludeExpressions[inclIdx].ParseQueryString(), "rec", variables);
                         this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress));
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
@@ -138,10 +135,10 @@ namespace SanteDB.Core.Jobs
                     // Exclude keys from retention
                     for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Length; exclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, rule.ExcludeExpressions[exclIdx].ParseQueryString(), "rec", variables);
                         this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress));
                         int offset = 0, totalCount = 1;
-                        while (offset < totalCount) // gather the included keys 
+                        while (offset < totalCount) // gather the included keys
                         {
                             keys = keys.Except(persistenceService.QueryKeys(expr, offset, 1000, out totalCount));
                             offset += 1000;
@@ -163,9 +160,11 @@ namespace SanteDB.Core.Jobs
                         case DataRetentionActionType.Obsolete:
                             persistenceService.Obsolete(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
+
                         case DataRetentionActionType.Purge:
                             persistenceService.Purge(TransactionMode.Commit, AuthenticationContext.SystemPrincipal, keys.ToArray());
                             break;
+
                         case DataRetentionActionType.Archive:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Obsolete:
                         case DataRetentionActionType.Archive | DataRetentionActionType.Purge:

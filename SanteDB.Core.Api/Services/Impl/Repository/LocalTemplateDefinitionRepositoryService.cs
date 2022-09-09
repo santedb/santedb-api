@@ -16,31 +16,37 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-9-7
  */
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
+using System.Linq;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Services.Impl.Repository
 {
     /// <summary>
-    /// Represents a repository service for managing assigning authorities.
+    /// Represents a local metadata repository service
     /// </summary>
-    /// <remarks>This specialized <see cref="IRepositoryService"/> is intended to add functionality 
-    /// to make the management of identity domains (<see cref="AssigningAuthority"/>) objects simpler by including 
-    /// methods for getting domains by name and URI</remarks>
-    [System.ComponentModel.Description("Identity Domain Provider")]
-    public interface IAssigningAuthorityRepositoryService : IRepositoryService<AssigningAuthority>
+    public class LocalTemplateDefinitionRepositoryService :
+        GenericLocalMetadataRepository<TemplateDefinition>,
+        ITemplateDefinitionRepositoryService
     {
+        /// <summary>
+        /// Creates a new template repository
+        /// </summary>
+        public LocalTemplateDefinitionRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TemplateDefinition> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        {
+        }
 
         /// <summary>
-        /// Get by domain
+        /// Get a template definition by mnemonic
         /// </summary>
-        AssigningAuthority Get(String domain);
-
-        /// <summary>
-        /// Get assigning authority by uri 
-        /// </summary>
-        AssigningAuthority Get(Uri uri);
+        public TemplateDefinition GetTemplateDefinition(string mnemonic)
+        {
+            return base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
+        }
     }
 }

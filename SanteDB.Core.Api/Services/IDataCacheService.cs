@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
 using System;
@@ -132,5 +132,10 @@ namespace SanteDB.Core.Services
         /// Gets the current size of the cache in objects
         /// </summary>
         long Size { get; }
+
+        /// <summary>
+        /// Returns true if the specified cache item exists
+        /// </summary>
+        bool Exists<TData>(Guid id) where TData : IdentifiedData; 
     }
 }

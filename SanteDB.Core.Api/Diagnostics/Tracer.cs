@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -81,6 +81,17 @@ namespace SanteDB.Core.Diagnostics
             {
                 //    if (level <= w.Value || w.Value == EventLevel.LogAlways)
                 w.Key.TraceEvent(level, this.m_source, format, args);
+            }
+        }
+
+        /// <summary>
+        /// Trace structured data into the log
+        /// </summary>
+        public void TraceData(EventLevel level, String message, params object[] data)
+        {
+            foreach (var w in m_writers.ToArray())
+            {
+                w.Key.TraceEventWithData(level, this.m_source, message, data);
             }
         }
 

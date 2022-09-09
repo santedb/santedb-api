@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using System;
@@ -97,7 +97,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         /// <param name="providerName">The name of the regisered provider (see: OrmConfigurationSection for defining provider invariant names)</param>
         /// <param name="values">The values for the connection string expressed as a dictionary of key-value pairs rather than a string</param>
-        public ConnectionString(String providerName, Dictionary<String, Object> values)
+        public ConnectionString(String providerName, IDictionary<String, Object> values)
         {
             this.Provider = providerName;
             this.Value = String.Empty;

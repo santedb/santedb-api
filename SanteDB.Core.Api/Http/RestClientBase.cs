@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
@@ -30,6 +31,7 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -110,22 +112,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="query">The query to be sent to the server</param>
         /// <returns>The query string</returns>
-        public static String CreateQueryString(NameValueCollection query)
-        {
-            String queryString = String.Empty;
-            foreach (var kv in query)
-            {
-                foreach (var v in kv.Value)
-                {
-                    if (v == null) continue;
-                    queryString += String.Format("{0}={1}&", kv.Key, Uri.EscapeDataString(v));
-                }
-            }
-            if (queryString.Length > 0)
-                return queryString.Substring(0, queryString.Length - 1);
-            else
-                return queryString;
-        }
+        public static String CreateQueryString(NameValueCollection query) => query.ToHttpString();
 
         /// <summary>
         /// Create the HTTP request
@@ -135,7 +122,7 @@ namespace SanteDB.Core.Http
         protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
-            if (this.Description.Endpoint.Count == 0)
+            if (this.Description.Endpoint.IsNullOrEmpty())
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
@@ -222,7 +209,7 @@ namespace SanteDB.Core.Http
 
             try
             {
-                var requestEventArgs = new RestRequestEventArgs("GET", url, new NameValueCollection(query), null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, query.ToNameValueCollection(), null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -266,7 +253,7 @@ namespace SanteDB.Core.Http
                                 switch (o.Result.Headers["Content-Encoding"])
                                 {
                                     case "deflate":
-                                        using (var dfs = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var dfs = new DeflateStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             dfs.CopyTo(oms);
@@ -275,7 +262,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "gzip":
-                                        using (var gzs = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var gzs = new GZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             gzs.CopyTo(oms);
@@ -284,7 +271,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "bzip2":
-                                        using (var lzmas = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                        using (var lzmas = new BZip2Stream(NonDisposingStream.Create(ms), CompressionMode.Decompress, false))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
@@ -293,7 +280,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "lzma":
-                                        using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var lzmas = new LZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
@@ -384,7 +371,7 @@ namespace SanteDB.Core.Http
             {
                 if (query != null)
                 {
-                    parameters = new NameValueCollection(query);
+                    parameters = query.ToNameValueCollection();
                 }
 
                 var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
@@ -587,7 +574,7 @@ namespace SanteDB.Core.Http
             {
                 if (query != null)
                 {
-                    parameters = new NameValueCollection(query);
+                    parameters = query.ToNameValueCollection();
                 }
 
                 var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, parameters, null, null);

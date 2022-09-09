@@ -16,33 +16,38 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-namespace SanteDB.Core.Http.Description
+using SanteDB.Core.Http.Description;
+using System.IO;
+
+namespace SanteDB.Core.Http.Compression
 {
     /// <summary>
-    /// Certificate description
+    /// Represents a compression scheme
     /// </summary>
-    public interface IRestClientCertificateDescription
+    public interface ICompressionScheme
     {
-        /// <summary>
-        /// Gets the type of find algorithm of X509FindType
-        /// </summary>
-        string FindType { get; }
 
         /// <summary>
-        /// Gets the find value
+        /// Get the encoding 
         /// </summary>
-        string FindValue { get; }
+        string AcceptHeaderName { get; }
 
         /// <summary>
-        /// Gets the location of the certificate store
+        /// Gets the method this compression scheme implements
         /// </summary>
-        string StoreLocation { get; }
+        HttpOptimizationMethod ImplementedMethod { get; }
 
         /// <summary>
-        /// Gets the name of the certificate store
+        /// Create a stream that compresses
         /// </summary>
-        string StoreName { get; }
+        Stream CreateCompressionStream(Stream underlyingStream);
+        /// <summary>
+        /// Create a stream that de-compresses
+        /// </summary>
+        Stream CreateDecompressionStream(Stream underlyingStream);
     }
+
+
 }

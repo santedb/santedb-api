@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -41,7 +41,7 @@ namespace SanteDB.Core.Jobs
     public class DefaultJobManagerService : IJobManagerService, IServiceFactory
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
 
         // Thread pool
         private IThreadPoolService m_threadPool;
@@ -307,7 +307,8 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Returns true when the service is running
         /// </summary>
-        public bool IsRunning { get { return this.m_systemTimer != null; } }
+        public bool IsRunning
+        { get { return this.m_systemTimer != null; } }
 
         /// <summary>
         /// Get the jobs

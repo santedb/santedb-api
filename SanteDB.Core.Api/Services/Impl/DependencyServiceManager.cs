@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -75,7 +75,7 @@ namespace SanteDB.Core.Services.Impl
         private class ServiceInstanceInformation : IDisposable
         {
             // Tracer
-            private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
+            private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
 
             // Singleton instance
             private object m_singletonInstance = null;
@@ -171,13 +171,14 @@ namespace SanteDB.Core.Services.Impl
         public DependencyServiceManager()
         {
             this.AddServiceProvider(this);
+            this.AddServiceFactory(new DefaultServiceFactory(this));
         }
 
         // Disposed?
         private bool m_isDisposed = false;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
 
         // Lock for the sync
         private object m_lock = new object();
@@ -299,7 +300,8 @@ namespace SanteDB.Core.Services.Impl
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
-                                    this.m_cachedServices.TryAdd(serviceType, candidateService);
+                                    this.AddCacheServices(candidateService);
+
                                     break;
                                 }
                             }
@@ -310,10 +312,23 @@ namespace SanteDB.Core.Services.Impl
                         }
                     }
                     if (candidateService != null)
-                        this.m_cachedServices.TryAdd(serviceType, candidateService);
+                    {
+                        this.AddServiceProvider(candidateService);
+                    }
                 }
             }
             return candidateService?.GetInstance();
+        }
+
+        /// <summary>
+        /// Add service <paramref name="candidateService"/> to cached services
+        /// </summary>
+        private void AddCacheServices(ServiceInstanceInformation candidateService)
+        {
+            foreach (var itm in candidateService.ImplementedServices)
+            {
+                this.m_cachedServices.TryAdd(itm, candidateService);
+            }
         }
 
         /// <summary>
@@ -655,6 +670,26 @@ namespace SanteDB.Core.Services.Impl
                     this.m_serviceFactories.Add(serviceFactory);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create all instances of <typeparamref name="T"/>
+        /// </summary>
+        public IEnumerable<T> CreateAll<T>(params object[] parms)
+        {
+            return this.GetAllTypes().Where(t => typeof(T).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(t =>
+                {
+                    try
+                    {
+                        return Activator.CreateInstance(t, parms);
+                    }
+                    catch
+                    {
+                        return Activator.CreateInstance(t);
+                    }
+                })
+                .OfType<T>();
         }
     }
 }

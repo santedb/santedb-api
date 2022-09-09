@@ -16,34 +16,32 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-9-7
  */
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using System.Security.Principal;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Services.Impl.Repository
 {
     /// <summary>
-    /// Represents a session identity service that can provide identities
+    /// Alter policies
     /// </summary>
-    [System.ComponentModel.Description("Session Authentication Provider")]
-    public interface ISessionIdentityProviderService : IServiceImplementation
+    public class LocalSecurityPolicyRepository : GenericLocalSecurityRepository<SecurityPolicy>
     {
-
         /// <summary>
-        /// Authenticate based on session
+        /// DI constructor
         /// </summary>
-        /// <param name="session">The session which is being sought for authentication</param>
-        /// <returns>The authenticated principal</returns>
-        IPrincipal Authenticate(ISession session);
+        public LocalSecurityPolicyRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<SecurityPolicy> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        {
+        }
 
-
-        /// <summary>
-        /// Gets an un-authenticated principal from the specified session
-        /// </summary>
-        /// <param name="session">The session to get an authenticated principal from</param>
-        /// <returns>The unauthenticated principal</returns>
-        IIdentity[] GetIdentities(ISession session);
-
+        /// <inheritdoc/>
+        protected override string WritePolicy => PermissionPolicyIdentifiers.AlterPolicy;
+        /// <inheritdoc/>
+        protected override string DeletePolicy => PermissionPolicyIdentifiers.AlterPolicy;
+        /// <inheritdoc/>
+        protected override string AlterPolicy => PermissionPolicyIdentifiers.AlterPolicy;
     }
 }

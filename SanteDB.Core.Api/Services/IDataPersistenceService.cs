@@ -16,10 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections;
@@ -38,17 +40,169 @@ namespace SanteDB.Core.Services
         /// Inherit the persistence mode from a parent context
         /// </summary>
         None,
+
         /// <summary>
         /// Debug mode, this means nothing is actually committed to the database
         /// </summary>
         Rollback,
+
         /// <summary>
         /// Production, everything is for reals
         /// </summary>
         Commit
     }
 
+    /// <summary>
+    /// Specified the method of deletion
+    /// </summary>
+    [Flags]
+    public enum DeleteMode
+    {
 
+        /// <summary>
+        /// The record is logically deleted meaning the obsolete time is set and (if <see cref="IVersionedData"/> no new version is created
+        /// </summary>
+        LogicalDelete = 0,
+
+        /// <summary>
+        /// Permanently delete - it should be purged from the database
+        /// </summary>
+        PermanentDelete = 1
+
+    }
+
+    /// <summary>
+    /// Load strategy
+    /// </summary>
+    public enum LoadMode
+    {
+        /// <summary>
+        /// Quick loading - No properties are loaded and the caller must load
+        /// </summary>
+        QuickLoad = 0,
+
+        /// <summary>
+        /// Sync loading - only properties which are necessary for synchronization
+        /// </summary>
+        SyncLoad = 1,
+
+        /// <summary>
+        /// Full loading - load all properties
+        /// </summary>
+        FullLoad = 2
+    }
+
+    /// <summary>
+    /// A query context class that allows the caller to specify / override the load settings for the .Query() methods
+    /// </summary>
+    public class DataPersistenceControlContext : IDisposable
+    {
+        // The current query context
+        [ThreadStatic]
+        private static DataPersistenceControlContext m_current;
+
+        // Loading mode
+        private readonly LoadMode? m_loadMode;
+
+        // Delete mode
+        private readonly DeleteMode? m_deleteMode;
+
+        // Wrapped
+        private readonly DataPersistenceControlContext m_wrapped;
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(LoadMode loadingMode, DataPersistenceControlContext wrapped)
+        {
+            this.m_loadMode = loadingMode;
+            this.m_wrapped = wrapped;
+        }
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(DeleteMode deleteMode, DataPersistenceControlContext wrapped)
+        {
+            this.m_deleteMode = deleteMode;
+            this.m_wrapped = wrapped;
+
+        }
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, DataPersistenceControlContext wrapped)
+        {
+            this.m_deleteMode = deleteMode;
+            this.m_loadMode = loadMode;
+            this.m_wrapped = wrapped;
+        }
+
+        /// <summary>
+        /// Gets the current query context
+        /// </summary>
+        public static DataPersistenceControlContext Current => m_current;
+
+        /// <summary>
+        /// Get the name
+        /// </summary>
+        public String Name { get; private set; }
+
+        /// <summary>
+        /// Gets this context's load mode
+        /// </summary>
+        public LoadMode? LoadMode => this.m_loadMode;
+
+        /// <summary>
+        /// Gets this context's deletion mode
+        /// </summary>
+        public DeleteMode? DeleteMode => this.m_deleteMode;
+
+        /// <summary>
+        /// Sets the current loading mode
+        /// </summary>
+        /// <param name="loadMode"></param>
+        /// <returns></returns>
+        public static DataPersistenceControlContext Create(LoadMode loadMode)
+        {
+            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current)
+            {
+                Name = m_current?.Name
+            };
+            return m_current;
+        }
+
+        /// <summary>
+        /// Sets the current deletion mode for all persistence requests on this thread (or until a wrapped context is done)
+        /// </summary>
+        /// <param name="deleteMode">The mode of deletion</param>
+        public static DataPersistenceControlContext Create(DeleteMode deleteMode)
+        {
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current)
+            {
+                Name = m_current?.Name
+            };
+            return m_current;
+        }
+
+        /// <summary>
+        /// Add name to the current value
+        /// </summary>
+        public DataPersistenceControlContext WithName(String name)
+        {
+            m_current.Name = name;
+            return m_current;
+        }
+
+        /// <summary>
+        /// Unload the current
+        /// </summary>
+        public void Dispose()
+        {
+            m_current = m_wrapped;
+        }
+    }
 
     /// <summary>
     /// Represents a data persistence service which is capable of storing and retrieving data
@@ -60,30 +214,37 @@ namespace SanteDB.Core.Services
         /// Occurs when inserted.
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TData>> Inserted;
+
         /// <summary>
         /// Occurs when inserting.
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TData>> Inserting;
+
         /// <summary>
         /// Occurs when updated.
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TData>> Updated;
+
         /// <summary>
         /// Occurs when updating.
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TData>> Updating;
+
         /// <summary>
         /// Occurs when obsoleted.
         /// </summary>
-        event EventHandler<DataPersistedEventArgs<TData>> Obsoleted;
+        event EventHandler<DataPersistedEventArgs<TData>> Deleted;
+
         /// <summary>
         /// Occurs when obsoleting.
         /// </summary>
-        event EventHandler<DataPersistingEventArgs<TData>> Obsoleting;
+        event EventHandler<DataPersistingEventArgs<TData>> Deleting;
+
         /// <summary>
         /// Occurs when queried.
         /// </summary>
         event EventHandler<QueryResultEventArgs<TData>> Queried;
+
         /// <summary>
         /// Occurs when querying.
         /// </summary>
@@ -104,40 +265,76 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">Data.</param>
         /// <param name="principal">The principal which is executing the insert</param>
-        /// <param name="mode">The mode of insert (commit or rollback for testing)</param>
-        TData Insert(TData data, TransactionMode mode, IPrincipal principal);
+        /// <param name="transactionMode">The mode of insert (commit or rollback for testing)</param>
+        TData Insert(TData data, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
         /// Update the specified data
         /// </summary>
         /// <param name="data">Data.</param>
-        /// <param name="mode">The mode of update (commit or rollback)</param>
+        /// <param name="transactionMode">The mode of update (commit or rollback)</param>
         /// <param name="principal">The principal which is executing the operation</param>
-        TData Update(TData data, TransactionMode mode, IPrincipal principal);
+        TData Update(TData data, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
-        /// Obsolete the specified identified data
+        /// Delete the specified identified data
         /// </summary>
-        /// <param name="data">Data.</param>
-        /// <param name="principal">The security principal which is executing the obsolete</param>
-        /// <param name="mode">The transaction mode (commit or rollback)</param>
-        TData Obsolete(TData data, TransactionMode mode, IPrincipal principal);
+        /// <param name="key">The identifier/key of the data to be deleted</param>
+        /// <param name="principal">The principal which is deleting the data</param>
+        /// <param name="transactionMode">The transaction mode</param>
+        /// <remarks>
+        /// <para>
+        /// This method will attempt to delete data according to the currently scoped <see cref="DataPersistenceControlContext"/>.
+        /// </para>
+        /// <list type="table">
+        ///     <item>
+        ///         <term>LogicalDelete</term>
+        ///         <description>The persistence layer should attempt to logically delete the record. This means that the record should not appear in queries, nor direct retrieves</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>PermanentDelete</term>
+        ///         <description>The persistence layer should purge the data from the database</description>
+        ///     </item>
+        /// </list>
+        /// <para>
+        /// The <see cref="DataPersistenceControlContext.DeleteMode"/> is a suggestion to the persistence layer, generally the closest, most appropriate value
+        /// is chosen based on:
+        /// </para>
+        /// <list type="bullet">
+        ///     <item>Whether the <typeparamref name="TData"/> class can be logically deleted (i.e. does it carry the necessary fields to support deletion)</item>
+        ///     <item>Whether there are other references to the object</item>
+        ///     <item>Whether the configuration for the persistence layer permits logical deletion</item>
+        /// </list>
+        /// </remarks>
+        TData Delete(Guid key, TransactionMode transactionMode, IPrincipal principal);
 
         /// <summary>
-        /// Get the object specified <paramref name="key"/>.
+        /// Get the object with identifier <paramref name="key"/>.
         /// </summary>
-        /// <param name="key">Key.</param>
+        /// <param name="key">The identifier of the object to fetch</param>
         /// <param name="principal">The security principal which is executing the retrieve</param>
-        /// <param name="loadFast">If true, the data should not be deep loaded</param>
         /// <param name="versionKey">The version of the oject to fetch</param>
-        TData Get(Guid key, Guid? versionKey, bool loadFast, IPrincipal principal);
+        /// <remarks>
+        /// This method will retrieve the record of type <typeparamref name="TData"/> from the database regardless of its state. If the
+        /// record is logically deleted, or indicated as inactive (i.e. would not appear in a result set), this method will still
+        /// retrieve the data from the database.
+        /// </remarks>
+        TData Get(Guid key, Guid? versionKey, IPrincipal principal);
 
         /// <summary>
-        /// Query the specified data
+        /// Query for <typeparamref name="TData"/> whose current version matches <paramref name="query"/>
         /// </summary>
         /// <param name="query">Query.</param>
         /// <param name="principal">The principal under which the query is occurring</param>
-        IEnumerable<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
+        /// <remarks>
+        /// <para>This method will query for all records of type <typeparamref name="TData"/>. By default the query will
+        /// only return active records, unless a status parameter is passed, in which case records matching the
+        /// requested status will be returned.</para>
+        /// <para>The result of this call is an <see cref="IQueryResultSet{TData}"/>, this class supports delayed execution
+        /// and yielded returns of records. This means that each call to methods on the return value may result in a
+        /// query to the database.</para>
+        /// </remarks>
+        IQueryResultSet<TData> Query(Expression<Func<TData, bool>> query, IPrincipal principal);
 
         /// <summary>
         /// Query the specified data
@@ -148,14 +345,14 @@ namespace SanteDB.Core.Services
         /// <param name="count">The count of results to include in the response set</param>
         /// <param name="offset">The offset of the first result</param>
         /// <param name="principal">The security principal under which the query is occurring</param>
+        [Obsolete("Use Query(query, principal) instead", true)]
         IEnumerable<TData> Query(Expression<Func<TData, bool>> query, int offset, int? count, out int totalResults, IPrincipal principal, params ModelSort<TData>[] orderBy);
 
         /// <summary>
         /// Performs a fast count
         /// </summary>
-        long Count(Expression<Func<TData, bool>> p, IPrincipal authContext = null);
-
-
+        [Obsolete("Use Query(Expression).Count()", true)]
+        long Count(Expression<Func<TData, bool>> query, IPrincipal authContext = null);
     }
 
     /// <summary>
@@ -176,7 +373,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Obsoletes the specified data
         /// </summary>
-        Object Obsolete(Object data);
+        Object Delete(Guid id);
 
         /// <summary>
         /// Gets the specified data
@@ -186,7 +383,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Query based on the expression given
         /// </summary>
+        [Obsolete("Use Query(Expression query)", false)]
         IEnumerable Query(Expression query, int offset, int? count, out int totalResults);
-    }
 
+        /// <summary>
+        /// Query the specified expression
+        /// </summary>
+        IQueryResultSet Query(Expression query);
+    }
 }

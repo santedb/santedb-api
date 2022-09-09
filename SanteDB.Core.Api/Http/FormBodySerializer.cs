@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Query;
@@ -57,7 +57,7 @@ namespace SanteDB.Core.Http
     /// </summary>
     public class FormBodySerializer : IBodySerializer
     {
-        private Tracer m_tracer = Tracer.GetTracer(typeof(FormBodySerializer));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FormBodySerializer));
 
         /// <summary>
         /// Gets the underlying serializer
@@ -104,7 +104,7 @@ namespace SanteDB.Core.Http
         {
             using (StreamReader sr = new StreamReader(s))
             {
-                return NameValueCollection.ParseQueryString(sr.ReadToEnd());
+                return sr.ReadToEnd().ParseQueryString();
             }
         }
 

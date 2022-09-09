@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Subscription;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace SanteDB.Core.Services
 {
@@ -35,7 +36,7 @@ namespace SanteDB.Core.Services
     /// from the <see cref="ISubscriptionRepository"/> to the appropriate database technology. The subscription executor
     /// gathers any new records requested by the dCDR and prepares them for download by the dCDR.</para>
     /// </remarks>
-    [System.ComponentModel.Description("dCDR Subscription Execution Provider")]
+    [System.ComponentModel.Description("dCDR Server Named Query Provider")]
     public interface ISubscriptionExecutor : IServiceImplementation
     {
 
@@ -54,14 +55,14 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Executes the identified subscription agianst the persistence layer.
         /// </summary>
-        /// <param name="subscriptionKey">The key of the subscription to run</param>
+        /// <param name="queryDefinitionKey">The key of the query definition to run</param>
         /// <param name="parameters">The parameters from the query</param>
         /// <param name="offset">The start record</param>
         /// <param name="count">The number of records</param>
         /// <param name="totalResults">The total results in the subscription</param>
         /// <param name="queryId">The query identifier</param>
         /// <returns>The results from the execution</returns>
-        IEnumerable<Object> Execute(Guid subscriptionKey, NameValueCollection parameters, int offset, int? count, out int totalResults, Guid queryId);
+        IEnumerable<Object> Execute(Guid queryDefinitionKey, NameValueCollection parameters, int offset, int? count, out int totalResults, Guid queryId);
 
         /// <summary>
         /// Executes the provided subscription definition

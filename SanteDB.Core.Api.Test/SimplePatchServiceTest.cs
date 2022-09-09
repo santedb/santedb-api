@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2022-5-30
  */
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -463,7 +463,7 @@ namespace SanteDB.Core.Api.Test
             // Should not update source
             Assert.AreEqual(2, a.Names.Count);
             Assert.AreEqual(2, a.Identifiers.Count);
-            Assert.AreEqual(0, a.Addresses.Count);
+            Assert.IsEmpty(a.Addresses);
             Assert.AreEqual(1, a.Tags.Count);
             Assert.AreEqual("VALUE", a.Tags[0].Value);
             Assert.AreEqual(a.VersionKey, patch.Operation[1].Value);

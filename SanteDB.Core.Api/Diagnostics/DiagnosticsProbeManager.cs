@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Services;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,11 +90,10 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Find the specified performance counters
         /// </summary>
-        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query, int offset, int? count, out int totalResults)
+        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query)
         {
             var matches = this.m_probes.Where(query);
-            totalResults = matches.Count();
-            return matches.Skip(offset).Take(count ?? 100);
+            return matches;
         }
 
         /// <summary>

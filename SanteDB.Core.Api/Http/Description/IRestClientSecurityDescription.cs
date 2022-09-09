@@ -16,8 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using System.Collections;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
+
 namespace SanteDB.Core.Http.Description
 {
     /// <summary>
@@ -38,12 +42,17 @@ namespace SanteDB.Core.Http.Description
         /// <summary>
         /// Gets the certificate
         /// </summary>
-        IRestClientCertificateDescription ClientCertificate { get; }
+        X509Certificate2 ClientCertificate { get; }
 
         /// <summary>
         /// Gets the credential provider
         /// </summary>
         ICredentialProvider CredentialProvider { get; }
+
+        /// <summary>
+        /// Credential provider parameters
+        /// </summary>
+        IDictionary<string, string> CredentialProviderParameters { get; }
 
         /// <summary>
         /// Gets or sets the mode of security

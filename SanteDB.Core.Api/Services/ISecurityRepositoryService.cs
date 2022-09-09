@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
@@ -144,11 +145,11 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the data object for the provided <paramref name="principal"/>
         /// </summary>
-        SecurityEntity GetSecurityEntity(IPrincipal principal);
+        IdentifiedData GetSecurityEntity(IPrincipal principal);
 
         /// <summary>
         /// Find provenance objects matching the specified object
         /// </summary>
-        IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy);
+        IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query);
     }
 }

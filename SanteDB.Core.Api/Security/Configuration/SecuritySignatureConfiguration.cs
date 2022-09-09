@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using System;
@@ -191,10 +191,12 @@ namespace SanteDB.Core.Security.Configuration
             var key = cryptoService.GetContextKey();
 
             var data = cryptoService.Encrypt(secret, key, iv);
+            
             this.m_secret = new byte[data.Length + iv.Length + 1];
             this.m_secret[0] = (byte)iv.Length;
             Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
             Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
+            //this.m_plainTextSecret = String.Empty;
             return true;
         }
 

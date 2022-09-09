@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using System;
@@ -40,7 +40,7 @@ namespace SanteDB.Core.Services.Impl
         public String ServiceName => ".NET Thread Pool Integration";
 
         // Tracer for thread pool
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         // Dispatched workers
         private int m_dispatchedWorkers = 0;

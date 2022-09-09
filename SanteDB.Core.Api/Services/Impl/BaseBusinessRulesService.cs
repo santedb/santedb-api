@@ -16,24 +16,23 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace SanteDB.Core.Services
 {
-
     /// <summary>
     /// Business rule extensions
     /// </summary>
     public static class BusinessRulesExtensions
     {
-
         /// <summary>
         /// Add a business rule service to this instance of me or the next instance
         /// </summary>
@@ -82,9 +81,7 @@ namespace SanteDB.Core.Services
             }
             else
                 return cbre;
-
         }
-
     }
 
     /// <summary>
@@ -93,7 +90,6 @@ namespace SanteDB.Core.Services
     /// </summary>
     public abstract class BaseBusinessRulesService<TModel> : IBusinessRulesService<TModel> where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -128,9 +124,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// After obsolete
         /// </summary>
-        public virtual TModel AfterObsolete(TModel data)
+        public virtual TModel AfterDelete(TModel data)
         {
-            return this.Next?.AfterObsolete(data) ?? data;
+            return this.Next?.AfterDelete(data) ?? data;
         }
 
         /// <summary>
@@ -138,7 +134,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public object AfterObsolete(object data)
         {
-            return this.AfterObsolete((TModel)data);
+            return this.AfterDelete((TModel)data);
         }
 
         /// <summary>
@@ -146,7 +142,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="results"></param>
         /// <returns></returns>
-        public virtual IEnumerable<TModel> AfterQuery(IEnumerable<TModel> results)
+        public virtual IQueryResultSet<TModel> AfterQuery(IQueryResultSet<TModel> results)
         {
             return this.Next?.AfterQuery(results) ?? results;
         }
@@ -154,9 +150,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// After query
         /// </summary>
-        public IEnumerable<object> AfterQuery(IEnumerable<object> results)
+        public IQueryResultSet AfterQuery(IQueryResultSet results)
         {
-            return this.AfterQuery(results.OfType<TModel>());
+            return this.Next?.AfterQuery(results) ?? results;
         }
 
         /// <summary>
@@ -210,9 +206,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Before obselete
         /// </summary>
-        public virtual TModel BeforeObsolete(TModel data)
+        public virtual TModel BeforeDelete(TModel data)
         {
-            return this.Next?.BeforeObsolete(data) ?? data;
+            return this.Next?.BeforeDelete(data) ?? data;
         }
 
         /// <summary>
@@ -220,8 +216,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         public object BeforeObsolete(object data)
         {
-            return this.BeforeObsolete((TModel)data);
-
+            return this.BeforeDelete((TModel)data);
         }
 
         /// <summary>

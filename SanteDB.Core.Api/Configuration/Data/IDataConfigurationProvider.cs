@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Services;
 using System;
@@ -82,7 +82,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         /// <param name="options">The options to be set on the connection string</param>
         /// <returns>The constructed <see cref="ConnectionString"/> instance</returns>
-        ConnectionString CreateConnectionString(Dictionary<String, Object> options);
+        ConnectionString CreateConnectionString(IDictionary<String, Object> options);
 
         /// <summary>
         /// Parse the specified connection string into a dictionary of key/value pairs

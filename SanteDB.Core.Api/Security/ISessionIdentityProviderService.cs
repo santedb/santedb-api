@@ -16,26 +16,35 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Query;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+using SanteDB.Core.Security;
 using System.Security.Principal;
+using SanteDB.Core.Services;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
-    /// Represents a data persistence provider that can store and continue queries
+    /// Represents a session identity service that can provide identities
     /// </summary>
-    public interface IStoredQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
-        where TEntity : IdentifiedData
+    [System.ComponentModel.Description("Session Authentication Provider")]
+    public interface ISessionIdentityProviderService : IServiceImplementation
     {
+
         /// <summary>
-        /// Queries or continues a query 
+        /// Authenticate based on session
         /// </summary>
-        IEnumerable<TEntity> Query(Expression<Func<TEntity, bool>> query, Guid queryId, int offset, int? count, out int totalCount, IPrincipal overrideAuthContext, params ModelSort<TEntity>[] orderBy);
+        /// <param name="session">The session which is being sought for authentication</param>
+        /// <returns>The authenticated principal</returns>
+        IPrincipal Authenticate(ISession session);
+
+
+        /// <summary>
+        /// Gets an un-authenticated principal from the specified session
+        /// </summary>
+        /// <param name="session">The session to get an authenticated principal from</param>
+        /// <returns>The unauthenticated principal</returns>
+        IIdentity[] GetIdentities(ISession session);
+
     }
 }

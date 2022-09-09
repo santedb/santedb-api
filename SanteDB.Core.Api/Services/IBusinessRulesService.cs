@@ -16,24 +16,23 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace SanteDB.Core.Services
 {
-
     /// <summary>
     /// Represents a generic interface for business rules services
     /// </summary>
     [System.ComponentModel.Description("Business Rules Engine")]
     public interface IBusinessRulesService
     {
-
         /// <summary>
         /// Gets the next BRE
         /// </summary>
@@ -54,7 +53,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Called after query
         /// </summary>
-        IEnumerable<Object> AfterQuery(IEnumerable<Object> results);
+        IQueryResultSet AfterQuery(IQueryResultSet results);
 
         /// <summary>
         /// Called after retrieve
@@ -127,7 +126,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">The data which was obsoleted</param>
         /// <returns>The data which is to be returned to the caller</returns>
-        TModel AfterObsolete(TModel data);
+        TModel AfterDelete(TModel data);
 
         /// <summary>
         /// Called after a query has been executed
@@ -136,7 +135,7 @@ namespace SanteDB.Core.Services
         /// of objects based on custom business logic</remarks>
         /// <param name="results">The results of the query</param>
         /// <returns>The modified query results</returns>
-        IEnumerable<TModel> AfterQuery(IEnumerable<TModel> results);
+        IQueryResultSet<TModel> AfterQuery(IQueryResultSet<TModel> results);
 
         /// <summary>
         /// Called after retrieve of an object
@@ -168,7 +167,7 @@ namespace SanteDB.Core.Services
         /// <returns>The data object to be passed to the persistence layer for obsoletion</returns>
         /// <remarks>Implementers can use this method to change tags, states, extensions or notes on the object prior to the object being 
         /// committed to the data persistence layer.</remarks>
-        TModel BeforeObsolete(TModel data);
+        TModel BeforeDelete(TModel data);
 
         /// <summary>
         /// Called before an update occurs
@@ -186,7 +185,5 @@ namespace SanteDB.Core.Services
         /// <param name="data">The data which is to be validated</param>
         /// <returns>A list of <see cref="DetectedIssue"/> instances which represent the validation statements.</returns>
         List<DetectedIssue> Validate(TModel data);
-
     }
-
 }

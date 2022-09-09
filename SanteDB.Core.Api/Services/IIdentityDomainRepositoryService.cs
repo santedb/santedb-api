@@ -16,26 +16,31 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Model;
+using SanteDB.Core.Model.DataTypes;
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents a query repository service which can find lean queries
+    /// Represents a repository service for managing assigning authorities.
     /// </summary>
-    public interface IFastQueryRepositoryService<TEntity> : IPersistableQueryRepositoryService<TEntity>
-        where TEntity : IdentifiedData
+    /// <remarks>This specialized <see cref="IRepositoryService"/> is intended to add functionality 
+    /// to make the management of identity domains (<see cref="IdentityDomain"/>) objects simpler by including 
+    /// methods for getting domains by name and URI</remarks>
+    [System.ComponentModel.Description("Identity Domain Provider")]
+    public interface IIdentityDomainRepositoryService : IRepositoryService<IdentityDomain>
     {
 
         /// <summary>
-        /// Perform a quick search (instructs the data persistence layer not to load as many properties)
+        /// Get by domain
         /// </summary>
-        IEnumerable<TEntity> FindFast(Expression<Func<TEntity, bool>> query, int offset, int? count, out int totalResults, Guid queryId);
+        IdentityDomain Get(String domain);
 
+        /// <summary>
+        /// Get assigning authority by uri 
+        /// </summary>
+        IdentityDomain Get(Uri uri);
     }
 }

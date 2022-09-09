@@ -16,8 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Model.Map;
+
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -46,6 +48,11 @@ namespace SanteDB.Core.Services
         /// Get all services
         /// </summary>
         IEnumerable<object> GetServices();
+
+        /// <summary>
+        /// Creates all instances 
+        /// </summary>
+        IEnumerable<T> CreateAll<T>(params object[] parms);
 
         /// <summary>
         /// Removes a service provider

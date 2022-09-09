@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,6 @@ namespace SanteDB.Core.Security
     [System.ComponentModel.Description("Data Privacy Enforcement Provider")]
     public interface IPrivacyEnforcementService : IServiceImplementation
     {
-
         /// <summary>
         /// Applies the privacy policies attached to the provided data such that a disclosure to the provided principal would
         /// not compromise patient privacy.
@@ -74,7 +74,7 @@ namespace SanteDB.Core.Security
         /// <param name="data">The results which are about to be disclosed to <paramref name="principal"/></param>
         /// <param name="principal">The security principal to which the <paramref name="data"/> is being disclosed</param>
         /// <returns>The data which will actually be disclosed</returns>
-        IEnumerable<TData> Apply<TData>(IEnumerable<TData> data, IPrincipal principal) where TData : IdentifiedData;
+        IQueryResultSet<TData> Apply<TData>(IQueryResultSet<TData> data, IPrincipal principal) where TData : IdentifiedData;
 
         /// <summary>
         /// Determine if the record provided contains data that the user <paramref name="principal"/>
@@ -100,7 +100,7 @@ namespace SanteDB.Core.Security
         ///     <item>The query is not using fields which have been configured as forbidden by the jurisdiction</item>
         ///     <item>The query does not contain explicit queries for data which, when masked, would indicate the condition. For example,
         ///     if records contain a policy "HIDE HIV programme identifiers", the disclosure of the identifier would be protected via
-        ///     the <see cref="Apply{TData}(IEnumerable{TData}, IPrincipal)"/> method, however, if a principal explicitly queried
+        ///     the <see cref="Apply{TData}(IQueryResultSet{TData}, IPrincipal)"/> method, however, if a principal explicitly queried
         ///     for <c>identifier[HIV_PROGRAM].value=!null</c> they would still be disclosed patients which have an HIV program identifier. This method
         ///     should search the <paramref name="query"/> provided and ensure that <paramref name="principal"/> is not violating such conditions.</item>
         /// </list>

@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-17
+ * Date: 2022-5-30
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -133,6 +134,17 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_dispatchThread = null;
             }
             Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Trace event
+        /// </summary>
+        public override void TraceEventWithData(EventLevel level, string source, string message, object[] data)
+        {
+            foreach (var obj in data)
+            {
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
+            }
         }
     }
 }

@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -69,6 +69,14 @@ namespace SanteDB.Core.Security.Claims
         public SanteDBClaimsPrincipal(IEnumerable<IClaimsIdentity> identities)
         {
             this.m_identities = identities.ToList();
+        }
+
+        /// <summary>
+        /// Identities
+        /// </summary>
+        public SanteDBClaimsPrincipal(IEnumerable<IIdentity> identities)
+        {
+            this.m_identities = identities.Select(o=>o is IClaimsIdentity ? o : new SanteDBClaimsIdentity(o)).OfType<IClaimsIdentity>().ToList();
         }
 
         /// <summary>

@@ -16,18 +16,20 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Text.RegularExpressions;
 
-namespace SanteDB.Core.Services.Impl
-{
+namespace SanteDB.Core.Security
+{ 
     /// <summary>
     /// Represents a regular expression password validator
     /// </summary>
-    public abstract class RegexPasswordValidator : IPasswordValidatorService
+    public class RegexPasswordValidator : IPasswordValidatorService
     {
 
         /// <summary>
@@ -46,9 +48,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Create regex password validator with specified expression
         /// </summary>
-        public RegexPasswordValidator(String passwordMatch)
+        public RegexPasswordValidator(IConfigurationManager configurationManager)
         {
-            this.m_passwordRegex = new Regex(passwordMatch);
+            this.m_passwordRegex = new Regex(configurationManager.GetSection<SecurityConfigurationSection>()?.PasswordRegex ?? DefaultPasswordPattern);
         }
 
         /// <summary>

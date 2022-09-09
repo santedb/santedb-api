@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-1-11
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using System.Collections.Generic;
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobScheduleManager()
         {
-            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "xcron.xml");
+            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xcron.xml");
             if (File.Exists(this.m_cronTabLocation))
             {
                 try

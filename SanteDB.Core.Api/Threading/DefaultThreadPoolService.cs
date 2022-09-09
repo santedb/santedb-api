@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -59,7 +59,7 @@ namespace SanteDB.Core.Services.Impl
         private object s_lock = new object();
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         /// <summary>
         /// Maximum concurrency for the thread pool

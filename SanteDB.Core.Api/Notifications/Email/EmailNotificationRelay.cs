@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -36,12 +36,11 @@ namespace SanteDB.Core.Notifications.Email
     /// </summary>
     public class EmailNotificationRelay : INotificationRelay
     {
-
         // Configuration for the object
         private EmailNotificationConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<EmailNotificationConfigurationSection>();
 
         // Get tracer
-        private Tracer m_traceSource = Tracer.GetTracer(typeof(EmailNotificationRelay));
+        private readonly Tracer m_traceSource = Tracer.GetTracer(typeof(EmailNotificationRelay));
 
         /// <summary>
         /// The scheme of the relay

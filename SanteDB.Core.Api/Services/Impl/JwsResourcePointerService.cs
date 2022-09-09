@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
@@ -34,6 +34,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -104,10 +105,10 @@ namespace SanteDB.Core.Services.Impl
                         this.m_tracer.TraceWarning("No application identity could be found in principal (available identities: {0})", String.Join(",", claimsPrincipal.Identities.Select(o => o.GetType())));
                         throw new InvalidOperationException("No application identity found in principal");
                     }
-                    var key = this.m_applicationIdService.GetSecureKey(appIdentity.Name);
+                    var key = this.m_applicationIdService.GetPublicSigningKey(appIdentity.Name);
 
                     // Get the key
-                    this.m_signingService.AddSigningKey(keyId, key, "HS256");
+                    this.m_signingService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
 
                     return keyId;
                 }
@@ -145,7 +146,7 @@ namespace SanteDB.Core.Services.Impl
                 id = identifers.Select(o => new
                 {
                     value = o.Value,
-                    ns = o.LoadProperty<AssigningAuthority>("Authority").DomainName
+                    ns = o.LoadProperty<IdentityDomain>("Authority").DomainName
                 }).ToList()
             };
 
@@ -220,10 +221,12 @@ namespace SanteDB.Core.Services.Impl
                             var appId = Guid.Parse(keyId.Substring(3));
                             var appInstance = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityApplication>>().Get(appId);
                             if (appInstance == null)
+                            {
                                 throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.app", "Unknown source application", DetectedIssueKeys.SecurityIssue));
+                            }
 
-                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetSecureKey(appInstance.Name);
-                            this.m_signingService.AddSigningKey(keyId, secret, "HS256");
+                            var secret = ApplicationServiceContext.Current.GetService<IApplicationIdentityProviderService>()?.GetPublicSigningKey(appInstance.Name);
+                            this.m_signingService.AddSigningKey(keyId, secret, Security.Configuration.SignatureAlgorithm.HS256);
                         }
                         else
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", "Invalid Key Type", DetectedIssueKeys.SecurityIssue));

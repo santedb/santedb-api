@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Roles;
@@ -38,11 +38,7 @@ namespace SanteDB.Core.Services
     [System.ComponentModel.Description("Care Plan Generation Service")]
     public interface ICarePlanService : IServiceImplementation
     {
-        /// <summary>
-        /// Gets the list of protocols which can be or should be used to create the care plans
-        /// </summary>
-        IList<IClinicalProtocol> Protocols { get; }
-
+        
         /// <summary>
         /// Create a new care plan (using all available protocols for which the patient is eligible)
         /// </summary>
@@ -77,6 +73,6 @@ namespace SanteDB.Core.Services
         /// <param name="patient">The patient for which the care plan is being generated</param>
         /// <param name="protocols">The protocols which the care plan should be restricted to</param>
         /// <returns>The generated care plan</returns>
-        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters, params Guid[] protocols);
+        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols);
     }
 }

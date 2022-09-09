@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Claims;
@@ -65,7 +66,7 @@ namespace SanteDB.Core.Security.Privacy
         public string ServiceName => "Data Policy Enforcement Filter Service";
 
         // Security tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataPolicyFilterService));
 
         // Filter configuration
         private DataPolicyFilterConfigurationSection m_configuration;
@@ -82,27 +83,20 @@ namespace SanteDB.Core.Security.Privacy
         // Password Hashing
         private IPasswordHashingService m_hasher;
 
-        // Data caching service
-        private IDataCachingService m_dataCachingService;
 
-        // Subscription executor
-        private ISubscriptionExecutor m_subscriptionExecutor;
-
-        // Threadpool service
-        private IThreadPoolService m_threadPool;
+        // Pip service
+        private IPolicyInformationService m_pipService;
 
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
-        public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IThreadPoolService threadPoolService,
-            IDataCachingService dataCachingService, ISubscriptionExecutor subscriptionExecutor = null, IAdhocCacheService adhocCache = null)
+        public DataPolicyFilterService(IConfigurationManager configurationManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IPolicyInformationService pipService,
+             IAdhocCacheService adhocCache = null)
         {
             this.m_hasher = passwordService;
             this.m_adhocCache = adhocCache;
             this.m_pdpService = pdpService;
-            this.m_subscriptionExecutor = subscriptionExecutor;
-            this.m_dataCachingService = dataCachingService;
-            this.m_threadPool = threadPoolService;
+            this.m_pipService = pipService;
 
             // Configuration load
             this.m_configuration = configurationManager.GetSection<DataPolicyFilterConfigurationSection>();
@@ -116,7 +110,7 @@ namespace SanteDB.Core.Security.Privacy
             if (this.m_configuration.Resources != null)
                 foreach (var t in this.m_configuration.Resources)
                 {
-                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(AssigningAuthority).IsAssignableFrom(t.ResourceType.Type))
+                    if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(IdentityDomain).IsAssignableFrom(t.ResourceType.Type))
                     {
                         this.m_tracer.TraceInfo("Binding privacy action {0} to {1}", t.Action, t.ResourceType.Type);
                         this.m_actions.TryAdd(t.ResourceType.Type, t);
@@ -127,20 +121,19 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Handle post query event
         /// </summary>
-        public virtual IEnumerable<TData> Apply<TData>(IEnumerable<TData> results, IPrincipal principal) where TData : IdentifiedData
+        public virtual IQueryResultSet<TData> Apply<TData>(IQueryResultSet<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
             if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
-                return results
-                    .Select(
-                        o => this.Apply(o, principal)
-                    );
+            {
+                return new NestedQueryResultSet<TData>(results, (o) => this.Apply(o, principal));
+            }
             return results;
         }
 
         /// <summary>
         /// Gets the domains that <paramref name="principal"/> should be filtered
         /// </summary>
-        private IEnumerable<AssigningAuthority> GetFilterDomains(IPrincipal principal)
+        private IEnumerable<IdentityDomain> GetFilterDomains(IPrincipal principal)
         {
             String key = null;
             if (principal is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
@@ -148,13 +141,13 @@ namespace SanteDB.Core.Security.Privacy
             else
                 key = this.m_hasher.ComputeHash($"$aa.filter.{principal.Identity.Name}");
 
-            var domainsToFilter = this.m_adhocCache?.Get<AssigningAuthority[]>(key);
+            var domainsToFilter = this.m_adhocCache?.Get<IdentityDomain[]>(key);
             if (domainsToFilter == null)
             {
-                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AssigningAuthority>>();
+                var aaDp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<IdentityDomain>>();
                 var protectedAuthorities = aaDp?.Query(o => o.PolicyKey != null, AuthenticationContext.SystemPrincipal).ToList();
                 domainsToFilter = protectedAuthorities
-                        .Where(aa => this.m_pdpService.GetPolicyOutcome(principal, aa.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid) != PolicyGrantType.Grant)
+                        .Where(aa => this.m_pdpService.GetPolicyOutcome(principal, aa.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid) != PolicyGrantType.Grant)
                         .ToArray();
                 this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
             }
@@ -166,7 +159,7 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
-            if (!this.m_actions.TryGetValue(typeof(AssigningAuthority), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
+            if (!this.m_actions.TryGetValue(typeof(IdentityDomain), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
                 policy = new ResourceDataPolicyFilter() { Action = this.m_configuration.DefaultAction };
             var domainsToFilter = this.GetFilterDomains(accessor);
 
@@ -208,7 +201,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag("$pep.masked", "true");
@@ -237,7 +230,7 @@ namespace SanteDB.Core.Security.Privacy
                             }
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(AssigningAuthority.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
 
                             if (result is ITaggable tag)
                             {
@@ -379,7 +372,7 @@ namespace SanteDB.Core.Security.Privacy
                 return default(TData);
             else if (result is Bundle bdl)
             {
-                bdl.Item = this.Apply(bdl.Item, principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
+                bdl.Item = this.Apply(new MemoryQueryResultSet<IdentifiedData>(bdl.Item), principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
                 return result;
             }
 
