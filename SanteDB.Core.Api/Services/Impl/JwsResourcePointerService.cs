@@ -34,6 +34,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;

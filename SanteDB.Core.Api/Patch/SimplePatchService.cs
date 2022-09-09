@@ -392,7 +392,6 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private object ExecuteLambda(string action, object source, PropertyInfo property, string pathName, PatchOperation op)
         {
-            var mi = typeof(QueryExpressionParser).GetGenericMethod("BuildLinqExpression", new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(NameValueCollection) });
 
             // Does this have a selector?
             var classAtt = source.GetType().StripGeneric().GetCustomAttribute<ClassifierAttribute>();
@@ -404,13 +403,14 @@ namespace SanteDB.Core.Services.Impl
                 {
                     var classProp = op.GetType().GetRuntimeProperty(classAtt.ClassifierProperty);
                     var classAttValue = classProp.GetValue(op.Value);
-                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}[{classAttValue}]") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}[{classAttValue}]".ParseQueryString());
                 }
                 else
-                    lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")}={op.Value}") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}={op.Value}".ParseQueryString());
+
             }
             else
-                lambda = mi.Invoke(null, new object[] { NameValueCollection.ParseQueryString($"{op.Path.Replace(pathName, "")} = {op.Value}") });
+                    lambda = QueryExpressionParser.BuildLinqExpression(property.PropertyType.StripGeneric(), $"{op.Path.Replace(pathName, "")}={op.Value}".ParseQueryString());
 
             lambda = lambda.GetType().GetRuntimeMethod("Compile", new Type[] { }).Invoke(lambda, new object[] { });
             var filterMethod = typeof(Enumerable).GetGenericMethod(action, new Type[] { property.PropertyType.StripGeneric() }, new Type[] { typeof(IEnumerable<>).MakeGenericType(property.PropertyType.StripGeneric()), lambda.GetType() });

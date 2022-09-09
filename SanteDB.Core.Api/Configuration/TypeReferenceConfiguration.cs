@@ -108,5 +108,14 @@ namespace SanteDB.Core.Configuration
         /// Represent as a string
         /// </summary>
         public override string ToString() => this.Type?.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? this.Type?.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? this.Type.Name;
+
+        /// <summary>
+        /// Validate the type 
+        /// </summary>
+        public bool IsValid()
+        {
+            return this.m_type != null ||
+                Type.GetType(this.TypeXml) != null;
+        }
     }
 }

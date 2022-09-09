@@ -31,6 +31,7 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -111,22 +112,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="query">The query to be sent to the server</param>
         /// <returns>The query string</returns>
-        public static String CreateQueryString(NameValueCollection query)
-        {
-            String queryString = String.Empty;
-            foreach (var kv in query)
-            {
-                foreach (var v in kv.Value)
-                {
-                    if (v == null) continue;
-                    queryString += String.Format("{0}={1}&", kv.Key, Uri.EscapeDataString(v));
-                }
-            }
-            if (queryString.Length > 0)
-                return queryString.Substring(0, queryString.Length - 1);
-            else
-                return queryString;
-        }
+        public static String CreateQueryString(NameValueCollection query) => query.ToHttpString();
 
         /// <summary>
         /// Create the HTTP request
@@ -223,7 +209,7 @@ namespace SanteDB.Core.Http
 
             try
             {
-                var requestEventArgs = new RestRequestEventArgs("GET", url, new NameValueCollection(query), null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, query.ToNameValueCollection(), null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -385,7 +371,7 @@ namespace SanteDB.Core.Http
             {
                 if (query != null)
                 {
-                    parameters = new NameValueCollection(query);
+                    parameters = query.ToNameValueCollection();
                 }
 
                 var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
@@ -588,7 +574,7 @@ namespace SanteDB.Core.Http
             {
                 if (query != null)
                 {
-                    parameters = new NameValueCollection(query);
+                    parameters = query.ToNameValueCollection();
                 }
 
                 var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, parameters, null, null);

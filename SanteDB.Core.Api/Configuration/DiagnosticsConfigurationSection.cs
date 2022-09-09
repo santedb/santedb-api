@@ -19,9 +19,11 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.BusinessRules;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -31,7 +33,7 @@ namespace SanteDB.Core.Configuration
     /// Diagnostics configuration
     /// </summary>
     [XmlType(nameof(DiagnosticsConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class DiagnosticsConfigurationSection : IConfigurationSection
+    public class DiagnosticsConfigurationSection : IValidatableConfigurationSection
     {
 
         /// <summary>
@@ -64,6 +66,31 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [JsonProperty("mode"), XmlIgnore]
         public EventLevel Mode { get; set; }
+
+        /// <summary>
+        /// Validate the configuration section
+        /// </summary>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            foreach(var itm in this.TraceWriter)
+            {
+                if(itm.TraceWriterClassXml.IsValid())
+                {
+                    // Is there a new type?
+                    var tName = itm.TraceWriterClassXml.TypeXml.Split(',')[0].Split('.').Last();
+                    var candidateType = AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(t => t.Name == tName);
+                    if (candidateType != null)
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml} has moved to {candidateType.FullName}, {candidateType.Assembly.GetName().Name}", Guid.Empty);
+                        itm.TraceWriter = candidateType;
+                    }
+                    else
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml} is invalid", Guid.Empty);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -105,8 +132,8 @@ namespace SanteDB.Core.Configuration
         [XmlIgnore]
         public Type TraceWriter
         {
-            get;
-            set;
+            get => this.TraceWriterClassXml.Type;
+            set => this.TraceWriterClassXml = new TypeReferenceConfiguration(value);
         }
 
         /// <summary>
@@ -130,13 +157,9 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the writer implementation
         /// </summary>
         [XmlElement("writer")]
-        public String TraceWriterClassXml
+        public TypeReferenceConfiguration TraceWriterClassXml
         {
-            get { return this.TraceWriter?.AssemblyQualifiedName; }
-            set
-            {
-                this.TraceWriter = Type.GetType(value);
-            }
+            get;set;
         }
 
         /// <summary>

@@ -27,7 +27,7 @@ namespace SanteDB.Core.Configuration.Http
         /// Gets or sets the type which dictates how a body maps to a
         /// </summary>
         /// <value>The serialization binder type xml.</value>
-        [XmlAttribute("contentTypeMapper"), JsonProperty("contentTypeMapper")]
+        [XmlElement("contentTypeMapper"), JsonProperty("contentTypeMapper")]
         public TypeReferenceConfiguration ContentTypeMapperXml
         {
             get => new TypeReferenceConfiguration(this.ContentTypeMapper.GetType());

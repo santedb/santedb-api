@@ -25,7 +25,7 @@ namespace SanteDB.Core.Configuration.Http
         /// certificates
         /// </summary>
         /// <value>The serialization binder type xml.</value>
-        [XmlAttribute("certificateValidator"), JsonProperty("certificateValidator")]
+        [XmlElement("certificateValidator"), JsonProperty("certificateValidator")]
         [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(ICertificateValidator))]
         public TypeReferenceConfiguration CertificateValidatorXml
         {
@@ -46,7 +46,7 @@ namespace SanteDB.Core.Configuration.Http
         /// Gets or sets the ICredentialProvider
         /// </summary>
         /// <value>The credential provider xml.</value>
-        [XmlAttribute("credentialProvider"), JsonProperty("credentialProvider")]
+        [XmlElement("credentialProvider"), JsonProperty("credentialProvider")]
         [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(ICredentialProvider))]
         public TypeReferenceConfiguration CredentialProviderXml
         {
@@ -109,7 +109,7 @@ namespace SanteDB.Core.Configuration.Http
         /// <summary>
         /// Preemptive authentication
         /// </summary>
-        [XmlElement("preAuth"), JsonProperty("preAuth")]
+        [XmlAttribute("preAuth"), JsonProperty("preAuth")]
         public bool PreemptiveAuthentication { get; set; }
     }
 

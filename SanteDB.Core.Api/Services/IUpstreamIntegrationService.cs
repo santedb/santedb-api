@@ -4,6 +4,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq.Expressions;
 using System.Net;
 using System.Text;

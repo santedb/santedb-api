@@ -19,11 +19,14 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -74,6 +77,43 @@ namespace SanteDB.Core.Configuration
             set;
         }
 
+        /// <summary>
+        /// Validate the configuration section
+        /// </summary>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            foreach(var itm in this.ServiceProviders)
+            {
+                if(!itm.IsValid())
+                {
+                    // Is there a new type?
+                    var tName = itm.TypeXml.Split(',')[0].Split('.').Last();
+                    var candidateType = AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(t => t.Name == tName);
+                    if (candidateType != null)
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "movedType", $"Type {itm.TypeXml} has been moved to {candidateType.FullName},{candidateType.Assembly.GetName().Name}", Guid.Empty);
+                        itm.Type = candidateType;
+                    }
+                    else
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingtype", $"Type {itm.TypeXml} is not valid", Guid.Empty);
+                    }
+                }
+            }
+
+            if(this.ThreadPoolSize > Environment.ProcessorCount)
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "resources", $"Max thread pool will have {this.ThreadPoolSize} but machine only has {Environment.ProcessorCount}", Guid.Empty);
+            }
+
+            foreach(var itm in this.AppSettings)
+            {
+                if(String.IsNullOrEmpty(itm.Key) || String.IsNullOrEmpty(itm.Value))
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "appsetting", $"App setting {itm.Key}={itm.Value} is missing key or value", Guid.Empty);
+                }
+            }
+        }
     }
 
 

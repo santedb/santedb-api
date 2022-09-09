@@ -208,7 +208,7 @@ namespace SanteDB.Core.PubSub.Broker
 
                                 foreach (var itm in s.Filter)
                                 {
-                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), NameValueCollection.ParseQueryString(itm), "p", forceLoad: true, lazyExpandVariables: true);
+                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), itm.ParseQueryString(), "p", forceLoad: true, lazyExpandVariables: true);
                                     if (dynFn is LambdaExpression le)
                                         dynFn = Expression.Lambda(
                                             Expression.And(

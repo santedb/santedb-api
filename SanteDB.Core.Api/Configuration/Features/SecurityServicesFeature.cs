@@ -197,6 +197,7 @@ namespace SanteDB.Core.Configuration.Features
             /// </summary>
             public bool Execute(SanteDBConfiguration configuration)
             {
+
                 SecurityExtensions.InstallCertsForChain();
                 this.ProgressChanged?.Invoke(this, new SanteDB.Core.Services.ProgressChangedEventArgs(1.0f, "Complete"));
 

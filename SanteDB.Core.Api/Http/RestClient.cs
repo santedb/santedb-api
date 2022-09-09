@@ -51,6 +51,7 @@ using System.Threading;
 using SanteDB.Core.Http.Compression;
 using System.Net.Sockets;
 using SanteDB.Core.i18n;
+using System.Collections.Specialized;
 
 namespace SanteDB.Core.Http
 {

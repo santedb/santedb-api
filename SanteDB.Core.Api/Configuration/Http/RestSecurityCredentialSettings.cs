@@ -6,7 +6,7 @@ namespace SanteDB.Core.Configuration.Http
     /// <summary>
     /// Security credential provider settings
     /// </summary>
-    [XmlType(nameof(RestClientSecurityConfiguration), Namespace = "http://santedb.org/configuration")]
+    [XmlType(nameof(RestSecurityCredentialSettings), Namespace = "http://santedb.org/configuration")]
     public class RestSecurityCredentialSettings
     {
 

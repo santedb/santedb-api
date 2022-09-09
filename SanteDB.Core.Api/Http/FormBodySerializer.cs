@@ -104,7 +104,7 @@ namespace SanteDB.Core.Http
         {
             using (StreamReader sr = new StreamReader(s))
             {
-                return NameValueCollection.ParseQueryString(sr.ReadToEnd());
+                return sr.ReadToEnd().ParseQueryString();
             }
         }
 

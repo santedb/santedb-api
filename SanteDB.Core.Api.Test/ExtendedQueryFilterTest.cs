@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using SanteDB.Core.Model.Query;
@@ -34,7 +35,7 @@ namespace SanteDB.Core.Api.Test
         public void TestAgeFilter()
         {
             QueryFilterExtensions.AddExtendedFilter(new AgeQueryFilterExtension());
-            var filterQuery = NameValueCollection.ParseQueryString("dateOfBirth=:(age)<P3Y");
+            var filterQuery = "dateOfBirth=:(age)<P3Y".ParseQueryString();
             var expr = QueryExpressionParser.BuildLinqExpression<Patient>(filterQuery);
             Assert.IsTrue(expr.ToString().Contains("Age"));
         }
@@ -43,7 +44,7 @@ namespace SanteDB.Core.Api.Test
         public void TestAgeFilterEx()
         {
             QueryFilterExtensions.AddExtendedFilter(new AgeQueryFilterExtension());
-            var filterQuery = NameValueCollection.ParseQueryString("dateOfBirth=:(age|2020-01-01)<P3Y");
+            var filterQuery = "dateOfBirth=:(age|2020-01-01)<P3Y".ParseQueryString();
             var expr = QueryExpressionParser.BuildLinqExpression<Patient>(filterQuery);
             Assert.IsTrue(expr.ToString().Contains("Age"));
 

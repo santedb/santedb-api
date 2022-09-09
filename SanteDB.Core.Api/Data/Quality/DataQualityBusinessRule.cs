@@ -148,7 +148,7 @@ namespace SanteDB.Core.Data.Quality
                 {
                     foreach (var expression in assert.Expressions)
                     {
-                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(expression), null, safeNullable: true, forceLoad: true);
+                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(expression.ParseQueryString(), null, safeNullable: true, forceLoad: true);
                         var linqResult = (bool)linq.Compile().DynamicInvoke(data);
                         switch (assert.Evaluation)
                         {

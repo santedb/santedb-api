@@ -165,7 +165,7 @@ namespace SanteDB.Core.Configuration.Features
                 {
                     WriterName = "main",
                     InitializationData = featureConfig.Values["initializationData"] as string,
-                    TraceWriterClassXml = (featureConfig.Values["writer"] as Type).AssemblyQualifiedName,
+                    TraceWriterClassXml = new TypeReferenceConfiguration(featureConfig.Values["writer"] as Type),
                     Filter = (EventLevel)featureConfig.Values["filter"]
                 });
                 config.Mode = (EventLevel)featureConfig.Values["filter"];

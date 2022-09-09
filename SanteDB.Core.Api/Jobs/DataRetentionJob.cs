@@ -122,7 +122,7 @@ namespace SanteDB.Core.Jobs
                     IEnumerable<Guid> keys = new Guid[0];
                     for (int inclIdx = 0; inclIdx < rule.IncludeExpressions.Length; inclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.IncludeExpressions[inclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, rule.IncludeExpressions[inclIdx].ParseQueryString(), "rec", variables);
                         this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + ((float)inclIdx / rule.IncludeExpressions.Length) * 0.3 * ruleProgress));
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
@@ -135,7 +135,7 @@ namespace SanteDB.Core.Jobs
                     // Exclude keys from retention
                     for (int exclIdx = 0; exclIdx < rule.ExcludeExpressions.Length; exclIdx++)
                     {
-                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, NameValueCollection.ParseQueryString(rule.ExcludeExpressions[exclIdx]), "rec", variables);
+                        var expr = QueryExpressionParser.BuildLinqExpression(rule.ResourceType.Type, rule.ExcludeExpressions[exclIdx].ParseQueryString(), "rec", variables);
                         this.m_stateManager.SetProgress(this, $"Gathering {rule.Name} ({rule.ResourceType.TypeXml})", (float)((ruleIdx * ruleProgress) + (0.3 + ((float)exclIdx / rule.ExcludeExpressions.Length) * 0.3) * ruleProgress));
                         int offset = 0, totalCount = 1;
                         while (offset < totalCount) // gather the included keys
