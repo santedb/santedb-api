@@ -35,7 +35,7 @@ namespace SanteDB.Core.Configuration
     /// SanteDB server configuration 
     /// </summary>
     [XmlType(nameof(ApplicationServiceContextConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class ApplicationServiceContextConfigurationSection : IConfigurationSection
+    public class ApplicationServiceContextConfigurationSection : IValidatableConfigurationSection
     {
 
         /// <summary>
