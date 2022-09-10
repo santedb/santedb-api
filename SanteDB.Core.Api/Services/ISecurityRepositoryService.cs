@@ -51,6 +51,13 @@ namespace SanteDB.Core.Services
         Provider GetProviderEntity(IIdentity identity);
 
         /// <summary>
+        /// Get the security identifier for the provided <paramref name="identity"/>
+        /// </summary>
+        /// <param name="identity">The identity to resolve</param>
+        /// <returns>The SID for the identity</returns>
+        Guid GetSid(IIdentity identity);
+
+        /// <summary>
         /// Creates a user with a specified password.
         /// </summary>
         /// <param name="userInfo">The security user.</param>
