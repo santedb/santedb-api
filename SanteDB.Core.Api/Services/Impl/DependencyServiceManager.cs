@@ -86,6 +86,9 @@ namespace SanteDB.Core.Services.Impl
             // Service manager
             private DependencyServiceManager m_serviceManager;
 
+            // Implemented services
+            private HashSet<Type> m_implementedServices;
+
             /// <summary>
             /// Create a new service instance
             /// </summary>
@@ -101,7 +104,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.ServiceImplementer = serviceImplementationClass;
                 this.InstantiationType = serviceImplementationClass.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
-                this.ImplementedServices = serviceImplementationClass.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)).ToArray();
+                this.m_implementedServices = new HashSet<Type>(serviceImplementationClass.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
             /// <summary>
@@ -112,7 +115,7 @@ namespace SanteDB.Core.Services.Impl
                 this.ServiceImplementer = singleton.GetType();
                 this.InstantiationType = this.ServiceImplementer.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
                 this.m_singletonInstance = singleton;
-                this.ImplementedServices = this.ServiceImplementer.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)).ToArray();
+                this.m_implementedServices = new HashSet<Type>( this.ServiceImplementer.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
             /// <summary>
@@ -157,7 +160,7 @@ namespace SanteDB.Core.Services.Impl
             /// <summary>
             /// Gets the implemented services
             /// </summary>
-            public IEnumerable<Type> ImplementedServices { get; }
+            public IEnumerable<Type> ImplementedServices => this.m_implementedServices;
 
             /// <summary>
             /// Service implementer
@@ -313,6 +316,7 @@ namespace SanteDB.Core.Services.Impl
                     }
                     if (candidateService != null)
                     {
+                        this.AddCacheServices(candidateService);
                         this.AddServiceProvider(candidateService);
                     }
                 }
