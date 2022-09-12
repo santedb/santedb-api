@@ -56,7 +56,7 @@ namespace SanteDB.Core.Mail
         Transient = 0x10,
 
         /// <summary>
-        /// Idicates a high priority alert.
+        /// Indicates a high priority alert.
         /// </summary>
         HighPriorityAlert = HighPriority | Alert
     }

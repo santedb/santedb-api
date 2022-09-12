@@ -427,5 +427,23 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             return this.GetApplication(identity.Name);
         }
+
+        /// <summary>
+        /// Get the security identifier for the provided <paramref name="identity"/>
+        /// </summary>
+        /// <param name="identity">The identity for which the security identifier should be retrieved</param>
+        /// <returns>The SID of <paramref name="identity"/></returns>
+        public Guid GetSid(IIdentity identity)
+        {
+            switch(identity)
+            {
+                case IDeviceIdentity did:
+                    return this.m_deviceIdentityProvider.GetSid(identity.Name);
+                case IApplicationIdentity aid:
+                    return this.m_applicationIdentityProvider.GetSid(identity.Name);
+                default:
+                    return this.m_identityProviderService.GetSid(identity.Name);
+            }
+        }
     }
 }

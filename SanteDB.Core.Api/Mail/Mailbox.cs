@@ -17,6 +17,9 @@ namespace SanteDB.Core.Mail
     public class Mailbox : BaseEntityData
     {
 
+        public const string INBOX_NAME = "Inbox";
+        public const string DELETED_NAME = "Deleted";
+
         /// <summary>
         /// Gets or sets the user which owns this mailbox
         /// </summary>
