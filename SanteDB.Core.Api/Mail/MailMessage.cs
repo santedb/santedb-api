@@ -148,7 +148,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// Mailboxes which this mail message appears in
         /// </summary>
-        [XmlIgnore, JsonIgnore]
+        [XmlIgnore, JsonIgnore, QueryParameter("mailbox")]
         public List<MailboxMailMessage> Mailboxes { get; set; }
     }
 }

@@ -45,6 +45,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(XmlFileJobStateManager),
             typeof(DefaultNotificationService),
             typeof(SimplePatchService),
+            typeof(LocalMailMessageService),
             typeof(SimpleCarePlanService),
             typeof(AesSymmetricCrypographicProvider),
             typeof(DefaultDataSigningService),

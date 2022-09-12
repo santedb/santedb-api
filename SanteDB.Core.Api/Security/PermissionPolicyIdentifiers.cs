@@ -178,6 +178,11 @@ namespace SanteDB.Core.Security
         public const string ManageDispatcherQueues = UnrestrictedAdministration + ".16";
 
         /// <summary>
+        /// Manage mail
+        /// </summary>
+        public const string ManageMail = UnrestrictedAdministration + ".17";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";

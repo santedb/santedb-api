@@ -41,7 +41,7 @@ namespace SanteDB.Core.Services
         /// Send the specified mailmessage according to its sending instructions
         /// </summary>
         /// <param name="mail">The mail message to be sent</param>
-        void Send(MailMessage mail);
+        MailMessage Send(MailMessage mail);
 
         /// <summary>
         /// Get mailboxes for the current user
@@ -66,18 +66,20 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Move <paramref name="messageKey"/> to <paramref name="targetMailboxKey"/>
         /// </summary>
+        /// <param name="fromMailboxKey">The GUID of the from mailbox to move</param>
         /// <param name="messageKey">The key of the message to be moved</param>
         /// <param name="targetMailboxKey">The target mailbox</param>
         /// <param name="copy">True if the message should be duplicated</param>
         /// <returns>The updated mail message</returns>
-        MailboxMailMessage MoveMessage(Guid messageKey, Guid targetMailboxKey, bool copy = false);
+        MailboxMailMessage MoveMessage(Guid fromMailboxKey, Guid messageKey, Guid targetMailboxKey, bool copy = false);
 
         /// <summary>
         /// Delete the specified message
         /// </summary>
+        /// <param name="fromMailboxKey">The mailbox from which the message should be removed</param>
         /// <param name="messageKey">Delete the specified message key</param>
         /// <returns>The deleted message</returns>
-        MailboxMailMessage DeleteMessage(Guid messageKey);
+        MailboxMailMessage DeleteMessage(Guid fromMailboxKey, Guid messageKey);
 
         /// <summary>
         /// Delete mailbox from current user account

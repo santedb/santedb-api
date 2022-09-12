@@ -193,7 +193,7 @@ namespace SanteDB.Core.Http
         /// <param name="query">The query to be executed on th eserver</param>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <typeparam name="TResult">The expected result from the server</typeparam>
-        public TResult Get<TResult>(string url, params KeyValuePair<string, object>[] query)
+        public TResult Get<TResult>(string url, params KeyValuePair<string, string>[] query)
         {
             return this.Invoke<Object, TResult>("GET", url, null, null, query);
         }
@@ -203,13 +203,13 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <param name="query">The query (as key=value) to send on the GET request</param>
-        public byte[] Get(String url, params KeyValuePair<string, object>[] query)
+        public byte[] Get(String url, params KeyValuePair<string, string>[] query)
         {
-            NameValueCollection parameters = new NameValueCollection();
+            var parameters = query?.ToNameValueCollection();
 
             try
             {
-                var requestEventArgs = new RestRequestEventArgs("GET", url, query.ToNameValueCollection(), null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, parameters, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -363,16 +363,13 @@ namespace SanteDB.Core.Http
         /// <param name="body">The contents of the request to send to the server</param>
         /// <param name="query">The query to append to the URL</param>
         /// <returns>The server response</returns>
-        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, params KeyValuePair<string, object>[] query)
+        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, params KeyValuePair<string, string>[] query)
         {
-            NameValueCollection parameters = new NameValueCollection();
+            var parameters = query?.ToNameValueCollection();
 
             try
             {
-                if (query != null)
-                {
-                    parameters = query.ToNameValueCollection();
-                }
+               
 
                 var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
                 this.Requesting?.Invoke(this, requestEventArgs);
@@ -566,16 +563,12 @@ namespace SanteDB.Core.Http
         /// <param name="query">The query to execute</param>
         /// <param name="resourceName">The name of the resource (url)</param>
         /// <returns>The HTTP headers (result of the HEAD operation)</returns>
-        public IDictionary<string, string> Head(string resourceName, params KeyValuePair<String, Object>[] query)
+        public IDictionary<string, string> Head(string resourceName, params KeyValuePair<String, String>[] query)
         {
-            NameValueCollection parameters = new NameValueCollection();
+            var parameters = query?.ToNameValueCollection();
 
             try
             {
-                if (query != null)
-                {
-                    parameters = query.ToNameValueCollection();
-                }
 
                 var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, parameters, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);

@@ -735,7 +735,7 @@ namespace SanteDB.Core.Security.Audit
                             UserName = uid.Name,
                             UserIsRequestor = true,
                             NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation?.Replace(",", " via ") ?? 
-                                RemoteEndpointUtil.Current.GetRemoteClient().RemoteAddress,
+                                RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                             NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             ActorRoleCode = new List<AuditCode>()
                             {

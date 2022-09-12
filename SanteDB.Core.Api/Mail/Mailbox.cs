@@ -18,7 +18,7 @@ namespace SanteDB.Core.Mail
     {
 
         public const string INBOX_NAME = "Inbox";
-        public const string DELETED_NAME = "Deleted";
+        public const string SENT_NAME = "Sent";
 
         /// <summary>
         /// Gets or sets the user which owns this mailbox
