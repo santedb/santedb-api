@@ -168,8 +168,8 @@ namespace SanteDB.Core.Security.Privacy
                 case ResourceDataPolicyActionType.Hide:
                 case ResourceDataPolicyActionType.Nullify:
                     {
-                        var r = (result as Act)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey));
-                        r += (result as Entity)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey));
+                        var r = (result as Act)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
+                        r += (result as Entity)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
                         if (r > 0)
                         {
                             //AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
@@ -186,16 +186,16 @@ namespace SanteDB.Core.Security.Privacy
                     {
                         var r = 0;
                         if (result is Act act)
-                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                act.Identifiers.Add(new ActIdentifier(id.Authority, this.m_hasher.ComputeHash(id.Value)));
+                                act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 act.Identifiers.Remove(id);
                                 r++;
                             }
                         else if (result is Entity entity)
-                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                entity.Identifiers.Add(new EntityIdentifier(id.Authority, this.m_hasher.ComputeHash(id.Value)));
+                                entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 entity.Identifiers.Remove(id);
                                 r++;
                             }
@@ -215,16 +215,16 @@ namespace SanteDB.Core.Security.Privacy
                     {
                         var r = 0;
                         if (result is Act act)
-                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                act.Identifiers.Add(new ActIdentifier(id.Authority, new string('X', id.Value.Length)));
+                                act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
                                 act.Identifiers.Remove(id);
                                 r++;
                             }
                         else if (result is Entity entity)
-                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.AuthorityKey)).ToArray())
+                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                entity.Identifiers.Add(new EntityIdentifier(id.Authority, new string('X', id.Value.Length)));
+                                entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
                                 entity.Identifiers.Remove(id);
                                 r++;
                             }
@@ -354,9 +354,9 @@ namespace SanteDB.Core.Security.Privacy
             {
                 var domainsToFilter = this.GetFilterDomains(accessor);
                 if (record is Entity entity)
-                    return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.Authority.SemanticEquals(dtf)));
+                    return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
                 else if (record is Act act)
-                    return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.Authority.SemanticEquals(dtf)));
+                    return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
                 else
                     return true;
             }

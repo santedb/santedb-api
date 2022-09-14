@@ -74,19 +74,19 @@ namespace SanteDB.Core.Configuration
         {
             foreach(var itm in this.TraceWriter)
             {
-                if(itm.TraceWriterClassXml.IsValid())
+                if(!itm.TraceWriterClassXml.IsValid())
                 {
                     // Is there a new type?
                     var tName = itm.TraceWriterClassXml.TypeXml.Split(',')[0].Split('.').Last();
                     var candidateType = AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(t => t.Name == tName);
                     if (candidateType != null)
                     {
-                        yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml} has moved to {candidateType.FullName}, {candidateType.Assembly.GetName().Name}", Guid.Empty);
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml.TypeXml} has moved to {candidateType.FullName}, {candidateType.Assembly.GetName().Name}", Guid.Empty);
                         itm.TraceWriter = candidateType;
                     }
                     else
                     {
-                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml} is invalid", Guid.Empty);
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "writerinvalid", $"Source {itm.WriterName} trace writer implementation {itm.TraceWriterClassXml.TypeXml} is invalid", Guid.Empty);
                     }
                 }
             }

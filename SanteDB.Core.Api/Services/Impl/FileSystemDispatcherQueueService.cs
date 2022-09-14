@@ -28,6 +28,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
@@ -40,6 +41,7 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// A persistent queue service that uses the file system (use when there's no other infrastructure)
     /// </summary>
+    [DisplayName("File System Dispatcher"), Description("Persistent queue service using a file system directory for storage")]
     public class FileSystemDispatcherQueueService : IDispatcherQueueManagerService, IDisposable
     {
 

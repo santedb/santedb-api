@@ -244,6 +244,7 @@ namespace SanteDB.Core.Services.Impl
                     {
                         this.AddServiceFactory(sii.GetInstance() as IServiceFactory);
                     }
+                    this.AddCacheServices(sii);
                 }
                 this.m_notConfiguredServices.Clear();
             }
@@ -259,13 +260,16 @@ namespace SanteDB.Core.Services.Impl
                 if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
                     this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
                 this.ValidateServiceSignature(serviceInstance.GetType());
-                this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
+                var serviceInfo = new ServiceInstanceInformation(serviceInstance, this);
+                this.m_serviceRegistrations.Add(serviceInfo);
                 this.m_notConfiguredServices.Clear();
 
                 if (serviceInstance is IServiceFactory sf)
                 {
                     this.AddServiceFactory(sf);
                 }
+                this.AddCacheServices(serviceInfo);
+
             }
         }
 
@@ -303,7 +307,7 @@ namespace SanteDB.Core.Services.Impl
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
-                                    this.AddCacheServices(candidateService);
+                                    this.AddServiceProvider(candidateService);
 
                                     break;
                                 }
@@ -316,7 +320,6 @@ namespace SanteDB.Core.Services.Impl
                     }
                     if (candidateService != null)
                     {
-                        this.AddCacheServices(candidateService);
                         this.AddServiceProvider(candidateService);
                     }
                 }

@@ -50,6 +50,9 @@ namespace SanteDB.Core.Diagnostics.Tracing
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
 
+        // Filter
+        private readonly EventLevel m_filter;
+
         /// <summary>
         /// Console trace writer
         /// </summary>
@@ -59,6 +62,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_dispatchThread = new Thread(this.LogDispatcherLoop);
             this.m_dispatchThread.IsBackground = true;
             this.m_dispatchThread.Start();
+            this.m_filter = filter;
         }
 
         /// <summary>
@@ -94,8 +98,12 @@ namespace SanteDB.Core.Diagnostics.Tracing
                     break;
             }
 
-            this.m_logBacklog.Enqueue(new KeyValuePair<ConsoleColor, String>(color, String.Format("{0:yyyy/MM/dd HH:mm:ss} [{1}] : {2} {3}: 0 : {4}", DateTime.Now, String.IsNullOrEmpty(Thread.CurrentThread.Name) ? $"@{Thread.CurrentThread.ManagedThreadId}" : Thread.CurrentThread.Name, source, level, String.Format(format, args))));
-            this.m_resetEvent.Set();
+
+            if (this.m_filter >= level)
+            {
+                this.m_logBacklog.Enqueue(new KeyValuePair<ConsoleColor, String>(color, String.Format("{0:yyyy/MM/dd HH:mm:ss} [{1}] : {2} {3}: 0 : {4}", DateTime.Now, String.IsNullOrEmpty(Thread.CurrentThread.Name) ? $"@{Thread.CurrentThread.ManagedThreadId}" : Thread.CurrentThread.Name, source, level, String.Format(format, args))));
+                this.m_resetEvent.Set();
+            }
         }
 
         private void LogDispatcherLoop()
@@ -143,7 +151,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         {
             foreach (var obj in data)
             {
-                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj).Replace("{","{{").Replace("}","}}")));
             }
         }
     }

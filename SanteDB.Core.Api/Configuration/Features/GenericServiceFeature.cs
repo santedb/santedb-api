@@ -65,7 +65,6 @@ namespace SanteDB.Core.Configuration.Features
                 this.Name = typeof(TService).GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? typeof(TService).Name;
                 this.Description = typeof(TService).GetCustomAttribute<DescriptionAttribute>()?.Description ?? typeof(TService).Name;
             }
-            this.Group = typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.Group;
         }
 
         /// <inheritdoc/>
@@ -97,7 +96,7 @@ namespace SanteDB.Core.Configuration.Features
         public virtual FeatureFlags Flags => typeof(TService).Assembly.GetCustomAttribute<PluginAttribute>()?.EnableByDefault == true ? FeatureFlags.AutoSetup : FeatureFlags.None;
 
         /// <inheritdoc/>
-        public virtual string Group { get; }
+        public abstract string Group { get; }
 
         /// <inheritdoc/>
         public virtual string Name { get; }
