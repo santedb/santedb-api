@@ -160,22 +160,25 @@ namespace SanteDB.Core.Jobs
             // Invoke the starting event handler
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            foreach (var configuration in this.m_configuration.Jobs)
+            if (this.m_configuration != null)
             {
-                var job = configuration.Type.CreateInjected() as IJob;
-                var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
-                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
-                this.m_jobs.Add(ji);
-
-                if(configuration.Schedule?.Any() == true)
+                foreach (var configuration in this.m_configuration.Jobs)
                 {
-                    this.m_jobScheduleManager.Clear(job);
-                    configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
-                }
+                    var job = configuration.Type.CreateInjected() as IJob;
+                    var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
+                    this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
+                    this.m_jobs.Add(ji);
 
-                if (configuration.StartType == JobStartType.Immediate)
-                {
-                    this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                    if (configuration.Schedule?.Any() == true)
+                    {
+                        this.m_jobScheduleManager.Clear(job);
+                        configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
+                    }
+
+                    if (configuration.StartType == JobStartType.Immediate)
+                    {
+                        this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                    }
                 }
             }
 

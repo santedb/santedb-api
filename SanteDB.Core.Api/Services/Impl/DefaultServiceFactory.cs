@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Protocol;
@@ -45,6 +46,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(XmlFileJobStateManager),
             typeof(DefaultNotificationService),
             typeof(SimplePatchService),
+            typeof(DataInitializationService),
             typeof(LocalMailMessageService),
             typeof(SimpleCarePlanService),
             typeof(AesSymmetricCrypographicProvider),
