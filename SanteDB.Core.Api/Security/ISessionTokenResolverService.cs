@@ -30,19 +30,32 @@ namespace SanteDB.Core.Security
     /// </summary>
     public interface ISessionTokenResolverService : IServiceImplementation
     {
-
         /// <summary>
-        /// Resolve an <see cref="ISession"/> instance from the provided token
+        /// Get the encoded id token of the <paramref name="session"/> instance provided.
         /// </summary>
-        /// <param name="token">The token which contains the session information</param>
-        /// <returns>The resolved session</returns>
-        ISession Resolve(string token);
-
+        /// <param name="session">The session which should be used to generated an encoded token.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="session"/> is null.</exception>
+        string GetEncodedIdToken(ISession session);
         /// <summary>
-        /// Serialize the <paramref name="session"/> to a byte format
+        /// Get the encoded refresh token of the <paramref name="session"/> instance provided.
         /// </summary>
-        /// <param name="session">The session which is to be serialized</param>
-        /// <returns>The serialized session</returns>
-        string Serialize(ISession session);
+        /// <param name="session">The session which should be used to generated an encoded token.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="session"/> is null.</exception>
+        string GetEncodedRefreshToken(ISession session);
+        /// <summary>
+        /// Resolves the session associated with the ID token provided in <paramref name="encodedToken"/>.
+        /// </summary>
+        /// <param name="encodedToken">The encoded id token for the session.</param>
+        /// <returns></returns>
+        /// <exception cref="System.Security.SecurityException"></exception>
+        ISession GetSessionFromIdToken(string encodedToken);
+        /// <summary>
+        /// Resolves the session associated with the Refresh token provided in <paramref name="encodedToken"/>.
+        /// </summary>
+        /// <param name="encodedToken">The encoded refresh token for the session.</param>
+        /// <returns></returns>
+        ISession GetSessionFromRefreshToken(string encodedToken);
     }
 }

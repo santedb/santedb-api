@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-7-25
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Security.Services;
@@ -36,17 +37,19 @@ namespace SanteDB.Core.Security.Services
     public class SimpleSessionTokenResolver : ISessionTokenResolverService
     {
 
-        private readonly ISessionProviderService m_sessionTokenProvider;
-        private readonly IDataSigningService m_dataSigningService;
+        private readonly ISessionProviderService m_SessionProvider;
+        private readonly ISessionTokenEncodingService m_sessionTokenEncoder;
         private readonly ILocalizationService m_localizationService;
+
+        private readonly Tracer m_traceSource = new Tracer(SanteDBConstants.ServiceTraceSourceName);
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public SimpleSessionTokenResolver(ISessionProviderService providerService, IDataSigningService dataSigningService, ILocalizationService localizationService)
+        public SimpleSessionTokenResolver(ISessionProviderService providerService, ISessionTokenEncodingService tokenEncoder, ILocalizationService localizationService)
         {
-            this.m_sessionTokenProvider = providerService;
-            this.m_dataSigningService = dataSigningService;
+            this.m_SessionProvider = providerService;
+            this.m_sessionTokenEncoder = tokenEncoder;
             this.m_localizationService = localizationService;
         }
 
@@ -55,32 +58,50 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         public string ServiceName => "Simple Session Token Resolver";
 
-        /// <summary>
-        /// Resolve the 
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public ISession Resolve(string token)
+        /// <inheritdoc cref="ISessionTokenResolverService.GetEncodedIdToken(ISession)"/>
+        public string GetEncodedIdToken(ISession session)
         {
-            var authenticationTokenParts = token.Split('.').Select(o => o.HexDecode()).ToArray();
-            // Validate signature?
-            if(authenticationTokenParts.Length > 1 && !this.m_dataSigningService.Verify(authenticationTokenParts[0], authenticationTokenParts[1]))
+            if (null == session)
             {
-                throw new SecurityException(this.m_localizationService.GetString(ErrorMessageStrings.SIGNATURE_INVALID));
+                throw new ArgumentNullException(nameof(session), m_localizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
             }
 
-            return this.m_sessionTokenProvider.Get(authenticationTokenParts[0]);
-                
+            return m_sessionTokenEncoder.Encode(session.Id);
         }
 
-        /// <summary>
-        /// Serialize a session to a token
-        /// </summary>
-        public string Serialize(ISession session)
+        /// <inheritdoc cref="ISessionTokenResolverService.GetEncodedRefreshToken(ISession)"/>
+        public string GetEncodedRefreshToken(ISession session)
         {
-            var signature = this.m_dataSigningService.SignData(session.Id);
-            return $"{session.Id.HexEncode()}.{signature.HexEncode()}";
+            if (null == session)
+            {
+                throw new ArgumentNullException(nameof(session), m_localizationService.GetString(ErrorMessageStrings.ARGUMENT_NULL));
+            }
+
+            return m_sessionTokenEncoder.Encode(session.RefreshToken);
+        }
+
+        /// <inheritdoc cref="ISessionTokenResolverService.GetSessionFromIdToken(string)"/>
+        /// <exception cref="SecurityException"></exception>
+        public ISession GetSessionFromIdToken(string encodedToken)
+        {
+            if (m_sessionTokenEncoder.TryDecode(encodedToken, out var sessionId))
+            {
+                return m_SessionProvider.Get(sessionId);
+            }
+
+            throw new SecurityException(m_localizationService.GetString(ErrorMessageStrings.SESSION_TOKEN_INVALID));
+        }
+
+        /// <inheritdoc cref="ISessionTokenResolverService.GetSessionFromRefreshToken(string)"/>
+        /// <exception cref="SecurityException"></exception>
+        public ISession GetSessionFromRefreshToken(string encodedToken)
+        {
+            if (m_sessionTokenEncoder.TryDecode(encodedToken, out var refreshToken))
+            {
+                return m_SessionProvider.Extend(refreshToken); //TODO: Need to have a GetByRefreshToken on the AdoSessionProvider impl or rename to ExtendWithRefreshToken for semantic equality.
+            }
+
+            throw new SecurityException(m_localizationService.GetString(ErrorMessageStrings.SESSION_TOKEN_INVALID)); //TODO: Need to have a new error message string for this.
         }
     }
 }
