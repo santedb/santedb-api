@@ -119,10 +119,10 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Authenticates the session identifier as evidence of session
         /// </summary>
-        /// <param name="sessionToken">The session identiifer to be authenticated</param>
+        /// <param name="sessionId">The session identiifer to be authenticated. This value is just the identifier, without any signatures attached.</param>
         /// <param name="allowExpired">When true, allows the retrieval of expired session</param>
         /// <returns>The authenticated session from the session provider</returns>
-        ISession Get(byte[] sessionToken, bool allowExpired = false);
+        ISession Get(byte[] sessionId, bool allowExpired = false);
 
         /// <summary>
         /// Extend the session with the specified refresh token
