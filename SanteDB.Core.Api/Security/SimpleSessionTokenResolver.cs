@@ -92,9 +92,9 @@ namespace SanteDB.Core.Security.Services
             throw new SecurityException(m_localizationService.GetString(ErrorMessageStrings.SESSION_TOKEN_INVALID));
         }
 
-        /// <inheritdoc cref="ISessionTokenResolverService.GetSessionFromRefreshToken(string)"/>
+        /// <inheritdoc cref="ISessionTokenResolverService.ExtendSessionWithRefreshToken(string)"/>
         /// <exception cref="SecurityException"></exception>
-        public ISession GetSessionFromRefreshToken(string encodedToken)
+        public ISession ExtendSessionWithRefreshToken(string encodedToken)
         {
             if (m_sessionTokenEncoder.TryDecode(encodedToken, out var refreshToken))
             {

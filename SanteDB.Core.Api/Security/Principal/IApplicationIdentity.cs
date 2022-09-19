@@ -23,7 +23,7 @@ using System.Security.Principal;
 namespace SanteDB.Core.Security.Principal
 {
     /// <summary>
-    /// Represents a device identity
+    /// Represents an application identity
     /// </summary>
     public interface IApplicationIdentity : IIdentity
     {

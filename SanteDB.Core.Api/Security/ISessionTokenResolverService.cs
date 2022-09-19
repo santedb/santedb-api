@@ -56,6 +56,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         /// <param name="encodedToken">The encoded refresh token for the session.</param>
         /// <returns></returns>
-        ISession GetSessionFromRefreshToken(string encodedToken);
+        ISession ExtendSessionWithRefreshToken(string encodedToken);
     }
 }
