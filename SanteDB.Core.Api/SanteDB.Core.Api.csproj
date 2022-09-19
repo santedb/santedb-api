@@ -21,7 +21,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
     <PropertyGroup Condition="'$(VersionNumber)' == ''">
-    <VersionNumber>2.4.0-debug</VersionNumber>
+    <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>SanteDB.Core.Api</PackageId>
@@ -289,11 +289,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Security\Tfa\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DynamicExpresso.Core" Version="2.10.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="RazorTemplates" Version="1.2.1" />
   </ItemGroup>
   <!--<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />-->
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

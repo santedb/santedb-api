@@ -45,6 +45,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(XmlFileJobScheduleManager),
             typeof(XmlFileJobStateManager),
             typeof(DefaultNotificationService),
+            typeof(DefaultThreadPoolService),
             typeof(SimplePatchService),
             typeof(DataInitializationService),
             typeof(LocalMailMessageService),

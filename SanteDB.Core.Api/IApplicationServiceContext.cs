@@ -63,8 +63,14 @@ namespace SanteDB.Core
         DateTime StartTime { get; }
 
         /// <summary>
+        /// Start the application context
+        /// </summary>
+        void Start();
+
+        /// <summary>
         /// Stop the service host context
         /// </summary>
         void Stop();
+
     }
 }

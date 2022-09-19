@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using System;
 
 namespace SanteDB.Core
@@ -27,6 +29,9 @@ namespace SanteDB.Core
     /// </summary>
     public static class ApplicationServiceContext
     {
+
+        // Current context
+        private static IApplicationServiceContext m_current;
 
         /// <summary>
         /// Helper extension method for getting strongly typed service
@@ -42,7 +47,20 @@ namespace SanteDB.Core
         /// <summary>
         /// Gets or sets the current application service context
         /// </summary>
-        public static IApplicationServiceContext Current { get; set; }
+        public static IApplicationServiceContext Current
+        {
+            get {
+                return m_current;
+            }
+            set
+            {
+                if(m_current != null)
+                {
+                    throw new InvalidOperationException(ErrorMessages.ALREADY_INITIALIZED);
+                }
+                m_current = value;
+            }
+        }
 
 
     }
