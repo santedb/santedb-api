@@ -24,9 +24,6 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Model.Query;
-
-using SanteDB.Core.Security;
-
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
