@@ -30,6 +30,11 @@
     <AssemblyName>SanteDB.Core.TestFramework</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="firebird\**" />
+    <EmbeddedResource Remove="firebird\**" />
+    <None Remove="firebird\**" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="TestConfig.xml" />
   </ItemGroup>
   <Choose>
