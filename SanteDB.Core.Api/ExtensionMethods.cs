@@ -18,9 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Data;
 using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -47,6 +49,31 @@ namespace SanteDB.Core
         {
             return ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected(me);
         }
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagementPattern.ResolveManagedTarget{T}(T)"/>
+        /// </summary>
+        public static T ResolveManagedTarget<T>(this T forSource) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>().ResolveManagedTarget<T>(forSource);
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagementPattern.ResolveManagedSource{T}(T)"/>
+        /// </summary>
+        public static T ResolveManagedSource<T>(this T forSource) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>().ResolveManagedSource<T>(forSource);
+
+        /// <summary>
+        /// Get managed reference links wrapper for <see cref="IDataManagementPattern.GetManagedReferenceLinks{T}(IEnumerable{T})"/>
+        /// </summary>
+        public static IEnumerable<T> GetManagedReferenceLinks<T>(this IEnumerable<T> forRelationships) where T : class, ITargetedAssociation =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>().GetManagedReferenceLinks<T>(forRelationships);
+
+        /// <summary>
+        /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
+        /// </summary>
+        public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : class, IHasRelationships =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>().AddManagedReferenceLink(sourceObject, targetObject);
+
 
         /// <summary>
         /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
