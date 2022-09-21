@@ -114,7 +114,7 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public bool IsValid()
         {
-            return this.m_type != null ||
+            return this.m_type != null &&
                 Type.GetType(this.TypeXml) != null;
         }
     }
