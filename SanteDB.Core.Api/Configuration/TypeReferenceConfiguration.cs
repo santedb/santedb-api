@@ -23,6 +23,7 @@ using SanteDB.Core.Services;
 using System;
 using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -114,8 +115,14 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public bool IsValid()
         {
-            return this.m_type != null &&
-                Type.GetType(this.TypeXml) != null;
+            try
+            {
+                return Type.GetType(TypeXml) != null;
+            }
+            catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                return false;
+            }
         }
     }
 }
