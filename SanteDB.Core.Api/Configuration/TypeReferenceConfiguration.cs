@@ -23,6 +23,7 @@ using SanteDB.Core.Services;
 using System;
 using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
