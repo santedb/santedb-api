@@ -2,10 +2,10 @@
 <Project>
   <Target Name="OutputDir" AfterTargets="PostBuildEvent" >
     <ItemGroup>
-      <Firebird Include="$(MSBuildThisFileDirectory)\firebird\**\*.*"></Firebird>
+      <Firebird Include="$(MSBuildThisFileDirectory)\firebird\*.*"></Firebird>
     </ItemGroup>
     <Copy  SourceFiles="@(Firebird)" DestinationFolder="$(MSBuildProjectDirectory)\$(OutputPath)" />
-    <Move SourceFiles="$(MSBuildProjectDirectory)\$(OutputPath)\engine12.dll" DestinationFolder="$(MSBuildProjectDirectory)\$(OutputPath)\plugins"/>
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)\firebird\plugins\engine12.dll" DestinationFolder="$(MSBuildProjectDirectory)\$(OutputPath)\plugins"/>
   </Target>
   <!--<ItemGroup>
     <NativeLibs Include="$(MSBuildThisFileDirectory)\firebird\**\*.dll" />

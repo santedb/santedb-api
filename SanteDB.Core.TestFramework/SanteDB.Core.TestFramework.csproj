@@ -66,7 +66,7 @@
     <None Update="SanteDB.Core.TestFramework.targets" Pack="true" PackagePath="build" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="$(SolutionName.Contains('-ext')) and '$(NoFirebird)' == '' and Exists('C:\Program Files\7-Zip\7z.exe')">
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(NoFirebird)' == '' and Exists('C:\Program Files\7-Zip\7z.exe')">
     <Exec Command="&quot;C:\Program Files\7-Zip\7z.exe&quot; x -o&quot;$(ProjectDir)\firebird&quot; -y &quot;$(MSBuildThisFileDirectory)..\Solution Items\FirebirdSQL-3.0.3-Embedded.zip&quot; " />
     <Copy SourceFiles="$(ProjectDir)..\Solution Items\santedb_test.fdb" DestinationFolder="$(ProjectDir)\firebird" />
   </Target>
