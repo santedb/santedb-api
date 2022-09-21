@@ -41,7 +41,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NUnit">
-      <Version>3.13.2</Version>
+      <Version>3.13.3</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress" Version="0.32.2" />
     <Reference Include="System" />
