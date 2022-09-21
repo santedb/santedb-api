@@ -82,7 +82,6 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(LocalProviderRepository),
                 typeof(LocalTemplateDefinitionRepositoryService),
                 typeof(LocalTemplateDefinitionRepositoryService),
-                typeof(LocalAuditRepository)
             };
 
         /// <summary>

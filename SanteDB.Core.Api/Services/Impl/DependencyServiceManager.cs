@@ -667,7 +667,7 @@ namespace SanteDB.Core.Services.Impl
             if (fromAssembly == null)
             {
                 return this.GetAllTypes()
-                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
                     .Select(t =>
                     {
                         try
@@ -710,7 +710,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<T> CreateAll<T>(params object[] parms)
         {
-            return this.GetAllTypes().Where(t => typeof(T).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+            return this.GetAllTypes().Where(t => typeof(T).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
                 .Select(t =>
                 {
                     try

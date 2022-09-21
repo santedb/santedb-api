@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Core.Api.Test", "SanteDB.Core.Api.Test\SanteDB.Core.Api.Test.csproj", "{59B5E3BE-790E-451F-BACA-631369CF535C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SanteDB.Core.Api", "SanteDB.Core.Api\SanteDB.Core.Api.csproj", "{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SanteDB.Core.Api", "SanteDB.Core.Api\SanteDB.Core.Api.csproj", "{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SanteDB.Core.TestFramework", "SanteDB.Core.TestFramework\SanteDB.Core.TestFramework.csproj", "{E793AC31-D20E-4814-9873-6672C9A43F71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A45F695-47A2-464C-ACE6-BDABBFA39FBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E793AC31-D20E-4814-9873-6672C9A43F71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E793AC31-D20E-4814-9873-6672C9A43F71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E793AC31-D20E-4814-9873-6672C9A43F71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E793AC31-D20E-4814-9873-6672C9A43F71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

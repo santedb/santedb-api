@@ -158,7 +158,8 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
         {
-            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>();
+            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>() ??
+                new FileSystemDispatcherQueueConfigurationSection() { QueuePath = "queue" };
             if (!Directory.Exists(this.m_configuration.QueuePath))
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
             this.m_pepService = pepService;

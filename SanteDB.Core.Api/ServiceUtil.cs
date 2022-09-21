@@ -9,7 +9,7 @@ using System.Text;
 namespace SanteDB.Core
 {
     /// <summary>
-    /// Utility for starting / stopping hosted services
+    /// Utility for starting / stopping the SanteDB hosted services
     /// </summary>
     public static class ServiceUtil
     {

@@ -52,7 +52,7 @@ namespace SanteDB.Core
             get {
                 return m_current;
             }
-            set
+            internal set
             {
                 if(m_current != null)
                 {

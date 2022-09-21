@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Linq;
 using SanteDB.Core.Security.Audit;
+using SanteDB.Core.i18n;
 
 namespace SanteDB.Core
 {
@@ -126,17 +127,19 @@ namespace SanteDB.Core
                         this.Started?.Invoke(this, EventArgs.Empty);
                         this.StartTime = DateTime.Now;
 
+                        AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
+
                         Trace.TraceInformation("SanteDB startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
                     }
                     catch (Exception e)
                     {
                         m_tracer.TraceError("Error starting up context: {0}", e);
                         this.IsRunning = false;
-                        Trace.TraceWarning("Server is running in Maintenance Mode due to error {0}...", e.Message);
+                        Trace.TraceError("Server is running in Maintenance Mode due to error {0}...", e.Message);
+                        throw new InvalidOperationException(ErrorMessages.CANNOT_INITIALIZE_APPLICATION, e);
                     }
                     finally
                     {
-                        AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
                         startWatch.Stop();
                     }
                 }

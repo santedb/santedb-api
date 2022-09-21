@@ -51,7 +51,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Construct instance of LocalAuditRepository
         /// </summary>
-        public LocalAuditRepository(ILocalizationService localizationService, IDataPersistenceService<AuditEventData> persistenceService, IPolicyEnforcementService pepService)
+        public LocalAuditRepository(ILocalizationService localizationService, IPolicyEnforcementService pepService, IDataPersistenceService<AuditEventData> persistenceService = null)
         {
             this.m_localizationService = localizationService;
             this.m_persistenceService = persistenceService;
@@ -71,13 +71,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public IQueryResultSet<AuditEventData> Find(Expression<Func<AuditEventData, bool>> query)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
-            var service = ApplicationServiceContext.Current.GetService<IDataPersistenceService<AuditEventData>>();
-            if (service == null)
-            {
-                this.m_tracer.TraceError("Cannot find the data persistence service for audits");
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.auditPersistenceService"));
-            }
-            return service.Query(query, AuthenticationContext.Current.Principal);
+            return this.m_persistenceService?.Query(query, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -132,7 +126,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
 
-            return this.m_persistenceService.Get(key, versionKey, AuthenticationContext.Current.Principal);
+            return this.m_persistenceService?.Get(key, versionKey, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -140,7 +134,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public AuditEventData Insert(AuditEventData audit)
         {
-            return this.m_persistenceService.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return this.m_persistenceService?.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -150,7 +144,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
 
-            return this.m_persistenceService.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return this.m_persistenceService?.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
 
         /// <summary>
@@ -163,11 +157,11 @@ namespace SanteDB.Core.Services.Impl.Repository
             var existing = this.m_persistenceService.Get(data.Key.Value, null, AuthenticationContext.Current.Principal);
             if (existing == null)
             {
-                return this.m_persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                return this.m_persistenceService?.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
             else
             {
-                return this.m_persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                return this.m_persistenceService?.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
         }
     }
