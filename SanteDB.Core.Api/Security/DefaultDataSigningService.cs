@@ -127,10 +127,12 @@ namespace SanteDB.Core.Security
                     {
                         if (!configuration.Certificate.HasPrivateKey)
                             throw new InvalidOperationException("You must have the private key to sign data with this certificate");
-                        var csp = (RSACryptoServiceProvider)configuration.Certificate.PrivateKey;
-                        RSAPKCS1SignatureFormatter formatter = new RSAPKCS1SignatureFormatter(csp);
-                        formatter.SetHashAlgorithm(configuration.Algorithm == SignatureAlgorithm.RS256 ? "SHA256" : "SHA512");
-                        return formatter.CreateSignature(data);
+
+                        var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPrivateKey(configuration.Certificate);
+                        var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
+                        var halg = HashAlgorithm.Create(halgname.Name);
+                        var hashtext = halg.ComputeHash(data);
+                        return csp.SignHash(hashtext, halgname, RSASignaturePadding.Pkcs1);
                     }
                 default:
                     throw new InvalidOperationException($"Cannot generate digital signature {configuration.Algorithm}");
@@ -168,13 +170,11 @@ namespace SanteDB.Core.Security
                 case SignatureAlgorithm.RS256:
                 case SignatureAlgorithm.RS512:
                     {
-                        var csp = (RSACryptoServiceProvider)configuration.Certificate.PublicKey.Key;
-                        RSAPKCS1SignatureDeformatter formatter = new RSAPKCS1SignatureDeformatter(csp);
-                        formatter.SetHashAlgorithm(configuration.Algorithm == SignatureAlgorithm.RS256 ? "SHA256" : "SHA512");
-                        // Compute SHA hash
-                        HashAlgorithm sha = configuration.Algorithm == SignatureAlgorithm.RS256 ? (HashAlgorithm)SHA256.Create() : (HashAlgorithm)SHA512.Create();
-                        var hashValue = sha.ComputeHash(data);
-                        return formatter.VerifySignature(hashValue, signature);
+                        var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPublicKey(configuration.Certificate);
+                        var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
+                        var halg = HashAlgorithm.Create(halgname.Name);
+                        var hashtext = halg.ComputeHash(data);
+                        return csp.VerifyHash(hashtext, signature, halgname, RSASignaturePadding.Pkcs1);
                     }
                 default:
                     throw new InvalidOperationException("Cannot validate digital signature");
