@@ -56,7 +56,11 @@ namespace SanteDB.Core.Http.Compression
         /// </summary>
         public static ICompressionScheme GetCompressionScheme(String schemeHeader)
         {
-            if (s_compressionSchemesByHeader.TryGetValue(schemeHeader, out var handler))
+            if (null == schemeHeader)
+            {
+                return null;
+            }
+            else if (s_compressionSchemesByHeader.TryGetValue(schemeHeader, out var handler))
             {
                 return handler;
             }
