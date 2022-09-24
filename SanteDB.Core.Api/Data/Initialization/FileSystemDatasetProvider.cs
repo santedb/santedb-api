@@ -26,7 +26,7 @@ namespace SanteDB.Core.Data.Initialization
             {
                 return Directory.GetFiles(dataPath, "*.dataset").Select(o =>
                 {
-                    this.m_tracer.TraceInfo("Loading {0}...", Path.GetFileName(o));
+                    this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
                     using (var fs = File.OpenRead(o)) return Dataset.Load(fs);
                 });
             }

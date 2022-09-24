@@ -162,6 +162,21 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Sets the current loading mode
         /// </summary>
+        /// <param name="loadMode">The load strategy</param>
+        /// <param name="deleteMode">The deletion strategy</param>
+        /// <returns></returns>
+        public static DataPersistenceControlContext Create(LoadMode loadMode, DeleteMode deleteMode)
+        {
+            m_current = new DataPersistenceControlContext(loadMode, deleteMode, m_current)
+            {
+                Name = m_current?.Name
+            };
+            return m_current;
+        }
+
+        /// <summary>
+        /// Sets the current loading mode
+        /// </summary>
         /// <param name="loadMode"></param>
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)

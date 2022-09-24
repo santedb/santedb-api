@@ -115,7 +115,6 @@ namespace SanteDB.Core.Data.Initialization
             {
                 foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
                 {
-                    this.m_traceSource.TraceInfo("Installing dataset {0}...", dataset.Id);
                     this.m_datasetInstaller.Install(dataset);
                 }
                 return true;

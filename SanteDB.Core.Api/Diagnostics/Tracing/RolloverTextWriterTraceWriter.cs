@@ -32,6 +32,7 @@ using System.Collections.Concurrent;
 using SanteDB.Core.Diagnostics;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -86,6 +87,11 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_dispatchThread = new Thread(this.LogDispatcherLoop);
             this.m_dispatchThread.IsBackground = true;
             this.m_dispatchThread.Start();
+
+            var managerService = ApplicationServiceContext.Current?.GetService(typeof(ILogManagerService));
+            if (managerService == null) {
+                ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RolloverTextWriterTraceWriter));
+            }
 
             this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", Assembly.GetEntryAssembly().GetName().Name, Assembly.GetEntryAssembly().GetName().Version, filter);
         }

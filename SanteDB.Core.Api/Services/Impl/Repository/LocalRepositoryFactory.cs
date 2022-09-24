@@ -130,17 +130,17 @@ namespace SanteDB.Core.Services.Impl.Repository
                     var wrappedType = serviceType.GenericTypeArguments[0];
                     if (typeof(Act).IsAssignableFrom(wrappedType))
                     {
-                        this.m_tracer.TraceInfo("Adding Act repository service for {0}...", wrappedType.Name);
+                        this.m_tracer.TraceVerbose("Adding Act repository service for {0}...", wrappedType.Name);
                         st = typeof(GenericLocalActRepository<>).MakeGenericType(wrappedType);
                     }
                     else if (typeof(Entity).IsAssignableFrom(wrappedType))
                     {
-                        this.m_tracer.TraceInfo("Adding Entity repository service for {0}...", wrappedType);
+                        this.m_tracer.TraceVerbose("Adding Entity repository service for {0}...", wrappedType);
                         st = typeof(GenericLocalClinicalDataRepository<>).MakeGenericType(wrappedType);
                     }
                     else
                     {
-                        this.m_tracer.TraceInfo("Adding generic repository service for {0}...", wrappedType);
+                        this.m_tracer.TraceVerbose("Adding generic repository service for {0}...", wrappedType);
                         st = typeof(GenericLocalRepository<>).MakeGenericType(wrappedType);
                     }
                 }

@@ -23,6 +23,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using System;
 using System.Collections.Generic;
@@ -63,7 +64,9 @@ namespace SanteDB.Core.Services.Impl
             typeof(LocalRepositoryFactory),
             typeof(RegexPasswordValidator),
             typeof(DefaultOperatingSystemInfoService),
-            typeof(DefaultNetworkInformationService)
+            typeof(DefaultNetworkInformationService),
+            typeof(SimpleSessionTokenEncodingService),
+            typeof(SimpleSessionTokenResolver)
         };
         private readonly IServiceManager m_serviceManager;
 

@@ -325,6 +325,7 @@ namespace SanteDB.Core.Services.Impl
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
                             this.m_serviceRegistrations.Add(candidateService);
+                            this.AddServiceProvider(candidateService);
                         }
                         else // Attempt to call the service factories to create it
                         {
@@ -346,11 +347,9 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_notConfiguredServices.Add(serviceType);
                             }
                         }
+                      
                     }
-                    if (candidateService != null)
-                    {
-                        this.AddServiceProvider(candidateService);
-                    }
+                    
                 }
             }
             return candidateService?.GetInstance();
@@ -382,7 +381,7 @@ namespace SanteDB.Core.Services.Impl
         public void RemoveServiceProvider(Type serviceType)
         {
             var serviceProviders = this.m_serviceRegistrations.Where(sr => sr.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(sr.ServiceImplementer)).ToArray();
-            this.m_tracer.TraceInfo("Removing {0}...", serviceType);
+            this.m_tracer.TraceVerbose("Removing {0}...", serviceType);
             // iterate and dispose :)
             foreach (var sp in serviceProviders)
             {
@@ -418,7 +417,7 @@ namespace SanteDB.Core.Services.Impl
                 foreach (var sp in this.m_serviceRegistrations.ToArray())
                     if (sp.ServiceImplementer != typeof(DependencyServiceManager))
                     {
-                        this.m_tracer.TraceInfo("Disposing {0}...", sp.ServiceImplementer);
+                        this.m_tracer.TraceVerbose("Disposing {0}...", sp.ServiceImplementer);
                         sp.Dispose();
                     }
         }
@@ -460,7 +459,7 @@ namespace SanteDB.Core.Services.Impl
                         this.m_tracer.TraceInfo("Loading singleton services");
                         foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
                         {
-                            this.m_tracer.TraceInfo("Instantiating {0}...", svc.ServiceImplementer.FullName);
+                            this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }
 
@@ -468,7 +467,7 @@ namespace SanteDB.Core.Services.Impl
                         foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
                         {
                             if (dc == null) continue;
-                            this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
+                            this.m_tracer.TraceInfo("Starting {0}...", dc.ServiceName);
                             if (dc != this && !dc.Start())
                                 throw new Exception($"Service {dc} reported unsuccessful start");
                         }
@@ -510,7 +509,7 @@ namespace SanteDB.Core.Services.Impl
                         extraCerts.Import(asmFile);
 
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
-                        this.m_tracer.TraceInfo("Validating {0} published by {1}", asmFile, certificate.Subject);
+                        this.m_tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
                         valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
                         if (!valid)
                         {
@@ -566,10 +565,10 @@ namespace SanteDB.Core.Services.Impl
             {
                 if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetCreatedInstance() is IDaemonService daemon)
                 {
-                    this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
+                    this.m_tracer.TraceInfo("Stopping {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
-                this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
+                this.m_tracer.TraceVerbose("Disposing service {0}...", svc.ServiceImplementer.Name);
                 svc.Dispose();
             }
 
