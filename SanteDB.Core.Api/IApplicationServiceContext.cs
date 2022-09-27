@@ -53,6 +53,11 @@ namespace SanteDB.Core
         bool IsRunning { get; }
 
         /// <summary>
+        /// Gets the name of the application
+        /// </summary>
+        string ApplicationName { get; }
+
+        /// <summary>
         /// Type of application hosting this SanteDB
         /// </summary>
         SanteDBHostType HostType { get; }

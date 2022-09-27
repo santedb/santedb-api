@@ -76,6 +76,7 @@ namespace SanteDB.Core.Configuration
             {
                 if (String.Equals(this.m_typeXml, value))
                     this.m_type = null;
+
                 this.m_typeXml = value;
             }
         }
@@ -101,7 +102,14 @@ namespace SanteDB.Core.Configuration
             set
             {
                 this.m_type = value;
-                this.m_typeXml = value?.AssemblyQualifiedName;
+                if (value != null)
+                {
+                    this.m_typeXml = $"{value?.FullName}, {value?.Assembly.GetName().Name}"; // remove version 
+                }
+                else
+                {
+                    this.m_typeXml = null;
+                }
             }
         }
 

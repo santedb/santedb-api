@@ -18,10 +18,12 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -55,10 +57,10 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Authenticate the application identity.
         /// </summary>
-        /// <param name="applicationId">The application id to authenticate.</param>
+        /// <param name="applicationName">The application id to authenticate.</param>
         /// <param name="applicationSecret">The application secret to authenticate.</param>
         /// <returns>Returns the principal of the application.</returns>
-        IPrincipal Authenticate(String applicationId, String applicationSecret);
+        IPrincipal Authenticate(String applicationName, String applicationSecret);
 
         /// <summary>
         /// Create a basic identity in the provider
@@ -74,7 +76,7 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         /// <param name="name">The name of the application for which to retrieve the identity.</param>
         /// <returns>Returns the identity of the application.</returns>
-        IApplicationIdentity GetIdentity(string name);
+        IApplicationIdentity GetIdentity(string applicationName);
 
         /// <summary>
         /// Gets the SID for the specified identity
@@ -87,7 +89,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="name">The name of the device</param>
         /// <param name="lockoutState">The status of the lockout</param>
         /// <param name="principal">The principal which is locking the device</param>
-        void SetLockout(string name, bool lockoutState, IPrincipal principal);
+        void SetLockout(string applicationName, bool lockoutState, IPrincipal principal);
 
         /// <summary>
         /// Change the specified application identity's secret
@@ -95,16 +97,40 @@ namespace SanteDB.Core.Security.Services
         /// <param name="name">The name of the application</param>
         /// <param name="secret">The new secret</param>
         /// <param name="principal">The principal that is changing the secret</param>
-        void ChangeSecret(String name, String secret, IPrincipal principal);
+        void ChangeSecret(String applicationName, String secret, IPrincipal principal);
 
         /// <summary>
         /// Get the secure key for the specified application (can be used for symmetric encryption)
         /// </summary>
-        byte[] GetPublicSigningKey(String name);
+        byte[] GetPublicSigningKey(String applicationName);
 
         /// <summary>
         /// Set the public key for the object
         /// </summary>
-        void SetPublicKey(string name, byte[] key, IPrincipal principal);
+        void SetPublicKey(string applicationName, byte[] key, IPrincipal principal);
+
+        /// <summary>
+        /// Add a <paramref name="claim"/> to <paramref name="applicationName"/> 
+        /// </summary>
+        /// <param name="applicationName">The name of the device to which the claim should be added</param>
+        /// <param name="claim">The claim which is to be added</param>
+        /// <param name="principal">The principal which is adding the claim</param>
+        /// <param name="expiry">The expiry time for the claim</param>
+        void AddClaim(String applicationName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null);
+
+        /// <summary>
+        /// Get all active claims for the specified application
+        /// </summary>
+        /// <param name="applicationName">The application name for which claims should be retrieved</param>
+        /// <returns>The configured claims on the application</returns>
+        IEnumerable<IClaim> GetClaims(String applicationName);
+
+        /// <summary>
+        /// Removes a claim from the specified device account
+        /// </summary>
+        /// <param name="claimType">The claim type to be removed</param>
+        /// <param name="principal">The principal which is removing the claim</param>
+        /// <param name="applicationName">The name of the device account from which the claim should be removed</param>
+        void RemoveClaim(String applicationName, String claimType, IPrincipal principal);
     }
 }

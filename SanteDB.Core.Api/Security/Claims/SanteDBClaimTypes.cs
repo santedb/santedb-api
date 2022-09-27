@@ -144,11 +144,6 @@ namespace SanteDB.Core.Security.Claims
         public const string SubjectId = "SubjectId";
 
         /// <summary>
-        /// Passwordless authentication (allow authentication without password)
-        /// </summary>
-        public const string SanteDBCodeAuth = "http://santedb.org/claims/code-auth";
-
-        /// <summary>
         /// Session id claim
         /// </summary>
         public const string SanteDBSessionIdClaim = "http://santedb.org/claims/session-id";
@@ -204,6 +199,11 @@ namespace SanteDB.Core.Security.Claims
         /// HTTP header for client claims
         /// </summary>
         public const string BasicHttpClientClaimHeaderName = "X-SanteDBClient-Claim";
+
+        /// <summary>
+        /// Claim which indicates that the client MUST reset its password
+        /// </summary>
+        public const string ForceResetPassword = "http://santedb.org/claims/force-reset-secret";
 
     }
 }

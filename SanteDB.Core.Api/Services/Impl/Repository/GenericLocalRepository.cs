@@ -356,7 +356,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 else
                     data = preSave.Data; // Data may have been updated
 
-                if (data.Key.HasValue && persistenceService.Get(data.Key.Value, null, AuthenticationContext.Current.Principal) != null)
+                if (data.Key.HasValue && persistenceService.Query(a=>a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);

@@ -29,14 +29,6 @@
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
     <AssemblyName>SanteDB.Core.TestFramework</AssemblyName>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="firebird\**" />
-    <EmbeddedResource Remove="firebird\**" />
-    <None Remove="firebird\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TestConfig.xml" />
-  </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
@@ -54,6 +46,7 @@
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model" Version="$(VersionNumber)" />
+        <PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -63,7 +56,19 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="SanteDB.Core.TestFramework.targets" Pack="true" PackagePath="build" />
+    <EmbeddedResource Include="SanteDB.Core.TestFramework.targets" Pack="true" PackagePath="build" />
+    <None Include="firebird\fbclient.dll" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\firebird.conf" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\firebird.msg" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\ib_util.dll" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\icudt52.dll" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\icudt52l.dat" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\icuin52.dll" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\icuuc52.dll" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\IDPLicense.txt" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\IPLicense.txt" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\santedb_test.fdb" Pack="true" PackagePath="build\firebird" />
+    <None Include="firebird\plugins\engine12.dll" Pack="true" PackagePath="build\firebird\plugins" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(NoFirebird)' == '' and Exists('C:\Program Files\7-Zip\7z.exe')">

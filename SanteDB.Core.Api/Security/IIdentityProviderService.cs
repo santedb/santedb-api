@@ -233,12 +233,19 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Adds a claim to the specified user account
         /// </summary>
-        void AddClaim(String userName, IClaim claim, IPrincipal principal, TimeSpan? expiriy = null);
+        void AddClaim(String userName, IClaim claim, IPrincipal principal, TimeSpan? expiry = null);
 
         /// <summary>
         /// Removes a claim from the specified user account
         /// </summary>
         void RemoveClaim(String userName, String claimType, IPrincipal principal);
+
+        /// <summary>
+        /// Get all active claims for the specified user
+        /// </summary>
+        /// <param name="userName">The user name for which claims should be retrieved</param>
+        /// <returns>The configured claims on the user</returns>
+        IEnumerable<IClaim> GetClaims(String userName);
 
         /// <summary>
         /// Get the SID for the named user

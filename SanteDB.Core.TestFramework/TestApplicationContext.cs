@@ -58,6 +58,11 @@ namespace SanteDB.Core.TestFramework
         public static Assembly TestAssembly { get; set; }
 
         /// <summary>
+        /// Application context name
+        /// </summary>
+        public override string ApplicationName => "TEST";
+
+        /// <summary>
         /// Creastes a new test context
         /// </summary>
         private TestApplicationContext() : base(SanteDBHostType.Test, new TestConfigurationService())

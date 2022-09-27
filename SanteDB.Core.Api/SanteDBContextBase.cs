@@ -36,6 +36,11 @@ namespace SanteDB.Core
         public DateTime StartTime { get; private set; }
 
         /// <summary>
+        /// Application name
+        /// </summary>
+        public virtual String ApplicationName => "SanteDB";
+
+        /// <summary>
         /// Gets whether the domain is running
         /// </summary>
         public bool IsRunning { get; private set; }
