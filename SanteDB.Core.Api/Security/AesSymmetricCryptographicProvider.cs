@@ -52,13 +52,15 @@ namespace SanteDB.Core.Security
         /// </summary>
         public String ServiceName => "AES Symmetric Cryptographic Provider";
 
+        private Aes CreateAlgorithm() => Aes.Create();
+
         /// <summary>
         /// Decrypt the specified data using the specified key and iv
         /// </summary>
         public byte[] Decrypt(byte[] data, byte[] key, byte[] iv)
         {
             key = this.CorrectKey(key);
-            using (var aes = new AesCryptoServiceProvider())
+            using (var aes = CreateAlgorithm())
             {
                 var decryptor = aes.CreateDecryptor(key, iv);
                 return decryptor.TransformFinalBlock(data, 0, data.Length);
@@ -82,7 +84,7 @@ namespace SanteDB.Core.Security
         public byte[] Encrypt(byte[] data, byte[] key, byte[] iv)
         {
             key = this.CorrectKey(key);
-            using (var aes = new AesCryptoServiceProvider())
+            using (var aes = CreateAlgorithm())
             {
                 var encryptor = aes.CreateEncryptor(key, iv);
                 var retVal = encryptor.TransformFinalBlock(data, 0, data.Length);
@@ -95,7 +97,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public byte[] GenerateIV()
         {
-            using (var aes = new AesCryptoServiceProvider())
+            using (var aes = CreateAlgorithm())
             {
                 aes.GenerateIV();
                 return aes.IV;
@@ -108,7 +110,7 @@ namespace SanteDB.Core.Security
         /// <returns></returns>
         public byte[] GenerateKey()
         {
-            using (var aes = new AesCryptoServiceProvider())
+            using (var aes = CreateAlgorithm())
             {
                 aes.GenerateKey();
                 return aes.Key;
