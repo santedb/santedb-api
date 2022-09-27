@@ -226,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
 
                 if (queueFile == null || !File.Exists(queueFile)) return null;
 
-                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
                 try
                 {
@@ -281,7 +281,7 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry.Create(data).Save(fs);
 
             this.NotifyQueuePush(queueName, Path.GetFileNameWithoutExtension(filePath));
-            this.m_tracer.TraceInfo("Successfully queued {0}", fname);
+            this.m_tracer.TraceVerbose("Successfully queued {0}", fname);
         }
 
         /// <summary>

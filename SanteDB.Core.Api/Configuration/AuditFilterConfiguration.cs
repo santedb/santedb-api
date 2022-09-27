@@ -107,6 +107,12 @@ namespace SanteDB.Core.Configuration
         public bool OutcomeSpecified { get; set; }
         #endregion
 
+
+        /// <summary>
+        /// Get the compbined filter flags
+        /// </summary>
+        public uint FilterFlags => (this.OutcomeSpecified ? (uint)this.Outcome : 0xFF) << 24 | (this.ActionSpecified ? (uint)this.Action : 0xFF) << 16 | (this.EventSpecified ? (uint)this.Event : 0xFFFF);
+
         /// <summary>
         /// Represent the filter as a stirng
         /// </summary>

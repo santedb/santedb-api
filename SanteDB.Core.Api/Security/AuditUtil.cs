@@ -220,29 +220,28 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Send audit internal logic
         /// </summary>
-        private static void SendAuditInternal(AuditEventData AuditEventData)
+        private static void SendAuditInternal(AuditEventData auditEventData)
         {
             using (AuthenticationContext.EnterSystemContext())
             {
                 // Filter apply?
-                var filters = s_configuration?.AuditFilters.Where(f =>
-                (!f.OutcomeSpecified ^ f.Outcome.HasFlag(AuditEventData.Outcome)) &&
-                    (!f.ActionSpecified ^ f.Action.HasFlag(AuditEventData.ActionCode)) &&
-                    (!f.EventSpecified ^ f.Event.HasFlag(AuditEventData.EventIdentifier)));
+                if (s_configuration?.ApplyFilters(auditEventData, out var saveLocal, out var dispatchRemote) == true)
+                {
 
-                if (filters == null || filters.Count() == 0 || filters.Any(f => f.InsertLocal))
-                {
-                    m_repositoryService?.Insert(AuditEventData); // insert into local AR
-                }
-                if (filters == null || filters.Count() == 0 || filters.Any(f => f.SendRemote))
-                {
-                    if (m_dispatcher == null)
+                    if (saveLocal)
                     {
-                        traceSource.TraceInfo("Cannot dispatch audit to central server - no dispatcher is available");
+                        m_repositoryService?.Insert(auditEventData); // insert into local AR
                     }
-                    else
+                    if (dispatchRemote)
                     {
-                        m_dispatcher?.SendAudit(AuditEventData);
+                        if (m_dispatcher == null)
+                        {
+                            traceSource.TraceInfo("Cannot dispatch audit to central server - no dispatcher is available");
+                        }
+                        else
+                        {
+                            m_dispatcher?.SendAudit(auditEventData);
+                        }
                     }
                 }
             }
@@ -650,41 +649,46 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static void SendAudit(AuditEventData audit)
         {
-            // If the current principal is SYSTEM then we don't need to send an audit
-
-            try
+            // Is there any point in queueing 
+            if (s_configuration?.ApplyFilters(audit, out _, out _) == true)
             {
-                var rc = RemoteEndpointUtil.Current.GetRemoteClient();
-                var principal = AuthenticationContext.Current.Principal as IClaimsPrincipal;
-                traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
 
-                // Get audit metadata
-                audit.AddMetadata(AuditMetadataKey.PID, s_processId.ToString());
-                audit.AddMetadata(AuditMetadataKey.ProcessName, s_processName);
-                audit.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
-                audit.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
-                audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
-                audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
-                audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
-                audit.AddMetadata(AuditMetadataKey.ForwardInformation, rc?.ForwardInformation);
-                audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
-                //audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? null)?.ToString());
-
-                using (AuthenticationContext.EnterSystemContext())
+                try
                 {
-                    if (m_queueService != null)
+                    var rc = RemoteEndpointUtil.Current.GetRemoteClient();
+                    var principal = AuthenticationContext.Current.Principal as IClaimsPrincipal;
+                    traceSource.TraceInfo("Dispatching audit {0} - {1}", audit.ActionCode, audit.EventIdentifier);
+
+                    // Get audit metadata
+                    audit.AddMetadata(AuditMetadataKey.PID, s_processId.ToString());
+                    audit.AddMetadata(AuditMetadataKey.ProcessName, s_processName);
+                    audit.AddMetadata(AuditMetadataKey.SessionId, principal?.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim)?.Value);
+                    audit.AddMetadata(AuditMetadataKey.CorrelationToken, rc?.CorrelationToken);
+                    audit.AddMetadata(AuditMetadataKey.AuditSourceType, "4");
+                    audit.AddMetadata(AuditMetadataKey.LocalEndpoint, rc?.OriginalRequestUrl);
+                    audit.AddMetadata(AuditMetadataKey.RemoteHost, rc?.RemoteAddress);
+                    audit.AddMetadata(AuditMetadataKey.ForwardInformation, rc?.ForwardInformation);
+                    audit.AddMetadata(AuditMetadataKey.EnterpriseSiteID, s_configuration?.SourceInformation?.EnterpriseSite);
+                    //audit.AddMetadata(AuditMetadataKey.AuditSourceID, (s_configuration?.SourceInformation?.EnterpriseDeviceKey ?? null)?.ToString());
+
+                    // Filter audit events
+
+                    using (AuthenticationContext.EnterSystemContext())
                     {
-                        m_queueService.Enqueue(QueueName, audit);
-                    }
-                    else
-                    {
-                        SendAuditInternal(audit);
+                        if (m_queueService != null)
+                        {
+                            m_queueService.Enqueue(QueueName, audit);
+                        }
+                        else
+                        {
+                            SendAuditInternal(audit);
+                        }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                traceSource.TraceError("Error dispatching / saving audit: {0}", e);
+                catch (Exception e)
+                {
+                    traceSource.TraceError("Error dispatching / saving audit: {0}", e);
+                }
             }
         }
 
