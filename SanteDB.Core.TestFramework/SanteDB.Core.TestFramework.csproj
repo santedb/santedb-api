@@ -46,7 +46,6 @@
       <ItemGroup>
         <PackageReference Include="SanteDB.Core.Api" Version="$(VersionNumber)" />
         <PackageReference Include="SanteDB.Core.Model" Version="$(VersionNumber)" />
-        <PackageReference Include="SanteDB.Persistence.Data" Version="$(VersionNumber)" />
       </ItemGroup>
     </Otherwise>
   </Choose>
