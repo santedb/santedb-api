@@ -63,15 +63,6 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Set the action on the audit
-        /// </summary>
-        public static AuditEventData Action(this AuditEventData me, ActionType action)
-        {
-            me.ActionCode = action;
-            return me;
-        }
-
-        /// <summary>
         /// With event type
         /// </summary>
         public static AuditEventData WithEventType(this AuditEventData me, String eventTypeCode, String eventTypeCodeSystem = "http://santedb.org/conceptset/SecurityAuditCode")
