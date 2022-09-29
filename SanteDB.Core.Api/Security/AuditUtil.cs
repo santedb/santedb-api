@@ -224,8 +224,9 @@ namespace SanteDB.Core.Security.Audit
         {
             using (AuthenticationContext.EnterSystemContext())
             {
+                bool saveLocal = false, dispatchRemote = true;
                 // Filter apply?
-                if (s_configuration?.ApplyFilters(auditEventData, out var saveLocal, out var dispatchRemote) == true)
+                if (s_configuration?.ApplyFilters(auditEventData, out saveLocal, out dispatchRemote) == true)
                 {
 
                     if (saveLocal)
