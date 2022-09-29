@@ -56,7 +56,7 @@ namespace SanteDB.Core
             {
                 if(m_current != null)
                 {
-                    throw new InvalidOperationException(ErrorMessages.ALREADY_INITIALIZED);
+                    throw new InvalidOperationException(String.Format(ErrorMessages.MULTIPLE_CALLS_NOT_ALLOWED, "Initialize"));
                 }
                 m_current = value;
             }
