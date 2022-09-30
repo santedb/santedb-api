@@ -190,7 +190,7 @@ namespace SanteDB.Core.Security.Audit
                     m_queueService.Open($"{QueueName}.dead");
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Test)
                     throw;
@@ -202,19 +202,32 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         private static void AuditQueued(DispatcherMessageEnqueuedInfo e)
         {
-            object queueObject = null;
-            while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditEventData AuditEventData)
+            DispatcherQueueEntry queueentry = null;
+            while (m_queueService.TryDequeue(QueueName, out queueentry) && queueentry.Body is AuditEventData AuditEventData)
             {
                 try
                 {
                     SendAuditInternal(AuditEventData);
                 }
-                catch (Exception ex)
+                catch(PolicyViolationException polvex)
+                {
+                    traceSource.TraceError("Policy Violation Exception dispatching audit. Principal: {0}, Policy: {1}, Outcome {2}{3}{4}", polvex.Principal?.Identity?.Name ?? "UNKNOWN", polvex.PolicyId, polvex.PolicyDecision.ToString(), Environment.NewLine, polvex.ToString());
+                    traceSource.TraceEvent(System.Diagnostics.Tracing.EventLevel.Critical, "!!!!!!!!! CRITICAL !!!!!!! Policy Violation dispatching audit. This is a configuration issue and needs to be corrected to use SanteDB.");
+                    Environment.Exit(911);
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     traceSource.TraceError("Error dispatching audit - {0}", ex);
                     m_queueService.Enqueue($"{QueueName}.dead", AuditEventData);
                 }
             }
+        }
+
+        private static bool TryDequeue(this IDispatcherQueueManagerService svc, string queueName, out DispatcherQueueEntry queueEntry)
+        {
+            queueEntry = svc.Dequeue(queueName);
+
+            return null != queueEntry;
         }
 
         /// <summary>
@@ -228,7 +241,6 @@ namespace SanteDB.Core.Security.Audit
                 // Filter apply?
                 if (s_configuration?.ApplyFilters(auditEventData, out saveLocal, out dispatchRemote) == true)
                 {
-
                     if (saveLocal)
                     {
                         m_repositoryService?.Insert(auditEventData); // insert into local AR
@@ -739,7 +751,7 @@ namespace SanteDB.Core.Security.Audit
                         {
                             UserName = uid.Name,
                             UserIsRequestor = true,
-                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation?.Replace(",", " via ") ?? 
+                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation?.Replace(",", " via ") ??
                                 RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                             NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             ActorRoleCode = new List<AuditCode>()
@@ -747,11 +759,11 @@ namespace SanteDB.Core.Security.Audit
                                 new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
                             },
                             AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.Sid)?.Value
-                        }) ;
+                        });
                     }
                 }
 
-                if(!audit.Actors.Any(a=>a.ActorRoleCode.Any(r=>r.Code == "110153")))
+                if (!audit.Actors.Any(a => a.ActorRoleCode.Any(r => r.Code == "110153")))
                 {
                     audit.Actors.LastOrDefault()?.ActorRoleCode.Add(new AuditCode("110153", "DCM") { DisplayName = "Source" });
                 }
