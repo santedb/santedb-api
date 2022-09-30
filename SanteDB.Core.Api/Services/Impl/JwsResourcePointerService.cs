@@ -82,7 +82,9 @@ namespace SanteDB.Core.Services.Impl
         {
             // Is there a key called jwsdefault? If so, use it as the default signature key
             if (m_signingService.GetKeys().Contains("jwsdefault"))
+            {
                 return "jwsdefault";
+            }
 
             // Otherwise use the configured secure application HMAC key as the default
             if (AuthenticationContext.Current.Principal is IClaimsPrincipal claimsPrincipal)
@@ -90,12 +92,17 @@ namespace SanteDB.Core.Services.Impl
                 // Is there a tag for their application
                 var appId = claimsPrincipal.FindFirst(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim)?.Value;
                 if (String.IsNullOrEmpty(appId))
+                {
                     throw new InvalidOperationException("Can only generate signed pointers when authenticated");
+                }
+
                 var keyId = $"SA.{appId}";
 
                 // Does the key provider have the key for this app?
                 if (m_signingService.GetKeys().Any(k => k == keyId))
+                {
                     return keyId;
+                }
                 else
                 {
                     // Application identity
@@ -114,7 +121,9 @@ namespace SanteDB.Core.Services.Impl
                 }
             }
             else
+            {
                 throw new InvalidOperationException("Cannot generate a personal key without knowing application id");
+            }
         }
 
         /// <summary>
@@ -172,7 +181,9 @@ namespace SanteDB.Core.Services.Impl
             {
                 var match = this.m_jwsFormat.Match(data);
                 if (!match.Success)
+                {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid", "Invalid Barcode Format", DetectedIssueKeys.InvalidDataIssue));
+                }
 
                 // Get the parts of the header
                 byte[] headerBytes = match.Groups[1].Value.ParseBase64UrlEncode(),
@@ -185,7 +196,10 @@ namespace SanteDB.Core.Services.Impl
 
                 // Now validate the payload
                 if (!header.typ.ToString().StartsWith("x-santedb+"))
+                {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Barcode Type", DetectedIssueKeys.InvalidDataIssue));
+                }
+
                 var type = new ModelSerializationBinder().BindToType(null, header.typ.ToString().Substring(10));
                 var algorithm = header.alg.ToString();
                 String keyId = header.key.ToString();
@@ -193,19 +207,26 @@ namespace SanteDB.Core.Services.Impl
                 // Attempt to locate the record
                 var domainQuery = new NameValueCollection();
                 foreach (var id in body.id)
+                {
                     domainQuery.Add($"identifier[{id.ns.ToString()}].value", id.value.ToString());
+                }
+
                 var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
 
                 // Get query
                 var repoType = typeof(IRepositoryService<>).MakeGenericType(type);
                 var repoService = (ApplicationServiceContext.Current as IServiceProvider).GetService(repoType) as IRepositoryService;
                 if (repoService == null)
+                {
                     throw new InvalidOperationException("Cannot find appropriate repository service");
+                }
 
                 // HACK: .NET is using late binding and getting confused
                 var results = repoService.Find(filterExpression, 0, 2, out int tr) as IEnumerable<IdentifiedData>;
                 if (tr > 1)
+                {
                     throw new InvalidOperationException("Resource is ambiguous (points to more than one resource)");
+                }
 
                 var result = results.FirstOrDefault();
 
@@ -229,16 +250,22 @@ namespace SanteDB.Core.Services.Impl
                             this.m_signingService.AddSigningKey(keyId, secret, Security.Configuration.SignatureAlgorithm.HS256);
                         }
                         else
+                        {
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", "Invalid Key Type", DetectedIssueKeys.SecurityIssue));
+                        }
                     }
 
                     if (this.m_signingService.GetSignatureAlgorithm(keyId) != algorithm)
+                    {
                         throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm {algorithm} Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(keyId)})", DetectedIssueKeys.SecurityIssue));
+                    }
 
                     var payload = Encoding.UTF8.GetBytes($"{match.Groups[1].Value}.{match.Groups[2].Value}");
 
                     if (!this.m_signingService.Verify(payload, signatureBytes, keyId))
+                    {
                         throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
+                    }
                 }
                 // Return the result
                 return result;

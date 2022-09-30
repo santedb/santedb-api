@@ -50,7 +50,10 @@ namespace SanteDB.Core.Http
         public HttpBasicCredentials(IPrincipal principal, string password) : base(principal)
         {
             if (!principal.Identity.IsAuthenticated)
+            {
                 throw new InvalidOperationException("Principal must be authenticated");
+            }
+
             this.m_userName = principal.Identity.Name;
             this.m_password = password;
 

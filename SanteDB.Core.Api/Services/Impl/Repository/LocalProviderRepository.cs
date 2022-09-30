@@ -21,12 +21,6 @@
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {

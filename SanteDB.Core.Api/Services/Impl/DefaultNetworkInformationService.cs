@@ -18,14 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -115,7 +112,10 @@ namespace SanteDB.Core.Services.Impl
             {
                 Uri uri = null;
                 if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out uri))
+                {
                     address = uri.Host;
+                }
+
                 var resolution = Dns.GetHostEntry(address);
                 return resolution.AddressList.First().ToString();
             }
@@ -134,7 +134,10 @@ namespace SanteDB.Core.Services.Impl
             {
                 Uri uri = null;
                 if (Uri.TryCreate(hostName, UriKind.RelativeOrAbsolute, out uri))
+                {
                     hostName = uri.Host;
+                }
+
                 Ping p = new Ping();
                 var reply = p.Send(hostName);
                 return reply.Status == IPStatus.Success ? reply.RoundtripTime : -1;

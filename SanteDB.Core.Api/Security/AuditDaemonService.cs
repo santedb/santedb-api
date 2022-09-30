@@ -18,8 +18,8 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -94,16 +94,22 @@ namespace SanteDB.Core.Security.Audit
                     this.m_tracer.TraceInfo("Binding to service events...");
 
                     if (ApplicationServiceContext.Current.GetService<IIdentityProviderService>() != null)
+                    {
                         ApplicationServiceContext.Current.GetService<IIdentityProviderService>().Authenticated += (so, se) =>
                         {
                             AuditUtil.AuditLogin(se.Principal, se.UserName, so as IIdentityProviderService, se.Success);
                         };
+                    }
+
                     if (ApplicationServiceContext.Current.GetService<ISessionProviderService>() != null)
                     {
                         ApplicationServiceContext.Current.GetService<ISessionProviderService>().Established += (so, se) =>
                         {
                             if (se.Elevated)
+                            {
                                 AuditUtil.AuditOverride(se.Session, se.Principal, se.Purpose, se.Policies, se.Success);
+                            }
+
                             AuditUtil.AuditSessionStart(se.Session, se.Principal, se.Success);
                         };
                         ApplicationServiceContext.Current.GetService<ISessionProviderService>().Abandoned += (so, se) => AuditUtil.AuditSessionStop(se.Session, se.Principal, se.Success);

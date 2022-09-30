@@ -18,18 +18,14 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Permissions;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -48,13 +44,13 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Privacy enforcement service
         /// </summary>
-        public LocalConceptRepository(IPolicyEnforcementService policyService, 
-            ILocalizationService localizationService, 
+        public LocalConceptRepository(IPolicyEnforcementService policyService,
+            ILocalizationService localizationService,
             IDataPersistenceService<Concept> persistenceService,
             IDataPersistenceService<ConceptReferenceTerm> referenceTermService,
             IDataPersistenceService<ConceptName> conceptNameService,
             IDataPersistenceService<ConceptSet> conceptSetPersistence,
-            IPrivacyEnforcementService privacyService = null, 
+            IPrivacyEnforcementService privacyService = null,
             IAdhocCacheService adhocCacheService = null) : base(policyService, localizationService, persistenceService, privacyService)
         {
             this.m_adhocCacheService = adhocCacheService;
@@ -118,20 +114,31 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             // Concept is loaded
             if (codeSystemDomain.StartsWith("urn:oid:"))
+            {
                 codeSystemDomain = codeSystemDomain.Substring(8);
+            }
 
             Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             var cacheKey = $"{code}.{codeSystemDomain}";
             var retVal = this.m_adhocCacheService?.Get<IEnumerable<ConceptReferenceTerm>>(cacheKey);
 
             if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            {
                 return retVal;
+            }
+
             if (codeSystemDomain.StartsWith("http:") || codeSystemDomain.StartsWith("urn:"))
+            {
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Url == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
             else if (oidRegex.IsMatch(codeSystemDomain))
+            {
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Oid == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
             else
+            {
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Authority == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
 
             retVal = retVal.ToArray();
             this.m_adhocCacheService?.Add(cacheKey, retVal);
@@ -161,7 +168,9 @@ namespace SanteDB.Core.Services.Impl.Repository
             var retVal = this.m_adhocCacheService?.Get<Guid>(cacheKey);
 
             if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            {
                 return this.Get(retVal.Value);
+            }
             else
             {
                 var obj = base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
@@ -182,18 +191,28 @@ namespace SanteDB.Core.Services.Impl.Repository
             var retVal = this.m_adhocCacheService?.Get<ReferenceTerm>(cacheKey);
 
             if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            {
                 return retVal;
+            }
 
             // Filter expression
             Expression<Func<ConceptReferenceTerm, bool>> filterExpression = null;
             if (String.IsNullOrEmpty(codeSystem))
+            {
                 filterExpression = o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
+            }
             else if (this.m_oidRegex.IsMatch(codeSystem))
+            {
                 filterExpression = o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
+            }
             else if (Uri.TryCreate(codeSystem, UriKind.Absolute, out Uri uri))
+            {
                 filterExpression = o => (o.ReferenceTerm.CodeSystem.Url == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
+            }
             else
+            {
                 filterExpression = o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
+            }
 
             if (exact)
             {
@@ -218,7 +237,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             var cacheKey = $"refTermAssoc.{conceptId}.{codeSystem}";
             var retVal = this.m_adhocCacheService?.Get<ConceptReferenceTerm[]>(cacheKey);
 
-            if(retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
             {
                 return retVal;
             }
@@ -227,14 +246,22 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             Uri uri = null;
-            if(String.IsNullOrEmpty(codeSystem)) // all
+            if (String.IsNullOrEmpty(codeSystem)) // all
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
             else if (oidRegex.IsMatch(codeSystem))
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
             else if (Uri.TryCreate(codeSystem, UriKind.Absolute, out uri))
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Url == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
             else
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+            }
 
             refTermEnt = refTermEnt.ToArray();
             this.m_adhocCacheService?.Add(cacheKey, refTermEnt);
@@ -298,14 +325,23 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             Uri uri = null;
-            if(String.IsNullOrEmpty(codeSystem))
+            if (String.IsNullOrEmpty(codeSystem))
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
+            }
             else if (oidRegex.IsMatch(codeSystem))
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
+            }
             else if (Uri.TryCreate(codeSystem, UriKind.Absolute, out uri))
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Url == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
+            }
             else
+            {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
+            }
+
             retVal = refTermEnt.LoadProperty<ReferenceTerm>("ReferenceTerm");
 
             this.m_adhocCacheService?.Add(cacheKey, retVal);
@@ -332,7 +368,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             return retVal?.FirstOrDefault(o => o.Language == twoLetterISOLanguageName)?.Name;
 
-            
+
         }
     }
 }

@@ -18,14 +18,11 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -78,7 +75,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService)
+                {
                     (irsi as ISecuredRepositoryService).DemandWrite(itm);
+                }
             }
             return base.Insert(data);
         }
@@ -104,7 +103,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService)
+                {
                     (irsi as ISecuredRepositoryService).DemandAlter(itm);
+                }
             }
 
             return base.Save(data);

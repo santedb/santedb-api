@@ -4,7 +4,6 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Mail

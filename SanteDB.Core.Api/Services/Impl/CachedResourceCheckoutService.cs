@@ -20,11 +20,8 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services.Impl

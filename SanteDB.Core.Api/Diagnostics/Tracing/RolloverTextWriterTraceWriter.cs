@@ -18,21 +18,16 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using Newtonsoft.Json;
+using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
+using System.ComponentModel;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using System.Configuration;
-using System.Diagnostics.Tracing;
-using System.Collections.Concurrent;
-using SanteDB.Core.Diagnostics;
-using System.ComponentModel;
-using Newtonsoft.Json;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -76,8 +71,10 @@ namespace SanteDB.Core.Diagnostics.Tracing
             // The logfile will actually be created with a yyyymmdd format appended to the filename
             this.m_fileName = fileName;
             if (!Path.IsPathRooted(fileName))
+            {
                 this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
                Path.GetFileName(this.m_fileName));
+            }
             //_stream = File.Open(generateFilename(), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             //_stream.Seek(0, SeekOrigin.End);
             //_traceWriter = new StreamWriter(_stream);
@@ -89,7 +86,8 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_dispatchThread.Start();
 
             var managerService = ApplicationServiceContext.Current?.GetService(typeof(ILogManagerService));
-            if (managerService == null) {
+            if (managerService == null)
+            {
                 ApplicationServiceContext.Current.GetService<IServiceManager>().AddServiceProvider(typeof(RolloverLogManagerService));
             }
 
@@ -128,13 +126,20 @@ namespace SanteDB.Core.Diagnostics.Tracing
             {
                 try
                 {
-                    if (this.m_disposing) return; // shutdown dispatch
+                    if (this.m_disposing)
+                    {
+                        return; // shutdown dispatch
+                    }
+
                     while (this.m_logBacklog.IsEmpty && !this.m_disposing)
                     {
                         this.m_resetEvent.Wait();
                         this.m_resetEvent.Reset();
                     }
-                    if (this.m_disposing) return;
+                    if (this.m_disposing)
+                    {
+                        return;
+                    }
 
                     // Use file stream
                     var fileName = this.GenerateFilename();

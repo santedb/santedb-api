@@ -21,7 +21,6 @@
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -74,7 +73,10 @@ namespace SanteDB.Core.Security
         {
             byte[] retVal = new byte[key.Length * 3];
             for (int i = 0; i < 32; i += key.Length)
+            {
                 Array.Copy(key, 0, retVal, i, key.Length);
+            }
+
             return retVal.Take(32).ToArray();
         }
 

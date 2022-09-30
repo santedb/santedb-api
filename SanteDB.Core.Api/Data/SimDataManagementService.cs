@@ -21,7 +21,6 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Matching;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -153,9 +152,13 @@ namespace SanteDB.Core.Data
             {
                 // Remove all duplicates
                 if (duplicate is Act)
+                {
                     (duplicate as Act).Relationships.RemoveAll(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate);
+                }
                 else if (duplicate is Entity)
+                {
                     (duplicate as Entity).Relationships.RemoveAll(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate);
+                }
 
                 // Now process any matches
                 foreach (var match in matches)
@@ -164,11 +167,17 @@ namespace SanteDB.Core.Data
 
                     // Mark duplicates
                     if (duplicate is Entity)
+                    {
                         (duplicate as Entity).Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Duplicate, match.Record.Key) { Quantity = (int)match.Score * 100 });
+                    }
                     else if (duplicate is Act)
+                    {
                         (duplicate as Act).Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Duplicate, match.Record.Key));
+                    }
                     else
+                    {
                         throw new InvalidOperationException($"Can't determine how to mark type of {duplicate.GetType().Name} as duplicate");
+                    }
                 }
             }
 
@@ -202,17 +211,26 @@ namespace SanteDB.Core.Data
                     if (l == Guid.Empty)
                     {
                         if (master is Act actMaster)
+                        {
                             actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, l));
+                        }
                         else if (master is Entity entityMaster)
+                        {
                             entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, l));
+                        }
+
                         persistenceBundle.Add(local);
                     }
                     else // Not persisted yet
                     {
                         if (master is Act actMaster)
+                        {
                             actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, masterKey) { TargetActKey = l });
+                        }
                         else if (master is Entity entityMaster)
+                        {
                             entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, masterKey) { TargetEntityKey = l });
+                        }
                     }
                     (local as IHasState).StatusConceptKey = StatusKeys.Nullified;
                 }
@@ -455,7 +473,9 @@ namespace SanteDB.Core.Data
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             if (ApplicationServiceContext.Current.GetService<IRecordMatchingService>() == null)
+            {
                 throw new InvalidOperationException("This service requires a record matching service to be registered");
+            }
 
             // Register mergers for all types in configuration
             foreach (var i in this.m_configuration.ResourceTypes)

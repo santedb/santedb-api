@@ -21,8 +21,6 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;

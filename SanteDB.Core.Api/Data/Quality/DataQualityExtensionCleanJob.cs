@@ -22,11 +22,9 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Quality

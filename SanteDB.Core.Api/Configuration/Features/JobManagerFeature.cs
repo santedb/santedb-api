@@ -18,15 +18,9 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Configuration.Features;
 using SanteDB.Core.Jobs;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -51,7 +45,7 @@ namespace SanteDB.Core.Configuration.Features
         /// <summary>
         /// Setup the job manager
         /// </summary>
-        public override FeatureFlags Flags => FeatureFlags.AutoSetup; 
+        public override FeatureFlags Flags => FeatureFlags.AutoSetup;
 
         /// <summary>
         /// Gets the description

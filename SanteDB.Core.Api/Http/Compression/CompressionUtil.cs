@@ -19,8 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Http.Description;
-using SanteDB.Core.i18n;
-using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;

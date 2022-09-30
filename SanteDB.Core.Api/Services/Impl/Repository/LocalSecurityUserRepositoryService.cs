@@ -18,17 +18,13 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Linq;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -57,7 +53,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             var su = data as SecurityUser;
             if (!su.UserName.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase))
+            {
                 this.m_policyService.Demand(PermissionPolicyIdentifiers.AlterIdentity);
+            }
         }
 
         /// <summary>
@@ -71,10 +69,12 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             // Verify password meets requirements
             if (ApplicationServiceContext.Current.GetService<IPasswordValidatorService>()?.Validate(data.Password) == false)
+            {
                 throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "err.password", this.m_localizationService.GetString("error.server.core.validationFail", new
                 {
                     param = "Password"
                 }), DetectedIssueKeys.SecurityIssue));
+            }
 
             // Create the identity
             var id = iids.CreateIdentity(data.UserName, data.Password, AuthenticationContext.Current.Principal);

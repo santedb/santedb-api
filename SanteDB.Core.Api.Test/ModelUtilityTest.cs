@@ -3,9 +3,6 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Api.Test
 {

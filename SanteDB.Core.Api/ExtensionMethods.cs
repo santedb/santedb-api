@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Data;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
@@ -33,7 +32,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core
 {
@@ -66,7 +64,7 @@ namespace SanteDB.Core
         /// Get managed reference links wrapper for <see cref="IDataManagementPattern.GetManagedReferenceLinks{T}(IEnumerable{T})"/>
         /// </summary>
         public static IEnumerable<T> GetManagedReferenceLinks<T>(this IEnumerable<T> forRelationships) where T : class, ITargetedAssociation =>
-            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetManagedReferenceLinks<T>(forRelationships) ?? forRelationships.Where(o=>false);
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetManagedReferenceLinks<T>(forRelationships) ?? forRelationships.Where(o => false);
 
         /// <summary>
         /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>

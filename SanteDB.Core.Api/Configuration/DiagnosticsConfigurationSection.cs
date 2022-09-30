@@ -72,9 +72,9 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public IEnumerable<DetectedIssue> Validate()
         {
-            foreach(var itm in this.TraceWriter)
+            foreach (var itm in this.TraceWriter)
             {
-                if(!itm.TraceWriterClassXml.IsValid())
+                if (!itm.TraceWriterClassXml.IsValid())
                 {
                     // Is there a new type?
                     var tName = itm.TraceWriterClassXml.TypeXml.Split(',')[0].Split('.').Last();
@@ -159,7 +159,7 @@ namespace SanteDB.Core.Configuration
         [XmlElement("writer")]
         public TypeReferenceConfiguration TraceWriterClassXml
         {
-            get;set;
+            get; set;
         }
 
         /// <summary>

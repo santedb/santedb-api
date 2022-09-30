@@ -20,8 +20,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Runtime.Serialization;
 
 namespace SanteDB.Core.Services
 {

@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model;
 using System;
 using System.Xml.Serialization;
 

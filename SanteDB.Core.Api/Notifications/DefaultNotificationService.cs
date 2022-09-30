@@ -19,8 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +64,10 @@ namespace SanteDB.Core.Notifications
         public INotificationRelay GetNotificationRelay(Uri toAddress)
         {
             if (this.m_relays.TryGetValue(toAddress.Scheme, out INotificationRelay retVal))
+            {
                 return retVal;
+            }
+
             return null;
         }
 
@@ -89,7 +90,9 @@ namespace SanteDB.Core.Notifications
                     retVal.Add(relay.Send(itm.Select(o => o.ToString()).ToArray(), subject, body, scheduleDelivery, ccAdmins, attachments));
                 }
                 else
+                {
                     this.m_tracer.TraceWarning("Cannot find relay on scheme {0}", itm.Key);
+                }
             }
 
             return retVal.ToArray();

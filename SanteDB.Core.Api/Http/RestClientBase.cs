@@ -19,10 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
@@ -78,7 +75,10 @@ namespace SanteDB.Core.Http
         {
             Dictionary<String, String> retVal = new Dictionary<string, string>();
             foreach (var k in headers.AllKeys)
+            {
                 retVal.Add(k, headers[k]);
+            }
+
             return retVal;
         }
 
@@ -123,7 +123,9 @@ namespace SanteDB.Core.Http
         {
             // URL is relative to base address
             if (this.Description.Endpoint.IsNullOrEmpty())
+            {
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
+            }
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
                 || uri.Scheme == "file")
@@ -133,18 +135,24 @@ namespace SanteDB.Core.Http
                 UriBuilder uriBuilder = new UriBuilder(baseUrl);
 
                 if (!String.IsNullOrEmpty(resourceNameOrUrl))
+                {
                     uriBuilder.Path += "/" + resourceNameOrUrl;
+                }
 
                 // HACK:
                 uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
                 // Add query string
                 if (query != null)
+                {
                     uriBuilder.Query = CreateQueryString(query);
+                }
 
                 uri = uriBuilder.Uri;
             }
             else
+            {
                 s_tracer.TraceVerbose("Constructed URI : {0}", uri);
+            }
 
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
@@ -155,7 +163,9 @@ namespace SanteDB.Core.Http
             if (this.Credentials == null &&
                 this.Description.Binding.Security?.CredentialProvider != null &&
                 this.Description.Binding.Security?.PreemptiveAuthentication == true)
+            {
                 this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
+            }
 
             if (this.Credentials != null)
             {
@@ -168,7 +178,9 @@ namespace SanteDB.Core.Http
 
             // Compress?
             if (this.Description.Binding.Optimize)
+            {
                 retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
+            }
 
             retVal.Accept = this.Description.Accept;
 
@@ -228,8 +240,11 @@ namespace SanteDB.Core.Http
                 var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
                 {
                     if (o.IsFaulted)
+                    {
                         requestException = o.Exception.InnerExceptions.First();
+                    }
                     else
+                    {
                         try
                         {
                             headers = o.Result.Headers;
@@ -298,10 +313,13 @@ namespace SanteDB.Core.Http
                         {
                             s_tracer.TraceError("Error downloading {0}: {1}", url, e.Message);
                         }
+                    }
                 }, TaskContinuationOptions.LongRunning);
                 httpTask.Wait();
                 if (requestException != null)
+                {
                     throw requestException;
+                }
 
                 this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0, this.ConvertHeaders(headers)));
 
@@ -369,7 +387,7 @@ namespace SanteDB.Core.Http
 
             try
             {
-               
+
 
                 var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
                 this.Requesting?.Invoke(this, requestEventArgs);
@@ -588,17 +606,24 @@ namespace SanteDB.Core.Http
                 var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
                 {
                     if (o.IsFaulted)
+                    {
                         fault = o.Exception.InnerExceptions.First();
+                    }
                     else
                     {
                         this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
                         foreach (var itm in o.Result.Headers.AllKeys)
+                        {
                             retVal.Add(itm, o.Result.Headers[itm]);
+                        }
                     }
                 }, TaskContinuationOptions.LongRunning);
                 httpTask.Wait();
                 if (fault != null)
+                {
                     throw fault;
+                }
+
                 this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, 0, retVal));
 
                 return retVal;

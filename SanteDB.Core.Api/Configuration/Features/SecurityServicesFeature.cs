@@ -18,22 +18,13 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Configuration.Features;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Privacy;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SanteDB.Core.Model;
 
 namespace SanteDB.Core.Configuration.Features
 {
@@ -134,7 +125,9 @@ namespace SanteDB.Core.Configuration.Features
             config.Values.Add("PolicyInformationProvider", pip ?? (config.Options["PolicyInformationProvider"]() as IEnumerable<Type>).FirstOrDefault());
 
             if (this.Configuration == null)
+            {
                 this.Configuration = config;
+            }
 
             // Add policies
             config.Categories.Add("Policies", new String[] {

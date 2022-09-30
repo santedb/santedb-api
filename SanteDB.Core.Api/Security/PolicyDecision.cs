@@ -60,8 +60,13 @@ namespace SanteDB.Core.Security
             {
                 PolicyGrantType restrictive = PolicyGrantType.Grant;
                 foreach (var dtl in this.Details)
+                {
                     if (dtl.Outcome < restrictive)
+                    {
                         restrictive = dtl.Outcome;
+                    }
+                }
+
                 return restrictive;
             }
         }

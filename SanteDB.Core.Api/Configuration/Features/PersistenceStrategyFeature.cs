@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Data;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;

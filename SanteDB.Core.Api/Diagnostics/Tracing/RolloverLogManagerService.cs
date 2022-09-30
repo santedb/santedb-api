@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -29,14 +28,18 @@ namespace SanteDB.Core.Diagnostics.Tracing
         public RolloverLogManagerService(IConfigurationManager configurationManager)
         {
             var logFileTracerConfig = configurationManager.GetSection<DiagnosticsConfigurationSection>().TraceWriter.FirstOrDefault(o => o.TraceWriter == typeof(RolloverTextWriterTraceWriter));
-            if(logFileTracerConfig == null)
+            if (logFileTracerConfig == null)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, typeof(RolloverTextWriterTraceWriter)));
             }
             if (!Path.IsPathRooted(logFileTracerConfig.InitializationData))
+            {
                 this.m_rootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            }
             else
+            {
                 this.m_rootPath = Path.GetDirectoryName(logFileTracerConfig.InitializationData);
+            }
         }
 
         /// <inheritdoc/>

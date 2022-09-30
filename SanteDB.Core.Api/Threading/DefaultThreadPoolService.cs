@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -297,7 +296,9 @@ namespace SanteDB.Core.Services.Impl
         private void ThrowIfDisposed()
         {
             if (this.m_disposing)
+            {
                 throw new ObjectDisposedException(nameof(DefaultThreadPoolService));
+            }
         }
 
         /// <summary>
@@ -305,7 +306,10 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            if (this.m_disposing) return;
+            if (this.m_disposing)
+            {
+                return;
+            }
 
             this.m_disposing = true;
 

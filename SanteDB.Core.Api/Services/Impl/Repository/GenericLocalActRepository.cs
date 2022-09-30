@@ -18,19 +18,13 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -73,10 +67,13 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override TAct Validate(TAct data)
         {
             if (data == null)
+            {
                 throw new ArgumentNullException(this.m_localizationService.GetString("error.type.ArgumentNullException.param", new
                 {
                     param = nameof(data)
                 }));
+            }
+
             base.Validate(data);
 
             if (data.LoadProperty(o => o.Participations).All(o => o.ParticipationRoleKey != ActParticipationKeys.Authororiginator))

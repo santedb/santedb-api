@@ -21,7 +21,6 @@
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace SanteDB.Core.Diagnostics.Performance
 {

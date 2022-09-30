@@ -29,10 +29,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
 
@@ -47,7 +45,7 @@ namespace SanteDB.Core.Services.Impl
 
         // Ticks for system time
         private long m_ctr = DateTime.Now.Ticks;
-        
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -161,7 +159,10 @@ namespace SanteDB.Core.Services.Impl
             this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>() ??
                 new FileSystemDispatcherQueueConfigurationSection() { QueuePath = "queue" };
             if (!Directory.Exists(this.m_configuration.QueuePath))
+            {
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
+            }
+
             this.m_pepService = pepService;
 
             // Listener thread
@@ -205,7 +206,9 @@ namespace SanteDB.Core.Services.Impl
             try
             {
                 if (String.IsNullOrEmpty(queueName))
+                {
                     throw new ArgumentNullException(nameof(queueName));
+                }
 
                 // Open the queue
                 this.Open(queueName);
@@ -224,7 +227,10 @@ namespace SanteDB.Core.Services.Impl
                     queueFile = Path.Combine(queueDirectory, correlationId);
                 }
 
-                if (queueFile == null || !File.Exists(queueFile)) return null;
+                if (queueFile == null || !File.Exists(queueFile))
+                {
+                    return null;
+                }
 
                 this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
@@ -256,9 +262,13 @@ namespace SanteDB.Core.Services.Impl
         public void Enqueue(string queueName, object data)
         {
             if (String.IsNullOrEmpty(queueName))
+            {
                 throw new ArgumentNullException(nameof(queueName));
+            }
             else if (data == null)
+            {
                 throw new ArgumentNullException(nameof(data));
+            }
 
             // Open the queue
             this.Open(queueName);
@@ -278,7 +288,9 @@ namespace SanteDB.Core.Services.Impl
             }
 
             using (var fs = File.Create(filePath))
+            {
                 QueueEntry.Create(data).Save(fs);
+            }
 
             this.NotifyQueuePush(queueName, Path.GetFileNameWithoutExtension(filePath));
             this.m_tracer.TraceVerbose("Successfully queued {0}", fname);
@@ -299,11 +311,15 @@ namespace SanteDB.Core.Services.Impl
         public void Open(string queueName)
         {
             if (this.m_watchers?.ContainsKey(queueName) == true)
+            {
                 return; // already open
+            }
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
             if (!Directory.Exists(queueDirectory))
+            {
                 Directory.CreateDirectory(queueDirectory);
+            }
         }
 
         /// <summary>
@@ -359,7 +375,9 @@ namespace SanteDB.Core.Services.Impl
                 try
                 {
                     using (var fs = File.OpenRead(f))
+                    {
                         entry = QueueEntry.Load(fs);
+                    }
                 }
                 catch
                 {
@@ -380,7 +398,9 @@ namespace SanteDB.Core.Services.Impl
             {
                 var filesToRemove = Directory.EnumerateFiles(Path.Combine(this.m_configuration.QueuePath, queueName));
                 foreach (var f in filesToRemove)
+                {
                     File.Delete(f);
+                }
             }
             catch (Exception e)
             {

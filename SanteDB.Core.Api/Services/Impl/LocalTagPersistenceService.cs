@@ -18,14 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
-using SanteDB.Core.Services;
 using System;
-using System.Linq;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -47,7 +44,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public LocalTagPersistenceService(IDataCachingService cacheService = null)
         {
-            
+
             this.m_cacheService = cacheService;
         }
 
@@ -59,7 +56,10 @@ namespace SanteDB.Core.Services.Impl
             using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
             {
                 // Don't persist empty tags
-                if ((tag as IdentifiedData)?.IsEmpty() == true || tag.TagKey.StartsWith("$")) return;
+                if ((tag as IdentifiedData)?.IsEmpty() == true || tag.TagKey.StartsWith("$"))
+                {
+                    return;
+                }
 
                 if (tag is EntityTag)
                 {
@@ -69,14 +69,21 @@ namespace SanteDB.Core.Services.Impl
                     {
                         existing.Value = tag.Value;
                         if (existing.Value == null)
+                        {
                             idp.Delete(existing.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                        }
                         else
+                        {
                             idp.Update(existing as EntityTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                        }
                     }
                     else
                     {
                         if (!tag.SourceEntityKey.HasValue)
+                        {
                             tag.SourceEntityKey = sourceKey;
+                        }
+
                         idp.Insert(tag as EntityTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     }
                 }
@@ -89,14 +96,21 @@ namespace SanteDB.Core.Services.Impl
                     {
                         existing.Value = tag.Value;
                         if (existing.Value == null)
+                        {
                             idp.Delete(existing.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                        }
                         else
+                        {
                             idp.Update(existing as ActTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                        }
                     }
                     else
                     {
                         if (!tag.SourceEntityKey.HasValue)
+                        {
                             tag.SourceEntityKey = sourceKey;
+                        }
+
                         idp.Insert(tag as ActTag, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     }
                 }

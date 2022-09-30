@@ -54,9 +54,10 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Gets or sets whether the override was successful
         /// </summary>
-        public new bool Success {
+        public new bool Success
+        {
             get => base.Success;
-            set => base.Success = value; 
+            set => base.Success = value;
         }
     }
 

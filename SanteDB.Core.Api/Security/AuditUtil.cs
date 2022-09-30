@@ -18,13 +18,12 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Security;
-using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
@@ -190,10 +189,12 @@ namespace SanteDB.Core.Security.Audit
                     m_queueService.Open($"{QueueName}.dead");
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Test)
+                {
                     throw;
+                }
             }
         }
 
@@ -322,7 +323,10 @@ namespace SanteDB.Core.Security.Audit
             }
 
             if (objects.All(o => o is Bundle))
+            {
                 objects = objects.OfType<Bundle>().SelectMany(o => o.Item).ToArray();
+            }
+
             audit.AuditableObjects = objects.OfType<IdentifiedData>().Select(o => CreateAuditableObject(o, lifecycle)).ToList();
 
             SendAudit(audit);
@@ -460,8 +464,13 @@ namespace SanteDB.Core.Security.Audit
             audit.AuditableObjects = data?.OfType<TData>().SelectMany(o =>
             {
                 if (o is Bundle bundle)
+                {
                     return bundle.Item.Select(i => CreateAuditableObject(i, lifecycle));
-                else return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
+                }
+                else
+                {
+                    return new AuditableObject[] { CreateAuditableObject(o, lifecycle) };
+                }
             }).ToList() ?? new List<AuditableObject>();
 
             // Query performed
@@ -477,7 +486,10 @@ namespace SanteDB.Core.Security.Audit
                 });
             }
             if (grantInfo != null)
+            {
                 audit.AuditableObjects.Add(CreateAuditableObject(grantInfo, AuditableObjectLifecycle.Verification));
+            }
+
             SendAudit(audit);
         }
 
@@ -506,13 +518,17 @@ namespace SanteDB.Core.Security.Audit
                 roleCode = AuditableObjectRole.Provider;
             }
             else if (obj is Entity)
+            {
                 idTypeCode = AuditableObjectIdType.EnrolleeNumber;
+            }
             else if (obj is Act)
             {
                 idTypeCode = AuditableObjectIdType.EncounterNumber;
                 roleCode = AuditableObjectRole.Report;
                 if ((obj as Act)?.ReasonConceptKey == NullReasonKeys.Masked) // Masked
+                {
                     lifecycle = AuditableObjectLifecycle.Deidentification;
+                }
             }
             else if (obj is SecurityUser)
             {
@@ -739,7 +755,7 @@ namespace SanteDB.Core.Security.Audit
                         {
                             UserName = uid.Name,
                             UserIsRequestor = true,
-                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation?.Replace(",", " via ") ?? 
+                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.ForwardInformation?.Replace(",", " via ") ??
                                 RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
                             NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             ActorRoleCode = new List<AuditCode>()
@@ -747,11 +763,11 @@ namespace SanteDB.Core.Security.Audit
                                 new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
                             },
                             AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.Sid)?.Value
-                        }) ;
+                        });
                     }
                 }
 
-                if(!audit.Actors.Any(a=>a.ActorRoleCode.Any(r=>r.Code == "110153")))
+                if (!audit.Actors.Any(a => a.ActorRoleCode.Any(r => r.Code == "110153")))
                 {
                     audit.Actors.LastOrDefault()?.ActorRoleCode.Add(new AuditCode("110153", "DCM") { DisplayName = "Source" });
                 }
@@ -826,6 +842,7 @@ namespace SanteDB.Core.Security.Audit
             }));
 
             if (session != null)
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     Role = AuditableObjectRole.SecurityResource,
@@ -834,6 +851,8 @@ namespace SanteDB.Core.Security.Audit
                     CustomIdTypeCode = new AuditCode("SecuritySession", "http://santedb.org/model"),
                     LifecycleType = AuditableObjectLifecycle.Creation
                 });
+            }
+
             SendAudit(audit);
         }
 
@@ -885,7 +904,9 @@ namespace SanteDB.Core.Security.Audit
         public static void AuditLogout(IPrincipal principal)
         {
             if (principal == null)
+            {
                 throw new ArgumentNullException(nameof(principal));
+            }
 
             traceSource.TraceInfo("Create Logout audit");
 
@@ -931,6 +952,7 @@ namespace SanteDB.Core.Security.Audit
             }
 
             if (ex is PolicyViolationException)
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Uri,
@@ -940,7 +962,9 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject,
                     NameData = ex.Message
                 });
+            }
             else
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Uri,
@@ -950,6 +974,7 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject,
                     NameData = ex.Message
                 });
+            }
 
             if (requestHeaders != null)
             {
@@ -995,6 +1020,7 @@ namespace SanteDB.Core.Security.Audit
             var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
 
             if (session != null)
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     Role = AuditableObjectRole.SecurityResource,
@@ -1011,7 +1037,9 @@ namespace SanteDB.Core.Security.Audit
                         new ObjectDataExtension("scope", String.Join("; ", policies ?? new String[] { "*" }))
                     }.OfType<ObjectDataExtension>().ToList()
                 });
+            }
             else
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     Role = AuditableObjectRole.SecurityResource,
@@ -1024,6 +1052,7 @@ namespace SanteDB.Core.Security.Audit
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
                     }.OfType<ObjectDataExtension>().ToList()
                 });
+            }
 
             SendAudit(audit);
         }
@@ -1046,6 +1075,7 @@ namespace SanteDB.Core.Security.Audit
             var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
 
             if (session != null)
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     Role = AuditableObjectRole.SecurityResource,
@@ -1061,7 +1091,9 @@ namespace SanteDB.Core.Security.Audit
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
                     }.OfType<ObjectDataExtension>().ToList()
                 });
+            }
             else
+            {
                 audit.AuditableObjects.Add(new AuditableObject()
                 {
                     Role = AuditableObjectRole.SecurityResource,
@@ -1074,6 +1106,7 @@ namespace SanteDB.Core.Security.Audit
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null
                     }.OfType<ObjectDataExtension>().ToList()
                 });
+            }
 
             SendAudit(audit);
         }

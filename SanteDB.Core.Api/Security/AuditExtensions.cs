@@ -18,27 +18,15 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Audit;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Queue;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;

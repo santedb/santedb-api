@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;

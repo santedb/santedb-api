@@ -19,14 +19,12 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -47,7 +45,10 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
+            {
                 return persistenceService.Get(key.Value, null, AuthenticationContext.Current.Principal);
+            }
+
             return default(TObject);
         }
 
@@ -58,9 +59,14 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue && versionKey.HasValue)
+            {
                 return persistenceService.Get(key.Value, versionKey, AuthenticationContext.Current.Principal);
+            }
             else if (persistenceService != null && key.HasValue)
+            {
                 return persistenceService.Get(key.Value, null, AuthenticationContext.SystemPrincipal);
+            }
+
             return default(TObject);
         }
 

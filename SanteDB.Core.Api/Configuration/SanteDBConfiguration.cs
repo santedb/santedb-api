@@ -85,7 +85,9 @@ namespace SanteDB.Core.Configuration
                 Version v = new Version(value),
                     myVersion = typeof(SanteDBConfiguration).Assembly.GetName().Version;
                 if (v.Major > myVersion.Major)
+                {
                     throw new ConfigurationException(String.Format("Configuration file version {0} is newer than SanteDB version {1}", v, myVersion), this);
+                }
             }
         }
 
@@ -116,29 +118,37 @@ namespace SanteDB.Core.Configuration
             }
 
             if (retVal.Includes != null)
+            {
                 foreach (var incl in retVal.Includes)
                 {
                     string fileName = incl.Replace('\\', Path.DirectorySeparatorChar);
                     if (!Path.IsPathRooted(fileName))
+                    {
                         fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), fileName);
+                    }
 
                     if (File.Exists(fileName))
+                    {
                         using (var fs = File.OpenRead(fileName))
                         {
                             var inclData = SanteDBConfiguration.Load(fs);
                             retVal.Sections.AddRange(inclData.Sections);
                         }
+                    }
                     else
+                    {
                         throw new ConfigurationException($"Include {fileName} was not found", retVal);
+                    }
                 }
+            }
 
             // Validate the configuration 
             var errors = retVal.Sections.OfType<IValidatableConfigurationSection>().SelectMany(o => o.Validate()).Where(d => d.Priority == DetectedIssuePriorityType.Error);
-            if(errors.Any())
+            if (errors.Any())
             {
                 throw new ConfigurationException($"Error validating configuration: {String.Join("\r\n", errors.Select(o => o.Text))}", retVal);
             }
-           
+
             return retVal;
         }
 
@@ -170,29 +180,29 @@ namespace SanteDB.Core.Configuration
             }
 
             configStream.Seek(0, SeekOrigin.Begin);
-            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Where(o=>o.IsValid()).Select(o => o.Type).ToArray());
+            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Where(o => o.IsValid()).Select(o => o.Type).ToArray());
 
             // Re-load
-            var config =  xsz.Deserialize(configStream) as SanteDBConfiguration;
+            var config = xsz.Deserialize(configStream) as SanteDBConfiguration;
 
-            foreach(var xn in config.Sections.OfType<XmlNode[]>().Select(o=>o.First().Value))
+            foreach (var xn in config.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))
             {
                 yield return new DetectedIssue(DetectedIssuePriorityType.Error, "unknown", $"Section {xn} is unknown", Guid.Empty);
             }
 
             if (config.Includes != null)
             {
-                foreach(var inc in config.Includes)
+                foreach (var inc in config.Includes)
                 {
-                    if(!File.Exists(inc))
+                    if (!File.Exists(inc))
                     {
                         yield return new DetectedIssue(DetectedIssuePriorityType.Error, "include", $"Include {inc} is missing", Guid.Empty);
                     }
                     else
                     {
-                        using(var fs = File.OpenRead(inc))
+                        using (var fs = File.OpenRead(inc))
                         {
-                            foreach(var itm in SanteDBConfiguration.Validate(fs))
+                            foreach (var itm in SanteDBConfiguration.Validate(fs))
                             {
                                 yield return new DetectedIssue(itm.Priority, $"include.{itm.Id}", $"({inc}): {itm.Text}", Guid.Empty);
                             }
@@ -202,15 +212,15 @@ namespace SanteDB.Core.Configuration
             }
 
             // Validate the main section
-            foreach(var sc in config.Sections.OfType<IValidatableConfigurationSection>())
+            foreach (var sc in config.Sections.OfType<IValidatableConfigurationSection>())
             {
-                foreach(var itm in sc.Validate())
+                foreach (var itm in sc.Validate())
                 {
                     yield return new DetectedIssue(itm.Priority, $"section.{itm.Id}", $"(#{sc.GetType().Name}) - {itm.Text}", Guid.Empty);
                 }
             }
 
-            
+
         }
 
 

@@ -21,7 +21,6 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
-using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -117,7 +116,13 @@ namespace SanteDB.Core.Configuration
         public string ValueXml
         {
             get { return XmlConvert.ToString(this.Value); }
-            set { if (!string.IsNullOrEmpty(value)) this.Value = XmlConvert.ToTimeSpan(value); }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    this.Value = XmlConvert.ToTimeSpan(value);
+                }
+            }
         }
 
         /// <summary>
@@ -129,7 +134,8 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Convert this wrapper to timespan
         /// </summary>
-        public static explicit operator TimeSpan(PolicyValueTimeSpan instance) {
+        public static explicit operator TimeSpan(PolicyValueTimeSpan instance)
+        {
             return instance.Value;
         }
 

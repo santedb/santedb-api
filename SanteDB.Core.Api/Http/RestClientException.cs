@@ -44,8 +44,9 @@ namespace SanteDB.Core.Http
         public RestClientException(String message, Exception inner) : this(default(TResult), inner, (inner as RestClientException<TResult>)?.Status ?? WebExceptionStatus.UnknownError, (inner as RestClientException<TResult>)?.Response)
         {
             if ((inner as RestClientException<TResult>) != null)
+            {
                 this.Result = (inner as RestClientException<TResult>).Result;
-
+            }
         }
 
         /// <summary>

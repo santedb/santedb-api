@@ -19,16 +19,12 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Tracing;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -75,9 +71,14 @@ namespace SanteDB.Core.Diagnostics.Tracing
             {
                 case EventLevel.Verbose:
                     if (format.Contains("PERF"))
+                    {
                         color = ConsoleColor.Green;
+                    }
                     else
+                    {
                         color = ConsoleColor.Magenta;
+                    }
+
                     break;
 
                 case EventLevel.Informational:
@@ -115,13 +116,20 @@ namespace SanteDB.Core.Diagnostics.Tracing
                     this.m_resetEvent.Wait();
                     this.m_resetEvent.Reset();
                 }
-                if (this.m_disposing) return;
+                if (this.m_disposing)
+                {
+                    return;
+                }
 
                 while (!this.m_logBacklog.IsEmpty)
                 {
                     if (this.m_logBacklog.TryDequeue(out var dq))
                     {
-                        if (this.m_disposing) return;
+                        if (this.m_disposing)
+                        {
+                            return;
+                        }
+
                         Console.ForegroundColor = dq.Key;
                         Console.WriteLine(dq.Value);
                         Console.ResetColor();
@@ -151,7 +159,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         {
             foreach (var obj in data)
             {
-                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj).Replace("{","{{").Replace("}","}}")));
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj).Replace("{", "{{").Replace("}", "}}")));
             }
         }
     }

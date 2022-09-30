@@ -135,7 +135,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public IEnumerable<IJobSchedule> Get(IJob job)
         {
-            lock(this.m_lock)
+            lock (this.m_lock)
             {
                 return this.m_jobSchedules.Find(o => o.Type == job.GetType())?.Schedule;
             }

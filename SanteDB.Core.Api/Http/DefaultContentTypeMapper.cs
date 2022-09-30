@@ -98,7 +98,9 @@ namespace SanteDB.Core.Http
 
                 default:
                     if (contentType.StartsWith("multipart/form-data"))
+                    {
                         return new MultipartBinarySerializer(contentType);
+                    }
 
                     throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");
             }

@@ -136,22 +136,44 @@ namespace SanteDB.Core.Interop
         {
             var caps = new List<ServiceResourceCapability>();
             if (me.HasFlag(ResourceCapabilityType.Create))
+            {
                 caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Create, getDemandsFunc(ResourceCapabilityType.Create)));
-            if (me.HasFlag(ResourceCapabilityType.CreateOrUpdate))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.CreateOrUpdate, getDemandsFunc(ResourceCapabilityType.CreateOrUpdate)));
-            if (me.HasFlag(ResourceCapabilityType.Delete))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Delete, getDemandsFunc(ResourceCapabilityType.Delete)));
-            if (me.HasFlag(ResourceCapabilityType.Get))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Get, getDemandsFunc(ResourceCapabilityType.Get)));
-            if (me.HasFlag(ResourceCapabilityType.GetVersion))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.GetVersion, getDemandsFunc(ResourceCapabilityType.GetVersion)));
-            if (me.HasFlag(ResourceCapabilityType.History))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.History, getDemandsFunc(ResourceCapabilityType.History)));
-            if (me.HasFlag(ResourceCapabilityType.Search))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Search, getDemandsFunc(ResourceCapabilityType.Search)));
-            if (me.HasFlag(ResourceCapabilityType.Update))
-                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Update, getDemandsFunc(ResourceCapabilityType.Update)));
+            }
 
+            if (me.HasFlag(ResourceCapabilityType.CreateOrUpdate))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.CreateOrUpdate, getDemandsFunc(ResourceCapabilityType.CreateOrUpdate)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.Delete))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Delete, getDemandsFunc(ResourceCapabilityType.Delete)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.Get))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Get, getDemandsFunc(ResourceCapabilityType.Get)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.GetVersion))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.GetVersion, getDemandsFunc(ResourceCapabilityType.GetVersion)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.History))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.History, getDemandsFunc(ResourceCapabilityType.History)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.Search))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Search, getDemandsFunc(ResourceCapabilityType.Search)));
+            }
+
+            if (me.HasFlag(ResourceCapabilityType.Update))
+            {
+                caps.Add(new ServiceResourceCapability(ResourceCapabilityType.Update, getDemandsFunc(ResourceCapabilityType.Update)));
+            }
 
             return caps;
         }

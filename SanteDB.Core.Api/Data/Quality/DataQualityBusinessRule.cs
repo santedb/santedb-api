@@ -107,13 +107,18 @@ namespace SanteDB.Core.Data.Quality
 
             // Just in-case the rule was triggered and the caller never bothered to throw
             if (ruleViolations.Any(o => o.Priority == DetectedIssuePriorityType.Error))
+            {
                 throw new DetectedIssueException(ruleViolations);
+            }
             else if (data is IExtendable extendable)
             {
                 //this.m_tracer.TraceWarning("Object {0} contains {1} data quality issues", data, ruleViolations.Count);
 
                 if (extendable.Extensions.Any(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension))
+                {
                     extendable.RemoveExtension(ExtensionTypeKeys.DataQualityExtension);
+                }
+
                 extendable.AddExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), ruleViolations);
             }
         }
@@ -167,7 +172,9 @@ namespace SanteDB.Core.Data.Quality
                     }
 
                     if (!result)
+                    {
                         retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
+                    }
                 }
                 catch (Exception e)
                 {

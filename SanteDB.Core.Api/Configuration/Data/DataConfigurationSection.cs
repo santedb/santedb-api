@@ -102,7 +102,9 @@ namespace SanteDB.Core.Configuration.Data
             this.Provider = providerName;
             this.Value = String.Empty;
             foreach (var itm in values)
+            {
                 this.SetComponent(itm.Key, itm.Value?.ToString());
+            }
         }
 
         /// <summary>
@@ -185,12 +187,19 @@ namespace SanteDB.Core.Configuration.Data
             if (values.ContainsKey(component))
             {
                 if (String.IsNullOrEmpty(value))
+                {
                     values.Remove(component);
+                }
                 else
+                {
                     values[component] = value;
+                }
             }
             else if (!String.IsNullOrEmpty(value))
+            {
                 values.Add(component, value.ToString());
+            }
+
             this.Value = String.Join(";", values.Select(o => $"{o.Key}={o.Value}"));
         }
 

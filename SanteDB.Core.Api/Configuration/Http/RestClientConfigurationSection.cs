@@ -1,10 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Core.Http;
-using SanteDB.Core.Http.Description;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration.Http
@@ -19,7 +15,7 @@ namespace SanteDB.Core.Configuration.Http
     public class RestClientConfigurationSection : IConfigurationSection
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientConfigurationSection"/> class.
+        /// Initializes a new instance of the <see href="SanteDB.DisconnectedClient.Configuration.ServiceClientConfigurationSection"/> class.
         /// </summary>
         public RestClientConfigurationSection()
         {

@@ -25,7 +25,7 @@ using System;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Security
-{ 
+{
     /// <summary>
     /// Represents a regular expression password validator
     /// </summary>

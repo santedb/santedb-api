@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
-using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Xml.Serialization;
 

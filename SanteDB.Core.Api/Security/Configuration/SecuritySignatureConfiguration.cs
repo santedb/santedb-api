@@ -136,7 +136,7 @@ namespace SanteDB.Core.Security.Configuration
             {
                 this.m_secret = null;
                 this.m_plainTextSecret = value;
-                
+
             }
         }
 
@@ -151,7 +151,9 @@ namespace SanteDB.Core.Security.Configuration
         public byte[] GetSecret()
         {
             if (this.m_decrypedSecret != null)
+            {
                 return this.m_decrypedSecret;
+            }
 
             if (this.Secret == null)
             {
@@ -161,7 +163,9 @@ namespace SanteDB.Core.Security.Configuration
                     this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
                 }
                 else
+                {
                     return null;
+                }
             }
 
             if (this.m_decrypedSecret == null)
@@ -185,13 +189,15 @@ namespace SanteDB.Core.Security.Configuration
 
             var cryptoService = ApplicationServiceContext.Current?.GetService<ISymmetricCryptographicProvider>();
             if (cryptoService == null)
+            {
                 return false;
+            }
 
             var iv = cryptoService.GenerateIV();
             var key = cryptoService.GetContextKey();
 
             var data = cryptoService.Encrypt(secret, key, iv);
-            
+
             this.m_secret = new byte[data.Length + iv.Length + 1];
             this.m_secret[0] = (byte)iv.Length;
             Array.Copy(iv, 0, this.m_secret, 1, iv.Length);

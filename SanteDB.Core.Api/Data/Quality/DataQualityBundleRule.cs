@@ -49,7 +49,9 @@ namespace SanteDB.Core.Data.Quality
             {
                 var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if (breSvc != null)
+                {
                     issues.AddRange(breSvc.Validate(itm));
+                }
             }
             return base.Validate(data).Union(issues).ToList();
         }
@@ -64,7 +66,9 @@ namespace SanteDB.Core.Data.Quality
                 var itm = data.Item[i];
                 var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if (breSvc != null)
+                {
                     data.Item[i] = breSvc.BeforeInsert(itm) as IdentifiedData;
+                }
             }
             return base.BeforeInsert(data);
         }
@@ -79,7 +83,9 @@ namespace SanteDB.Core.Data.Quality
                 var itm = data.Item[i];
                 var breSvc = ApplicationServiceContext.Current.GetService(typeof(DataQualityBusinessRule<>).MakeGenericType(itm.GetType())) as IBusinessRulesService;
                 if (breSvc != null)
+                {
                     data.Item[i] = breSvc.BeforeUpdate(itm) as IdentifiedData;
+                }
             }
             return base.BeforeUpdate(data);
         }

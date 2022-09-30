@@ -1,9 +1,7 @@
 ﻿using SanteDB.Core.Diagnostics;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Data.Initialization
 {
@@ -22,12 +20,15 @@ namespace SanteDB.Core.Data.Initialization
         public IEnumerable<Dataset> GetDatasets()
         {
             var dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "data");
-            if(Directory.Exists(dataPath))
+            if (Directory.Exists(dataPath))
             {
                 return Directory.GetFiles(dataPath, "*.dataset").Select(o =>
                 {
                     this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
-                    using (var fs = File.OpenRead(o)) return Dataset.Load(fs);
+                    using (var fs = File.OpenRead(o))
+                    {
+                        return Dataset.Load(fs);
+                    }
                 });
             }
             else

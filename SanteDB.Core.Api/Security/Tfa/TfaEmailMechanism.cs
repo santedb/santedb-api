@@ -18,22 +18,15 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
-using SanteDB.Core.Services;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
-using System.Linq;
-using SanteDB.Core.Model;
-using SanteDB.Core.Security.Claims;
-using System.Security;
-using SanteDB.Core.Security.Services;
-using SanteDB.Core;
-using SanteDB.Core.Security;
 using System.Security.Principal;
 
 namespace SanteDB.Security.Tfa.Email
@@ -90,12 +83,16 @@ namespace SanteDB.Security.Tfa.Email
         public string Send(IIdentity user)
         {
             if (user == null)
+            {
                 throw new ArgumentNullException(nameof(user));
+            }
 
             // Gather the e-mail
             var filler = ApplicationServiceContext.Current.GetService<INotificationTemplateFiller>();
             if (filler == null)
+            {
                 throw new InvalidOperationException("Cannot find notification filler service");
+            }
 
             // We want to send the data in which language?
             String language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;

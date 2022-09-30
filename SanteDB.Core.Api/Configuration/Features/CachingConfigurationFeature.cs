@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -133,7 +132,10 @@ namespace SanteDB.Core.Configuration.Features
             // Add the distinct configuration sections
             foreach (var ct in cacheProviders.Union(adhocProvider).Union(queryProvider).Select(o => o.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration).Distinct())
             {
-                if (ct == null) continue; // no configuration available
+                if (ct == null)
+                {
+                    continue; // no configuration available
+                }
 
                 // Configuration for feature
                 var categoryName = $"{ct.Name}";

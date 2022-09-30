@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
@@ -210,13 +209,17 @@ namespace SanteDB.Core.PubSub.Broker
                                 {
                                     var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), itm.ParseQueryString(), "p", forceLoad: true, lazyExpandVariables: true);
                                     if (dynFn is LambdaExpression le)
+                                    {
                                         dynFn = Expression.Lambda(
                                             Expression.And(
                                                 Expression.Invoke(le, parameter),
                                                 Expression.Invoke(fFn, parameter)
                                                ), parameter);
+                                    }
                                     else
+                                    {
                                         dynFn = fFn;
+                                    }
                                 }
 
                                 if (dynFn == null)
@@ -246,8 +249,13 @@ namespace SanteDB.Core.PubSub.Broker
         public void Dispose()
         {
             if (this.m_repositoryListeners != null)
+            {
                 foreach (var itm in this.m_repositoryListeners)
+                {
                     itm.Dispose();
+                }
+            }
+
             this.m_repositoryListeners = null;
             this.m_queue.UnSubscribe(QueueName, this.NotificationQueued);
         }
@@ -313,7 +321,9 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
                 if (!this.m_repositoryListeners.Any(o => o.GetType().Equals(lt)))
+                {
                     this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected(lt) as IDisposable);
+                }
             }
         }
 

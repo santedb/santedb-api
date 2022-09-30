@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.Security.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {

@@ -18,21 +18,12 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Initialization
 {

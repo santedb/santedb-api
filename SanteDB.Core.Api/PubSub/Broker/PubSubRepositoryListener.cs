@@ -19,20 +19,14 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Parameters;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Queue;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.PubSub.Broker
@@ -93,11 +87,11 @@ namespace SanteDB.Core.PubSub.Broker
             get => this.NotificationDate.ToString("o");
             set
             {
-                if(String.IsNullOrEmpty(value))
+                if (String.IsNullOrEmpty(value))
                 {
                     this.NotificationDate = DateTimeOffset.MinValue;
                 }
-                else if(DateTimeOffset.TryParse(value, out var result))
+                else if (DateTimeOffset.TryParse(value, out var result))
                 {
                     this.NotificationDate = result;
                 }
@@ -155,7 +149,9 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_serviceManager = serviceManager;
 
             if (this.m_repository == null)
+            {
                 throw new InvalidOperationException($"Cannot actively subscribe to {typeof(TModel).FullName} as this repository does not raise events");
+            }
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;

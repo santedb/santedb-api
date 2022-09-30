@@ -19,9 +19,7 @@
  * Date: 2022-5-30
  */
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration

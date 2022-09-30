@@ -18,12 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Query.FilterExtension;
 using SanteDB.Core.Model.Roles;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SanteDB.Core.Api.Test
 {

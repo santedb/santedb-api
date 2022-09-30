@@ -54,12 +54,18 @@ namespace SanteDB.Core.Http
             if (o is byte[])
             {
                 using (var ms = new MemoryStream((byte[])o))
+                {
                     ms.CopyTo(s);
+                }
             }
             else if (o is Stream)
+            {
                 (o as Stream).CopyTo(s);
+            }
             else
+            {
                 throw new NotSupportedException("Object must be byte array");
+            }
         }
     }
 }

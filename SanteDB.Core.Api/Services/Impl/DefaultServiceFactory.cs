@@ -26,9 +26,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -94,7 +92,7 @@ namespace SanteDB.Core.Services.Impl
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
             var si = this.m_defaultServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));
-            if(si == null)
+            if (si == null)
             {
                 serviceInstance = null;
                 return false;

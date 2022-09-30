@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
@@ -168,8 +167,12 @@ namespace SanteDB.Core.Protocol
             {
                 var parmDict = new ParameterDictionary<String, Object>();
                 if (parameters != null)
+                {
                     foreach (var itm in parameters)
+                    {
                         parmDict.Add(itm.Key, itm.Value);
+                    }
+                }
 
                 // Allow each protocol to initialize itself
                 var execProtocols = protocols.OrderBy(o => o.Name).Distinct().ToList();
@@ -177,16 +180,20 @@ namespace SanteDB.Core.Protocol
                 Patient currentProcessing = null;
                 bool isCurrentProcessing = false;
                 if (patient.Key.HasValue)
+                {
                     isCurrentProcessing = this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing);
+                }
+
                 if (patient.Key.HasValue && !isCurrentProcessing)
                 {
                     lock (this.m_patientPromise)
+                    {
                         if (!this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing))
                         {
                             currentProcessing = patient.DeepCopy() as Patient;
 
                             // Are the participations of the patient null?
-                            if (patient.LoadProperty(o=>o.Participations).IsNullOrEmpty() && patient.VersionKey.HasValue)
+                            if (patient.LoadProperty(o => o.Participations).IsNullOrEmpty() && patient.VersionKey.HasValue)
                             {
                                 patient.Participations = EntitySource.Current.Provider.Query<Act>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key) &&
                                     StatusKeys.ActiveStates.Contains(o.StatusConceptKey.Value)).OfType<Act>()
@@ -206,7 +213,7 @@ namespace SanteDB.Core.Protocol
 
                                 (ApplicationServiceContext.Current.GetService(typeof(IDataCachingService)) as IDataCachingService)?.Add(patient);
                             }
-                            currentProcessing.Participations = new List<ActParticipation>(patient.LoadProperty(o=>o.Participations));
+                            currentProcessing.Participations = new List<ActParticipation>(patient.LoadProperty(o => o.Participations));
 
                             // The record target here is also a record target for any /relationships
                             // TODO: I think this can be removed no?
@@ -235,17 +242,22 @@ namespace SanteDB.Core.Protocol
                             // Add to the promised patient
                             this.m_patientPromise.Add(patient.Key.Value, currentProcessing);
                         }
+                    }
                 }
                 else if (!patient.Key.HasValue) // Not persisted
+                {
                     currentProcessing = patient.Clone() as Patient;
+                }
 
                 // Initialize for protocol execution
                 parmDict.Add("runProtocols", execProtocols.Distinct());
                 if (!this.IgnoreViewModelInitializer)
+                {
                     foreach (var o in execProtocols)
                     {
                         o.Prepare(currentProcessing, parmDict);
                     }
+                }
 
                 parmDict.Remove("runProtocols");
 
@@ -257,6 +269,7 @@ namespace SanteDB.Core.Protocol
 
                     // Let's ensure that there are some properties loaded eh?
                     if (this.IgnoreViewModelInitializer)
+                    {
                         foreach (var itm in thdPatient.LoadCollection<ActParticipation>("Participations"))
                         {
                             itm.LoadProperty<Act>("TargetAct").LoadProperty<Concept>("TypeConcept");
@@ -267,6 +280,8 @@ namespace SanteDB.Core.Protocol
                                 itmPtcpt.LoadProperty<Entity>("PlayerEntity").LoadProperty<Concept>("MoodConcept");
                             };
                         }
+                    }
+
                     protocolActs = execProtocols.AsParallel().WithDegreeOfParallelism(2).SelectMany(o => o.Calculate(thdPatient, parmDict)).OrderBy(o => o.StopTime - o.StartTime).ToList();
                 }
 
@@ -303,14 +318,20 @@ namespace SanteDB.Core.Protocol
                             var overlapMin = Array.IndexOf(overlap, minOverlap);
                             // Adjust the dates based on the start / stop time
                             if (overlapMin % 2 == 1)
+                            {
                                 candidate.StartTime = act.StartTime;
+                            }
+
                             if (overlapMin > 1)
+                            {
                                 candidate.StopTime = act.StopTime;
+                            }
+
                             candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
                         }
 
                         // Add the protocol act
-                        candidate.LoadProperty(o=>o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
+                        candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
 
                         // Remove so we don't have duplicates
                         protocolActs.Remove(act);
@@ -338,8 +359,12 @@ namespace SanteDB.Core.Protocol
 
                 // TODO: Configure for days of week
                 foreach (var itm in protocolActs)
+                {
                     while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
+                    {
                         itm.ActTime = itm.ActTime?.AddDays(1);
+                    }
+                }
 
                 return new CarePlan(patient, protocolActs.ToList())
                 {
@@ -354,8 +379,12 @@ namespace SanteDB.Core.Protocol
             finally
             {
                 lock (m_patientPromise)
+                {
                     if (patient.Key.HasValue && this.m_patientPromise.ContainsKey(patient.Key.Value))
+                    {
                         m_patientPromise.Remove(patient.Key.Value);
+                    }
+                }
             }
         }
 

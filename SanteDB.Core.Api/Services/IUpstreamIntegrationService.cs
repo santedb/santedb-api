@@ -1,13 +1,10 @@
 ﻿using SanteDB.Core.Http;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq.Expressions;
 using System.Net;
-using System.Text;
 
 namespace SanteDB.Core.Services
 {
@@ -75,14 +72,23 @@ namespace SanteDB.Core.Services
         {
             return (o, e) =>
             {
-                if (options == null) return;
+                if (options == null)
+                {
+                    return;
+                }
                 else if (options?.IfModifiedSince.HasValue == true)
+                {
                     e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = options?.IfModifiedSince.Value.ToString();
+                }
                 else if (!String.IsNullOrEmpty(options?.IfNoneMatch))
+                {
                     e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
+                }
+
                 if (options?.Lean == true)
+                {
                     e.Query.Add("_lean", "true");
-               
+                }
             };
         }
     }

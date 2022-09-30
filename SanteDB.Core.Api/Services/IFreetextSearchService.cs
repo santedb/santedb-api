@@ -18,13 +18,10 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Event;
 using SanteDB.Core.Jobs;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {

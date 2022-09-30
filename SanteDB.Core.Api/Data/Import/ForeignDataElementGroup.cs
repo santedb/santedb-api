@@ -36,9 +36,9 @@ namespace SanteDB.Core.Data.Import
         /// <summary>
         /// Gets the data elements present in the foreign data
         /// </summary>
-        [XmlArray("children"),  
+        [XmlArray("children"),
             XmlArrayItem("element", Type = typeof(ForeignDataElement)),
-            XmlArrayItem("group", Type = typeof(ForeignDataElementGroup)), 
+            XmlArrayItem("group", Type = typeof(ForeignDataElementGroup)),
             JsonProperty("children")]
         public List<ForeignDataObject> DataElements { get; set; }
 
