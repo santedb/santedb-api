@@ -20,7 +20,6 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
-using System;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import

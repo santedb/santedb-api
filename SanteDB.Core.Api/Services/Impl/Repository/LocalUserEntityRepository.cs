@@ -18,12 +18,9 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
-using System;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {

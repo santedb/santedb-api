@@ -48,7 +48,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
-                
+
             }
 
             /// <summary>
@@ -154,8 +154,13 @@ namespace SanteDB.Core.Security
             get
             {
                 if (s_current == null)
+                {
                     lock (s_lockObject)
+                    {
                         s_current = new AuthenticationContext(s_anonymous);
+                    }
+                }
+
                 return s_current;
             }
             internal set { s_current = value; }

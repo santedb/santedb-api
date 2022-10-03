@@ -19,10 +19,8 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import
@@ -33,7 +31,7 @@ namespace SanteDB.Core.Data.Import
     [XmlType(nameof(ForeignDataMap), Namespace = "http://santedb.org/import")]
     [XmlRoot(nameof(ForeignDataMap), Namespace = "http://santedb.org/import")]
     [JsonObject]
-    public class ForeignDataMap 
+    public class ForeignDataMap
     {
 
         /// <summary>
@@ -58,7 +56,7 @@ namespace SanteDB.Core.Data.Import
         /// Gets or sets the mapping definition for the object
         /// </summary>
         [XmlArray("map"),
-            XmlArrayItem("element", typeof(ForeignDataElementMap)), 
+            XmlArrayItem("element", typeof(ForeignDataElementMap)),
             XmlArrayItem("group", typeof(ForeignDataElementGroupMap)),
             JsonProperty("map")]
         public List<ForeignDataObjectMap> ObjectMap { get; set; }

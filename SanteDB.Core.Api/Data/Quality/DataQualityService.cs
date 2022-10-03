@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
 using System;
@@ -146,7 +145,9 @@ namespace SanteDB.Core.Data.Quality
             this.Started?.Invoke(this, EventArgs.Empty);
 
             foreach (var itm in this.m_attachedRules)
+            {
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(itm.GetType());
+            }
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;

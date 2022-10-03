@@ -26,7 +26,6 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -69,9 +68,13 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_policyService.Demand(PermissionPolicyIdentifiers.AlterClinicalProtocolConfigurationDefinition);
             var data = protocol.GetProtocolData();
             if (this.Find(o => o.Oid == data.Oid).Any())
-                return protocol.Load( this.Save(data));
-            else 
+            {
+                return protocol.Load(this.Save(data));
+            }
+            else
+            {
                 return protocol.Load(base.Insert(data));
+            }
         }
 
         /// <summary>
@@ -83,7 +86,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             var expressionBody = expression.Body;
             var expressionParameter = expression.Parameters[0];
 
-            if(!String.IsNullOrEmpty(protocolName))
+            if (!String.IsNullOrEmpty(protocolName))
             {
                 expressionBody = Expression.And(Expression.MakeBinary(
                     ExpressionType.Equal,
@@ -91,7 +94,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                     Expression.Constant(protocolName)
                 ), expressionBody);
             }
-            if(!String.IsNullOrEmpty(protocolOid))
+            if (!String.IsNullOrEmpty(protocolOid))
             {
                 expressionBody = Expression.And(Expression.MakeBinary(
                     ExpressionType.Equal,

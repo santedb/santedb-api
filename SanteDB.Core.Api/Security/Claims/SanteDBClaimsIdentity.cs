@@ -44,12 +44,19 @@ namespace SanteDB.Core.Security.Claims
         public SanteDBClaimsIdentity(String userName, bool isAuthenticated, string authenticationMethod, IEnumerable<IClaim> claims = null)
         {
             if (claims != null)
+            {
                 this.m_claims = new List<IClaim>(claims);
+            }
             else
+            {
                 this.m_claims = new List<IClaim>();
+            }
 
             if (!this.m_claims.Exists(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType))
+            {
                 this.m_claims.Add(new SanteDBClaim(SanteDBClaimTypes.DefaultNameClaimType, userName));
+            }
+
             this.IsAuthenticated = isAuthenticated;
             this.AuthenticationType = authenticationMethod;
         }
@@ -75,8 +82,10 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         protected void AddClaim(IClaim claim)
         {
-            if(!this.m_claims.Any(c=>c.Type == claim.Type && c.Value == claim.Value))
+            if (!this.m_claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
+            {
                 this.m_claims.Add(claim);
+            }
         }
 
         /// <summary>
@@ -87,7 +96,9 @@ namespace SanteDB.Core.Security.Claims
             foreach (var claim in claims)
             {
                 if (!this.m_claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
+                {
                     this.m_claims.Add(claim);
+                }
             }
         }
 

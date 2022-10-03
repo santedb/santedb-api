@@ -100,14 +100,23 @@ namespace SanteDB.Core.Http
         {
             // Get the boundary
             var mimeParts = this.m_contentType.Split(';');
-            if (mimeParts.Length < 2) throw new InvalidOperationException("Missing mime-boundary marker");
+            if (mimeParts.Length < 2)
+            {
+                throw new InvalidOperationException("Missing mime-boundary marker");
+            }
+
             var boundaryParts = mimeParts[1].Split('=');
-            if (boundaryParts.Length < 2 && !boundaryParts[0].Trim().Equals("boundary", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Could not find boundary on content type");
+            if (boundaryParts.Length < 2 && !boundaryParts[0].Trim().Equals("boundary", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Could not find boundary on content type");
+            }
 
             // Boundary writer
             var attachmentList = o as IList;
             if (attachmentList == null)
+            {
                 attachmentList = new List<Object>() { o };
+            }
 
             using (StreamWriter sw = new StreamWriter(s))
             {
@@ -115,18 +124,28 @@ namespace SanteDB.Core.Http
                 {
                     var mimeInfo = att as MultipartAttachment;
                     if (mimeInfo == null)
+                    {
                         mimeInfo = new MultipartAttachment(att as byte[], "application/octet-stream", "attachment", false);
+                    }
 
                     sw.WriteLine("--{0}", boundaryParts[1]);
                     if (mimeInfo.UseFormEncoding)
+                    {
                         sw.WriteLine("Content-Disposition: form-data; name=\"file\"; filename=\"{0}\"", mimeInfo.Name);
+                    }
                     else
+                    {
                         sw.WriteLine("Content-Disposition: attachment; filename=\"{0}\"", mimeInfo.Name);
+                    }
+
                     sw.WriteLine("Content-Type: {0}", mimeInfo.MimeType);
                     sw.WriteLine();
                     sw.Flush();
                     using (MemoryStream ms = new MemoryStream(mimeInfo.Data))
+                    {
                         ms.CopyTo(s);
+                    }
+
                     sw.WriteLine();
                 }
                 sw.WriteLine("--{0}--", boundaryParts[1]);

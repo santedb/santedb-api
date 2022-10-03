@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {
@@ -117,7 +116,9 @@ namespace SanteDB.Core.Security
                         var key = configuration.GetSecret();
                         // Ensure 128 bit
                         while (key.Length < 16)
+                        {
                             key = key.Concat(key).ToArray();
+                        }
 
                         var hmac = new System.Security.Cryptography.HMACSHA256(key);
                         return hmac.ComputeHash(data);
@@ -126,7 +127,9 @@ namespace SanteDB.Core.Security
                 case SignatureAlgorithm.RS512:
                     {
                         if (!configuration.Certificate.HasPrivateKey)
+                        {
                             throw new InvalidOperationException("You must have the private key to sign data with this certificate");
+                        }
 
                         var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPrivateKey(configuration.Certificate);
                         var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
@@ -162,7 +165,9 @@ namespace SanteDB.Core.Security
                         var key = configuration.GetSecret();
                         // Ensure 128 bit
                         while (key.Length < 16)
+                        {
                             key = key.Concat(key).ToArray();
+                        }
 
                         var hmac = new System.Security.Cryptography.HMACSHA256(key);
                         return hmac.ComputeHash(data).SequenceEqual(signature);

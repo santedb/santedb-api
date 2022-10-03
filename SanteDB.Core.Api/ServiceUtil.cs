@@ -1,10 +1,7 @@
 ﻿using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 
 namespace SanteDB.Core
 {
@@ -57,17 +54,26 @@ namespace SanteDB.Core
         internal static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
             foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
                 if (args.Name == asm.FullName)
+                {
                     return asm;
+                }
+            }
 
-            /// Try for an non-same number Version
+            // Try for an non-same number Version
             foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 string fAsmName = args.Name;
                 if (fAsmName.Contains(","))
+                {
                     fAsmName = fAsmName.Substring(0, fAsmName.IndexOf(","));
+                }
+
                 if (fAsmName == asm.GetName().Name)
+                {
                     return asm;
+                }
             }
 
             return null;

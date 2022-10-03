@@ -1,15 +1,13 @@
 ﻿using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Linq;
-using SanteDB.Core.Security.Audit;
-using SanteDB.Core.i18n;
 
 namespace SanteDB.Core
 {
@@ -108,7 +106,9 @@ namespace SanteDB.Core
                         startWatch.Start();
 
                         if (this.Starting != null)
+                        {
                             this.Starting(this, null);
+                        }
 
                         // If there is no configuration manager then add the local
                         Trace.TraceInformation("STAGE0 START: Load Configuration");
@@ -117,11 +117,17 @@ namespace SanteDB.Core
                         var config = this.GetService<IConfigurationManager>().GetSection<DiagnosticsConfigurationSection>();
 
                         if (config != null)
+                        {
                             foreach (var writer in config.TraceWriter)
+                            {
                                 Tracer.AddWriter(Activator.CreateInstance(writer.TraceWriter, writer.Filter, writer.InitializationData, config.Sources.ToDictionary(o => o.SourceName, o => o.Filter)) as TraceWriter, writer.Filter);
+                            }
+                        }
 #if DEBUG
                         else
+                        {
                             Tracer.AddWriter(new SanteDB.Core.Diagnostics.Tracing.SystemDiagnosticsTraceWriter(), System.Diagnostics.Tracing.EventLevel.LogAlways);
+                        }
 #endif
 
                         Trace.TraceInformation("STAGE1 START: Start Dependency Injection Manager");
@@ -158,7 +164,9 @@ namespace SanteDB.Core
         public virtual void Stop()
         {
             if (this.Stopping != null)
+            {
                 this.Stopping(this, null);
+            }
 
             if (this.IsRunning)
             {
@@ -169,7 +177,9 @@ namespace SanteDB.Core
             this.m_serviceProvider.Stop();
 
             if (this.Stopped != null)
+            {
                 this.Stopped(this, null);
+            }
 
             this.Dispose();
         }

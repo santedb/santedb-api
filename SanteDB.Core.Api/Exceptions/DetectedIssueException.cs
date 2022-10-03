@@ -40,7 +40,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Get the message for the error
         /// </summary>
-        public override string Message => $"{base.Message} - [{String.Join(",", this.Issues.Select(i=>$"{i.Priority}: {i.Text}"))}]";
+        public override string Message => $"{base.Message} - [{String.Join(",", this.Issues.Select(i => $"{i.Priority}: {i.Text}"))}]";
 
         /// <summary>
         /// Creates a new detected issue exception

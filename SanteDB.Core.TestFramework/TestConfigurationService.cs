@@ -22,10 +22,8 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Services;
 using System;
-using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 
 namespace SanteDB.Core.TestFramework
 {
@@ -33,7 +31,7 @@ namespace SanteDB.Core.TestFramework
     /// Configuration service that loads from the test file
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class TestConfigurationService  : IConfigurationManager
+    public class TestConfigurationService : IConfigurationManager
     {
         /// <summary>
         /// Gets the service name
@@ -58,10 +56,14 @@ namespace SanteDB.Core.TestFramework
                 asmRsn = asm.GetManifestResourceNames().FirstOrDefault(o => o.EndsWith("TestConfig.xml"));
             }
             using (var s = asm.GetManifestResourceStream(asmRsn))
+            {
                 this.Configuration = SanteDBConfiguration.Load(s);
+            }
 
             if (this.Configuration == null)
+            {
                 throw new InvalidOperationException("Could not load test configuration. Ensure that TestConfig.xml is in your project and set as an EmbeddedResource");
+            }
         }
 
         /// <summary>
@@ -77,7 +79,7 @@ namespace SanteDB.Core.TestFramework
         /// </summary>
         public string GetAppSetting(string key)
         {
-            return this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.FirstOrDefault(o=>o.Key == key)?.Value;
+            return this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings.FirstOrDefault(o => o.Key == key)?.Value;
         }
 
         /// <summary>

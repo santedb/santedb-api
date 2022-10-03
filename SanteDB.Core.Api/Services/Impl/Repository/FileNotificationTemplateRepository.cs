@@ -18,20 +18,15 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Notifications;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -77,7 +72,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                 {
                     m_tracer.TraceInfo("Scanning {0}", m_configuration.RepositoryRoot);
                     if (!Directory.Exists(m_configuration.RepositoryRoot))
+                    {
                         Directory.CreateDirectory(m_configuration.RepositoryRoot);
+                    }
 
                     Directory.GetFiles(m_configuration.RepositoryRoot, "*.xml", SearchOption.AllDirectories)
                         .ToList().ForEach(f =>
@@ -85,8 +82,12 @@ namespace SanteDB.Core.Services.Impl.Repository
                             try
                             {
                                 lock (m_lock)
+                                {
                                     using (var fs = File.OpenRead(f))
+                                    {
                                         m_repository.Add(NotificationTemplate.Load(fs));
+                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -107,7 +108,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         public IEnumerable<NotificationTemplate> Find(Expression<Func<NotificationTemplate, bool>> filter)
         {
             lock (m_lock)
+            {
                 return m_repository.Where(filter.Compile()).ToList();
+            }
         }
 
         /// <summary>
@@ -116,7 +119,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         public NotificationTemplate Get(string id, string lang)
         {
             lock (m_lock)
+            {
                 return m_repository.FirstOrDefault(o => o.Id == id && o.Language == lang);
+            }
         }
 
         /// <summary>
@@ -125,7 +130,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         public NotificationTemplate Insert(NotificationTemplate template)
         {
             if (Get(template.Id, template.Language) != null)
+            {
                 throw new DuplicateNameException($"Template {template.Id} for language {template.Language} already exists");
+            }
 
             return Update(template);
         }
@@ -145,10 +152,14 @@ namespace SanteDB.Core.Services.Impl.Repository
 
                 var fileName = Path.Combine(m_configuration.RepositoryRoot, template.Language ?? "default", template.Id + ".xml");
                 if (!Directory.Exists(Path.GetDirectoryName(fileName)))
+                {
                     Directory.CreateDirectory(Path.GetDirectoryName(fileName));
+                }
 
                 using (var fs = File.Create(fileName))
+                {
                     return template.Save(fs);
+                }
             }
             catch (Exception e)
             {

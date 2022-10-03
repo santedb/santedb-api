@@ -1,8 +1,5 @@
 ﻿using SanteDB.Core.Http.Description;
 using SanteDB.Core.Interop;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Http
 {

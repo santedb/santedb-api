@@ -21,10 +21,8 @@
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {

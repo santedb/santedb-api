@@ -20,8 +20,6 @@
  */
 using RazorLight;
 using RazorLight.Razor;
-using SanteDB.Core;
-using SanteDB.Core.Notifications;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -37,7 +35,7 @@ namespace SanteDB.Core.Notifications.Templating
     /// <summary>
     /// Represents a notification template filler that uses Razor engine
     /// </summary>
-    public class RazorNotificationTemplateFiller :  INotificationTemplateFiller
+    public class RazorNotificationTemplateFiller : INotificationTemplateFiller
     {
 
         /// <summary>
@@ -106,13 +104,16 @@ namespace SanteDB.Core.Notifications.Templating
                 return Task.FromResult(Enumerable.Empty<RazorLightProjectItem>());
             }
 
+
+#pragma warning disable CS1998
             /// <summary>
             /// Get template item
             /// </summary>
             public override async Task<RazorLightProjectItem> GetItemAsync(string templateKey)
             {
                 var templateMatch = this.m_nameRegex.Match(templateKey);
-                if (templateMatch.Success) {
+                if (templateMatch.Success)
+                {
                     String templateId = templateMatch.Groups[1].Value,
                         languageId = templateMatch.Groups[2].Value,
                         parameterType = templateMatch.Groups[3].Value;
@@ -124,7 +125,7 @@ namespace SanteDB.Core.Notifications.Templating
                 }
             }
         }
-
+#pragma warning restore
         /// <summary>
         /// Service name
         /// </summary>
@@ -151,12 +152,17 @@ namespace SanteDB.Core.Notifications.Templating
         /// </summary>
         public NotificationTemplate FillTemplate(string id, string lang, dynamic model)
         {
-            
+
             // Now we want to set render
             if (!this.m_compiledRazorPages.TryGetValue($"{id}.{lang}.sub", out var subjectTemplate))
+            {
                 this.m_compiledRazorPages.Add($"{id}.{lang}.sub", this.m_razorEngine.CompileTemplateAsync($"{id}-{lang}-subject").Result);
+            }
+
             if (!this.m_compiledRazorPages.TryGetValue($"{id}.{lang}.body", out var bodyTemplate))
+            {
                 this.m_compiledRazorPages.Add($"{id}.{lang}.body", this.m_razorEngine.CompileTemplateAsync($"{id}-{lang}-body").Result);
+            }
 
             // Compose the return value
             try
@@ -169,7 +175,7 @@ namespace SanteDB.Core.Notifications.Templating
                     Subject = this.m_razorEngine.RenderTemplateAsync(subjectTemplate, model, model.GetType(), model as ExpandoObject).Result
                 };
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception($"Error filling template {id}", e);
             }

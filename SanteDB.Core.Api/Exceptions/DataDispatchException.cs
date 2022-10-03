@@ -19,9 +19,6 @@
  * Date: 2022-5-30
  */
 using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
 
 namespace SanteDB.Core.Exceptions
 {

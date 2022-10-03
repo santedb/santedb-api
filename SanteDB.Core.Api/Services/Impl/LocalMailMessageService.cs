@@ -8,7 +8,6 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -36,8 +35,8 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public LocalMailMessageService(ILocalizationService localizationService, 
-            IDataPersistenceService<MailMessage> mailMessagePersistence, 
+        public LocalMailMessageService(ILocalizationService localizationService,
+            IDataPersistenceService<MailMessage> mailMessagePersistence,
             IDataPersistenceService<Mailbox> mailboxPersistence,
             IDataPersistenceService<MailboxMailMessage> mailboxMessagePersistence,
             IDataPersistenceService<Bundle> bundlePersistence,
@@ -58,7 +57,7 @@ namespace SanteDB.Core.Services.Impl
         public Mailbox CreateMailbox(string name, Guid? ownerKey = null)
         {
             // If creating for a specific user then must have alter identity 
-            if(ownerKey.HasValue)
+            if (ownerKey.HasValue)
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
@@ -76,7 +75,7 @@ namespace SanteDB.Core.Services.Impl
         {
             var mailbox = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
             var currentUserKey = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            if(mailbox.OwnerKey != currentUserKey)
+            if (mailbox.OwnerKey != currentUserKey)
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
@@ -91,7 +90,7 @@ namespace SanteDB.Core.Services.Impl
             // Delete the specified mail message key
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
             var mailMessageBoxAssoc = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == messageKey && o.SourceEntityKey == fromMailboxKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
-            if(mailMessageBoxAssoc == null)
+            if (mailMessageBoxAssoc == null)
             {
                 throw new KeyNotFoundException(messageKey.ToString());
             }
@@ -102,7 +101,7 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public IQueryResultSet<Mailbox> GetMailboxes(Guid? forUserKey = null)
         {
-            if(forUserKey.HasValue)
+            if (forUserKey.HasValue)
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
@@ -114,7 +113,7 @@ namespace SanteDB.Core.Services.Impl
         public IQueryResultSet<MailMessage> GetMessages(Guid mailboxKey)
         {
             // Only administrators are permitted to read other people's mail
-            if(this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity) != 
+            if (this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity) !=
                 this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal).OwnerKey)
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
@@ -129,20 +128,20 @@ namespace SanteDB.Core.Services.Impl
             // Move a mail message to another mailbox
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
             var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == messageKey && o.SourceEntity.OwnerKey == mySid && o.SourceEntityKey == fromMailboxKey, AuthenticationContext.Current.Principal).FirstOrDefault();
-            if(sourceMessage == null)
+            if (sourceMessage == null)
             {
                 throw new KeyNotFoundException(messageKey.ToString());
             }
             var sourceMailbox = sourceMessage.LoadProperty(o => o.SourceEntity);
 
             var targetMailbox = this.m_mailboxPersistence.Get(targetMailboxKey, null, AuthenticationContext.Current.Principal);
-            if(targetMailbox == null)
+            if (targetMailbox == null)
             {
                 throw new KeyNotFoundException(targetMailboxKey.ToString());
             }
 
             // Ensure the mailboxes are the same owner
-            if(sourceMailbox.OwnerKey != targetMailbox.OwnerKey)
+            if (sourceMailbox.OwnerKey != targetMailbox.OwnerKey)
             {
                 throw new InvalidOperationException(ErrorMessages.MAIL_CANNOT_MOVE_OWNERS);
             }
@@ -167,7 +166,7 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public MailMessage Send(MailMessage mail)
         {
-            if(String.IsNullOrEmpty(mail.To) && mail.RcptTo?.Any() != true)
+            if (String.IsNullOrEmpty(mail.To) && mail.RcptTo?.Any() != true)
             {
                 throw new InvalidOperationException(ErrorMessages.MAIL_MISISNG_TO);
             }
@@ -175,7 +174,7 @@ namespace SanteDB.Core.Services.Impl
             try
             {
                 // We want to route via the RCPT to if available 
-                if(mail.RcptTo?.Any() != true)
+                if (mail.RcptTo?.Any() != true)
                 {
                     mail.RcptToXml = mail.To.Split(';').Distinct().Where(o => !String.IsNullOrEmpty(o)).Select(o => this.m_securityPersistence.GetUser(o).Key.Value).ToList();
                 }
@@ -190,7 +189,7 @@ namespace SanteDB.Core.Services.Impl
 
                 // Get the SENT folder for the user
                 var sentMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.SENT_NAME && o.OwnerKey == fromUser.Key, AuthenticationContext.SystemPrincipal).FirstOrDefault();
-                if(sentMailbox == null)
+                if (sentMailbox == null)
                 {
                     sentMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
                     {
@@ -202,10 +201,10 @@ namespace SanteDB.Core.Services.Impl
                 txBundle.Add(new MailboxMailMessage() { TargetKey = mail.Key.Value, SourceEntityKey = sentMailbox.Key });
 
                 // Route the mail to inboxes of the recipients
-                foreach(var itm in mail.RcptToXml)
+                foreach (var itm in mail.RcptToXml)
                 {
                     var inboxMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.INBOX_NAME && o.OwnerKey == itm && o.ObsoletionTime == null, AuthenticationContext.SystemPrincipal).FirstOrDefault();
-                    if(inboxMailbox == null)
+                    if (inboxMailbox == null)
                     {
                         inboxMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
                         {
@@ -227,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
                 this.Sent?.Invoke(this, new MailMessageEventArgs(mail));
                 return mail;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new DataPersistenceException(ErrorMessages.MAIL_ERROR_SENDING, e);
             }
@@ -238,7 +237,7 @@ namespace SanteDB.Core.Services.Impl
         {
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
             var mailMessageItem = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == mailMessageKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
-            if(mailMessageItem == null)
+            if (mailMessageItem == null)
             {
                 throw new KeyNotFoundException(mailMessageKey.ToString());
             }

@@ -23,7 +23,6 @@ using SanteDB.Core.Services;
 using System;
 using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -75,7 +74,9 @@ namespace SanteDB.Core.Configuration
             set
             {
                 if (String.Equals(this.m_typeXml, value))
+                {
                     this.m_type = null;
+                }
 
                 this.m_typeXml = value;
             }

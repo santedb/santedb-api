@@ -135,7 +135,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Gets the type of job schedule
         /// </summary>
-        [XmlAttribute("type"),JsonProperty("type"), DisplayName("Type"),Description("Gets or sets the type of job schedule")]
+        [XmlAttribute("type"), JsonProperty("type"), DisplayName("Type"), Description("Gets or sets the type of job schedule")]
         public JobScheduleType Type { get; set; }
 
         /// <summary>

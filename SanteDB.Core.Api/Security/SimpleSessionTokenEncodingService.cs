@@ -1,13 +1,8 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security;
-using System.Security.Authentication;
-using System.Text;
-using static System.Collections.Specialized.BitVector32;
 
 namespace SanteDB.Core.Security
 {
@@ -54,7 +49,7 @@ namespace SanteDB.Core.Security
             }
 
             var tokenparts = encodedToken.Split('.').Select(o => o.HexDecode()).ToArray();
-            
+
             if (tokenparts.Length != 2)
             {
                 _TraceSource.TraceVerbose("SimpleSessionTokenEncodingService - Malformed token passed to TryDecode().");

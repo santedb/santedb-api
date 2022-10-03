@@ -19,11 +19,9 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Subscription;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Security.Principal;
 
@@ -62,7 +60,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets the results which have been executed
         /// </summary>
-        public virtual IQueryResultSet Results { get; set;  }
+        public virtual IQueryResultSet Results { get; set; }
 
 
     }

@@ -27,7 +27,7 @@ namespace SanteDB.Core
     /// </summary>
     public static class SanteDBConstants
     {
-      
+
         /// <summary>
         /// Service trace source name
         /// </summary>

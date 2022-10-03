@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Core.Http.Description;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -47,14 +45,17 @@ namespace SanteDB.Core.Configuration.Http
         /// Gets or sets the timeout
         /// </summary>
         [XmlAttribute("timeout"), JsonProperty("timeout")]
-        public String TimeoutXml {
+        public String TimeoutXml
+        {
             get => XmlConvert.ToString(this.Timeout);
-            set {
-                if(TimeSpan.TryParse(value, out var ts))
+            set
+            {
+                if (TimeSpan.TryParse(value, out var ts))
                 {
                     this.Timeout = ts;
                 }
-                else { 
+                else
+                {
                     this.Timeout = XmlConvert.ToTimeSpan(value);
                 }
             }

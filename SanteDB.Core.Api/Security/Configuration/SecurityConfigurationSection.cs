@@ -20,13 +20,9 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Model.Map;
-using SanteDB.Core.Security.Configuration;
-using SanteDB.Core.Services.Impl;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
@@ -92,8 +88,8 @@ namespace SanteDB.Core.Security.Configuration
         [XmlAttribute("pepExemptionPolicy")]
         [DisplayName("PEP Exemption Policy")]
         [Description("Identifies the policy enforcement exception." +
-            "When set, certain types of security principals will not be subject to PEP rules." + 
-            "DevicePrincipalsExempt indicates that userless principals should not be subject to PEP enforcement" + 
+            "When set, certain types of security principals will not be subject to PEP rules." +
+            "DevicePrincipalsExempt indicates that userless principals should not be subject to PEP enforcement" +
             "UserPrincipalsExempt indicates that user principals should be should not be subject to PEP enforcement")]
         public PolicyEnforcementExemptionPolicy PepExemptionPolicy { get; set; }
 
@@ -120,9 +116,13 @@ namespace SanteDB.Core.Security.Configuration
         {
             var pol = this.SecurityPolicy.Find(o => o.PolicyId == policyId);
             if (pol == null)
+            {
                 this.SecurityPolicy.Add(new SecurityPolicyConfiguration(policyId, policyValue));
+            }
             else
+            {
                 pol.PolicyValue = policyValue;
+            }
         }
 
         /// <summary>
@@ -142,11 +142,18 @@ namespace SanteDB.Core.Security.Configuration
         public T GetSecurityPolicy<T>(SecurityPolicyIdentification id, T defaultValue = default(T))
         {
             var pol = this.SecurityPolicy?.Find(o => o.Enabled && o.PolicyId == id);
-            if (pol == null) return defaultValue;
-            else if (MapUtil.TryConvert(pol.PolicyValue, typeof(T), out object retVal))
-                return (T)retVal;
-            else
+            if (pol == null)
+            {
                 return defaultValue;
+            }
+            else if (MapUtil.TryConvert(pol.PolicyValue, typeof(T), out object retVal))
+            {
+                return (T)retVal;
+            }
+            else
+            {
+                return defaultValue;
+            }
         }
     }
 }

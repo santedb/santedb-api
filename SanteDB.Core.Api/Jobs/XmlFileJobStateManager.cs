@@ -49,7 +49,7 @@ namespace SanteDB.Core.Jobs
         [XmlAttribute("job")]
         public Guid JobId
         {
-            get;set;
+            get; set;
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace SanteDB.Core.Jobs
         public IJobState GetJobState(IJob job)
         {
             var jobState = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobState == null)
+            if (jobState == null)
             {
                 jobState = new XmlJobState()
                 {
@@ -149,7 +149,7 @@ namespace SanteDB.Core.Jobs
         public void SetProgress(IJob job, string statusText, float progress)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobData == null)
+            if (jobData == null)
             {
                 this.m_jobStates.Add(new XmlJobState()
                 {
@@ -171,7 +171,7 @@ namespace SanteDB.Core.Jobs
         public void SetState(IJob job, JobStateType state)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobData == null)
+            if (jobData == null)
             {
                 jobData = new XmlJobState()
                 {
@@ -181,12 +181,12 @@ namespace SanteDB.Core.Jobs
                 };
                 this.m_jobStates.Add(jobData);
             }
-            
+
             // Determine state transition
-            switch(state)
+            switch (state)
             {
                 case JobStateType.Running:
-                    if(!jobData.IsRunning())
+                    if (!jobData.IsRunning())
                     {
                         jobData.LastStartTime = DateTime.Now;
                         jobData.LastStopTime = null;
@@ -212,12 +212,12 @@ namespace SanteDB.Core.Jobs
         {
             try
             {
-                using(var fs = File.Create(this.m_jobStateLocation))
+                using (var fs = File.Create(this.m_jobStateLocation))
                 {
                     this.m_xsz.Serialize(fs, this.m_jobStates.ToList());
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error saving job states: {0}", e);
                 throw new Exception("Error persisting job status", e);

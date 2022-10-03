@@ -18,13 +18,11 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -66,7 +64,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                 exPersistence.Touch(id, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
             else
+            {
                 throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.supportTouch"));
+            }
         }
     }
 }

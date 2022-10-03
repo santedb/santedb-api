@@ -32,7 +32,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Gets the type of schedule
         /// </summary>
-        JobScheduleType Type { get;  }
+        JobScheduleType Type { get; }
 
         /// <summary>
         /// Get the interval on which the job runs

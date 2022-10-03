@@ -18,10 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -70,7 +67,9 @@ namespace SanteDB.Core.Security
             // Get the mechanism
             var mechanism = this.Mechanisms.FirstOrDefault(o => o.Id == mechanismId);
             if (mechanism == null)
+            {
                 throw new SecurityException($"TFA mechanism {mechanismId} not found");
+            }
 
             // send the secret
             return mechanism.Send(user);
@@ -84,7 +83,9 @@ namespace SanteDB.Core.Security
             // Get the mechanism
             var mechanism = this.Mechanisms.FirstOrDefault(o => o.Id == mechanismId);
             if (mechanism == null)
+            {
                 throw new SecurityException($"TFA mechanism {mechanismId} not found");
+            }
 
             // send the secret
             return mechanism.Validate(user, secret);

@@ -18,9 +18,6 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Map;
-
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Reflection;

@@ -145,8 +145,11 @@ namespace SanteDB.Core.Security.Configuration
             set
             {
                 if (value == null)
+                {
                     this.FindValue = null;
+                }
                 else
+                {
                     switch (this.FindType)
                     {
                         case X509FindType.FindBySubjectName:
@@ -164,6 +167,7 @@ namespace SanteDB.Core.Security.Configuration
                             this.FindTypeSpecified = true;
                             break;
                     }
+                }
             }
         }
 
@@ -182,9 +186,13 @@ namespace SanteDB.Core.Security.Configuration
                         store.Open(OpenFlags.ReadOnly);
                         var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
                         if (matches.Count == 0)
+                        {
                             throw new InvalidOperationException("Certificate not found");
+                        }
                         else if (matches.Count > 1)
+                        {
                             throw new InvalidOperationException("Too many matches");
+                        }
                         else
                         {
                             this.m_certificate = matches[0];

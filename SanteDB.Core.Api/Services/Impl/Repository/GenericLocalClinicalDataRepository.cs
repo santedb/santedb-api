@@ -22,7 +22,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {

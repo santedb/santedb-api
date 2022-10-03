@@ -19,11 +19,7 @@
  * Date: 2022-5-30
  */
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Security.Principal;
-using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -39,9 +35,13 @@ namespace SanteDB.Core.Security.Claims
         public static String GetClaimValue(this IPrincipal me, String claim)
         {
             if (me is IClaimsPrincipal icp)
+            {
                 return icp.FindFirst(claim)?.Value;
+            }
             else
+            {
                 return null;
+            }
         }
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace SanteDB.Core.Security.Claims
         /// Purpose of use claim
         /// </summary>
         public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
-      
+
         /// <summary>
         /// Organization name claim
         /// </summary>

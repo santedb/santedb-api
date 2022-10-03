@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -74,7 +73,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Gets the specified identity for an application.
         /// </summary>
-        /// <param name="name">The name of the application for which to retrieve the identity.</param>
+        /// <param name="applicationName">The name of the application for which to retrieve the identity.</param>
         /// <returns>Returns the identity of the application.</returns>
         IApplicationIdentity GetIdentity(string applicationName);
 
@@ -86,7 +85,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Set the lockout status
         /// </summary>
-        /// <param name="name">The name of the device</param>
+        /// <param name="applicationName">The name of the device</param>
         /// <param name="lockoutState">The status of the lockout</param>
         /// <param name="principal">The principal which is locking the device</param>
         void SetLockout(string applicationName, bool lockoutState, IPrincipal principal);
@@ -94,7 +93,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Change the specified application identity's secret
         /// </summary>
-        /// <param name="name">The name of the application</param>
+        /// <param name="applicationName">The name of the application</param>
         /// <param name="secret">The new secret</param>
         /// <param name="principal">The principal that is changing the secret</param>
         void ChangeSecret(String applicationName, String secret, IPrincipal principal);

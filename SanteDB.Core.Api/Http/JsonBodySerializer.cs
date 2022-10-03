@@ -69,7 +69,9 @@ namespace SanteDB.Core.Http
         {
             using (TextWriter tw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
             using (JsonTextWriter jw = new JsonTextWriter(tw))
+            {
                 this.m_serializer.Serialize(jw, o);
+            }
         }
 
         /// <summary>
@@ -79,7 +81,9 @@ namespace SanteDB.Core.Http
         {
             using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
             using (JsonTextReader jr = new JsonTextReader(tr))
+            {
                 return this.m_serializer.Deserialize(jr, this.m_type);
+            }
         }
 
         #endregion IBodySerializer implementation

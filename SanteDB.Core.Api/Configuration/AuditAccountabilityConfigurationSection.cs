@@ -71,13 +71,13 @@ namespace SanteDB.Core.Configuration
         {
             uint dictFlag = (uint)auditEventData.Outcome << 24 | (uint)auditEventData.ActionCode << 16 | (uint)auditEventData.EventIdentifier;
 
-            if(this.m_filterDictionary == null)
+            if (this.m_filterDictionary == null)
             {
                 this.m_filterDictionary = new ConcurrentDictionary<uint, AuditFilterConfiguration>();
             }
 
             // Have we already encountered this exact filter?
-            if(this.m_filterDictionary.TryGetValue(dictFlag, out var res))
+            if (this.m_filterDictionary.TryGetValue(dictFlag, out var res))
             {
                 saveLocal = res.InsertLocal;
                 dispatchRemote = res.SendRemote;
@@ -86,7 +86,7 @@ namespace SanteDB.Core.Configuration
             {
                 var filters = this.AuditFilters
                     .Where(f => (dictFlag & f.FilterFlags) == dictFlag);
-                saveLocal = !filters.Any(o => !o.InsertLocal );
+                saveLocal = !filters.Any(o => !o.InsertLocal);
                 dispatchRemote = !filters.Any(o => !o.SendRemote);
                 m_filterDictionary.Add(dictFlag, new AuditFilterConfiguration(auditEventData.ActionCode, auditEventData.EventIdentifier, auditEventData.Outcome, saveLocal, dispatchRemote));
             }

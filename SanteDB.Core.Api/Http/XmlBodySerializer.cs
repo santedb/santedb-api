@@ -18,11 +18,9 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -66,7 +64,9 @@ namespace SanteDB.Core.Http
             if (o.GetType() == this.m_type)
             {
                 if (this.m_serializer == null)
+                {
                     this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(this.m_type);
+                }
 
                 this.m_serializer.Serialize(s, o);
             }
@@ -86,20 +86,28 @@ namespace SanteDB.Core.Http
             using (XmlReader bodyReader = XmlReader.Create(s))
             {
                 while (bodyReader.NodeType != XmlNodeType.Element)
+                {
                     bodyReader.Read();
+                }
 
                 // Service fault?
                 // Find candidate type
                 if (this.m_serializer?.CanDeserialize(bodyReader) == true)
+                {
                     serializer = this.m_serializer;
+                }
                 else if (bodyReader.LocalName == "RestServiceFault" &&
                    bodyReader.NamespaceURI == "http://santedb.org/fault")
+                {
                     serializer = m_faultSerializer;
+                }
                 else
                 {
                     serializer = XmlModelSerializerFactory.Current.GetSerializer(bodyReader);
                     if (serializer == null)
+                    {
                         throw new KeyNotFoundException($"Could not determine how to de-serialize {bodyReader.NamespaceURI}#{bodyReader.Name}");
+                    }
                 }
                 return serializer.Deserialize(bodyReader);
             }

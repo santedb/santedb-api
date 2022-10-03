@@ -22,7 +22,6 @@ using SanteDB.Core.Http.Description;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 
 namespace SanteDB.Core.Http
 {

@@ -18,15 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -48,7 +44,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// <summary>
         /// Creates a new diagnostics trace writer
         /// </summary>
-        public DebugDiagnosticsTraceWriter() : base (EventLevel.LogAlways, null, new Dictionary<String, EventLevel>())
+        public DebugDiagnosticsTraceWriter() : base(EventLevel.LogAlways, null, new Dictionary<String, EventLevel>())
         {
         }
 

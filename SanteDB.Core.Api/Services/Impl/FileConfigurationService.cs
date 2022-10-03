@@ -18,16 +18,12 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Configuration;
+using SanteDB.Core.Configuration.Data;
 using System;
-using System.Collections.Specialized;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Xml;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Configuration.Data;
-using SanteDB.Core.Services;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -68,13 +64,18 @@ namespace SanteDB.Core.Services.Impl
             try
             {
                 if (string.IsNullOrEmpty(configFile))
+                {
                     configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "santedb.config.xml");
+                }
                 else if (!Path.IsPathRooted(configFile))
+                {
                     configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), configFile);
+                }
 
                 using (var s = File.OpenRead(configFile))
+                {
                     Configuration = SanteDBConfiguration.Load(s);
-
+                }
             }
             catch (Exception e)
             {

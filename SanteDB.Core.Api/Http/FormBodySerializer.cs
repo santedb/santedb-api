@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.Query;
 using System;
 using System.IO;
 using System.Reflection;
@@ -80,15 +79,22 @@ namespace SanteDB.Core.Http
                     // Use XML Attribute
                     FormElementAttribute fatt = pi.GetCustomAttribute<FormElementAttribute>();
                     if (fatt == null)
+                    {
                         continue;
+                    }
 
                     // Write
                     String value = pi.GetValue(o)?.ToString();
                     if (String.IsNullOrEmpty(value))
+                    {
                         continue;
+                    }
 
                     if (!first)
+                    {
                         sw.Write("&");
+                    }
+
                     sw.Write("{0}={1}", fatt.Name, value);
                     first = false;
                 }

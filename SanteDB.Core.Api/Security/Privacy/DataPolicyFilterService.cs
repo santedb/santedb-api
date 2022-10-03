@@ -109,6 +109,7 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             if (this.m_configuration.Resources != null)
+            {
                 foreach (var t in this.m_configuration.Resources)
                 {
                     if (typeof(Act).IsAssignableFrom(t.ResourceType.Type) || typeof(Entity).IsAssignableFrom(t.ResourceType.Type) || typeof(IdentityDomain).IsAssignableFrom(t.ResourceType.Type))
@@ -117,6 +118,7 @@ namespace SanteDB.Core.Security.Privacy
                         this.m_actions.TryAdd(t.ResourceType.Type, t);
                     }
                 }
+            }
         }
 
         /// <summary>
@@ -138,9 +140,13 @@ namespace SanteDB.Core.Security.Privacy
         {
             String key = null;
             if (principal is IClaimsPrincipal cp && cp.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBSessionIdClaim))
+            {
                 key = this.m_hasher.ComputeHash($"$aa.filter.{cp.FindFirst(SanteDBClaimTypes.SanteDBSessionIdClaim).Value}");
+            }
             else
+            {
                 key = this.m_hasher.ComputeHash($"$aa.filter.{principal.Identity.Name}");
+            }
 
             var domainsToFilter = this.m_adhocCache?.Get<IdentityDomain[]>(key);
             if (domainsToFilter == null)
@@ -161,7 +167,10 @@ namespace SanteDB.Core.Security.Privacy
         private void ApplyIdentifierFilter(IdentifiedData result, IPrincipal accessor)
         {
             if (!this.m_actions.TryGetValue(typeof(IdentityDomain), out var policy) && !this.m_actions.TryGetValue(result.GetType(), out policy))
+            {
                 policy = new ResourceDataPolicyFilter() { Action = this.m_configuration.DefaultAction };
+            }
+
             var domainsToFilter = this.GetFilterDomains(accessor);
 
             switch (policy.Action)
@@ -187,19 +196,24 @@ namespace SanteDB.Core.Security.Privacy
                     {
                         var r = 0;
                         if (result is Act act)
+                        {
                             foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 act.Identifiers.Remove(id);
                                 r++;
                             }
+                        }
                         else if (result is Entity entity)
+                        {
                             foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 entity.Identifiers.Remove(id);
                                 r++;
                             }
+                        }
+
                         if (r > 0)
                         {
                             ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
@@ -216,19 +230,24 @@ namespace SanteDB.Core.Security.Privacy
                     {
                         var r = 0;
                         if (result is Act act)
+                        {
                             foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
                                 act.Identifiers.Remove(id);
                                 r++;
                             }
+                        }
                         else if (result is Entity entity)
+                        {
                             foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
                                 entity.Identifiers.Remove(id);
                                 r++;
                             }
+                        }
+
                         if (r > 0)
                         {
                             ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
@@ -255,12 +274,16 @@ namespace SanteDB.Core.Security.Privacy
         /// <param name="query">The query expression</param>
         /// <param name="accessor">The user which is running the query</param>
         /// <returns>True if the user can execute the query, false if not</returns>
-        public bool ValidateQuery<TModel>(Expression<Func<TModel, bool>> query, IPrincipal accessor) where TModel: IdentifiedData
+        public bool ValidateQuery<TModel>(Expression<Func<TModel, bool>> query, IPrincipal accessor) where TModel : IdentifiedData
         {
             if (accessor == AuthenticationContext.SystemPrincipal)
+            {
                 return true;
+            }
             else
+            {
                 return this.ValidateExpression(query, accessor, null);
+            }
         }
 
         /// <summary>
@@ -272,7 +295,7 @@ namespace SanteDB.Core.Security.Privacy
         /// <returns>True if <paramref name="accessor"/> can run the query part</returns>
         private bool ValidateExpression(Expression expression, IPrincipal accessor, ResourceDataPolicyFilter policy)
         {
-            if(expression== null)
+            if (expression == null)
             {
                 return true;
             }
@@ -281,25 +304,33 @@ namespace SanteDB.Core.Security.Privacy
             {
                 case LambdaExpression le:
                     if (this.m_actions.TryGetValue(le.Parameters[0].Type, out var subPolicy))
+                    {
                         return this.ValidateExpression(le.Body, accessor, subPolicy);
+                    }
                     else
+                    {
                         return true;
+                    }
+
                 case BinaryExpression be:
-                    return this.ValidateExpression(be.Left, accessor, policy) && 
+                    return this.ValidateExpression(be.Left, accessor, policy) &&
                         this.ValidateExpression(be.Right, accessor, policy);
                 case UnaryExpression ue:
                     return this.ValidateExpression(ue.Operand, accessor, policy);
                 case MemberExpression me:
-                    
-                    switch(me.Member)
+
+                    switch (me.Member)
                     {
                         case System.Reflection.PropertyInfo pi:
                             var serializationName = pi.GetSerializationName();
                             var fieldPolicy = policy.Fields?.FirstOrDefault(o => o.Property == serializationName);
 
                             if (fieldPolicy == null || fieldPolicy.Action == ResourceDataPolicyActionType.None)
+                            {
                                 return true;
-                            else {
+                            }
+                            else
+                            {
                                 return fieldPolicy.Policy.Any() ? fieldPolicy.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) == PolicyGrantType.Grant) :
                                     fieldPolicy?.Action == ResourceDataPolicyActionType.None;
                             }
@@ -325,17 +356,24 @@ namespace SanteDB.Core.Security.Privacy
         {
             // Is the record a bundle?
             if (record is Bundle bdl)
+            {
                 return !bdl.Item.Any(o => !this.ValidateWrite(o, accessor)); // We do ! since we want the first FALSE to stop searching the bundle
+            }
 
             // Is this SYSTEM?
             if (!this.m_actions.TryGetValue(record.GetType(), out var policy) || accessor == AuthenticationContext.SystemPrincipal)
+            {
                 return true;
+            }
 
             // Validate fields can be stored
             foreach (var itm in policy.Fields)
             {
                 var value = record.GetType().GetQueryProperty(itm.Property)?.GetValue(record);
-                if (value == null) continue;
+                if (value == null)
+                {
+                    continue;
+                }
                 else
                 {
                     return itm.Policy.Any() ? itm.Policy.All(p => this.m_pdpService.GetPolicyOutcome(accessor, p) != PolicyGrantType.Grant) :
@@ -350,16 +388,24 @@ namespace SanteDB.Core.Security.Privacy
 
             var decision = this.m_pdpService.GetPolicyDecision(accessor, record);
             if (decision.Outcome != PolicyGrantType.Grant)
+            {
                 return false;
+            }
             else
             {
                 var domainsToFilter = this.GetFilterDomains(accessor);
                 if (record is Entity entity)
+                {
                     return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
+                }
                 else if (record is Act act)
+                {
                     return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
+                }
                 else
+                {
                     return true;
+                }
             }
         }
 
@@ -370,7 +416,9 @@ namespace SanteDB.Core.Security.Privacy
         {
             // Is the record a bundle?
             if (result == default(TData))
+            {
                 return default(TData);
+            }
             else if (result is Bundle bdl)
             {
                 bdl.Item = this.Apply(new MemoryQueryResultSet<IdentifiedData>(bdl.Item), principal).ToList(); // We do ! since we want the first FALSE to stop searching the bundle
@@ -378,7 +426,9 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             if (!this.m_actions.TryGetValue(result.GetType(), out var policy) || principal == AuthenticationContext.SystemPrincipal)
+            {
                 return result;
+            }
 
             var decision = this.m_pdpService.GetPolicyDecision(principal, result);
 
@@ -415,7 +465,10 @@ namespace SanteDB.Core.Security.Privacy
                                 }
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
+                                {
                                     tag.AddTag("$pep.masked", "true");
+                                }
+
                                 return result;
                             }
                         case ResourceDataPolicyActionType.Nullify:
@@ -430,7 +483,10 @@ namespace SanteDB.Core.Security.Privacy
                                 nResult.Key = result.Key;
                                 (nResult as IHasState).StatusConceptKey = StatusKeys.Nullified;
                                 if (nResult is ITaggable tag)
+                                {
                                     tag.AddTag("$pep.masked", "true");
+                                }
+
                                 return (TData)nResult;
                             }
                         case ResourceDataPolicyActionType.Error:
@@ -448,7 +504,10 @@ namespace SanteDB.Core.Security.Privacy
                     }
                 case PolicyGrantType.Grant:
                     if (result is ISecurable sec && sec.Policies.Any())
+                    { 
                         ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, true).Send();
+                    }
+
                     return result;
 
                 default:
@@ -469,7 +528,10 @@ namespace SanteDB.Core.Security.Privacy
             {
                 var property = result.GetType().GetQueryProperty(itm.Property);
                 var value = property?.GetValue(result);
-                if (value == null) continue;
+                if (value == null)
+                {
+                    continue;
+                }
 
                 var hasPolicy = itm.Policy?.Select(p => this.m_pdpService.GetPolicyDecision(principal, p)).OrderBy(o => o.Outcome).FirstOrDefault();
                 if (hasPolicy == null || hasPolicy.Outcome != PolicyGrantType.Grant)
@@ -490,18 +552,29 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 property.SetValue(result, null);
                                 if (result is ITaggable tag)
+                                {
                                     tag.AddTag("$pep.masked", "true");
+                                }
+
                                 break;
                             }
                         case ResourceDataPolicyActionType.Redact:
                         case ResourceDataPolicyActionType.Redact | ResourceDataPolicyActionType.Audit:
                             {
                                 if (typeof(String).IsAssignableFrom(property.PropertyType))
+                                {
                                     property.SetValue(result, "XXXXX");
+                                }
                                 else
+                                {
                                     property.SetValue(result, Activator.CreateInstance(property.PropertyType));
+                                }
+
                                 if (result is ITaggable tag)
+                                {
                                     tag.AddTag("$pep.masked", "true");
+                                }
+
                                 break;
                             }
                         default:

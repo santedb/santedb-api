@@ -24,7 +24,6 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -52,7 +51,10 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IRepositoryService<TObject>>();
             if (persistenceService != null && key.HasValue)
+            {
                 return persistenceService.Get(key.Value);
+            }
+
             return default(TObject);
         }
 
@@ -64,9 +66,15 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IRepositoryService<TObject>>();
             if (persistenceService != null && key.HasValue && versionKey.HasValue)
+            {
                 return persistenceService.Get(key.Value, versionKey.Value);
+            }
+
             if (persistenceService != null && key.HasValue)
+            {
                 return persistenceService.Get(key.Value);
+            }
+
             return default(TObject);
         }
 

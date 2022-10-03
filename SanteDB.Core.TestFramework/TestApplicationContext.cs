@@ -18,23 +18,15 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model.EntityLoader;
-using SanteDB.Core.Services;
-using SanteDB.Core.Services.Impl;
 using SanteDB.Core.Diagnostics.Tracing;
+using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Services.Impl;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.TestFramework
 {
@@ -92,7 +84,10 @@ namespace SanteDB.Core.TestFramework
         /// <param name="deploymentDirectory"></param>
         public static void Initialize(String deploymentDirectory)
         {
-            if (ApplicationServiceContext.Current != null) return;
+            if (ApplicationServiceContext.Current != null)
+            {
+                return;
+            }
 
             AppDomain.CurrentDomain.SetData(
                "DataDirectory",
@@ -113,6 +108,6 @@ namespace SanteDB.Core.TestFramework
             }
             base.Start();
         }
-           
+
     }
 }

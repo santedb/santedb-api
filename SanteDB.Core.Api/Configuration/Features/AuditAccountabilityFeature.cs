@@ -18,10 +18,10 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using System;
-using System.Collections.Generic;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Services;
+using System;
+using System.Collections.Generic;
 
 #pragma warning disable  CS1587
 /// <summary>

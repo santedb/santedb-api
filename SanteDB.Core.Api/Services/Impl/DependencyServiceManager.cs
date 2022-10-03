@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;
@@ -130,8 +128,11 @@ namespace SanteDB.Core.Services.Impl
             {
                 // Is there already an object activator?
                 lock (this.m_lockBox)
+                {
                     if (this.m_singletonInstance != null)
+                    {
                         return this.m_singletonInstance;
+                    }
                     else if (this.InstantiationType == ServiceInstantiationType.Singleton)
                     {
                         this.m_singletonInstance = this.m_serviceManager.CreateInjected(this.ServiceImplementer);
@@ -141,6 +142,7 @@ namespace SanteDB.Core.Services.Impl
                     {
                         return this.m_serviceManager.CreateInjected(this.ServiceImplementer);
                     }
+                }
             }
 
             /// <summary>
@@ -149,7 +151,9 @@ namespace SanteDB.Core.Services.Impl
             public void Dispose()
             {
                 if (this.m_singletonInstance is IDisposable disposable)
+                {
                     disposable.Dispose();
+                }
             }
 
             /// <summary>
@@ -236,7 +240,9 @@ namespace SanteDB.Core.Services.Impl
             lock (this.m_lock)
             {
                 if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
+                {
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
+                }
                 else
                 {
                     this.ValidateServiceSignature(serviceType);
@@ -266,7 +272,10 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.m_serviceRegistrations.Add(serviceInfo);
                 if (typeof(IServiceFactory).IsAssignableFrom(serviceInfo.ServiceImplementer))
+                {
                     this.AddServiceFactory(serviceInfo.GetInstance() as IServiceFactory);
+                }
+
                 this.AddCacheServices(serviceInfo);
             }
         }
@@ -286,7 +295,10 @@ namespace SanteDB.Core.Services.Impl
                 else
                 {
                     if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
+                    {
                         this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
+                    }
+
                     this.ValidateServiceSignature(serviceInstance.GetType());
                     var serviceInfo = new ServiceInstanceInformation(serviceInstance, this);
                     this.m_serviceRegistrations.Add(serviceInfo);
@@ -347,9 +359,9 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_notConfiguredServices.Add(serviceType);
                             }
                         }
-                      
+
                     }
-                    
+
                 }
             }
             return candidateService?.GetInstance();
@@ -372,7 +384,9 @@ namespace SanteDB.Core.Services.Impl
         public IEnumerable<object> GetServices()
         {
             lock (this.m_lock)
+            {
                 return this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).Select(o => o.GetInstance());
+            }
         }
 
         /// <summary>
@@ -399,10 +413,17 @@ namespace SanteDB.Core.Services.Impl
 
                 // Remove
                 lock (this.m_lock)
+                {
                     this.m_serviceRegistrations.Remove(sp);
+                }
+
                 foreach (var i in sp.ImplementedServices)
+                {
                     if (this.m_cachedServices.TryGetValue(i, out ServiceInstanceInformation v) && v.ServiceImplementer == sp.ServiceImplementer)
+                    {
                         this.m_cachedServices.TryRemove(i, out ServiceInstanceInformation _);
+                    }
+                }
             }
         }
 
@@ -411,15 +432,23 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            if (this.m_isDisposed == true) return;
+            if (this.m_isDisposed == true)
+            {
+                return;
+            }
+
             this.m_isDisposed = true;
             if (this.m_serviceRegistrations != null)
+            {
                 foreach (var sp in this.m_serviceRegistrations.ToArray())
+                {
                     if (sp.ServiceImplementer != typeof(DependencyServiceManager))
                     {
                         this.m_tracer.TraceVerbose("Disposing {0}...", sp.ServiceImplementer);
                         sp.Dispose();
                     }
+                }
+            }
         }
 
         /// <summary>
@@ -434,17 +463,26 @@ namespace SanteDB.Core.Services.Impl
                 try
                 {
                     if (this.GetService<IConfigurationManager>() == null)
+                    {
                         throw new InvalidOperationException("Cannot find configuration manager!");
+                    }
+
                     if (this.m_configuration == null)
+                    {
                         this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+                    }
 
                     // Add configured services
                     foreach (var svc in this.m_configuration.ServiceProviders)
                     {
                         if (svc.Type == null)
+                        {
                             this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
+                        }
                         else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
+                        {
                             this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
+                        }
                         else
                         {
                             this.AddServiceProvider(svc.Type);
@@ -466,14 +504,22 @@ namespace SanteDB.Core.Services.Impl
                         this.m_tracer.TraceInfo("Starting Daemon services");
                         foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
                         {
-                            if (dc == null) continue;
+                            if (dc == null)
+                            {
+                                continue;
+                            }
+
                             this.m_tracer.TraceInfo("Starting {0}...", dc.ServiceName);
                             if (dc != this && !dc.Start())
+                            {
                                 throw new Exception($"Service {dc} reported unsuccessful start");
+                            }
                         }
 
                         if (this.Started != null)
+                        {
                             this.Started(this, null);
+                        }
                     }
                 }
                 finally
@@ -557,7 +603,10 @@ namespace SanteDB.Core.Services.Impl
 
             this.Stopping?.Invoke(this, null);
 
-            if (!this.IsRunning) return true;
+            if (!this.IsRunning)
+            {
+                return true;
+            }
 
             this.IsRunning = false;
 
@@ -606,13 +655,17 @@ namespace SanteDB.Core.Services.Impl
                     // Is it a parameterless constructor?
                     var constructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 0);
                     if (constructor != null)
+                    {
                         activator = Expression.Lambda<Func<Object>>(Expression.New(constructor)).Compile();
+                    }
                     else
                     {
                         // Get a constructor that we can fulfill
                         constructor = constructors.SingleOrDefault();
                         if (constructor == null)
+                        {
                             throw new MissingMemberException($"Cannot find default constructor on {type}");
+                        }
 
                         var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue, Default = p.DefaultValue }).ToArray();
                         var parameterValues = new Expression[parameterTypes.Length];

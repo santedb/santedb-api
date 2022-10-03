@@ -24,7 +24,6 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Security.Principal;
 

@@ -22,7 +22,6 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Protocol;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Exceptions
 {

@@ -69,7 +69,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     this.m_tracer.TraceError("Unhandled ThreadPool Worker Error:  {0}", e);
                 }
-               
+
             }, parm);
         }
 
@@ -81,7 +81,7 @@ namespace SanteDB.Core.Services.Impl
             ThreadPool.GetMaxThreads(out totalWorkers, out _);
             ThreadPool.GetAvailableThreads(out availableWorkers, out _);
             //availableWorkers = totalWorkers - availableWorkers; // totalWorkers - this.m_activeWorkers;
-            waitingInQueue = this.m_dispatchedWorkers ;
+            waitingInQueue = this.m_dispatchedWorkers;
         }
     }
 }

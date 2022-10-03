@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using System;
 
@@ -49,12 +48,13 @@ namespace SanteDB.Core
         /// </summary>
         public static IApplicationServiceContext Current
         {
-            get {
+            get
+            {
                 return m_current;
             }
             internal set
             {
-                if(m_current != null)
+                if (m_current != null)
                 {
                     throw new InvalidOperationException(String.Format(ErrorMessages.MULTIPLE_CALLS_NOT_ALLOWED, "Initialize"));
                 }

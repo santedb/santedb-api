@@ -23,7 +23,6 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -100,9 +99,13 @@ namespace SanteDB.Core.Security
             if (!DateTime.TryParse(me.Value, out var value))
             {
                 if (Int32.TryParse(me.Value, out int offset))
+                {
                     value = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(offset).ToLocalTime();
+                }
                 else
+                {
                     throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
+                }
             }
             return value;
         }

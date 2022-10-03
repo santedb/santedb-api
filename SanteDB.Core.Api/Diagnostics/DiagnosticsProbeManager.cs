@@ -18,10 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
-using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,9 +67,16 @@ namespace SanteDB.Core.Diagnostics
             get
             {
                 if (m_current == null)
+                {
                     lock (m_lockObject)
+                    {
                         if (m_current == null)
+                        {
                             m_current = new DiagnosticsProbeManager();
+                        }
+                    }
+                }
+
                 return m_current;
             }
         }
@@ -101,9 +105,9 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public void Add(IDiagnosticsProbe probe)
         {
-            lock(m_lockObject)
+            lock (m_lockObject)
             {
-                if(!this.m_probes.Any(p=>p.Uuid == probe.Uuid))
+                if (!this.m_probes.Any(p => p.Uuid == probe.Uuid))
                 {
                     this.m_probes.Add(probe);
                 }

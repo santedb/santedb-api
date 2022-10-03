@@ -88,12 +88,15 @@ namespace SanteDB.Core.Diagnostics
                 }
 
                 if (this.m_filter == EventLevel.LogAlways)
+                {
                     this.WriteTrace(level, source, format, args);
+                }
                 else if (this.m_filter >= level &&
                     (sourceConfig >= level ||
                     sourceConfig == EventLevel.LogAlways))
+                {
                     this.WriteTrace(level, source, format, args);
-
+                }
             }
             catch { }
         }

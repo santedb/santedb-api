@@ -19,7 +19,6 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
@@ -40,7 +39,10 @@ namespace SanteDB.Core.Services
         {
             var ibre = instance.FindInterfaces((t, p) => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(IBusinessRulesService<>), null).FirstOrDefault();
             if (ibre == null)
+            {
                 throw new InvalidOperationException($"{nameof(instance)} must implement IBusinessRulesService<T>");
+            }
+
             var meth = typeof(BusinessRulesExtensions).GetGenericMethod(nameof(AddBusinessRule), ibre.GenericTypeArguments, new Type[] { typeof(IServiceProvider), typeof(Type) });
             return meth.Invoke(null, new object[] { me, instance });
         }
@@ -73,14 +75,20 @@ namespace SanteDB.Core.Services
             {
                 while (cbre.Next != null)
                 {
-                    if (cbre.GetType() == breType) return breType; // duplicate
+                    if (cbre.GetType() == breType)
+                    {
+                        return breType; // duplicate
+                    }
+
                     cbre = cbre.Next;
                 }
                 cbre.Next = serviceManager.CreateInjected(breType) as IBusinessRulesService<TModel>;
                 return cbre.Next;
             }
             else
+            {
                 return cbre;
+            }
         }
     }
 

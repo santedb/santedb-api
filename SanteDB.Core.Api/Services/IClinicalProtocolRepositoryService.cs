@@ -21,8 +21,6 @@
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Protocol;
 using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {

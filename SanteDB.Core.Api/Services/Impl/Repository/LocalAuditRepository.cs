@@ -18,17 +18,14 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Audit;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {

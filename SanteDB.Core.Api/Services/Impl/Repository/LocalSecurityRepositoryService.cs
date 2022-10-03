@@ -18,24 +18,16 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
@@ -263,7 +255,10 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AlterRoles);
 
             if (!user.Key.HasValue)
+            {
                 user = this.GetUser(user.UserName);
+            }
+
             this.m_roleProvider.RemoveUsersFromRoles(new String[] { user.UserName }, this.m_roleProvider.GetAllRoles().Where(o => !roles.Contains(o)).ToArray(), AuthenticationContext.Current.Principal);
             this.m_roleProvider.AddUsersToRoles(new string[] { user.UserName }, roles, AuthenticationContext.Current.Principal);
         }
@@ -435,7 +430,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <returns>The SID of <paramref name="identity"/></returns>
         public Guid GetSid(IIdentity identity)
         {
-            switch(identity)
+            switch (identity)
             {
                 case IDeviceIdentity did:
                     return this.m_deviceIdentityProvider.GetSid(identity.Name);

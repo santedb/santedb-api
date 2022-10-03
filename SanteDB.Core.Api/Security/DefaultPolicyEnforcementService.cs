@@ -24,9 +24,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using System;
-using System.Collections.Generic;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {
@@ -64,7 +62,9 @@ namespace SanteDB.Core.Security
             // Non system principals must be authenticated
             if (!principal.Identity.IsAuthenticated &&
                 principal != AuthenticationContext.SystemPrincipal)
+            {
                 return PolicyGrantType.Deny;
+            }
             else
             {
                 action = this.m_pdpService.GetPolicyOutcome(principal, policyId);

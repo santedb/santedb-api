@@ -18,33 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Event;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Security;
-using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Principal;
-using SanteDB.Core.Security.Privacy;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Privacy
@@ -83,12 +61,18 @@ namespace SanteDB.Core.Security.Privacy
 
                 case PolicyEnforcementExemptionPolicy.DevicePrincipalsExempt:
                     if (principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity)
+                    {
                         return results;
+                    }
+
                     break;
 
                 case PolicyEnforcementExemptionPolicy.UserPrincipalsExempt:
                     if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
+                    {
                         return results;
+                    }
+
                     break;
             }
             return base.Apply(results, principal);
@@ -101,7 +85,9 @@ namespace SanteDB.Core.Security.Privacy
         public override TData Apply<TData>(TData result, IPrincipal principal)
         {
             if (result == null) // no result
+            {
                 return null;
+            }
 
             // If the current authentication context is a device (not a user) then we should allow the data to flow to the device
             switch (this.m_configuration.PepExemptionPolicy)
@@ -111,12 +97,18 @@ namespace SanteDB.Core.Security.Privacy
 
                 case PolicyEnforcementExemptionPolicy.DevicePrincipalsExempt:
                     if (principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity)
+                    {
                         return result;
+                    }
+
                     break;
 
                 case PolicyEnforcementExemptionPolicy.UserPrincipalsExempt:
                     if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
+                    {
                         return result;
+                    }
+
                     break;
             }
             return base.Apply(result, principal);

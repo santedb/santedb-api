@@ -2,8 +2,6 @@
 using SanteDB.Core.Http;
 using SanteDB.Core.Http.Description;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration.Http
@@ -16,7 +14,7 @@ namespace SanteDB.Core.Configuration.Http
     public class RestClientBindingConfiguration : IRestClientBindingDescription
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ServiceClientBinding"/> class.
+        /// Initializes a new instance of the <see cref="RestClientBindingConfiguration"/> class.
         /// </summary>
         public RestClientBindingConfiguration()
         {
@@ -46,7 +44,7 @@ namespace SanteDB.Core.Configuration.Http
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this <see cref="SanteDB.DisconnectedClient.Configuration.ServiceClientBinding"/>
+        /// Gets or sets a value indicating whether this <see cref="RestClientBindingConfiguration"/>
         /// is optimized
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>

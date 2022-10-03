@@ -144,7 +144,7 @@ namespace SanteDB.Core.Mail
         /// </summary>
         [JsonProperty("to"), XmlElement("to")]
         public String To { get; set; }
-        
+
         /// <summary>
         /// Mailboxes which this mail message appears in
         /// </summary>

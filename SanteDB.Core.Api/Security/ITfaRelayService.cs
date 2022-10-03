@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -76,6 +75,6 @@ namespace SanteDB.Core.Security.Services
         /// Gets the tfa mechanisms supported by this relay service
         /// </summary>
         IEnumerable<ITfaMechanism> Mechanisms { get; }
-        
+
     }
 }

@@ -51,7 +51,10 @@ namespace SanteDB.Core.Diagnostics
         public static void DisposeWriters()
         {
             foreach (var itm in m_writers)
+            {
                 (itm.Key as IDisposable)?.Dispose();
+            }
+
             return;
         }
 

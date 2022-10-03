@@ -18,24 +18,20 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
-using SanteDB.Core.Services;
+using SanteDB.Core.Security.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using SanteDB.Core.Security.Services;
-using SanteDB.Core.i18n;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -178,7 +174,9 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             // Call privacy hook
             if (this.m_privacyService?.ValidateWrite(data, AuthenticationContext.Current.Principal) == false)
+            {
                 this.ThrowPrivacyValidationException(data);
+            }
 
             // Fire pre-persistence triggers
             var prePersistence = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
@@ -240,10 +238,12 @@ namespace SanteDB.Core.Services.Impl.Repository
             var entity = persistenceService.Get(key, null, AuthenticationContext.Current.Principal);
 
             if (entity == null)
+            {
                 throw new KeyNotFoundException(this.m_localizationService.GetString("error.type.KeyNotFoundException.notFound", new
                 {
                     param = $"Entity {key}"
                 }));
+            }
 
             // Fire pre-persistence triggers
             var prePersistence = new DataPersistingEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal);
@@ -339,7 +339,9 @@ namespace SanteDB.Core.Services.Impl.Repository
             try
             {
                 if (this.m_privacyService?.ValidateWrite(data, AuthenticationContext.Current.Principal) == false)
+                {
                     this.ThrowPrivacyValidationException(data);
+                }
 
                 var preSave = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 this.Saving?.Invoke(this, preSave);
@@ -354,9 +356,11 @@ namespace SanteDB.Core.Services.Impl.Repository
                     return this.m_privacyService?.Apply(preSave.Data, AuthenticationContext.Current.Principal) ?? preSave.Data;
                 }
                 else
+                {
                     data = preSave.Data; // Data may have been updated
+                }
 
-                if (data.Key.HasValue && persistenceService.Query(a=>a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
+                if (data.Key.HasValue && persistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
@@ -403,7 +407,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                     var vrsi = ApplicationServiceContext.Current.GetService(vrst);
 
                     if (vrsi != null)
+                    {
                         bundle.Item[i] = vrsi.GetType().GetMethod(nameof(Validate)).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
+                    }
                 }
             }
             return p;

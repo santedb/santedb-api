@@ -38,7 +38,7 @@ namespace SanteDB.Core.Services
     [System.ComponentModel.Description("Care Plan Generation Service")]
     public interface ICarePlanService : IServiceImplementation
     {
-        
+
         /// <summary>
         /// Create a new care plan (using all available protocols for which the patient is eligible)
         /// </summary>

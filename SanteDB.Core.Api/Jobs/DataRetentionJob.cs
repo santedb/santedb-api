@@ -116,7 +116,9 @@ namespace SanteDB.Core.Jobs
                     var pserviceType = typeof(IDataPersistenceService<>).MakeGenericType(rule.ResourceType.Type);
                     var persistenceService = ApplicationServiceContext.Current.GetService(pserviceType) as IBulkDataPersistenceService;
                     if (persistenceService == null)
+                    {
                         throw new InvalidOperationException("Cannot locate appropriate persistence service");
+                    }
 
                     // Included keys for retention
                     IEnumerable<Guid> keys = new Guid[0];
@@ -146,8 +148,8 @@ namespace SanteDB.Core.Jobs
                     }
 
 
-                    
-                    EventHandler<Services.ProgressChangedEventArgs> callback = (o,ev ) => this.m_stateManager.SetProgress(this, $"Executing {rule.Action} {rule.ResourceType.TypeXml} ({rule.Name})", ev.Progress);
+
+                    EventHandler<Services.ProgressChangedEventArgs> callback = (o, ev) => this.m_stateManager.SetProgress(this, $"Executing {rule.Action} {rule.ResourceType.TypeXml} ({rule.Name})", ev.Progress);
 
                     if (persistenceService is IReportProgressChanged irpc)
                     {
@@ -171,7 +173,9 @@ namespace SanteDB.Core.Jobs
 
                             var archiveService = ApplicationServiceContext.Current.GetService<IDataArchiveService>();
                             if (archiveService == null)
+                            {
                                 throw new InvalidOperationException("Could not find archival service");
+                            }
                             // Test PURGE
                             if (rule.Action.HasFlag(DataRetentionActionType.Purge))
                             {

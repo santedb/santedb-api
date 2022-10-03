@@ -18,11 +18,9 @@
  * User: fyfej
  * Date: 2022-9-7
  */
-using SanteDB.Core;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -71,7 +69,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             // force set the version sequence
             if (data.EffectiveVersionSequenceId == null)
+            {
                 data.EffectiveVersionSequenceId = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Get(data.SourceEntityKey.Value, Guid.Empty)?.VersionSequence;
+            }
 
             return base.Insert(data);
         }
@@ -86,7 +86,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             // force set the version sequence
             if (data.EffectiveVersionSequenceId == null)
+            {
                 data.EffectiveVersionSequenceId = ApplicationServiceContext.Current.GetService<IRepositoryService<Entity>>().Get(data.SourceEntityKey.Value, Guid.Empty)?.VersionSequence;
+            }
 
             return base.Save(data);
         }

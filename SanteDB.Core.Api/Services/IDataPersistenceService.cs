@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
@@ -32,8 +31,10 @@ using System.Security.Principal;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Data persistence modes
+    /// Data persistence transaction control modes
     /// </summary>
+    /// <remarks>This enumeration is used on method which add, update or delete data in the database to control 
+    /// the transactional finalization of the request</remarks>
     public enum TransactionMode
     {
         /// <summary>
@@ -42,12 +43,12 @@ namespace SanteDB.Core.Services
         None,
 
         /// <summary>
-        /// Debug mode, this means nothing is actually committed to the database
+        /// The operation is a test only - rollback any changes
         /// </summary>
         Rollback,
 
         /// <summary>
-        /// Production, everything is for reals
+        /// The operation should be committed to the datastore
         /// </summary>
         Commit
     }
