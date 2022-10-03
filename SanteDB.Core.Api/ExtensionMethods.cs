@@ -24,6 +24,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
@@ -164,6 +165,13 @@ namespace SanteDB.Core
         }
 
         /// <summary>
+        /// Get the audit service.
+        /// </summary>
+        /// <param name="me">The application context.</param>
+        /// <returns>Returns an instance of the <see cref="IAuditService"/>.</returns>
+        public static IAuditService GetAuditService(this IApplicationServiceContext me) => me.GetService<IAuditService>();
+
+        /// <summary>
         /// Gets the user identifier for a given identity.
         /// </summary>
         /// <returns>Returns a string which represents the users identifier, or null if unable to retrieve the users identifier.</returns>
@@ -210,6 +218,20 @@ namespace SanteDB.Core
                 },
                 (PolicyGrantType)(int)me.Rule
             );
+        }
+
+        /// <summary>
+        /// Tries to dequeue a message from the dispatcher queue. Returns <c>true</c> if successful, <c>false</c> otherwise.
+        /// </summary>
+        /// <param name="svc">The service implementation to dequeue from.</param>
+        /// <param name="queueName">The name of the queue to dequeue from.</param>
+        /// <param name="queueEntry">Out; the entry that was dequeued.</param>
+        /// <returns>True if the operation succeeded, false otherwise.</returns>
+        public static bool TryDequeue(this IDispatcherQueueManagerService svc, string queueName, out DispatcherQueueEntry queueEntry)
+        {
+            var entry = svc.Dequeue(queueName);
+            queueEntry = entry;
+            return null != entry;
         }
     }
 }
