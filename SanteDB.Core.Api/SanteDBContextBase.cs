@@ -138,7 +138,7 @@ namespace SanteDB.Core
                         this.Started?.Invoke(this, EventArgs.Empty);
                         this.StartTime = DateTime.Now;
 
-                        AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStart);
+                        this.GetAuditService().Audit().ForApplicationStart().Send();
 
                         Trace.TraceInformation("SanteDB startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
                     }
@@ -170,7 +170,7 @@ namespace SanteDB.Core
 
             if (this.IsRunning)
             {
-                AuditUtil.AuditApplicationStartStop(EventTypeCodes.ApplicationStop);
+                this.GetAuditService().Audit().ForApplicationStop().Send();
             }
 
             this.IsRunning = false;

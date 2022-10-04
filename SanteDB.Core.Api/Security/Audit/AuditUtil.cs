@@ -47,102 +47,6 @@ using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Audit
 {
-    /// <summary>
-    /// Event type codes
-    /// </summary>
-#pragma warning disable CS1591
-
-    public enum EventTypeCodes
-    {
-        [XmlEnum("SecurityAuditCode-ApplicationActivity")]
-        ApplicationActivity,
-
-        [XmlEnum("SecurityAuditCode-AuditLogUsed")]
-        AuditLogUsed,
-
-        [XmlEnum("SecurityAuditCode-Export")]
-        Export,
-
-        [XmlEnum("SecurityAuditCode-Import")]
-        Import,
-
-        [XmlEnum("SecurityAuditCode-NetworkActivity")]
-        NetworkActivity,
-
-        [XmlEnum("SecurityAuditCode-OrderRecord")]
-        OrderRecord,
-
-        [XmlEnum("SecurityAuditCode-PatientRecord")]
-        PatientRecord,
-
-        [XmlEnum("SecurityAuditCode-ProcedureRecord")]
-        ProcedureRecord,
-
-        [XmlEnum("SecurityAuditCode-Query")]
-        Query,
-
-        [XmlEnum("SecurityAuditCode-SecurityAlert")]
-        SecurityAlert,
-
-        [XmlEnum("SecurityAuditCode-UserAuthentication")]
-        UserAuthentication,
-
-        [XmlEnum("SecurityAuditCode-ApplicationStart")]
-        ApplicationStart,
-
-        [XmlEnum("SecurityAuditCode-ApplicationStop")]
-        ApplicationStop,
-
-        [XmlEnum("SecurityAuditCode-Login")]
-        Login,
-
-        [XmlEnum("SecurityAuditCode-Logout")]
-        Logout,
-
-        [XmlEnum("SecurityAuditCode-Attach")]
-        Attach,
-
-        [XmlEnum("SecurityAuditCode-Detach")]
-        Detach,
-
-        [XmlEnum("SecurityAuditCode-NodeAuthentication")]
-        NodeAuthentication,
-
-        [XmlEnum("SecurityAuditCode-EmergencyOverrideStarted")]
-        EmergencyOverrideStarted,
-
-        [XmlEnum("SecurityAuditCode-Useofarestrictedfunction")]
-        UseOfARestrictedFunction,
-
-        [XmlEnum("SecurityAuditCode-Securityattributeschanged")]
-        SecurityAttributesChanged,
-
-        [XmlEnum("SecurityAuditCode-Securityroleschanged")]
-        SecurityRolesChanged,
-
-        [XmlEnum("SecurityAuditCode-SecurityObjectChanged")]
-        SecurityObjectChanged,
-
-        [XmlEnum("SecurityAuditCode-AuditLoggingStarted")]
-        AuditLoggingStarted,
-
-        [XmlEnum("SecurityAuditCode-AuditLoggingStopped")]
-        AuditLoggingStopped,
-
-        [XmlEnum("SecurityAuditCode-SessionStarted")]
-        SessionStarted,
-
-        [XmlEnum("SecurityAuditCode-SessionStopped")]
-        SessionStopped,
-
-        [XmlEnum("SecurityAuditCode-AccessControlDecision")]
-        AccessControlDecision,
-
-        [XmlEnum("SecurityAuditCode-SecondaryUseQuery")]
-        SecondaryUseQuery,
-    }
-
-#pragma warning restore CS1591
 
     /// <summary>
     /// Security utility
@@ -167,8 +71,6 @@ namespace SanteDB.Core.Security.Audit
         // Dispatch service
         private static IAuditDispatchService m_dispatcher;
 
-        // Queue name for audits
-        private const string QueueName = "sys.audit";
 
         /// <summary>
         /// Audit utility
@@ -184,9 +86,9 @@ namespace SanteDB.Core.Security.Audit
                 s_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<AuditAccountabilityConfigurationSection>();
                 if (m_queueService != null)
                 {
-                    m_queueService.Open(QueueName);
-                    m_queueService.SubscribeTo(QueueName, AuditQueued);
-                    m_queueService.Open($"{QueueName}.dead");
+                    m_queueService.Open(AuditConstants.QueueName);
+                    m_queueService.SubscribeTo(AuditConstants.QueueName, AuditQueued);
+                    m_queueService.Open(AuditConstants.DeadletterQueueName);
                 }
             }
             catch (Exception)
@@ -203,20 +105,28 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         private static void AuditQueued(DispatcherMessageEnqueuedInfo e)
         {
-            object queueObject = null;
-            while ((queueObject = m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is AuditEventData AuditEventData)
+            DispatcherQueueEntry queueentry = null;
+            while (m_queueService.TryDequeue(AuditConstants.QueueName, out queueentry) && queueentry.Body is AuditEventData auditEventData)
             {
                 try
                 {
-                    SendAuditInternal(AuditEventData);
+                    SendAuditInternal(auditEventData);
                 }
-                catch (Exception ex)
+                catch(PolicyViolationException polvex)
+                {
+                    traceSource.TraceError("Policy Violation Exception dispatching audit. Principal: {0}, Policy: {1}, Outcome {2}{3}{4}", polvex.Principal?.Identity?.Name ?? "UNKNOWN", polvex.PolicyId, polvex.PolicyDecision.ToString(), Environment.NewLine, polvex.ToString());
+                    traceSource.TraceEvent(System.Diagnostics.Tracing.EventLevel.Critical, "!!!!!!!!! CRITICAL !!!!!!! Policy Violation dispatching audit. This is a configuration issue and needs to be corrected to use SanteDB.");
+                    Environment.Exit(911);
+                }
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     traceSource.TraceError("Error dispatching audit - {0}", ex);
-                    m_queueService.Enqueue($"{QueueName}.dead", AuditEventData);
+                    m_queueService.Enqueue(AuditConstants.DeadletterQueueName, auditEventData);
                 }
             }
         }
+
+        
 
         /// <summary>
         /// Send audit internal logic
@@ -229,7 +139,6 @@ namespace SanteDB.Core.Security.Audit
                 // Filter apply?
                 if (s_configuration?.ApplyFilters(auditEventData, out saveLocal, out dispatchRemote) == true)
                 {
-
                     if (saveLocal)
                     {
                         m_repositoryService?.Insert(auditEventData); // insert into local AR
@@ -256,6 +165,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="outcome">The outcome of the action</param>
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditAuditLogUsed(ActionType action, OutcomeIndicator outcome, String query, params Guid[] auditIds)
         {
             traceSource.TraceInfo("Create AuditLogUsed audit");
@@ -293,6 +203,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a synchronization occurred
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSynchronization(AuditableObjectLifecycle lifecycle, String remoteTarget, OutcomeIndicator outcome, params IdentifiedData[] objects)
         {
             AuditCode eventTypeId = new AuditCode("Synchronization", "SecurityAuditCode");
@@ -335,6 +246,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit an access control decision
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditAccessControlDecision(IPrincipal principal, string policy, PolicyGrantType action)
         {
             if (s_configuration?.CompleteAuditTrail != true && action == PolicyGrantType.Grant)
@@ -369,6 +281,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
         /// <param name="maskedObject">The object that was masked</param>
         /// <param name="decision">The decision which caused the masking to occur</param>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditMasking<TModel>(TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             where TModel : IdentifiedData
         {
@@ -380,6 +293,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the creation of an object
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditCreate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
             AuditUtil.AuditEventDataAction(new AuditCode("SecurityAuditCode-CreateInstances", "SecurityAuditEventDataEvent") { DisplayName = "Create New Record" }, ActionType.Create, AuditableObjectLifecycle.Creation, EventIdentifierType.Import, outcome, queryPerformed, null, resourceData);
@@ -388,6 +302,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditUpdate<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
             AuditUtil.AuditEventDataAction(new AuditCode("SecurityAuditCode-UpdateInstances", "SecurityAuditEventDataEvent") { DisplayName = "Update Existing Record" }, ActionType.Update, AuditableObjectLifecycle.Amendment, EventIdentifierType.Import, outcome, queryPerformed, null, resourceData);
@@ -396,6 +311,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a deletion
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditDelete<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
         {
             AuditUtil.AuditEventDataAction(new AuditCode("SecurityAuditCode-DeleteInstances", "SecurityAuditEventDataEvent") { DisplayName = "Delete Existing Record" }, ActionType.Delete, AuditableObjectLifecycle.LogicalDeletion, EventIdentifierType.Import, outcome, queryPerformed, null, resourceData);
@@ -404,6 +320,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditQuery<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] results)
         {
             AuditUtil.AuditEventDataAction(CreateAuditActionCode(EventTypeCodes.Query), ActionType.Execute, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, null, results);
@@ -412,6 +329,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditRead<TData>(OutcomeIndicator outcome, string queryPerformed, params TData[] results)
         {
             AuditUtil.AuditEventDataAction(CreateAuditActionCode(EventTypeCodes.Query), ActionType.Read, AuditableObjectLifecycle.Disclosure, EventIdentifierType.Query, outcome, queryPerformed, null, results);
@@ -420,6 +338,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that security objects were created
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSecurityCreationAction(IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties)
         {
             traceSource.TraceInfo("Create SecurityCreationAction audit");
@@ -443,6 +362,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit data action
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditEventDataAction<TData>(EventTypeCodes typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, params TData[] data)
         {
             AuditEventDataAction<TData>(CreateAuditActionCode(typeCode), action, lifecycle, eventType, outcome, queryPerformed, null, data);
@@ -451,6 +371,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Autility utility which can be used to send a data audit
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditEventDataAction<TData>(AuditCode typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, PolicyDecision grantInfo, params TData[] data)
         {
             traceSource.TraceInfo("Create AuditEventDataAction audit");
@@ -499,7 +420,7 @@ namespace SanteDB.Core.Security.Audit
         /// <typeparam name="TData"></typeparam>
         /// <param name="obj">The object to translate</param>
         /// <param name="lifecycle">The lifecycle of </param>
-        private static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
+        public static AuditableObject CreateAuditableObject<TData>(TData obj, AuditableObjectLifecycle lifecycle)
         {
             var idTypeCode = AuditableObjectIdType.Custom;
             var roleCode = AuditableObjectRole.Resource;
@@ -580,6 +501,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="decision">The policy decision which resulted in the disclosure</param>
         /// <param name="disclosed">True if the record was actually disclosed (false if the audit is merely the access is being audited)</param>
         /// <param name="properties">The properties which were disclosed</param>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSensitiveDisclosure(IdentifiedData result, PolicyDecision decision, bool disclosed, params string[] properties)
         {
             traceSource.TraceInfo("Create AuditEventDataAction audit");
@@ -611,6 +533,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSecurityDeletionAction(IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
         {
             traceSource.TraceInfo("Create SecurityDeletionAction audit");
@@ -634,6 +557,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSecurityAttributeAction(IEnumerable<Object> objects, bool success, params string[] changedProperties)
         {
             traceSource.TraceInfo("Create SecurityAttributeAction audit");
@@ -664,6 +588,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Send specified audit
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void SendAudit(AuditEventData audit)
         {
             // Is there any point in queueing 
@@ -694,7 +619,7 @@ namespace SanteDB.Core.Security.Audit
                     {
                         if (m_queueService != null)
                         {
-                            m_queueService.Enqueue(QueueName, audit);
+                            m_queueService.Enqueue(AuditConstants.QueueName, audit);
                         }
                         else
                         {
@@ -712,6 +637,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add user actor
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AddUserActor(AuditEventData audit, IPrincipal principal = null)
         {
             // Use all remote endpoint providers to find the current request
@@ -797,6 +723,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add device actor
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AddLocalDeviceActor(AuditEventData audit)
         {
             traceSource.TraceInfo("Adding local device actor to audit {0}", audit.EventIdentifier);
@@ -815,6 +742,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit an override operation
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditOverride(ISession session, IPrincipal principal, string purposeOfUse, string[] policies, bool success)
         {
             traceSource.TraceInfo("Create Override audit");
@@ -866,60 +794,9 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Audit application start or stop
-        /// </summary>
-        public static void AuditApplicationStartStop(EventTypeCodes eventType)
-        {
-            traceSource.TraceInfo("Create ApplicationStart audit");
-
-            AuditEventData audit = new AuditEventData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, CreateAuditActionCode(eventType));
-            AddLocalDeviceActor(audit);
-            SendAudit(audit);
-        }
-
-        /// <summary>
-        /// Audit a login of a principal
-        /// </summary>
-        public static void AuditLogin(IPrincipal principal, String identityName, IIdentityProviderService identityProvider, bool successfulLogin = true)
-        {
-            traceSource.TraceInfo("Create Login audit");
-
-            AuditEventData audit = new AuditEventData(DateTimeOffset.Now, ActionType.Execute, successfulLogin ? OutcomeIndicator.Success : OutcomeIndicator.SeriousFail, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Login));
-            AddLocalDeviceActor(audit);
-            AddUserActor(audit, principal);
-            audit.AuditableObjects.Add(new AuditableObject()
-            {
-                IDTypeCode = AuditableObjectIdType.UserIdentifier,
-                ObjectId = identityName,
-                LifecycleType = AuditableObjectLifecycle.NotSet,
-                Role = AuditableObjectRole.SecurityUser,
-                Type = AuditableObjectType.SystemObject
-            });
-            SendAudit(audit);
-        }
-
-        /// <summary>
-        /// Audit a login of a principal
-        /// </summary>
-        public static void AuditLogout(IPrincipal principal)
-        {
-            if (principal == null)
-            {
-                throw new ArgumentNullException(nameof(principal));
-            }
-
-            traceSource.TraceInfo("Create Logout audit");
-
-            AuditEventData audit = new AuditEventData(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.UserAuthentication, CreateAuditActionCode(EventTypeCodes.Logout));
-            AddLocalDeviceActor(audit);
-            AddUserActor(audit, principal);
-
-            SendAudit(audit);
-        }
-
-        /// <summary>
         /// Audit the use of a restricted function
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, NameValueCollection requestHeaders, NameValueCollection responseHeaders)
         {
             AuditNetworkRequestFailure(ex, url, requestHeaders.AllKeys.ToDictionary(o => o, o => requestHeaders[o]), responseHeaders?.AllKeys.ToDictionary(o => o, o => responseHeaders[o]));
@@ -928,6 +805,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a network request failure
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditNetworkRequestFailure(Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
         {
             traceSource.TraceInfo("Create Network Request Failure audit");
@@ -1004,6 +882,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSessionStart(ISession session, IPrincipal principal, bool success)
         {
             traceSource.TraceInfo("Create session audit");
@@ -1060,6 +939,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditSessionStop(ISession session, IPrincipal principal, bool success)
         {
             traceSource.TraceInfo("End session audit");
@@ -1114,6 +994,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the export of data
         /// </summary>
+        [Obsolete("Obsolete", error: true)]
         public static void AuditEventDataExport(params object[] exportedData)
         {
             AuditCode eventTypeId = CreateAuditActionCode(EventTypeCodes.Export);

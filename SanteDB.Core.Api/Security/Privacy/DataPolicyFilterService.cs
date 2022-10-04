@@ -87,6 +87,7 @@ namespace SanteDB.Core.Security.Privacy
         // Pip service
         private IPolicyInformationService m_pipService;
 
+
         /// <summary>
         /// Data policy filter service with DI
         /// </summary>
@@ -215,7 +216,7 @@ namespace SanteDB.Core.Security.Privacy
 
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag("$pep.masked", "true");
@@ -249,7 +250,7 @@ namespace SanteDB.Core.Security.Privacy
 
                         if (r > 0)
                         {
-                            AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result);
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
 
                             if (result is ITaggable tag)
                             {
@@ -261,7 +262,7 @@ namespace SanteDB.Core.Security.Privacy
                     }
                 case ResourceDataPolicyActionType.Audit:
 
-                    AuditUtil.AuditSensitiveDisclosure(result, null, true);
+                    ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, null, true).Send();
                     break;
             }
         }
@@ -445,14 +446,14 @@ namespace SanteDB.Core.Security.Privacy
                     switch (policy.Action)
                     {
                         case ResourceDataPolicyActionType.Audit:
-                            AuditUtil.AuditSensitiveDisclosure(result, decision, true);
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, true).Send();
                             return result;
 
                         case ResourceDataPolicyActionType.Hide:
                             return null;
 
                         case ResourceDataPolicyActionType.Hide | ResourceDataPolicyActionType.Audit:
-                            AuditUtil.AuditMasking(result, decision, true, result);
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, true, result).Send();
                             return null;
 
                         case ResourceDataPolicyActionType.Redact:
@@ -460,7 +461,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
-                                    AuditUtil.AuditMasking(result, decision, false, result);
+                                    ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, false, result).Send();
                                 }
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
@@ -475,7 +476,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                                 {
-                                    AuditUtil.AuditMasking(result, decision, true, result);
+                                    ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, true, result).Send();
                                 }
 
                                 var nResult = Activator.CreateInstance(result.GetType()) as IdentifiedData;
@@ -492,7 +493,7 @@ namespace SanteDB.Core.Security.Privacy
                         case ResourceDataPolicyActionType.Error | ResourceDataPolicyActionType.Audit:
                             if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                             {
-                                AuditUtil.AuditSensitiveDisclosure(result, decision, false);
+                                ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, false).Send();
                             }
                             throw new SecurityException($"Access denied");
                         case ResourceDataPolicyActionType.None:
@@ -502,9 +503,9 @@ namespace SanteDB.Core.Security.Privacy
                             throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
                     }
                 case PolicyGrantType.Grant:
-                    if (this.m_pipService.GetPolicies(result).Any())
-                    {
-                        AuditUtil.AuditSensitiveDisclosure(result, decision, true);
+                    if (result is ISecurable sec && sec.Policies.Any())
+                    { 
+                        ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, true).Send();
                     }
 
                     return result;
@@ -538,12 +539,12 @@ namespace SanteDB.Core.Security.Privacy
                     switch (policy.Action)
                     {
                         case ResourceDataPolicyActionType.Audit:
-                            AuditUtil.AuditSensitiveDisclosure(result, hasPolicy, true, itm.Property);
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, hasPolicy, true, itm.Property).Send();
                             break;
                         case ResourceDataPolicyActionType.Error:
                             if ((policy.Action & ResourceDataPolicyActionType.Audit) == ResourceDataPolicyActionType.Audit)
                             {
-                                AuditUtil.AuditSensitiveDisclosure(result, hasPolicy, false, itm.Property);
+                                ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, hasPolicy, false, itm.Property).Send();
                             }
                             throw new SecurityException($"Access denied");
                         case ResourceDataPolicyActionType.Nullify:

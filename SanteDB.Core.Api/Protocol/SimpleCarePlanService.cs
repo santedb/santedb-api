@@ -368,7 +368,7 @@ namespace SanteDB.Core.Protocol
 
                 return new CarePlan(patient, protocolActs.ToList())
                 {
-                    CreatedByKey = Guid.Parse("fadca076-3690-4a6e-af9e-f1cd68e8c7e8")
+                    CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid)
                 };
             }
             catch (Exception e)

@@ -23,6 +23,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using System;
@@ -64,7 +65,8 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultOperatingSystemInfoService),
             typeof(DefaultNetworkInformationService),
             typeof(SimpleSessionTokenEncodingService),
-            typeof(SimpleSessionTokenResolver)
+            typeof(SimpleSessionTokenResolver),
+            typeof(DefaultAuditService)
         };
         private readonly IServiceManager m_serviceManager;
 
