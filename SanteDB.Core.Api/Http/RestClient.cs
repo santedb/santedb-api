@@ -155,6 +155,8 @@ namespace SanteDB.Core.Http
         /// <param name="contentType">Content type.</param>
         /// <param name="body">Body.</param>
         /// <param name="query">Query.</param>
+        /// <param name="additionalHeaders"></param>
+        /// <param name="responseHeaders"></param>
         /// <typeparam name="TBody">The 1st type parameter.</typeparam>
         /// <typeparam name="TResult">The 2nd type parameter.</typeparam>
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection additionalHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)

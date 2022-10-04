@@ -7,7 +7,6 @@
     <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
 
-  <Import Project="SanteDB.Core.TestFramework.targets" />
   <PropertyGroup>
     <PackageId>SanteDB.Core.TestFramework</PackageId>
     <Title>SanteDB.Core.TestFramework</Title>
@@ -50,29 +49,11 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.0.2" />
+    <None Remove="C:\Users\fyfej\source\repos\santedb\santedb-server-v3\santedb-api\SanteDB.Core.TestFramework\\firebird\santedb_test.fdb" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="SanteDB.Core.TestFramework.targets" Pack="true" PackagePath="build" />
-    <None Include="firebird\fbclient.dll" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\firebird.conf" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\firebird.msg" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\ib_util.dll" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\icudt52.dll" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\icudt52l.dat" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\icuin52.dll" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\icuuc52.dll" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\IDPLicense.txt" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\IPLicense.txt" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\santedb_test.fdb" Pack="true" PackagePath="build\firebird" />
-    <None Include="firebird\plugins\engine12.dll" Pack="true" PackagePath="build\firebird\plugins" />
-  </ItemGroup>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(NoFirebird)' == '' and Exists('C:\Program Files\7-Zip\7z.exe')">
-    <Exec Command="&quot;C:\Program Files\7-Zip\7z.exe&quot; x -o&quot;$(ProjectDir)\firebird&quot; -y &quot;$(MSBuildThisFileDirectory)..\Solution Items\FirebirdSQL-3.0.3-Embedded.zip&quot; " />
-    <Copy SourceFiles="$(ProjectDir)..\Solution Items\santedb_test.fdb" DestinationFolder="$(ProjectDir)\firebird" />
-  </Target>
 
 </Project>

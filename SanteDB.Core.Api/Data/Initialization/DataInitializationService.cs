@@ -84,11 +84,6 @@ namespace SanteDB.Core.Data.Initialization
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <summary>
-        /// Event handler which fires after startup
-        /// </summary>
-        private EventHandler m_persistenceHandler;
-
-        /// <summary>
         /// DI constructor
         /// </summary>
         public DataInitializationService(IDatasetInstallerService datasetInstaller, IServiceManager serviceManager)
@@ -121,6 +116,4 @@ namespace SanteDB.Core.Data.Initialization
             return true;
         }
     }
-
-#pragma warning enable CS0067
 }

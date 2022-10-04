@@ -502,7 +502,7 @@ namespace SanteDB.Core.Security.Privacy
                             throw new InvalidOperationException("Shouldn't be here - No Effective Policy Decision has been made");
                     }
                 case PolicyGrantType.Grant:
-                    if (result is ISecurable sec && sec.Policies.Any())
+                    if (this.m_pipService.GetPolicies(result).Any())
                     {
                         AuditUtil.AuditSensitiveDisclosure(result, decision, true);
                     }

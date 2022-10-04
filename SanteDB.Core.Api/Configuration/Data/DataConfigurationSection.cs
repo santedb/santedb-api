@@ -162,11 +162,15 @@ namespace SanteDB.Core.Configuration.Data
         /// </example>
         public String GetComponent(String component)
         {
-            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            if(String.IsNullOrEmpty(component))
+            {
+                return String.Empty;
+            }
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
 
             String retVal = null;
-            values.TryGetValue(component, out retVal);
-            return retVal;
+            values?.TryGetValue(component, out retVal);
+            return retVal ?? String.Empty;
         }
 
         /// <summary>
@@ -183,8 +187,8 @@ namespace SanteDB.Core.Configuration.Data
         /// ]]></code></example>
         public void SetComponent(String component, String value)
         {
-            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
-            if (values.ContainsKey(component))
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            if (values?.ContainsKey(component) == true)
             {
                 if (String.IsNullOrEmpty(value))
                 {
@@ -197,10 +201,10 @@ namespace SanteDB.Core.Configuration.Data
             }
             else if (!String.IsNullOrEmpty(value))
             {
-                values.Add(component, value.ToString());
+                values?.Add(component, value.ToString());
             }
 
-            this.Value = String.Join(";", values.Select(o => $"{o.Key}={o.Value}"));
+            this.Value = String.Join(";", values?.Select(o => $"{o.Key}={o.Value}") ?? new String[0]);
         }
 
         /// <summary>

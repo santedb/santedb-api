@@ -175,7 +175,12 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Object type
         /// </summary>
-        Object
+        Object,
+
+        /// <summary>
+        /// Certificate picker for an X509 certificate  
+        /// </summary>
+        Certificate
     }
 
     /// <summary>

@@ -88,7 +88,7 @@ namespace SanteDB.Core.Security
             try
             {
                 store.Open(OpenFlags.ReadOnly);
-                var matches = store.Certificates.Find(findType, findValue, true);
+                var matches = store.Certificates.Find(findType, findValue, false);
                 if (matches.Count == 0)
                 {
                     throw new InvalidOperationException("Certificate not found");

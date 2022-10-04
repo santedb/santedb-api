@@ -16,7 +16,13 @@ namespace SanteDB.Core.Mail
     public class Mailbox : BaseEntityData
     {
 
+        /// <summary>
+        /// The name of the inbox
+        /// </summary>
         public const string INBOX_NAME = "Inbox";
+        /// <summary>
+        /// The name of the sent mailbox
+        /// </summary>
         public const string SENT_NAME = "Sent";
 
         /// <summary>

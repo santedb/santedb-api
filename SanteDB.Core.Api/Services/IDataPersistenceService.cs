@@ -108,8 +108,20 @@ namespace SanteDB.Core.Services
         // Delete mode
         private readonly DeleteMode? m_deleteMode;
 
+        // Auto update
+        private readonly bool? m_autoUpdate;
+
         // Wrapped
         private readonly DataPersistenceControlContext m_wrapped;
+
+        /// <summary>
+        /// Constructor for query context
+        /// </summary>
+        private DataPersistenceControlContext(bool autoUpdate, DataPersistenceControlContext wrapped)
+        {
+            this.m_autoUpdate = autoUpdate;
+            this.m_wrapped = wrapped;
+        }
 
         /// <summary>
         /// Constructor for query context
@@ -133,10 +145,11 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, DataPersistenceControlContext wrapped)
+        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, bool? autoUpdate,  DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
             this.m_loadMode = loadMode;
+            this.m_autoUpdate = autoUpdate;
             this.m_wrapped = wrapped;
         }
 
@@ -149,6 +162,11 @@ namespace SanteDB.Core.Services
         /// Get the name
         /// </summary>
         public String Name { get; private set; }
+
+        /// <summary>
+        /// Auto update resources which are being INSERT
+        /// </summary>
+        public bool? AutoUpdate => this.m_autoUpdate;
 
         /// <summary>
         /// Gets this context's load mode
@@ -165,10 +183,11 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="loadMode">The load strategy</param>
         /// <param name="deleteMode">The deletion strategy</param>
+        /// <param name="autoUpdate">True if existing resources on an INSERT should be switched to an UPDATE</param>
         /// <returns></returns>
-        public static DataPersistenceControlContext Create(LoadMode loadMode, DeleteMode deleteMode)
+        public static DataPersistenceControlContext Create(LoadMode loadMode, DeleteMode deleteMode, bool autoUpdate)
         {
-            m_current = new DataPersistenceControlContext(loadMode, deleteMode, m_current)
+            m_current = new DataPersistenceControlContext(loadMode, deleteMode, autoUpdate, m_current)
             {
                 Name = m_current?.Name
             };
@@ -182,7 +201,21 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current)
+            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current?.m_autoUpdate, m_current)
+            {
+                Name = m_current?.Name
+            };
+            return m_current;
+        }
+
+        /// <summary>
+        /// Create a new data control context specifying the update parameter
+        /// </summary>
+        /// <param name="autoUpdate"></param>
+        /// <returns></returns>
+        public static DataPersistenceControlContext Create(bool autoUpdate)
+        {
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, m_current?.DeleteMode, autoUpdate, m_current)
             {
                 Name = m_current?.Name
             };
@@ -195,7 +228,7 @@ namespace SanteDB.Core.Services
         /// <param name="deleteMode">The mode of deletion</param>
         public static DataPersistenceControlContext Create(DeleteMode deleteMode)
         {
-            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current)
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current?.m_autoUpdate, m_current)
             {
                 Name = m_current?.Name
             };
