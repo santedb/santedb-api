@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 
@@ -75,5 +76,22 @@ namespace SanteDB.Core.PubSub
         /// <param name="primary">The primary record which was unmerged (the remaining record)</param>
         /// <param name="unMerged">The records which were un-merged</param>
         void NotifyUnMerged<TModel>(TModel primary, IEnumerable<TModel> unMerged) where TModel : IdentifiedData;
+
+        /// <summary>
+        /// Notify subscribers that two objects have been linked together
+        /// </summary>
+        /// <typeparam name="TModel"></typeparam>
+        /// <param name="target">The link that was established</param>
+        /// <param name="primary">The primary data that was the focus of the link</param>
+        void NotifyLinked<TModel>(TModel primary, TModel target) where TModel : IdentifiedData;
+
+
+        /// <summary>
+        /// Notify subscribers two objects being unlinked
+        /// </summary>
+        /// <typeparam name="TModel">The type of model</typeparam>
+        /// <param name="holder">The holder of the relationship</param>
+        /// <param name="target">The link that was removed</param>
+        void NotifyUnlinked<TModel>(TModel holder, TModel target) where TModel : IdentifiedData;
     }
 }

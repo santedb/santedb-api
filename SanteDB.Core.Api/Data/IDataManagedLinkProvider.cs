@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model.Interfaces;
+﻿using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,15 +16,15 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get the managed link that was altered
         /// </summary>
-        public DataManagementLinkEventArgs(ITargetedAssociation managedLink)
+        public DataManagementLinkEventArgs(ITargetedAssociation targetedAssociation)
         {
-            this.ManagedLink = managedLink;
+            this.TargetedAssociation = targetedAssociation;
         }
 
         /// <summary>
         /// Gets the managed link that was impacted
         /// </summary>
-        public ITargetedAssociation ManagedLink { get; }
+        public ITargetedAssociation TargetedAssociation { get; }
 
     }
 
@@ -32,7 +33,7 @@ namespace SanteDB.Core.Data
     /// objects
     /// </summary>
     public interface IDataManagedLinkProvider<T>
-        where T : IHasClassConcept, IHasTypeConcept, IIdentifiedData, IHasRelationships
+        where T : IdentifiedData
     {
         /// <summary>
         /// Fired when a managed link is established

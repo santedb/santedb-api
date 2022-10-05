@@ -52,13 +52,13 @@ namespace SanteDB.Core
         /// <summary>
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedTarget(T)"/>
         /// </summary>
-        public static T ResolveManagedTarget<T>(this T forSource) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData, IHasRelationships =>
+        public static T ResolveManagedTarget<T>(this T forSource) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.ResolveManagedTarget(forSource) ?? forSource;
 
         /// <summary>
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedSource(T)"/>
         /// </summary>
-        public static T ResolveManagedSource<T>(this T forSource) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData, IHasRelationships =>
+        public static T ResolveManagedSource<T>(this T forSource) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.ResolveManagedSource(forSource) ?? forSource;
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
         /// </summary>
-        public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData, IHasRelationships =>
+        public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
 
 
