@@ -33,39 +33,5 @@ namespace SanteDB.Core.Data
     public interface IDataManagementPattern : IServiceImplementation
     {
 
-        /// <summary>
-        /// When a data management pattern (like MDM) masks or performs specialized linking in the database
-        /// this method will allow callers to discern the true record.
-        /// </summary>
-        /// <typeparam name="T">The type of record to be resolved</typeparam>
-        /// <param name="forSource">The record returned from the persistence layer</param>
-        /// <returns>The resolved target object</returns>
-        T ResolveManagedTarget<T>(T forSource) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData;
-
-        /// <summary>
-        /// When a data management pattern (like MDM) masks or performs specialized linking in the database
-        /// and a target has been returned, this method will allow callers to discern the record in the database.
-        /// </summary>
-        /// <typeparam name="T">The type of record to be resolved</typeparam>
-        /// <param name="forTarget">The record returned from the persistence layer</param>
-        /// <returns>The resolved target object</returns>
-        T ResolveManagedSource<T>(T forTarget) where T : class, IHasClassConcept, IHasTypeConcept, IIdentifiedData;
-
-        /// <summary>
-        /// Get the managed reference links for the collection of relationships
-        /// </summary>
-        /// <typeparam name="T">The type of relationship</typeparam>
-        /// <param name="forRelationships">The relationship collection on the object</param>
-        /// <returns>The reference links on the object</returns>
-        IEnumerable<T> GetManagedReferenceLinks<T>(IEnumerable<T> forRelationships) where T : class, ITargetedAssociation;
-
-        /// <summary>
-        /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
-        /// </summary>
-        /// <typeparam name="T">The type of object to add a reference link to</typeparam>
-        /// <param name="sourceObject">The source object of the link</param>
-        /// <param name="targetObject">The target object of the link</param>
-        /// <returns>The created target</returns>
-        ITargetedAssociation AddManagedReferenceLink<T>(T sourceObject, T targetObject) where T : class, IHasRelationships;
     }
 }

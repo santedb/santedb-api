@@ -508,16 +508,5 @@ namespace SanteDB.Core.Data
             return true;
         }
 
-        /// <inheritdoc/>
-        T IDataManagementPattern.ResolveManagedTarget<T>(T forSource) => forSource;
-
-        /// <inheritdoc/>
-        T IDataManagementPattern.ResolveManagedSource<T>(T forTarget) => forTarget;
-
-        /// <inheritdoc/>
-        IEnumerable<T> IDataManagementPattern.GetManagedReferenceLinks<T>(IEnumerable<T> forRelationships) => forRelationships.Where(o => o.AssociationTypeKey == EntityRelationshipTypeKeys.EquivalentEntity); // There are no special reference links
-
-        /// <inheritdoc/>
-        ITargetedAssociation IDataManagementPattern.AddManagedReferenceLink<T>(T sourceObject, T targetObject) => null;
     }
 }
