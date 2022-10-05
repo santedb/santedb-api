@@ -191,7 +191,7 @@ namespace SanteDB.Core.Data
                 if (mergeEventArgs.Cancel)
                 {
                     this.m_tracer.TraceInfo("Pre-Event trigger indicated cancel merge");
-                    return new RecordMergeResult(RecordMergeStatus.Cancelled, null, null);
+                    return new RecordMergeResult(RecordMergeStatus.Aborted, null, null);
                 }
 
                 // The invoke may have changed the master
