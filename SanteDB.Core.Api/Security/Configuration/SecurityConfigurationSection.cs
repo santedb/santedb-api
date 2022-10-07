@@ -60,7 +60,7 @@ namespace SanteDB.Core.Security.Configuration
     /// SanteDB Security configuration
     /// </summary>
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class SecurityConfigurationSection : IConfigurationSection
+    public class SecurityConfigurationSection : IEncryptedConfigurationSection
     {
 
         /// <summary>

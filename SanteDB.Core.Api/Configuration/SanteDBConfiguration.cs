@@ -21,12 +21,16 @@
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Security.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -62,6 +66,19 @@ namespace SanteDB.Core.Configuration
     {
         // Serializer
         private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
+
+        /// <summary>
+        /// Initialization vector of the configuration section
+        /// </summary>
+        [XmlAttribute("eci")]
+        public byte[] EncryptionMetadata { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="X509Certificate2"/> which protects any instance of
+        /// <see cref="IEncryptedConfigurationSection"/> instances
+        /// </summary>
+        [XmlElement("protectedSectionKey")]
+        public X509ConfigurationElement ProtectedSectionKey { get; set; }
 
         /// <summary>
         /// SanteDB configuration
@@ -108,6 +125,7 @@ namespace SanteDB.Core.Configuration
             // Load the base types
             var tbaseConfig = s_baseSerializer.Deserialize(configStream) as SanteDBBaseConfiguration;
             configStream.Seek(0, SeekOrigin.Begin);
+            tbaseConfig.SectionTypes.Add(new TypeReferenceConfiguration(typeof(SanteDBProtectedConfigurationSectionWrapper)));
             var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), tbaseConfig.SectionTypes.Select(o => o.Type).Where(o => o != null).ToArray());
 
             var retVal = xsz.Deserialize(configStream) as SanteDBConfiguration;
@@ -115,6 +133,26 @@ namespace SanteDB.Core.Configuration
             {
                 string allowedSections = String.Join(";", tbaseConfig.SectionTypes.Select(o => $"{o.Type?.GetCustomAttribute<XmlTypeAttribute>()?.TypeName} (in {o.TypeXml})"));
                 throw new ConfigurationException($"Could not understand configuration sections: {String.Join(",", retVal.Sections.OfType<XmlNode[]>().Select(o => o.First().Value))} allowed sections {allowedSections}", retVal);
+            }
+
+            if (retVal.ProtectedSectionKey != null && retVal.EncryptionMetadata != null)
+            {
+
+                using (var crypto = retVal.ProtectedSectionKey.Certificate.GetRSAPrivateKey())
+                {
+                    var aesKey = crypto.Decrypt(retVal.EncryptionMetadata, RSAEncryptionPadding.Pkcs1);
+                    retVal.Sections = retVal.Sections.Select(o =>
+                    {
+                        if (o is SanteDBProtectedConfigurationSectionWrapper w)
+                        {
+                            return w.Decrypt(aesKey);
+                        }
+                        else
+                        {
+                            return o;
+                        }
+                    }).ToList();
+                }
             }
 
             if (retVal.Includes != null)
@@ -223,7 +261,6 @@ namespace SanteDB.Core.Configuration
 
         }
 
-
         /// <summary>
         /// Save the configuration to the specified data stream
         /// </summary>
@@ -231,11 +268,41 @@ namespace SanteDB.Core.Configuration
         public void Save(Stream dataStream)
         {
             this.SectionTypes = this.Sections.OfType<IConfigurationSection>().Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
+            this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(SanteDBProtectedConfigurationSectionWrapper)));
+
             var namespaces = this.Sections.OfType<IConfigurationSection>().Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
             var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.OfType<TypeReferenceConfiguration>().Select(o => o.Type).Where(o => o != null).ToArray());
-            xsz.Serialize(dataStream, this, xmlns);
+
+            // Any protected sections we need to encrypt using the configured key
+            if (this.ProtectedSectionKey != null)
+            {
+                var cryptoConfig = this.MemberwiseClone() as SanteDBConfiguration;
+                
+                using (var crypto = this.ProtectedSectionKey.Certificate.GetRSAPrivateKey())
+                {
+                    byte[] aesKey = Guid.NewGuid().ToByteArray();
+                    cryptoConfig.EncryptionMetadata = crypto.Encrypt(aesKey, RSAEncryptionPadding.Pkcs1); // Save the encrypted secret in the config file
+                    cryptoConfig.Sections = cryptoConfig.Sections.Select(o =>
+                    {
+                        if (o is IEncryptedConfigurationSection)
+                        {
+                            return new SanteDBProtectedConfigurationSectionWrapper(aesKey, o as IConfigurationSection);
+                        }
+                        else
+                        {
+                            return o;
+                        }
+                    }).ToList();
+                    xsz.Serialize(dataStream, cryptoConfig, xmlns);
+
+                }
+            }
+            else
+            {
+                xsz.Serialize(dataStream, this, xmlns);
+            }
         }
 
         /// <summary>
@@ -305,6 +372,72 @@ namespace SanteDB.Core.Configuration
         public void RemoveSection<T>()
         {
             this.Sections.RemoveAll(o => o is T);
+        }
+
+        /// <summary>
+        /// Protected configuration section
+        /// </summary>
+        [XmlType(nameof(SanteDBProtectedConfigurationSectionWrapper), Namespace = "http://santedb.org/configuration")]
+        public class SanteDBProtectedConfigurationSectionWrapper : IConfigurationSection
+        {
+            /// <summary>
+            /// Creates a new protected section wrapper
+            /// </summary>
+            public SanteDBProtectedConfigurationSectionWrapper()
+            {
+            }
+
+            /// <summary>
+            /// Create a protected wrapper
+            /// </summary>
+            public SanteDBProtectedConfigurationSectionWrapper(byte[] aesKey, IConfigurationSection wrapped)
+            {
+                this.WrappedType = wrapped.GetType().AssemblyQualifiedName;
+                var aes = AesCryptoServiceProvider.Create();
+                aes.GenerateIV();
+                this.Iv = aes.IV;
+                using (var ms = new MemoryStream())
+                {
+                    using (var cs = new CryptoStream(ms, aes.CreateEncryptor(aesKey, aes.IV), CryptoStreamMode.Write))
+                    {
+                        new XmlSerializer(wrapped.GetType()).Serialize(cs, wrapped);
+                    }
+                    this.ProtectedContents = ms.ToArray();
+                }
+            }
+
+            /// <summary>
+            /// Decrypt the protected section
+            /// </summary>
+            public IConfigurationSection Decrypt(byte[] aesKey)
+            {
+                var aes = AesCryptoServiceProvider.Create();
+                using (var ms = new MemoryStream(this.ProtectedContents))
+                {
+                    using (var cs = new CryptoStream(ms, aes.CreateDecryptor(aesKey, this.Iv), CryptoStreamMode.Read))
+                    {
+                        return new XmlSerializer(Type.GetType(this.WrappedType)).Deserialize(cs) as IConfigurationSection;
+                    }
+                }
+            }
+
+            /// <summary>
+            /// The original type
+            /// </summary>
+            [XmlAttribute("t")]
+            public String WrappedType { get; set; }
+
+            /// <summary>
+            /// The protected contents
+            /// </summary>
+            [XmlElement("c")]
+            public byte[] ProtectedContents { get; set; }
+
+            /// <summary>
+            /// Initialization vector
+            /// </summary>
+            [XmlElement("i")]
+            public byte[] Iv { get; set; }
         }
     }
 }
