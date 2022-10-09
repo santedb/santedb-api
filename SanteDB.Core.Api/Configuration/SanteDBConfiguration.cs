@@ -283,6 +283,7 @@ namespace SanteDB.Core.Configuration
                 using (var crypto = this.ProtectedSectionKey.Certificate.GetRSAPrivateKey())
                 {
                     byte[] aesKey = Guid.NewGuid().ToByteArray();
+                    cryptoConfig.ProtectedSectionKey = this.ProtectedSectionKey;
                     cryptoConfig.EncryptionMetadata = crypto.Encrypt(aesKey, RSAEncryptionPadding.Pkcs1); // Save the encrypted secret in the config file
                     cryptoConfig.Sections = cryptoConfig.Sections.Select(o =>
                     {

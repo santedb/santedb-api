@@ -178,8 +178,8 @@ namespace SanteDB.Core.Security.Privacy
                 case ResourceDataPolicyActionType.Hide:
                 case ResourceDataPolicyActionType.Nullify:
                     {
-                        var r = (result as Act)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
-                        r += (result as Entity)?.Identifiers.RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
+                        var r = (result as Act)?.LoadProperty(o=>o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
+                        r += (result as Entity)?.LoadProperty(o => o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
                         if (r > 0)
                         {
                             //AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
