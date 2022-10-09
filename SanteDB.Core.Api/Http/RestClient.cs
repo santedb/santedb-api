@@ -394,7 +394,10 @@ namespace SanteDB.Core.Http
                 }
 
                 var ms = new MemoryStream(); // copy response to memory
-                errorResponse.GetResponseStream().CopyTo(ms);
+                using (var str = CompressionUtil.GetCompressionScheme(errorResponse.Headers[HttpResponseHeader.ContentEncoding]).CreateDecompressionStream(errorResponse.GetResponseStream()))
+                {
+                    str.CopyTo(ms);
+                }
                 ms.Seek(0, SeekOrigin.Begin);
 
                 try
@@ -403,10 +406,7 @@ namespace SanteDB.Core.Http
 
                     if (!String.IsNullOrEmpty(errorResponse.Headers[HttpResponseHeader.ContentEncoding]))
                     {
-                        using (var str = CompressionUtil.GetCompressionScheme(errorResponse.Headers[HttpResponseHeader.ContentEncoding]).CreateDecompressionStream(ms))
-                        {
-                            errorResult = serializer.DeSerialize(str);
-                        }
+                        errorResult = serializer.DeSerialize(ms);
                     }
                     else
                     {
@@ -415,6 +415,7 @@ namespace SanteDB.Core.Http
                 }
                 catch (Exception e2)
                 {
+                    // De-Serialize using 
                     throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2);
                 }
 
