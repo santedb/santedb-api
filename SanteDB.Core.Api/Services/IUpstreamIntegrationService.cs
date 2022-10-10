@@ -56,11 +56,6 @@ namespace SanteDB.Core.Services
         public int? Timeout { get; set; }
 
         /// <summary>
-        /// Lean
-        /// </summary>
-        public bool Lean { get; set; }
-
-        /// <summary>
         /// Gets or sets the query identifier for the query
         /// </summary>
         public Guid QueryId { get; set; }
@@ -85,10 +80,6 @@ namespace SanteDB.Core.Services
                     e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
                 }
 
-                if (options?.Lean == true)
-                {
-                    e.Query.Add("_lean", "true");
-                }
             };
         }
     }

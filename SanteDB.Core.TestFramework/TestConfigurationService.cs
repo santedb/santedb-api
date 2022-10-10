@@ -43,6 +43,9 @@ namespace SanteDB.Core.TestFramework
         /// </summary>
         public SanteDBConfiguration Configuration { get; set; }
 
+        /// <inheritdoc/>
+        public bool IsReadonly => true;
+
         /// <summary>
         /// Get configuration service
         /// </summary>
@@ -112,6 +115,11 @@ namespace SanteDB.Core.TestFramework
         public void Reload()
         {
             throw new NotSupportedException();
+        }
+
+        public void SaveConfiguration()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -23,6 +23,7 @@ using SanteDB.Core.Model.Map;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
@@ -154,6 +155,21 @@ namespace SanteDB.Core.Security.Configuration
             {
                 return defaultValue;
             }
+        }
+
+        /// <summary>
+        /// Turn this configuration section into something suitable for sharing
+        /// </summary>
+        public SecurityConfigurationSection ForDisclosure()
+        {
+            return new SecurityConfigurationSection()
+            {
+                PasswordRegex = this.PasswordRegex,
+                PepExemptionPolicy = this.PepExemptionPolicy,
+                SecurityPolicy = new List<SecurityPolicyConfiguration>(this.SecurityPolicy),
+                Signatures = this.Signatures.Select(o => o.ForDisclosure()).ToList(),
+                TrustedCertificates = this.TrustedCertificates
+            };
         }
     }
 }
