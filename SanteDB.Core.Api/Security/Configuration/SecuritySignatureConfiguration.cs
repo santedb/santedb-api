@@ -126,6 +126,11 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
+        /// Should serialize the secret
+        /// </summary>
+        public bool ShouldSerializeSecret() => !this.m_hideSecrets;
+
+        /// <summary>
         /// Plaintext editor for secret
         /// </summary>
         [XmlAttribute("hmacSecret"), JsonProperty("hmacSecret")]
@@ -144,7 +149,7 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
-        /// SHould serialize the secret?
+        /// Should serialize the secret
         /// </summary>
         public bool ShouldSerializeHmacSecret() => this.m_secret == null && !this.m_forDisclosure;
 
@@ -214,14 +219,23 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         public override string ToString() => this.KeyName;
 
-        /// <summary>
-        /// Convert this object into something safe for disclosure to clients
-        /// </summary>
-        public SecuritySignatureConfiguration ForDisclosure()
+        public SecuritySignatureConfiguration ForDisclosure() => new SecuritySignatureConfiguration()
         {
-            var retVal = this.MemberwiseClone() as SecuritySignatureConfiguration;
-            retVal.m_forDisclosure = true;
-            return retVal;
-        }
+            Algorithm = this.Algorithm,
+            Certificate = this.Certificate,
+            FindType = this.FindType,
+            FindTypeSpecified = this.FindTypeSpecified,
+            FindValue = this.FindValue,
+            HmacSecret = this.HmacSecret,
+            IssuerName = this.IssuerName,
+            KeyName = this.KeyName,
+            Secret = this.Secret,
+            StoreLocation = this.StoreLocation,
+            StoreLocationSpecified = this.StoreLocationSpecified,
+            StoreName = this.StoreName,
+            StoreNameSpecified = this.StoreNameSpecified,
+            ValidationOnly = this.ValidationOnly,
+            m_forDisclosure = true
+        };
     }
 }
