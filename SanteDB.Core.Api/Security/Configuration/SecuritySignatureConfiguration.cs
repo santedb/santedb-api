@@ -67,6 +67,9 @@ namespace SanteDB.Core.Security.Configuration
         private byte[] m_secret = null;
         private byte[] m_decrypedSecret = null;
 
+        // True if the serializer should hide secret info
+        private bool m_hideSecrets;
+
         /// <summary>
         /// Gets or sets the key name
         /// </summary>
@@ -123,6 +126,11 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
+        /// Should serialize the secret
+        /// </summary>
+        public bool ShouldSerializeSecret() => !this.m_hideSecrets;
+
+        /// <summary>
         /// Plaintext editor for secret
         /// </summary>
         [XmlAttribute("hmacSecret"), JsonProperty("hmacSecret")]
@@ -141,9 +149,9 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
-        /// SHould serialize the secret?
+        /// Should serialize the secret
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => this.m_secret == null;
+        public bool ShouldSerializeHmacSecret() => this.m_secret == null && !this.m_hideSecrets;
 
         /// <summary>
         /// Get the HMAC secret
@@ -210,5 +218,24 @@ namespace SanteDB.Core.Security.Configuration
         /// Represent as a string
         /// </summary>
         public override string ToString() => this.KeyName;
+
+        public SecuritySignatureConfiguration HideSecrets() => new SecuritySignatureConfiguration()
+        {
+            Algorithm = this.Algorithm,
+            Certificate = this.Certificate,
+            FindType = this.FindType,
+            FindTypeSpecified = this.FindTypeSpecified,
+            FindValue = this.FindValue,
+            HmacSecret = this.HmacSecret,
+            IssuerName = this.IssuerName,
+            KeyName = this.KeyName,
+            Secret = this.Secret,
+            StoreLocation = this.StoreLocation,
+            StoreLocationSpecified = this.StoreLocationSpecified,
+            StoreName = this.StoreName,
+            StoreNameSpecified = this.StoreNameSpecified,
+            ValidationOnly = this.ValidationOnly,
+            m_hideSecrets = true
+        };
     }
 }
