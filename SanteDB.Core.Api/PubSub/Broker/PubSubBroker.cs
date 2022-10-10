@@ -191,6 +191,12 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, Object data)
         {
+
+            if (data is ParameterCollection pc)
+            {
+                data = pc.Parameters.First().Value;
+            }
+
             using (AuthenticationContext.EnterSystemContext())
             {
                 var resourceName = data.GetType().GetSerializationName();
