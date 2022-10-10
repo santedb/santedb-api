@@ -128,7 +128,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Should serialize the secret
         /// </summary>
-        public bool ShouldSerializeSecret() => !this.m_hideSecrets;
+        public bool ShouldSerializeSecret() => !this.m_forDisclosure;
 
         /// <summary>
         /// Plaintext editor for secret
