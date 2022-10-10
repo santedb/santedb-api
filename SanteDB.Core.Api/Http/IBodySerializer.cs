@@ -54,5 +54,6 @@ namespace SanteDB.Core.Http
         /// Gets the body serializer based on the content type
         /// </summary>
         IBodySerializer GetSerializer(String contentType, Type type);
+
     }
 }

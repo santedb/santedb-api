@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Interop
@@ -39,6 +40,7 @@ namespace SanteDB.Core.Interop
         {
             this.Resources = new List<ServiceResourceOptions>();
             this.Endpoints = new List<ServiceEndpointOptions>();
+            this.ServerVersion = $"{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyProductAttribute>()?.Product} v{Assembly.GetEntryAssembly().GetName().Version} ({Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion})";
         }
 
         /// <summary>
@@ -46,6 +48,12 @@ namespace SanteDB.Core.Interop
         /// </summary>
         [XmlAttribute("version"), JsonProperty("version")]
         public String InterfaceVersion { get; set; }
+
+        /// <summary>
+        /// Gets the server informational version
+        /// </summary>
+        [XmlAttribute("server"), JsonProperty("server")]
+        public String ServerVersion { get; set; }
 
         /// <summary>
         /// Gets the service resource options

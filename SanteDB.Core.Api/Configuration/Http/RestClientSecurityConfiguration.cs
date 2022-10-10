@@ -80,7 +80,7 @@ namespace SanteDB.Core.Configuration.Http
         /// <summary>
         /// Gets certificate find
         /// </summary>
-        X509Certificate2 IRestClientSecurityDescription.ClientCertificate => this.ClientCertificate.Certificate;
+        X509Certificate2 IRestClientSecurityDescription.ClientCertificate => this.ClientCertificate?.Certificate;
 
         /// <summary>
         /// Credential provider parameters
