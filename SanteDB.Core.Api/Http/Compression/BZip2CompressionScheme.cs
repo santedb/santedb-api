@@ -45,7 +45,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Gets the implemented method
         /// </summary>
-        public HttpOptimizationMethod ImplementedMethod => HttpOptimizationMethod.Bzip2;
+        public HttpCompressionAlgorithm ImplementedMethod => HttpCompressionAlgorithm.Bzip2;
 
         /// <summary>
         /// Create compression stream

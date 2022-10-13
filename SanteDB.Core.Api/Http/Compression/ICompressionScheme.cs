@@ -37,7 +37,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Gets the method this compression scheme implements
         /// </summary>
-        HttpOptimizationMethod ImplementedMethod { get; }
+        HttpCompressionAlgorithm ImplementedMethod { get; }
 
         /// <summary>
         /// Create a stream that compresses

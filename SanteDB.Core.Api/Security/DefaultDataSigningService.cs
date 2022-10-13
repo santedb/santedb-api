@@ -98,6 +98,11 @@ namespace SanteDB.Core.Security
         public SignatureAlgorithm? GetSignatureAlgorithm(string keyId = null) => this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"))?.Algorithm;
 
         /// <summary>
+        /// Get the public key identifier for the object
+        /// </summary>
+        public string GetPublicKeyIdentifier(string keyId = null) => this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"))?.Certificate?.Thumbprint ?? keyId;
+
+        /// <summary>
         /// Sign data with the specified key data
         /// </summary>
         public byte[] SignData(byte[] data, string keyId = null)

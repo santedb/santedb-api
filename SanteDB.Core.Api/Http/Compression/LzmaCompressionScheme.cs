@@ -47,7 +47,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Gets the implemented method
         /// </summary>
-        public HttpOptimizationMethod ImplementedMethod => HttpOptimizationMethod.Lzma;
+        public HttpCompressionAlgorithm ImplementedMethod => HttpCompressionAlgorithm.Lzma;
 
         /// <summary>
         /// Create a compressed stream

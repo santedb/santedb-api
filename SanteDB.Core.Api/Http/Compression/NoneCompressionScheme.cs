@@ -20,7 +20,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// The optimization method
         /// </summary>
-        public HttpOptimizationMethod ImplementedMethod => HttpOptimizationMethod.None;
+        public HttpCompressionAlgorithm ImplementedMethod => HttpCompressionAlgorithm.None;
 
         /// <summary>
         /// Get the compression stream

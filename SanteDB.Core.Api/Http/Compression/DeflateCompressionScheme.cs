@@ -46,7 +46,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Gets the implemented method
         /// </summary>
-        public HttpOptimizationMethod ImplementedMethod => HttpOptimizationMethod.Deflate;
+        public HttpCompressionAlgorithm ImplementedMethod => HttpCompressionAlgorithm.Deflate;
 
         /// <summary>
         /// Create the compression stream

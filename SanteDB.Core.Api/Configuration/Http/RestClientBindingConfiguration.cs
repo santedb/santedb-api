@@ -58,7 +58,7 @@ namespace SanteDB.Core.Configuration.Http
         /// Gets or sets the optimization method
         /// </summary>
         [XmlElement("compressionScheme"), JsonProperty("compressionScheme")]
-        public HttpOptimizationMethod OptimizationMethod { get; set; }
+        public HttpCompressionAlgorithm OptimizationMethod { get; set; }
 
         /// <summary>
         /// Content type mapper

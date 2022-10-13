@@ -18,36 +18,34 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
+using System.IO;
 
-namespace SanteDB.Core.Http.Description
+namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// REST client binding
+    /// Represents a provider of barcode formats (QR, GS1, etc) to render data
     /// </summary>
-    public interface IRestClientBindingDescription
+    public interface IBarcodeGenerator 
     {
-        /// <summary>
-        /// Content type mapper
-        /// </summary>
-        /// <value>The content type mapper.</value>
-        IContentTypeMapper ContentTypeMapper { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this <see cref="IRestClientBindingDescription"/> is optimize.
+        /// Gets the barcode algorithm
         /// </summary>
-        /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>
-        bool Optimize { get; }
+        string BarcodeAlgorithm { get; }
 
         /// <summary>
-        /// Gets or sets the security configuration
+        /// Generate a barcode from the specified identifier
         /// </summary>
-        /// <value>The security.</value>
-        IRestClientSecurityDescription Security { get; }
+        /// <typeparam name="TEntity">The type of entity to which the identifier is attached</typeparam>
+        Stream Generate(IHasIdentifiers entity);
 
         /// <summary>
-        /// Gets the optimization method
+        /// Generate the barcode from raw data
         /// </summary>
-        HttpCompressionAlgorithm OptimizationMethod { get; }
-
+        /// <param name="rawData"></param>
+        /// <returns></returns>
+        Stream Generate(byte[] rawData);
     }
 }

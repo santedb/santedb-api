@@ -71,5 +71,10 @@ namespace SanteDB.Core.Security
         /// <param name="keyId">The identifier of the key to use for verification</param>
         /// <returns>True if the signature is valid</returns>
         bool Verify(byte[] data, byte[] signature, string keyId = null);
+
+        /// <summary>
+        /// Get the public key identifier
+        /// </summary>
+        String GetPublicKeyIdentifier(string keyId = null);
     }
 }

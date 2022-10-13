@@ -46,7 +46,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Gets the implemented method
         /// </summary>
-        public HttpOptimizationMethod ImplementedMethod => HttpOptimizationMethod.Gzip;
+        public HttpCompressionAlgorithm ImplementedMethod => HttpCompressionAlgorithm.Gzip;
 
         /// <summary>
         /// Create a compression stream

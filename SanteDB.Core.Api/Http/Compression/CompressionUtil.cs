@@ -34,7 +34,7 @@ namespace SanteDB.Core.Http.Compression
 
         // Compression schems
         private static readonly IDictionary<String, ICompressionScheme> s_compressionSchemesByHeader;
-        private static readonly IDictionary<HttpOptimizationMethod, ICompressionScheme> s_compressionSchemesByMethod;
+        private static readonly IDictionary<HttpCompressionAlgorithm, ICompressionScheme> s_compressionSchemesByMethod;
 
         /// <summary>
         /// Initialize the compression scheme
@@ -71,7 +71,7 @@ namespace SanteDB.Core.Http.Compression
         /// <summary>
         /// Get compression scheme
         /// </summary>
-        public static ICompressionScheme GetCompressionScheme(HttpOptimizationMethod httpOptimizationMethod)
+        public static ICompressionScheme GetCompressionScheme(HttpCompressionAlgorithm httpOptimizationMethod)
         {
             if (s_compressionSchemesByMethod.TryGetValue(httpOptimizationMethod, out var handler))
             {

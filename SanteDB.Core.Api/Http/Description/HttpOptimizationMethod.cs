@@ -5,8 +5,8 @@ namespace SanteDB.Core.Http.Description
     /// <summary>
     /// Optimization method
     /// </summary>
-    [XmlType(nameof(HttpOptimizationMethod), Namespace = "http://santedb.org/configuration")]
-    public enum HttpOptimizationMethod
+    [XmlType(nameof(HttpCompressionAlgorithm), Namespace = "http://santedb.org/configuration")]
+    public enum HttpCompressionAlgorithm
     {
         /// <summary>
         /// Do not optimize

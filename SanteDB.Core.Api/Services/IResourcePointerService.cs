@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 
@@ -35,11 +36,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Generate a structured pointer for the identified object
         /// </summary>
-        /// <typeparam name="TEntity">Type of entity</typeparam>
-        /// <param name="identifer">The list of identifiers to include in the pointer</param>
+        /// <param name="entity">The object to generate a pointer to</param>
         /// <returns>The structured pointer</returns>
-        String GeneratePointer<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifer)
-            where TEntity : VersionedEntityData<TEntity>, new();
+        string GeneratePointer(IHasIdentifiers entity);
 
         /// <summary>
         /// Resolve the specified resource
@@ -47,6 +46,6 @@ namespace SanteDB.Core.Services
         /// <param name="pointerData">The pointer to be resolved</param>
         /// <param name="validate">True if validation should be performed</param>
         /// <returns>The resource</returns>
-        IdentifiedData ResolveResource(String pointerData, bool validate = false);
+        IHasIdentifiers ResolveResource(string pointerData, bool validate = false);
     }
 }
