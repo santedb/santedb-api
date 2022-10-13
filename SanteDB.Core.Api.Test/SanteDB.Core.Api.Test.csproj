@@ -32,6 +32,9 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SanteDB.Core.TestFramework\SanteDB.Core.TestFramework.csproj" />
+  </ItemGroup>
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>

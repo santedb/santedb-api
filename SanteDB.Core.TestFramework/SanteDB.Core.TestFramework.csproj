@@ -50,6 +50,10 @@
   </Choose>
   <ItemGroup>
     <None Remove="C:\Users\fyfej\source\repos\santedb\santedb-server-v3\santedb-api\SanteDB.Core.TestFramework\\firebird\santedb_test.fdb" />
+    <None Remove="TestConfig.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TestConfig.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.13.3" />

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SanteDB.Core.Http.Compression;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Security.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,12 +40,43 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         SignatureMismatch
     }
+
+    /// <summary>
+    /// JSON Web signature header
+    /// </summary>
+    public class JsonWebSignatureHeader
+    {
+        /// <summary>
+        /// Algorithm for signature
+        /// </summary>
+        [JsonProperty("alg")]
+        public SignatureAlgorithm? Algorithm { get; set; }
+
+        /// <summary>
+        /// Type
+        /// </summary>
+        [JsonProperty("typ")]
+        public String Type { get; set; }
+
+        /// <summary>
+        /// Get identifier
+        /// </summary>
+        [JsonProperty("kid")]
+        public String KeyId { get; set; }
+
+        /// <summary>
+        /// Compression algorithm
+        /// </summary>
+        [JsonProperty("zip")]
+        public String Zip { get; set; }
+    }
     /// <summary>
     /// Web signature data
     /// </summary>
     public class JsonWebSignature
     {
 
+        
         // JWS format regex
         private static readonly Regex m_jwsFormat = new Regex(@"^((.*?)\.(.*?))\.(.*?)$");
 
@@ -67,12 +99,12 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         /// <param name="payload">The payload to set</param>
         /// <param name="dataSigningService">The data signing service to use</param>
-        public static JsonWebSignature Create(dynamic payload, IDataSigningService dataSigningService)
+        public static JsonWebSignature Create(object payload, IDataSigningService dataSigningService)
         {
             return new JsonWebSignature(dataSigningService)
             {
                 Payload = payload,
-                Header = new { }
+                Header = new JsonWebSignatureHeader() 
             };
         }
 
@@ -101,11 +133,11 @@ namespace SanteDB.Core.Security.Signing
                 signatureBytes = jwsMatch.Groups[4].Value.ParseBase64UrlEncode();
 
             // Now lets parse the JSON objects
-            parsedWebSignature.Header = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(headerBytes));
+            parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
 
             // First, validate the signature
-            var keyId = parsedWebSignature.Header.kid?.ToString();
-            var alg = parsedWebSignature.Header.alg?.ToString();
+            var keyId = parsedWebSignature.Header.KeyId?.ToString();
+            var alg = parsedWebSignature.Header.Algorithm?.ToString();
             var result = JsonWebSignatureParseResult.Success;
             if (String.IsNullOrEmpty(keyId))
             {
@@ -140,7 +172,7 @@ namespace SanteDB.Core.Security.Signing
         /// <summary>
         /// Get the header data
         /// </summary>
-        public dynamic Header { get; private set;  }
+        public JsonWebSignatureHeader Header { get; private set;  }
 
         /// <summary>
         /// Get the payload
@@ -166,21 +198,21 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         public JsonWebSignature WithCompression(HttpCompressionAlgorithm scheme)
         {
-            if (this.Header.zip == null)
+            if (this.Header.Zip == null)
             {
                 switch(scheme)
                 {
                     case HttpCompressionAlgorithm.Deflate:
-                        this.Header.zip = "DEF";
+                        this.Header.Zip = "DEF";
                         break;
                     case HttpCompressionAlgorithm.Gzip:
-                        this.Header.zip = "GZ";
+                        this.Header.Zip = "GZ";
                         break;
                     case HttpCompressionAlgorithm.Bzip2:
-                        this.Header.zip = "BZ2";
+                        this.Header.Zip = "BZ2";
                         break;
                     case HttpCompressionAlgorithm.Lzma:
-                        this.Header.zip = "LZ7";
+                        this.Header.Zip = "LZ7";
                         break;
                 }
             }
@@ -192,10 +224,10 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         public JsonWebSignature WithKey(String keyId)
         {
-            if (this.Header.alg == null)
+            if (String.IsNullOrEmpty(this.Header.KeyId))
             {
-                this.Header.alg = this.m_dataSigningService.GetSignatureAlgorithm(keyId);
-                this.Header.kid = this.m_dataSigningService.GetPublicKeyIdentifier(keyId);
+                this.Header.Algorithm = this.m_dataSigningService.GetSignatureAlgorithm(keyId);
+                this.Header.KeyId = this.m_dataSigningService.GetPublicKeyIdentifier(keyId);
             }
             return this;
         }
@@ -205,9 +237,9 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         public JsonWebSignature WithType(String type)
         {
-            if(this.Header.typ == null)
+            if(String.IsNullOrEmpty(this.Header.Type))
             {
-                this.Header.typ = type;
+                this.Header.Type = type;
             }
             return this;
         }
@@ -236,7 +268,7 @@ namespace SanteDB.Core.Security.Signing
                 retVal.AppendFormat(".{0}", ms.ToArray().Base64UrlEncode());
             }
 
-            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.Header.kid?.ToString());
+            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.Header.KeyId?.ToString());
             retVal.AppendFormat(".{0}", this.Signature.Base64UrlEncode());
             this.m_token= retVal.ToString();
             return this;
@@ -247,7 +279,7 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         private ICompressionScheme GetJwsCompressor()
         {
-            switch (this.Header.zip.ToString())
+            switch (this.Header.Zip.ToString())
             {
                 case "DEF":
                     return CompressionUtil.GetCompressionScheme(HttpCompressionAlgorithm.Deflate);

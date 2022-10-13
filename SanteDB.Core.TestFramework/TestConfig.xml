@@ -23,50 +23,49 @@
   <sections>
     <add type="SanteDB.Core.Configuration.ApplicationServiceContextConfigurationSection, SanteDB.Core.Api" />
     <add type="SanteDB.Core.Configuration.DiagnosticsConfigurationSection, SanteDB.Core.Api" />
-    <add type="SanteDB.Persistence.Data.Configuration.AdoPersistenceConfigurationSection, SanteDB.Persistence.Data" />
     <add type="SanteDB.Core.Configuration.AuditAccountabilityConfigurationSection, SanteDB.Core.Api, Version=2.0.0.0"/>
-    <add type="SanteDB.OrmLite.Configuration.OrmConfigurationSection, SanteDB.OrmLite" />
     <add type="SanteDB.Core.Configuration.Data.DataConfigurationSection, SanteDB.Core.Api" />
+    <add type="SanteDB.Core.Security.Configuration.SecurityConfigurationSection, SanteDB.Core.Api" />
 
   </sections>
-  <!-- Data based configuration connection string -->
-  <section xsi:type="DataConfigurationSection">
-    <connectionStrings>
-      <add name="TEST_CONNECTION" value="initial catalog=|DataDirectory|\santedb_test.fdb;server type=Embedded;user id=sysdba" provider="FirebirdSQL"/>
-    </connectionStrings>
-  </section>
-  <!-- This section controls the persistence for ADO.NET -->
-  <section xsi:type="AdoPersistenceConfigurationSection"
-           readWriteConnectionString="TEST_CONNECTION"
-           readOnlyConnectionString="TEST_CONNECTION"
-           traceSql="false"
-           providerType="FirebirdSQL"
-           staOnly="false"
-           autoUpdateExisting="true"
-           autoInsertChildren="true"
-           prepareStatements="true">
-  </section>
-  <section xsi:type="OrmConfigurationSection">
-    <providers>
-      <add type="SanteDB.OrmLite.Providers.Firebird.FirebirdSQLProvider, SanteDB.OrmLite" invariant="FirebirdSQL" />
-    </providers>
-    <dbProviderFactories>
-      <add name="PostgreSQL Data Provider" invariant="Npgsql" description=".Net Framework Data Provider for PostgreSQL" type="Npgsql.NpgsqlFactory, Npgsql, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7"/>
-      <add name="Firebird Data Provider" invariant="FirebirdSQL" description="Firebird" type="FirebirdSql.Data.FirebirdClient.FirebirdClientFactory, FirebirdSql.Data.FirebirdClient, Culture=neutral, PublicKeyToken=3750abcc3150b00c" />
-    </dbProviderFactories>
-
-  </section>
   <section xsi:type="ApplicationServiceContextConfigurationSection" allowUnsignedAssemblies="true" threadPoolSize="4">
     <serviceProviders>
-      <add type="SanteDB.Persistence.Data.Services.AdoPersistenceService, SanteDB.Persistence.Data" />
-      <add type="SanteDB.Persistence.Data.Services.AdoPolicyInformationService, SanteDB.Persistence.Data" />
-      <add type="SanteDB.Persistence.Data.Services.AdoRoleProvider, SanteDB.Persistence.Data" />
-      <add type="SanteDB.Persistence.Data.Services.AdoIdentityProvider, SanteDB.Persistence.Data" />
       <add type="SanteDB.Core.Security.SHA256PasswordHashingService, SanteDB.Core.Api" />
       <add type="SanteDB.Core.Security.DefaultPolicyDecisionService, SanteDB.Core.Api" />
       <add type="SanteDB.Core.Services.Impl.Repository.LocalRepositoryFactory,SanteDB.Core.Api"/>
       <add type="SanteDB.Core.Services.Impl.DefaultThreadPoolService, SanteDB.Core.Api" />
       <add type="SanteDB.Core.Services.Impl.LocalTagPersistenceService, SanteDB.Core.Api"/>
     </serviceProviders>
+  </section>
+  <!-- Represents this server's internal security configuration -->
+  <section xsi:type="SecurityConfigurationSection"
+           passwordRegex="^(?=.*\d){1,}(?=.*[a-z]){1,}(?=.*[A-Z]){1,}(?=.*[^\w\d]){1,}.{6,}$"
+           allowUnsignedApplets="true"
+           pepExemptionPolicy="devices">
+    <!-- Sets policies for the system -->
+    <securityPolicy>
+      <add enabled="true" policy="auth.pwd.maxAge">
+        <int>120</int>
+      </add>
+      <add enabled="true" policy="auth.pwd.history">
+        <bool>true</bool>
+      </add>
+      <add enabled="true" policy="auth.failLogin">
+        <int>5</int>
+      </add>
+      <add enabled="true" policy="auth.session.length">
+        <timespan>PT30M</timespan>
+      </add>
+      <add enabled="true" policy="auth.session.refresh">
+        <timespan>PT35M</timespan>
+      </add>
+    </securityPolicy>
+    <!-- SanteDB signs a lot of data when communicating it, this is used for configuring how this server signs data -->
+    <signingKeys>
+      <add id="jwsdefault" alg="hmac" hmacSecret="@SanteDBDefault$$$409" />
+      <add id="default" alg="hmac" hmacSecret="@SanteDBDefault$$$409"/>
+    </signingKeys>
+    <!-- To Configure X509 Signatures -->
+    <!--<signing alg="rsa" findType="FindByThumbprint" storeName="My" storeLocation="CurrentUser" findValue="value" />-->
   </section>
 </SanteDBConfiguration>

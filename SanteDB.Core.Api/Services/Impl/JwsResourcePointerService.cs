@@ -168,7 +168,7 @@ namespace SanteDB.Core.Services.Impl
                     switch(parseResult)
                     {
                         case JsonWebSignatureParseResult.AlgorithmAndKeyMismatch:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(parsedToken.Header.kid)})", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(parsedToken.Header.KeyId)})", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.InvalidFormat:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.format", $"Token is not in a valid format", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingAlgorithm:
@@ -179,12 +179,12 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                     }
                 } 
-                else if(!parsedToken.Header.typ.ToString().StartsWith("x-santedb+"))
+                else if(!parsedToken.Header.Type.StartsWith("x-santedb+"))
                 {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Object Type", DetectedIssueKeys.InvalidDataIssue));
                 }
 
-                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.typ.ToString().Substring(10));
+                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.Type.Substring(10));
                 
                 // Attempt to locate the record
                 var domainQuery = new NameValueCollection();
@@ -210,7 +210,7 @@ namespace SanteDB.Core.Services.Impl
                     throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
                 }
 
-                return results.FirstOrDefault();
+                return results.FirstOrDefault() as IHasIdentifiers;
             }
             catch (DetectedIssueException) { throw; }
             catch (Exception e)
