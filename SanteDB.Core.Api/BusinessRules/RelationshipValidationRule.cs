@@ -12,6 +12,7 @@ namespace SanteDB.Core.BusinessRules
     /// 
     /// </summary>
     /// HACK - We need to make this better.
+    [XmlType("RelationshipValidationRule", Namespace = "http://santedb.org/model"), JsonObject("RelationshipValidationRule")]
     public class RelationshipValidationRule : IdentifiedData, IRelationshipValidationRule
     {
 
