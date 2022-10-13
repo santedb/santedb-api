@@ -31,6 +31,11 @@ namespace SanteDB.Core.Services
     public interface IRelationshipValidationRule
     {
         /// <summary>
+        /// The key associated with the rule. This key is used to remove the record at a later date.
+        /// </summary>
+        Guid? Key { get; }
+
+        /// <summary>
         /// The source class key
         /// </summary>
         Guid? SourceClassKey { get; }
@@ -91,6 +96,22 @@ namespace SanteDB.Core.Services
         /// <param name="relationshipTypeKey">The relationship type key</param>
         void RemoveValidRelationship<TRelationship>(Guid? sourceClassKey, Guid? targetClassKey, Guid relationshipTypeKey)
             where TRelationship : ITargetedAssociation;
+
+        /// <summary>
+        /// Get a relationship directly using the key of the relationship.
+        /// </summary>
+        /// <typeparam name="TRelationship"></typeparam>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        IRelationshipValidationRule GetRuleByKey<TRelationship>(Guid key)
+            where TRelationship: ITargetedAssociation;
+
+        /// <summary>
+        /// Remove a relationship directly using the key of the relationship.
+        /// </summary>
+        /// <param name="key"></param>
+        void RemoveRuleByKey<TRelationship>(Guid key)
+            where TRelationship: ITargetedAssociation;
 
     }
 }
