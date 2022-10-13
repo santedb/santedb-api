@@ -58,6 +58,8 @@ namespace SanteDB.Core.Security.Configuration
             this.StoreLocation = storeLocation;
             this.FindType = findType;
             this.FindValue = findValue;
+            this.FindTypeSpecified = this.StoreLocationSpecified = this.StoreNameSpecified = true;
+
         }
 
         /// <summary>
@@ -68,7 +70,6 @@ namespace SanteDB.Core.Security.Configuration
             this.FindType = X509FindType.FindByThumbprint;
             this.StoreLocation = StoreLocation.LocalMachine;
             this.StoreName = StoreName.My;
-            this.FindTypeSpecified = this.StoreLocationSpecified = true;
         }
 
         /// <summary>

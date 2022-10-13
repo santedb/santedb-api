@@ -35,22 +35,27 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Merge was completed as instructed
         /// </summary>
-        Success,
-
-        /// <summary>
-        /// Merge was submitted but is not complete
-        /// </summary>
-        Submitted,
+        Success = 0x0,
 
         /// <summary>
         /// Merge was cancelled
         /// </summary>
-        Cancelled,
+        Aborted = 0x1,
 
         /// <summary>
         /// An alternate merging strategy was used
         /// </summary>
-        Alternate
+        Alternate = 0x2,
+
+        /// <summary>
+        /// A link was used instead 
+        /// </summary>
+        LinkInsteadOfMerge = 0x4,
+
+        /// <summary>
+        /// A destructive merge was used
+        /// </summary>
+        DestructiveMerge = 0x8
     }
 
     /// <summary>

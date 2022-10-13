@@ -191,7 +191,7 @@ namespace SanteDB.Core.Data
                 if (mergeEventArgs.Cancel)
                 {
                     this.m_tracer.TraceInfo("Pre-Event trigger indicated cancel merge");
-                    return new RecordMergeResult(RecordMergeStatus.Cancelled, null, null);
+                    return new RecordMergeResult(RecordMergeStatus.Aborted, null, null);
                 }
 
                 // The invoke may have changed the master
@@ -508,16 +508,5 @@ namespace SanteDB.Core.Data
             return true;
         }
 
-        /// <inheritdoc/>
-        T IDataManagementPattern.ResolveManagedTarget<T>(T forSource) => forSource;
-
-        /// <inheritdoc/>
-        T IDataManagementPattern.ResolveManagedSource<T>(T forTarget) => forTarget;
-
-        /// <inheritdoc/>
-        IEnumerable<T> IDataManagementPattern.GetManagedReferenceLinks<T>(IEnumerable<T> forRelationships) => forRelationships.Where(o => o.AssociationTypeKey == EntityRelationshipTypeKeys.EquivalentEntity); // There are no special reference links
-
-        /// <inheritdoc/>
-        ITargetedAssociation IDataManagementPattern.AddManagedReferenceLink<T>(T sourceObject, T targetObject) => null;
     }
 }

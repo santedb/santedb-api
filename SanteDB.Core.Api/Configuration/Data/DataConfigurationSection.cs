@@ -44,7 +44,7 @@ namespace SanteDB.Core.Configuration.Data
     /// access to change and save the value contained therein (opposed to the much more obtuse ConfigurationSectionHandler pattern).</para>
     /// </remarks>
     [XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class DataConfigurationSection : IConfigurationSection
+    public class DataConfigurationSection : IEncryptedConfigurationSection
     {
         /// <summary>
         /// Initializes a new instance of the data configuration section

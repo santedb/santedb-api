@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.i18n;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -38,6 +39,10 @@ namespace SanteDB.Core.Services.Impl
     [ServiceProvider("Local File Configuration Manager")]
     public class FileConfigurationService : IConfigurationManager
     {
+
+        // Configuration file name
+        private readonly String m_configurationFileName;
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -46,12 +51,17 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get the configuration
         /// </summary>
-        public SanteDBConfiguration Configuration { get; set; }
+        public SanteDBConfiguration Configuration { get; protected set; }
+
+        /// <summary>
+        /// True if the configuration is readonly
+        /// </summary>
+        public bool IsReadonly { get; }
 
         /// <summary>
         /// Create new file confiugration service.
         /// </summary>
-        public FileConfigurationService() : this(string.Empty)
+        public FileConfigurationService() : this(string.Empty, false)
         {
 
         }
@@ -59,7 +69,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get configuration service
         /// </summary>
-        public FileConfigurationService(string configFile)
+        public FileConfigurationService(string configFile, bool isReadonly)
         {
             try
             {
@@ -72,10 +82,9 @@ namespace SanteDB.Core.Services.Impl
                     configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), configFile);
                 }
 
-                using (var s = File.OpenRead(configFile))
-                {
-                    Configuration = SanteDBConfiguration.Load(s);
-                }
+                this.IsReadonly = isReadonly;
+                this.m_configurationFileName = configFile;
+                this.Reload();
             }
             catch (Exception e)
             {
@@ -132,7 +141,15 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void SetAppSetting(string key, string value)
         {
-            throw new NotSupportedException();
+            if (this.IsReadonly)
+            {
+                throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
+            }
+
+            var appSettings = this.Configuration.GetSection<ApplicationServiceContextConfigurationSection>().AppSettings;
+            appSettings.RemoveAll(o => o.Key == key);
+            appSettings.Add(new AppSettingKeyValuePair(key, value));
+            this.SaveConfiguration();
         }
 
         /// <summary>
@@ -140,7 +157,26 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Reload()
         {
-            throw new NotSupportedException();
+            using (var s = File.OpenRead(this.m_configurationFileName))
+            {
+                Configuration = SanteDBConfiguration.Load(s);
+            }
+        }
+
+        /// <summary>
+        /// Save configuration
+        /// </summary>
+        public void SaveConfiguration()
+        {
+            if(this.IsReadonly)
+            {
+                throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
+            }
+
+            using(var s = File.Create(this.m_configurationFileName))
+            {
+                this.Configuration.Save(s);
+            }
         }
     }
 }

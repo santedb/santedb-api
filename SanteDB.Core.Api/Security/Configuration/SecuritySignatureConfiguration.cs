@@ -61,6 +61,9 @@ namespace SanteDB.Core.Security.Configuration
         // Algorithm
         private SignatureAlgorithm m_algorithm = SignatureAlgorithm.HS256;
 
+        // When true don't disclose secrets
+        private bool m_forDisclosure = false;
+
         // HMAC key
         private string m_plainTextSecret = null;
 
@@ -123,6 +126,11 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
+        /// Should serialize the secret
+        /// </summary>
+        public bool ShouldSerializeSecret() => !this.m_forDisclosure;
+
+        /// <summary>
         /// Plaintext editor for secret
         /// </summary>
         [XmlAttribute("hmacSecret"), JsonProperty("hmacSecret")]
@@ -141,9 +149,9 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
-        /// SHould serialize the secret?
+        /// Should serialize the secret
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => this.m_secret == null;
+        public bool ShouldSerializeHmacSecret() => this.m_secret == null && !this.m_forDisclosure;
 
         /// <summary>
         /// Get the HMAC secret
@@ -210,5 +218,24 @@ namespace SanteDB.Core.Security.Configuration
         /// Represent as a string
         /// </summary>
         public override string ToString() => this.KeyName;
+
+        public SecuritySignatureConfiguration ForDisclosure() => new SecuritySignatureConfiguration()
+        {
+            Algorithm = this.Algorithm,
+            Certificate = this.Certificate,
+            FindType = this.FindType,
+            FindTypeSpecified = this.FindTypeSpecified,
+            FindValue = this.FindValue,
+            HmacSecret = this.HmacSecret,
+            IssuerName = this.IssuerName,
+            KeyName = this.KeyName,
+            Secret = this.Secret,
+            StoreLocation = this.StoreLocation,
+            StoreLocationSpecified = this.StoreLocationSpecified,
+            StoreName = this.StoreName,
+            StoreNameSpecified = this.StoreNameSpecified,
+            ValidationOnly = this.ValidationOnly,
+            m_forDisclosure = true
+        };
     }
 }

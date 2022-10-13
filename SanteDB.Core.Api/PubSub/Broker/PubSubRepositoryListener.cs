@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
@@ -125,6 +126,7 @@ namespace SanteDB.Core.PubSub.Broker
 
         // The repository this listener listens to
         private INotifyRepositoryService<TModel> m_repository;
+        private readonly IDataManagedLinkProvider<TModel> m_managedLinkService;
 
         // Queue service
         private IDispatcherQueueManagerService m_queueService;
@@ -141,10 +143,11 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
         {
             this.m_pubSubManager = pubSubManager;
-            this.m_repository = ApplicationServiceContext.Current.GetService<IRepositoryService<TModel>>() as INotifyRepositoryService<TModel>;
+            this.m_repository = repositoryService;
+            this.m_managedLinkService = managedLinkProvider;
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
 
@@ -156,12 +159,18 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
             this.m_repository.Deleted += OnDeleted;
-
+            
             this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
             if (this.m_mergeService != null)
             {
                 this.m_mergeService.Merged += OnMerged;
                 this.m_mergeService.UnMerged += OnUnmerged;
+            }
+
+            if(this.m_managedLinkService != null)
+            {
+                this.m_managedLinkService.ManagedLinkEstablished += OnLinked;
+                this.m_managedLinkService.ManagedLinkRemoved += OnUnLinked;
             }
         }
 
@@ -206,6 +215,24 @@ namespace SanteDB.Core.PubSub.Broker
         }
 
         /// <summary>
+        /// When link occurs
+        /// </summary>
+        protected virtual void OnLinked(object sender, Data.DataManagementLinkEventArgs evt)
+        {
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+
+        }
+
+        /// <summary>
+        /// When link occurs
+        /// </summary>
+        protected virtual void OnUnLinked(object sender, Data.DataManagementLinkEventArgs evt)
+        {
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+
+        }
+
+        /// <summary>
         /// Enqueue object
         /// </summary>
         private void EnqueueObject(IdentifiedData dataToQueue, PubSubEventType defaultEventType)
@@ -243,6 +270,11 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 this.m_mergeService.Merged -= this.OnMerged;
                 this.m_mergeService.UnMerged -= this.OnUnmerged;
+            }
+            if (this.m_managedLinkService != null)
+            {
+                this.m_managedLinkService.ManagedLinkEstablished -= this.OnLinked;
+                this.m_managedLinkService.ManagedLinkRemoved -= this.OnUnLinked;
             }
         }
     }

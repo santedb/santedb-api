@@ -16,22 +16,30 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-5-30
+ * Date: 2021-8-27
  */
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Services;
-using System.Collections.Generic;
-
 namespace SanteDB.Core.Data
 {
     /// <summary>
-    /// Indicates a class is a data management pattern
+    /// A service which manages and maintains the underlying data persistence technology
     /// </summary>
-    /// <remarks>
-    /// This interface is a marker interface
-    /// </remarks>
-    public interface IDataManagementPattern : IServiceImplementation
+    public interface IDataPersistenceMaintenanceService
     {
+        /// <summary>
+        /// Instructs the data connection manager to compact data
+        /// </summary>
+        void Compact();
 
+        /// <summary>
+        /// Copy the database to another location for backup purposes
+        /// </summary>
+        /// <param name="passkey">The passkey to use to encrypt the backup</param>
+        /// <returns>The location where backup can be found</returns>
+        string Backup(string passkey);
+
+        /// <summary>
+        /// Rekey all databases
+        /// </summary>
+        void RekeyDatabases();
     }
 }

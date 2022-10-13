@@ -115,7 +115,7 @@ namespace SanteDB.Core.Configuration.Features
             else
             {
                 var jobSection = configuration.GetSection<JobConfigurationSection>();
-                var jobConfig = jobSection.Jobs.Find(o => o.Type == typeof(DataRetentionJob));
+                var jobConfig = jobSection?.Jobs.Find(o => o.Type == typeof(DataRetentionJob));
                 var retentionConfig = configuration.GetSection<DataRetentionConfigurationSection>();
 
                 this.m_configuration = this.Configuration as GenericFeatureConfiguration;

@@ -51,6 +51,11 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
+        /// True if the configuration manager is readonly
+        /// </summary>
+        bool IsReadonly { get; }
+
+        /// <summary>
         /// Get the specified configuration section
         /// </summary>
         /// <typeparam name="T">The configuration section type to retrieve</typeparam>
@@ -94,5 +99,10 @@ namespace SanteDB.Core.Services
         /// Forces the configuration manager to reload the current configuration
         /// </summary>
         void Reload();
+
+        /// <summary>
+        /// Save the configuration
+        /// </summary>
+        void SaveConfiguration();
     }
 }

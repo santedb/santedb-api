@@ -142,7 +142,7 @@ namespace SanteDB.Core.Http
                 // HACK:
                 uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
                 // Add query string
-                if (query != null)
+                if (query != null && query.AllKeys.Any())
                 {
                     uriBuilder.Query = CreateQueryString(query);
                 }
