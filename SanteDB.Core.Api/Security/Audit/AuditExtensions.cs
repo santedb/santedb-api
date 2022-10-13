@@ -401,6 +401,26 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder WithAuditableObjects(this IAuditBuilder me, params AuditableObject[] auditableObjects)
             => WithAuditableObjects(me, (IEnumerable<AuditableObject>)auditableObjects);
 
+        /// <summary>
+        /// Conditionally Applies a section of the fluent syntax to the audit. 
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="condition">Condition that evaluates to true/false.</param>
+        /// <param name="then">A function/lambda that is executed when the condition is true.</param>
+        /// <param name="otherwise">An optional function/lambda that is executed when the condition is false.</param>
+        /// <returns>The <see cref="IAuditBuilder"/> in the current chain.</returns>
+        public static IAuditBuilder If(this IAuditBuilder builder, bool condition, Func<IAuditBuilder, IAuditBuilder> then, Func<IAuditBuilder, IAuditBuilder> otherwise = null)
+        {
+            if (condition)
+            {
+                return then(builder);
+            }
+            else if (null != otherwise)
+            {
+                return otherwise(builder);
+            }
+            return builder;
+        }
 
 
         /// <summary>
@@ -700,14 +720,15 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventType(EventTypeCodes.Login)
                 .WithLocalDevice()
                 .WithUser(principal)
-                .WithAuditableObjects(new AuditableObject
-                {
-                    IDTypeCode = AuditableObjectIdType.UserIdentifier,
-                    ObjectId = principal.Identity.Name,
-                    LifecycleType = AuditableObjectLifecycle.NotSet,
-                    Role = AuditableObjectRole.SecurityUser,
-                    Type = AuditableObjectType.SystemObject
-                });
+                .If(successfulLogin, b2=> b2.WithAuditableObjects(new AuditableObject
+                    {
+                        IDTypeCode = AuditableObjectIdType.UserIdentifier,
+                        ObjectId = principal?.Identity?.Name,
+                        LifecycleType = AuditableObjectLifecycle.NotSet,
+                        Role = AuditableObjectRole.SecurityUser,
+                        Type = AuditableObjectType.SystemObject
+                    })
+                );
 
         /// <summary>
         /// Audit a logout of a user principal
