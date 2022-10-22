@@ -143,9 +143,10 @@ namespace SanteDB.Core.Configuration.Features
             /// <summary>
             /// Get the installation task
             /// </summary>
-            public InstallTask(IFeature feature)
+            public InstallTask(IFeature feature, Func<SanteDBConfiguration, bool> shouldInstall = null)
             {
                 this.Feature = feature;
+                this.m_shouldInstall = shouldInstall;
             }
 
             /// <inheritdoc/>
@@ -154,6 +155,8 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
+                if (this.m_shouldInstall != null && !this.m_shouldInstall(configuration)) return true;
+
                 this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, $"Installing Service {this.Feature.Name}..."));
                 var serviceType = this.GetServiceType();
                 // Look for service type in the services
@@ -175,6 +178,8 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public IFeature Feature { get; }
 
+            private readonly Func<SanteDBConfiguration, bool> m_shouldInstall;
+
             /// <inheritdoc/>
             public string Name => $"Install {this.Feature.Name}";
 
@@ -191,8 +196,16 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
-                return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == this.GetServiceType()) ||
+                var retVal = !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == this.GetServiceType()) ||
                     configuration.GetSection(this.Feature.ConfigurationType) == null;
+                if(this.m_shouldInstall != null)
+                {
+                    return retVal & this.m_shouldInstall(configuration);
+                }
+                else
+                {
+                    return retVal;
+                }
             }
 
             /// <inheritdoc/>
