@@ -134,7 +134,7 @@ namespace SanteDB.Core.Security.Signing
 
             // Now lets parse the JSON objects
             parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
-
+            parsedWebSignature.Signature = signatureBytes;
             // First, validate the signature
             var keyId = parsedWebSignature.Header.KeyId?.ToString();
             var alg = parsedWebSignature.Header.Algorithm?.ToString();
@@ -147,7 +147,7 @@ namespace SanteDB.Core.Security.Signing
             {
                 result = JsonWebSignatureParseResult.MissingAlgorithm;
             }
-            else if (!alg.Equals(dataSigningService.GetSignatureAlgorithm(keyId)))
+            else if (!alg.Equals(dataSigningService.GetSignatureAlgorithm(keyId).ToString()))
             {
                 result = JsonWebSignatureParseResult.AlgorithmAndKeyMismatch;
             }
