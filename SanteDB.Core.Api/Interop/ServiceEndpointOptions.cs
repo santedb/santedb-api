@@ -91,7 +91,7 @@ namespace SanteDB.Core.Interop
         [XmlEnum("other")]
         Other,
         /// <summary>
-        /// Application control service
+        /// The application control service for interacting with the SanteDB web app framework.
         /// </summary>
         [XmlEnum("app")]
         ApplicationControlService
