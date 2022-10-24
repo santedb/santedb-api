@@ -85,6 +85,34 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
+    /// Represents an upstream realm (security environment) which this iCDR instance is configured to join
+    /// </summary>
+    public interface IUpstreamRealmSettings
+    {
+        /// <summary>
+        /// Gets the realm url
+        /// </summary>
+        Uri Realm { get; }
+
+        /// <summary>
+        /// Gets the local identity (how this node authenticates itself to the upstream)
+        /// </summary>
+        String LocalDeviceName { get; }
+
+        /// <summary>
+        /// Gets the local application name that this server presents as its client_id
+        /// </summary>
+        String LocalClientName { get; }
+
+        /// <summary>
+        /// The local application secret that this server presents as a client_secret (legacy)
+        /// </summary>
+        [Obsolete("This property should be used for older environments only (where a static client_secret is used)")]
+        String LocalClientSecret { get; }
+
+    }
+
+    /// <summary>
     /// Represents an integration service which is responsible for sending and
     /// pulling data to/from remote sources as a configured device or application account principal 
     /// rather than an interactive user
@@ -162,6 +190,23 @@ namespace SanteDB.Core.Services
         /// <param name="data">The data to be updated.</param>
         /// <param name="forceUpdate">When true, indicates that update should not do a safety check</param>
         void Update(IdentifiedData data, bool forceUpdate = false);
+
+        /// <summary>
+        /// Joins the specified <paramref name="targetRealm"/>
+        /// </summary>
+        /// <param name="targetRealm">The target realm to join</param>
+        void Join(IUpstreamRealmSettings targetRealm);
+
+        /// <summary>
+        /// Gets the upstream realm
+        /// </summary>
+        /// <returns></returns>
+        IUpstreamRealmSettings GetSettings();
+
+        /// <summary>
+        /// Un-joins the upstream target realm
+        /// </summary>
+        void UnJoin();
     }
 
 }
