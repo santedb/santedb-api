@@ -192,6 +192,12 @@ namespace SanteDB.Core.Services
         void Update(IdentifiedData data, bool forceUpdate = false);
 
         /// <summary>
+        /// Get server time drift between this machine and the server
+        /// </summary>
+        /// <returns>The time drift</returns>
+        TimeSpan GetTimeDrift();
+
+        /// <summary>
         /// Joins the specified <paramref name="targetRealm"/>
         /// </summary>
         /// <param name="targetRealm">The target realm to join</param>
