@@ -17,8 +17,8 @@ namespace SanteDB.Core.Configuration.Upstream
         /// <summary>
         /// The upstream domain configuration information
         /// </summary>
-        [XmlElement("domain"), JsonProperty("domain")]
-        public UpstreamDomainConfiguration Domain { get; set; }
+        [XmlElement("realm"), JsonProperty("realm")]
+        public UpstreamRealmConfiguration Realm { get; set; }
 
         /// <summary>
         /// Credentials that are used to contact the upstream

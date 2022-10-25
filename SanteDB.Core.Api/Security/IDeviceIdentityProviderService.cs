@@ -20,12 +20,13 @@
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security.Services
+namespace SanteDB.Core.Security
 {
 
     /// <summary>
