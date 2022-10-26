@@ -77,6 +77,13 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the instance name
+        /// </summary>
+        [XmlAttribute("instanceName"), JsonProperty("instanceName")]
+        [DisplayName("Instance Name"), Description("A human readable identifier for this instance (if running multiples on the same system)")]
+        public string InstanceName { get; set; }
+
+        /// <summary>
         /// Validate the configuration section
         /// </summary>
         public IEnumerable<DetectedIssue> Validate()

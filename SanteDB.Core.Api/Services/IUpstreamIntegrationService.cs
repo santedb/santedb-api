@@ -5,6 +5,7 @@ using System;
 using System.Collections.Specialized;
 using System.Linq.Expressions;
 using System.Net;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
@@ -213,6 +214,12 @@ namespace SanteDB.Core.Services
         /// Un-joins the upstream target realm
         /// </summary>
         void UnJoin();
+
+        /// <summary>
+        /// Authenticate as the device
+        /// </summary>
+        IPrincipal AuthenticateAsDevice();
+
     }
 
 }
