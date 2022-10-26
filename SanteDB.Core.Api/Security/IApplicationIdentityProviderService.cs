@@ -62,6 +62,14 @@ namespace SanteDB.Core.Security.Services
         IPrincipal Authenticate(String applicationName, String applicationSecret);
 
         /// <summary>
+        /// Authenticate the application identity given an existing authentication context.
+        /// </summary>
+        /// <param name="applicationName"></param>
+        /// <param name="authenticationContext"></param>
+        /// <returns></returns>
+        IPrincipal Authenticate(String applicationName, IPrincipal authenticationContext);
+
+        /// <summary>
         /// Create a basic identity in the provider
         /// </summary>
         /// <param name="applicationName">The username of the identity</param>

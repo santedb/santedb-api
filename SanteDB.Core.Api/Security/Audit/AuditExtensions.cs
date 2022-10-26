@@ -187,9 +187,9 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Append user information
+        /// Append principal information to the audit. Principals can represent a user, application or device, and any combination thereof. For example, a single principal can be composed of a User, Application and Device together.
         /// </summary>
-        public static IAuditBuilder WithUser(this IAuditBuilder me, IPrincipal principal = null)
+        public static IAuditBuilder WithPrincipal(this IAuditBuilder me, IPrincipal principal = null)
         {
             // Use all remote endpoint providers to find the current request
             principal = principal ?? AuthenticationContext.Current.Principal;
@@ -437,7 +437,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithAction(action)
                 .WithOutcome(outcome)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(auditIds.Select(o => new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -513,7 +513,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.AccessControlDecision)
                 .WithLocalDevice()
-                .WithUser(principal) //TODO: Check with Justin on this
+                .WithPrincipal(principal) //TODO: Check with Justin on this
                 .WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -538,7 +538,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(eventType)
                 .WithEventType(typeCode)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(data?.OfType<TData>()?.SelectMany(o =>
                 {
                     if (o is Bundle bundle)
@@ -649,7 +649,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditEventDataEvent", displayName: "Sensitive Data Was Disclosed to User")
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(
                     result.ToAuditableObject(AuditableObjectLifecycle.Disclosure),
                     decision.ToAuditableObject(AuditableObjectLifecycle.Verification),
@@ -673,7 +673,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityObjectChanged)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -719,7 +719,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.Login)
                 .WithLocalDevice()
-                .WithUser(principal)
+                .WithPrincipal(principal)
                 .If(successfulLogin, b2=> b2.WithAuditableObjects(new AuditableObject
                     {
                         IDTypeCode = AuditableObjectIdType.UserIdentifier,
@@ -740,7 +740,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.Logout)
                 .WithLocalDevice()
-                .WithUser(principal);
+                .WithPrincipal(principal);
 
         /// <summary>
         /// Audit a network request failure
@@ -759,7 +759,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.NetworkActivity)
                 .WithEventType(EventTypeCodes.NetworkActivity)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Uri,
@@ -833,7 +833,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStarted)
                 .WithLocalDevice()
-                .WithUser(principal);
+                .WithPrincipal(principal);
 
             var policies = session?.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim).Select(o => o.Value);
 
@@ -890,7 +890,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStopped)
                 .WithLocalDevice()
-                .WithUser(principal);
+                .WithPrincipal(principal);
 
 
             // Audit the actual session that is created
@@ -945,7 +945,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.Export)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(exportedData.Where(o => o != null).Select(o => o.ToAuditableObject(AuditableObjectLifecycle.Export)));
 
 
@@ -1058,7 +1058,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityObjectChanged)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -1079,7 +1079,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityAttributesChanged)
                 .WithLocalDevice()
-                .WithUser()
+                .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
