@@ -215,6 +215,16 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         IPrincipal Authenticate(String userName, String password, String tfaSecret);
 
+        /// <summary>
+        /// Recheck the authentication of an already authenticated <paramref name="principal"/>.
+        /// </summary>
+        /// <remarks>This method is used when the caller needs to re-verify the the <paramref name="principal"/> with the underlying identity 
+        /// provider (such as extending a session, performing an elevation check, or changing principal types, etc.). Implementers should send the <paramref name="principal"/>
+        /// to whatever the backing identity provider is, and then return a new <see cref="IPrincipal"/> which is authenticated.
+        /// </remarks>
+        /// <param name="principal">The principal which is to be re-authenticated</param>
+        /// <returns>The newly authenticated principal</returns>
+        IPrincipal ReAuthenticate(IPrincipal principal);
 
         /// <summary>
         /// Change user password
