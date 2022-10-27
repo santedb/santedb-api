@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Principal;
 using System.Text;
 
@@ -62,13 +63,10 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the HTTP headers
         /// </summary>
-        public override Dictionary<string, string> GetHttpHeaders()
+        public override void SetCredentials(HttpWebRequest request)
         {
             var authString = String.Format("{0}:{1}", this.m_userName, this.m_password);
-            return new Dictionary<string, string>()
-            {
-                {  "Authorization", String.Format("BASIC {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(authString))) }
-            };
+            request.Headers.Add(HttpRequestHeader.Authorization, String.Format("BASIC {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(authString))));
         }
     }
 }

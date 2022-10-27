@@ -105,11 +105,6 @@ namespace SanteDB.Core.Services
         /// </summary>
         String LocalClientName { get; }
 
-        /// <summary>
-        /// The local application secret that this server presents as a client_secret (legacy)
-        /// </summary>
-        [Obsolete("This property should be used for older environments only (where a static client_secret is used)")]
-        String LocalClientSecret { get; }
 
     }
 

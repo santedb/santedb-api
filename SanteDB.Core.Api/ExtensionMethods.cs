@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Data;
+using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
@@ -230,6 +231,16 @@ namespace SanteDB.Core
             var entry = svc.Dequeue(queueName);
             queueEntry = entry;
             return null != entry;
+        }
+
+        /// <summary>
+        /// Set timeout on <paramref name="me"/> to <paramref name="millisecondTimeout"/>
+        /// </summary>
+        /// <param name="me">The rest client to set the timeout  on</param>
+        /// <param name="millisecondTimeout">The timeout to set</param>
+        public static void SetTimeout(this IRestClient me, int millisecondTimeout)
+        {
+            me.Description.Endpoint.ForEach(o => { o.Timeout = new TimeSpan(0, 0, 0, 0, millisecondTimeout); });
         }
     }
 }

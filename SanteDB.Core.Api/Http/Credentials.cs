@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Http
@@ -48,8 +49,9 @@ namespace SanteDB.Core.Http
         public virtual IPrincipal Principal { get { return this.m_principal; } }
 
         /// <summary>
-        /// Get the http headers which are requried for the credential
+        /// Set the credentials
         /// </summary>
-        public abstract Dictionary<String, String> GetHttpHeaders();
+        /// <param name="webRequest">The web request to set the credentials for</param>
+        public abstract void SetCredentials(HttpWebRequest webRequest);
     }
 }

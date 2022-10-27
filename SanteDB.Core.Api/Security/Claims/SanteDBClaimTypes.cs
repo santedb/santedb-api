@@ -143,6 +143,7 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public const string SubjectId = "SubjectId";
 
+        
         /// <summary>
         /// Session id claim
         /// </summary>

@@ -167,14 +167,7 @@ namespace SanteDB.Core.Http
                 this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
             }
 
-            if (this.Credentials != null)
-            {
-                foreach (var kv in this.Credentials.GetHttpHeaders())
-                {
-                    s_tracer.TraceVerbose("Adding header {0}:{1}", kv.Key, kv.Value);
-                    retVal.Headers[kv.Key] = kv.Value;
-                }
-            }
+            this.Credentials?.SetCredentials(retVal);
 
             // Compress?
             if (this.Description.Binding.Optimize)

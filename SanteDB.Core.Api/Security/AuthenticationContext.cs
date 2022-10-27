@@ -140,7 +140,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Creates a new instance of the authentication context
         /// </summary>
-        public AuthenticationContext(IPrincipal principal)
+        private AuthenticationContext(IPrincipal principal)
         {
             this.m_principal = principal;
         }
@@ -177,6 +177,10 @@ namespace SanteDB.Core.Security
             }
         }
 
+        /// <summary>
+        /// Get the parent context
+        /// </summary>
+        public AuthenticationContext Parent => this.m_previous;
         /// <summary>
         /// Enter the system context
         /// </summary>

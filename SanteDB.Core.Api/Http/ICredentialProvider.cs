@@ -33,12 +33,6 @@ namespace SanteDB.Core.Http
         Credentials GetCredentials(IRestClient context);
 
         /// <summary>
-        /// Authenticate a user in the credential.
-        /// </summary>
-        /// <param name="context">Context.</param>
-        Credentials Authenticate(IRestClient context);
-
-        /// <summary>
         /// Gets credentials for the specified principal
         /// </summary>
         Credentials GetCredentials(IPrincipal principal);
