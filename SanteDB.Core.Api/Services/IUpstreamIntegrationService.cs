@@ -132,6 +132,11 @@ namespace SanteDB.Core.Services
         event EventHandler<UpstreamIntegrationResultEventArgs> Responded;
 
         /// <summary>
+        /// The realm settings have changed.
+        /// </summary>
+        event EventHandler RealmChanged;
+
+        /// <summary>
         /// Find the specified filtered object
         /// </summary>
         IQueryResultSet<IdentifiedData> Find(Type modelType, NameValueCollection filter, UpstreamIntegrationOptions options = null);

@@ -77,6 +77,11 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlEnum("auth.cert.store")]
         AuthenticationCertificateStore,
+        /// <summary>
+        /// How long the authentication cookie is valid for.
+        /// </summary>
+        [XmlEnum("auth.cookie.length")]
+        AuthenticationCookieValidityLength,
     }
 
     /// <summary>

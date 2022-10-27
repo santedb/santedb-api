@@ -122,6 +122,13 @@ namespace SanteDB.Core.Security.Services
         ISession Get(byte[] sessionId, bool allowExpired = false);
 
         /// <summary>
+        /// Gets active sessions for the user.
+        /// </summary>
+        /// <param name="userKey">The user to retrieve sessions for.</param>
+        /// <returns>An array of sessions if any, otherwise null.</returns>
+        ISession[] GetUserSessions(Guid userKey);
+
+        /// <summary>
         /// Extend the session with the specified refresh token
         /// </summary>
         /// <param name="refreshToken">The refresh token that will extend the session</param>
