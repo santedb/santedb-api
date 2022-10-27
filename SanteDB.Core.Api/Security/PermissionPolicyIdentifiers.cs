@@ -183,6 +183,21 @@ namespace SanteDB.Core.Security
         public const string ManageMail = UnrestrictedAdministration + ".17";
 
         /// <summary>
+        /// Unrestricted backups
+        /// </summary>
+        public const string ManageBackups = UnrestrictedAdministration + ".18";
+
+        /// <summary>
+        /// Unrestricted backups
+        /// </summary>
+        public const string CreateAnyBackup = ManageBackups + ".1";
+
+        /// <summary>
+        /// Create Public backups
+        /// </summary>
+        public const string CreatePrivateBackup = CreateAnyBackup + ".1";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";

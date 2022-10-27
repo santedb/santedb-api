@@ -20,8 +20,10 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -37,11 +39,17 @@ namespace SanteDB.Core.Services.Impl
     /// using the <see href="https://help.santesuite.org/operations/server-administration/configuration-tool">Configuration Tool</see>.
     /// </remarks>
     [ServiceProvider("Local File Configuration Manager")]
-    public class FileConfigurationService : IConfigurationManager
+    public class FileConfigurationService : IConfigurationManager, 
+        IProvideBackupAssets,
+        IRestoreBackupAssets
     {
+
+        // Asset ID
+        private static readonly Guid CONFIGURATION_FILE_ASSET_ID = Guid.Parse("09379015-3823-40F1-B051-573E9009E849");
 
         // Configuration file name
         private readonly String m_configurationFileName;
+        private readonly FileBackupAsset m_configurationFileBackupAsset;
 
         /// <summary>
         /// Gets the service name
@@ -57,6 +65,16 @@ namespace SanteDB.Core.Services.Impl
         /// True if the configuration is readonly
         /// </summary>
         public bool IsReadonly { get; }
+
+        /// <summary>
+        /// Get the asset class identifiers this supports
+        /// </summary>
+        public Guid[] AssetClassIdentifiers => new Guid[] { CONFIGURATION_FILE_ASSET_ID };
+
+        /// <summary>
+        /// Requrires a restart of this host after a restore
+        /// </summary>
+        public bool RequiresRestartAfterRestore => true;
 
         /// <summary>
         /// Create new file confiugration service.
@@ -84,6 +102,7 @@ namespace SanteDB.Core.Services.Impl
 
                 this.IsReadonly = isReadonly;
                 this.m_configurationFileName = configFile;
+                this.m_configurationFileBackupAsset = new FileBackupAsset(CONFIGURATION_FILE_ASSET_ID, "config", configFile);
                 this.Reload();
             }
             catch (Exception e)
@@ -177,6 +196,29 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.Configuration.Save(s);
             }
+        }
+
+        /// <inheritdoc />
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if(backupAsset.AssetClassId.Equals(CONFIGURATION_FILE_ASSET_ID))
+            {
+                using(var assetStream = backupAsset.Open())
+                {
+                    using(var configStream = File.Create(this.m_configurationFileName))
+                    {
+                        assetStream.CopyTo(assetStream);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            yield return this.m_configurationFileBackupAsset;
         }
     }
 }

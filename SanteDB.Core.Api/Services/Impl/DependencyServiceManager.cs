@@ -81,6 +81,7 @@ namespace SanteDB.Core.Services.Impl
             // Lock object
             private object m_lockBox = new object();
 
+
             // Service manager
             private DependencyServiceManager m_serviceManager;
 
@@ -102,6 +103,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.ServiceImplementer = serviceImplementationClass;
                 this.InstantiationType = serviceImplementationClass.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
+                this.Preferred = this.ServiceImplementer.GetCustomAttributes<PreferredServiceAttribute>().Select(o => o.ServiceType).ToArray();
                 this.m_implementedServices = new HashSet<Type>(serviceImplementationClass.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
@@ -113,6 +115,7 @@ namespace SanteDB.Core.Services.Impl
                 this.ServiceImplementer = singleton.GetType();
                 this.InstantiationType = this.ServiceImplementer.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
                 this.m_singletonInstance = singleton;
+                this.Preferred = this.ServiceImplementer.GetCustomAttributes<PreferredServiceAttribute>().Select(o => o.ServiceType).ToArray();
                 this.m_implementedServices = new HashSet<Type>(this.ServiceImplementer.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
@@ -120,6 +123,11 @@ namespace SanteDB.Core.Services.Impl
             /// Get the created instance otherwise null
             /// </summary>
             internal object GetCreatedInstance() => this.m_singletonInstance;
+
+            /// <summary>
+            /// Types that this is preferred for
+            /// </summary>
+            public Type[] Preferred { get; }
 
             /// <summary>
             /// Get an instance of the object
@@ -322,17 +330,24 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get the specified service
         /// </summary>
-        public object GetService(Type serviceType)
+        public object GetService(Type serviceType) => this.GetServiceInternal(serviceType);
+
+        /// <summary>
+        /// Get service with <paramref name="excludeImplementations"/>
+        /// </summary>
+        private object GetServiceInternal(Type serviceType, Type[] excludeImplementations = null)
         {
             ServiceInstanceInformation candidateService = null;
-            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false && !this.m_notConfiguredServices.Contains(serviceType))
+            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false 
+                && !this.m_notConfiguredServices.Contains(serviceType)
+                || excludeImplementations?.Any(s=>candidateService.Preferred.Contains(s)) == true)
             {
                 lock (this.m_lock)
                 {
-                    candidateService = this.m_serviceRegistrations.FirstOrDefault(s => s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer));
+                    candidateService = this.m_serviceRegistrations.FirstOrDefault(s => (s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer)) && excludeImplementations?.Any(a=>s.Preferred.Contains(a)) != true);
                     if (candidateService == null) // Attempt a load from configuration
                     {
-                        var cServiceType = this.m_configuration.ServiceProviders.FirstOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
+                        var cServiceType = this.m_configuration.ServiceProviders.FirstOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type) );
                         if (cServiceType != null)
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
@@ -345,12 +360,11 @@ namespace SanteDB.Core.Services.Impl
                             foreach (var factory in this.m_serviceFactories)
                             {
                                 // Is the service factory already created?
-                                created |= factory.TryCreateService(serviceType, out object serviceInstance);
+                                created |= factory.TryCreateService(serviceType, out object serviceInstance) ;
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
                                     this.AddServiceProvider(candidateService);
-
                                     break;
                                 }
                             }
@@ -372,10 +386,18 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void AddCacheServices(ServiceInstanceInformation candidateService)
         {
+
+            // Is the candidate service a preferred service? If so remove the others
+            foreach (var preferredService in candidateService.Preferred)
+            {
+                this.m_cachedServices.TryRemove(preferredService, out _);
+            }
+
             foreach (var itm in candidateService.ImplementedServices)
             {
                 this.m_cachedServices.TryAdd(itm, candidateService);
             }
+
         }
 
         /// <summary>
@@ -473,7 +495,10 @@ namespace SanteDB.Core.Services.Impl
                     }
 
                     // Add configured services
-                    foreach (var svc in this.m_configuration.ServiceProviders)
+                    foreach (var svc in this.m_configuration.ServiceProviders
+                        .Select(s => new { serviceType = s, order = s.Type.GetCustomAttributes<PreferredServiceAttribute>().Count() })
+                        .OrderByDescending(s=>s.order)
+                        .Select(s=>s.serviceType))
                     {
                         if (svc.Type == null)
                         {
@@ -635,6 +660,8 @@ namespace SanteDB.Core.Services.Impl
                 throw new ArgumentNullException(nameof(type), "Cannot find type for dependency injection");
             }
 
+            var preferredForServices = type.GetCustomAttributes<PreferredServiceAttribute>().Select(t => t.ServiceType).ToArray();
+
             // DI stack value
             this.m_dependencyInjectionStack.Value = this.m_dependencyInjectionStack.Value ?? new Stack<Type>();
 
@@ -672,7 +699,14 @@ namespace SanteDB.Core.Services.Impl
                         for (int i = 0; i < parameterValues.Length; i++)
                         {
                             var dependencyInfo = parameterTypes[i];
-                            var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
+                            var dependentServiceType = dependencyInfo.Type;
+                            // Is the dependent service anything for which we are the preferred service? If so find another instance
+                            object candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
+                            if (preferredForServices.Any(s => s.IsAssignableFrom(candidateService.GetType()))) // Replace with a specific implementation
+                            {
+                                dependentServiceType = candidateService.GetType();
+                            }
+
                             if (candidateService == null && dependencyInfo.Required)
                             {
                                 throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
@@ -682,9 +716,9 @@ namespace SanteDB.Core.Services.Impl
                                 var expr = Expression.Convert(Expression.Call(
                                     Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
                                     (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
-                                    Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type);
+                                    Expression.Constant(dependentServiceType)), dependencyInfo.Type);
                                 //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
-                                parameterValues[i] = expr;
+                                parameterValues[i] = expr; // Expression.Convert(Expression.Constant(candidateService), dependentServiceType); //expr;
                             }
                         }
 

@@ -7,6 +7,9 @@
 	<PropertyGroup Condition="'$(VersionNumber)' == ''">
     <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
+	<ItemGroup>
+	  <None Remove="TestConfig.xml" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -28,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\NonStandardBundle.xml" />
+    <EmbeddedResource Include="TestConfig.xml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
