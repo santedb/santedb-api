@@ -219,6 +219,10 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         public override string ToString() => this.KeyName;
 
+        /// <summary>
+        /// Modify the security signature collection for disclosure to a REST API
+        /// </summary>
+        /// <returns>The created configuration</returns>
         public SecuritySignatureConfiguration ForDisclosure() => new SecuritySignatureConfiguration()
         {
             Algorithm = this.Algorithm,
@@ -229,7 +233,6 @@ namespace SanteDB.Core.Security.Configuration
             HmacSecret = this.HmacSecret,
             IssuerName = this.IssuerName,
             KeyName = this.KeyName,
-            Secret = this.Secret,
             StoreLocation = this.StoreLocation,
             StoreLocationSpecified = this.StoreLocationSpecified,
             StoreName = this.StoreName,

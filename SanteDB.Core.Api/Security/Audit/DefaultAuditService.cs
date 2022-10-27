@@ -26,6 +26,7 @@ namespace SanteDB.Core.Security.Audit
         static readonly string s_ProcessId = Process.GetCurrentProcess().Id.ToString();
         static readonly string s_ProcessName = Process.GetCurrentProcess().ProcessName;
 
+        /// <inheritdoc/>
         public string ServiceName => SERVICE_NAME;
 
         readonly IRepositoryService<AuditEventData> _AuditRepository; //Local DB.
@@ -36,6 +37,9 @@ namespace SanteDB.Core.Security.Audit
         readonly Tracer _Tracer;
 
 
+        /// <summary>
+        /// DI Constructor
+        /// </summary>
         public DefaultAuditService(IServiceProvider serviceProvider)
         {
             _Tracer = new Tracer(nameof(DefaultAuditService));

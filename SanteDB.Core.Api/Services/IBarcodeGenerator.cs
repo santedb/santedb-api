@@ -38,7 +38,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Generate a barcode from the specified identifier
         /// </summary>
-        /// <typeparam name="TEntity">The type of entity to which the identifier is attached</typeparam>
         Stream Generate(IHasIdentifiers entity);
 
         /// <summary>

@@ -63,6 +63,14 @@ namespace SanteDB.Core.Security.Audit
             return me;
         }
 
+        /// <summary>
+        /// Modify the audit <paramref name="builder"/> to have <paramref name="condition"/>
+        /// </summary>
+        /// <param name="builder">The audit build on which the outcome should be appended</param>
+        /// <param name="condition">The condition which determines the outcome</param>
+        /// <param name="trueOutcome">The status outcome code for the success case</param>
+        /// <param name="falseOutcome">The status outcome code for the fail case</param>
+        /// <returns>The modified audit builder</returns>
         public static IAuditBuilder WithOutcome(this IAuditBuilder builder, bool condition, OutcomeIndicator trueOutcome = OutcomeIndicator.Success, OutcomeIndicator falseOutcome = OutcomeIndicator.MinorFail)
             => WithOutcome(builder, condition ? trueOutcome : falseOutcome);
 
@@ -430,6 +438,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="outcome">The outcome of the action</param>
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
+        /// <param name="me">The audit build on which the log information should be appened</param>
         public static IAuditBuilder ForAuditLogUsed(this IAuditBuilder me, ActionType action, OutcomeIndicator outcome, string query, params Guid[] auditIds)
             => me
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
@@ -956,6 +965,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="wasRemoved">True if the object was removed instead of masked</param>
         /// <param name="maskedObject">The object that was masked</param>
         /// <param name="decision">The decision which caused the masking to occur</param>
+        /// <param name="builder">The audit builder on which the information should be appended</param>
         public static IAuditBuilder ForMasking<TModel>(this IAuditBuilder builder, TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             => ForEventDataAction(
                 builder,
@@ -1138,12 +1148,13 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Creates a new <see cref="IAuditBuilder" /> instance tied to this service for dispatch.
         /// </summary>
-        /// <param name="timeStamp"></param>
-        /// <param name="actionCode"></param>
-        /// <param name="outcome"></param>
-        /// <param name="eventIdentifier"></param>
-        /// <param name="eventTypeCode"></param>
-        /// <returns></returns>
+        /// <param name="service">The service to use to build the audit</param>
+        /// <param name="timeStamp">The timestamp of the event</param>
+        /// <param name="actionCode">The action type which classifies the audit action</param>
+        /// <param name="outcome">The outcome of the audit</param>
+        /// <param name="eventIdentifier">The event identification</param>
+        /// <param name="eventTypeCode">The event type</param>
+        /// <returns>The constructed audit builder</returns>
         public static IAuditBuilder Audit(this IAuditService service, DateTimeOffset timeStamp, ActionType actionCode, OutcomeIndicator outcome, EventIdentifierType eventIdentifier, AuditCode eventTypeCode)
             => service.Audit()
                 .WithTimestamp(timeStamp)
@@ -1155,12 +1166,13 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Creates a new <see cref="IAuditBuilder" /> instance tied to this service for dispatch.
         /// </summary>
-        /// <param name="timeStamp"></param>
-        /// <param name="actionCode"></param>
-        /// <param name="outcome"></param>
-        /// <param name="eventIdentifier"></param>
-        /// <param name="eventTypeCode"></param>
-        /// <returns></returns>
+        /// <param name="service">The audit service to use for creating the audit</param>
+        /// <param name="timeStamp">The timestamp of the event</param>
+        /// <param name="actionCode">The action code which was executed</param>
+        /// <param name="outcome">The outcome of the audit</param>
+        /// <param name="eventIdentifier">The event identification</param>
+        /// <param name="eventTypeCode">The type code</param>
+        /// <returns>The audit builder for building the audit</returns>
         public static IAuditBuilder Audit(this IAuditService service, DateTimeOffset timeStamp, ActionType actionCode, OutcomeIndicator outcome, EventIdentifierType eventIdentifier, EventTypeCodes eventTypeCode)
             => service.Audit()
                 .WithTimestamp(timeStamp)
