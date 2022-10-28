@@ -349,7 +349,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Access administrative function on the SanteDB Client
         /// </summary>
-        public const string AccessClientAdministrativeFunction = "1.3.6.1.4.1.33349.3.1.5.9.2.10";
+        public const string AccessClientAdministrativeFunction = UnrestrictedAll + ".10";
 
         #endregion SanteDB Client Functions
     }

@@ -146,7 +146,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Identifies the realm that the identity is located in. Any valid realm identifier can be used. If this claim is missing, it means the identity is local to the calling system.
         /// </summary>
-        public const string RealmAuthority = "http://santedb.org/claims/realm";
+        public const string Realm = "http://santedb.org/claims/realm";
         
         /// <summary>
         /// Session id claim
