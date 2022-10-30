@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
 
     /// <summary>
@@ -151,4 +151,9 @@ namespace SanteDB.Core.Security
         /// <param name="deviceName">The name of the device account from which the claim should be removed</param>
         void RemoveClaim(String deviceName, String claimType, IPrincipal principal);
     }
+
+    /// <summary>
+    /// A <see cref="IIdentityProviderService"/> which only supports local authentication
+    /// </summary>
+    public interface ILocalDeviceIdentityProviderService : IDeviceIdentityProviderService { }
 }

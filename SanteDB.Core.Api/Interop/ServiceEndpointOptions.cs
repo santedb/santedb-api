@@ -94,7 +94,12 @@ namespace SanteDB.Core.Interop
         /// The application control service for interacting with the SanteDB web app framework.
         /// </summary>
         [XmlEnum("app")]
-        ApplicationControlService
+        ApplicationControlService,
+        /// <summary>
+        /// The user interface service
+        /// </summary>
+        [XmlEnum("web")]
+        WebUserInterfaceService
     }
 
     /// <summary>

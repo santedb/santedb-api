@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents an interface that allows for the retrieval of pre-configured security challenges
@@ -36,7 +36,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Gets the challenges current registered for the user (not the answers)
         /// </summary>
-        IEnumerable<SecurityChallenge> Get(String userName, IPrincipal principal);
+        IEnumerable<SecurityChallenge> Get(string userName, IPrincipal principal);
 
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace SanteDB.Core.Security
         /// <param name="challengeKey">The key of the challenge question</param>
         /// <param name="response">The response for the challenge</param>
         /// <param name="principal">The principal that is setting this response</param>
-        void Set(String userName, Guid challengeKey, String response, IPrincipal principal);
+        void Set(string userName, Guid challengeKey, string response, IPrincipal principal);
 
         /// <summary>
         /// Removes or clears the specified challenge
@@ -59,8 +59,13 @@ namespace SanteDB.Core.Security
         /// <param name="userName">The user towhich the challenge applies</param>
         /// <param name="challengeKey">The key of the challenge question</param>
         /// <param name="principal">The principal that is setting this response</param>
-        void Remove(String userName, Guid challengeKey, IPrincipal principal);
+        void Remove(string userName, Guid challengeKey, IPrincipal principal);
 
 
     }
+
+    /// <summary>
+    /// Represents a security challenge service which cannot use an upstream
+    /// </summary>
+    public interface ILocalSecurityChallengeService : ISecurityChallengeService { }
 }

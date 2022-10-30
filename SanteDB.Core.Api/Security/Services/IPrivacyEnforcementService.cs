@@ -27,7 +27,7 @@ using System;
 using System.Linq.Expressions;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Contract for services which enforce privacy directives

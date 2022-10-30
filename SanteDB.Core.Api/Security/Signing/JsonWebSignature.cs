@@ -2,6 +2,7 @@
 using SanteDB.Core.Http.Compression;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;

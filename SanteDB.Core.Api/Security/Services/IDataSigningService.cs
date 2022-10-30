@@ -23,7 +23,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Contract for services which can sign data using configured digital signature algorithms
@@ -40,12 +40,12 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the keys identifiers registered for the signature service
         /// </summary>
-        IEnumerable<String> GetKeys();
+        IEnumerable<string> GetKeys();
 
         /// <summary>
         /// Get the siganture algorithm this service would use to sign w/the specified key
         /// </summary>
-        SignatureAlgorithm? GetSignatureAlgorithm(String keyId = null);
+        SignatureAlgorithm? GetSignatureAlgorithm(string keyId = null);
 
         /// <summary>
         /// Register a key with the provider
@@ -75,6 +75,6 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the public key identifier
         /// </summary>
-        String GetPublicKeyIdentifier(string keyId = null);
+        string GetPublicKeyIdentifier(string keyId = null);
     }
 }

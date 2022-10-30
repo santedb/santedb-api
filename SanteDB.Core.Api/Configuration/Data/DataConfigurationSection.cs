@@ -55,6 +55,29 @@ namespace SanteDB.Core.Configuration.Data
         }
 
         /// <summary>
+        /// Get all configuration providers which can be used to configure the database on this system
+        /// </summary>
+        public static IEnumerable<IDataConfigurationProvider> GetDataConfigurationProviders()
+        {
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .Where(o => !o.IsDynamic)
+                .SelectMany(a =>
+                {
+                    try
+                    {
+                        return a.ExportedTypes;
+                    }
+                    catch
+                    {
+                        return new List<Type>();
+                    }
+                })
+                .Where(t => t != null && typeof(IDataConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(i => Activator.CreateInstance(i) as IDataConfigurationProvider)
+                .ToArray();
+        }
+
+        /// <summary>
         /// Gets or sets the collection of connection strings defined in the SanteDB CDR
         /// </summary>
         /// <remarks>Connection strings are comprised of three parts: a name, which identifies the connection string (example: production, main, etc.); the
@@ -162,7 +185,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </example>
         public String GetComponent(String component)
         {
-            if(String.IsNullOrEmpty(component))
+            if (String.IsNullOrEmpty(component))
             {
                 return String.Empty;
             }

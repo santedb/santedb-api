@@ -50,6 +50,11 @@ namespace SanteDB.Core.Services
         String GetString(String locale, String stringKey, dynamic parameters);
 
         /// <summary>
+        /// Gets all the locales which have codes in this manager
+        /// </summary>
+        IEnumerable<String> GetAvailableLocales();
+
+        /// <summary>
         /// Get all strings in the specified locale
         /// </summary>
         /// <param name="locale"></param>

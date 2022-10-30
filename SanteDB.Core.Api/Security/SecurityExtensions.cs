@@ -159,11 +159,7 @@ namespace SanteDB.Core.Security
                                     storeName = StoreName.CertificateAuthority;
                                 }
 
-                                using (var trustStore = new X509Store(storeName, StoreLocation.LocalMachine))
-                                {
-                                    trustStore.Open(OpenFlags.ReadWrite);
-                                    trustStore.Add(certTrust);
-                                }
+                                X509CertificateUtils.InstallCertificate(storeName, certTrust);
                             }
                         }
                     }

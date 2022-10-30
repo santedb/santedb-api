@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.Http;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using System;
@@ -132,11 +133,6 @@ namespace SanteDB.Core.Services
         event EventHandler<UpstreamIntegrationResultEventArgs> Responded;
 
         /// <summary>
-        /// The realm settings have changed.
-        /// </summary>
-        event EventHandler RealmChanged;
-
-        /// <summary>
         /// Find the specified filtered object
         /// </summary>
         IQueryResultSet<IdentifiedData> Find(Type modelType, NameValueCollection filter, UpstreamIntegrationOptions options = null);
@@ -173,12 +169,6 @@ namespace SanteDB.Core.Services
         void Insert(IdentifiedData data);
 
         /// <summary>
-        /// Determines whether the network is available.
-        /// </summary>
-        /// <returns>Returns true if the network is available.</returns>
-        bool IsAvailable();
-
-        /// <summary>
         /// Obsoletes specified data.
         /// </summary>
         /// <param name="data">The data to be obsoleted.</param>
@@ -193,32 +183,24 @@ namespace SanteDB.Core.Services
         void Update(IdentifiedData data, bool forceUpdate = false);
 
         /// <summary>
-        /// Get server time drift between this machine and the server
-        /// </summary>
-        /// <returns>The time drift</returns>
-        TimeSpan GetTimeDrift();
-
-        /// <summary>
-        /// Joins the specified <paramref name="targetRealm"/>
-        /// </summary>
-        /// <param name="targetRealm">The target realm to join</param>
-        void Join(IUpstreamRealmSettings targetRealm);
-
-        /// <summary>
-        /// Gets the upstream realm
-        /// </summary>
-        /// <returns></returns>
-        IUpstreamRealmSettings GetSettings();
-
-        /// <summary>
-        /// Un-joins the upstream target realm
-        /// </summary>
-        void UnJoin();
-
-        /// <summary>
         /// Authenticate as the device
         /// </summary>
         IPrincipal AuthenticateAsDevice();
+
+        /// <summary>
+        /// Determines whether the upstream service is available.
+        /// </summary>
+        /// <param name="endpoint">The remote endpoint to determine available for</param>
+        /// <returns>Returns true if the network is available.</returns>
+        bool IsAvailable(ServiceEndpointType endpoint);
+
+
+        /// <summary>
+        /// Get server time drift between this machine and the server
+        /// </summary>
+        /// <param name="endpoint">The service endpoint to determine time drift from</param>
+        /// <returns>The time drift</returns>
+        TimeSpan GetTimeDrift(ServiceEndpointType endpoint);
 
     }
 

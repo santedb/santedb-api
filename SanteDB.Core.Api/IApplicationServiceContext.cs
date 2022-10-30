@@ -58,6 +58,11 @@ namespace SanteDB.Core
         string ApplicationName { get; }
 
         /// <summary>
+        /// Gets the activity UUID
+        /// </summary>
+        Guid ActivityUuid { get; }
+
+        /// <summary>
         /// Type of application hosting this SanteDB
         /// </summary>
         SanteDBHostType HostType { get; }

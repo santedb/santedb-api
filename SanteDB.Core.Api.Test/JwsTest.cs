@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using SanteDB.Core.TestFramework;
 using System;

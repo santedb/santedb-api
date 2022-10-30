@@ -140,4 +140,9 @@ namespace SanteDB.Core.Security.Services
         /// <param name="applicationName">The name of the device account from which the claim should be removed</param>
         void RemoveClaim(String applicationName, String claimType, IPrincipal principal);
     }
+
+    /// <summary>
+    /// A <see cref="IApplicationIdentityProviderService"/> which only supports local authentication
+    /// </summary>
+    public interface ILocalApplicationIdentityProviderService : IApplicationIdentityProviderService {  }
 }

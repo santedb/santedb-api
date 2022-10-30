@@ -1,6 +1,6 @@
 ﻿using SanteDB.Core.Services;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Service which can encode session id and refresh tokens into an opaque format suitable to be roundtripped through an untrusted context

@@ -261,8 +261,20 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get the SID for the named user
         /// </summary>
-        Guid GetSid(String name);
+        Guid GetSid(String userName);
+
+        /// <summary>
+        /// Gets the applicable authentication methods from the identity provider for <paramref name="userName"/>
+        /// </summary>
+        /// <param name="userName">The name of the user</param>
+        /// <returns>The applicable authentication methods</returns>
+        AuthenticationMethod GetAuthenticationMethods(String userName);
     }
+
+    /// <summary>
+    /// An identity provider which only handles local authentication
+    /// </summary>
+    public interface ILocalIdentityProviderService : IIdentityProviderService { }
 
 }
 

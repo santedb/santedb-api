@@ -16,5 +16,9 @@
         /// </summary>
         CertificateSigningRequestStatus Status { get; }
 
+        /// <summary>
+        /// Get the DER encoded certificate signing request
+        /// </summary>
+        byte[] DerEncodedRequest { get; }
     }
 }

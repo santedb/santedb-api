@@ -51,7 +51,7 @@ namespace SanteDB.Core.Configuration.Http
         /// Gets or sets the rest client implementation
         /// </summary>
         /// <value>The type of the rest client.</value>
-        [XmlAttribute("clientType")]
+        [XmlElement("clientType")]
         [JsonProperty("clientType")]
         public TypeReferenceConfiguration RestClientType
         {

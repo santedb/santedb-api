@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;

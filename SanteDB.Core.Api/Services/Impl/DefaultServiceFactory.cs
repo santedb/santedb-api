@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Data.Initialization;
+using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Protocol;
@@ -48,6 +49,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultThreadPoolService),
             typeof(SimplePatchService),
             typeof(DataInitializationService),
+            typeof(RestClientFactory),
             typeof(LocalMailMessageService),
             typeof(SimpleCarePlanService),
             typeof(AesSymmetricCrypographicProvider),

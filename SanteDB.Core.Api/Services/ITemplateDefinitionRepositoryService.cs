@@ -23,8 +23,7 @@ using SanteDB.Core.Model.DataTypes;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Represents a repository which deals with metadata such as assigning authorities,
-    /// concept classes, etc.
+    /// Represents a template definition repository which loads clinical template definitions
     /// </summary>
     public interface ITemplateDefinitionRepositoryService : IRepositoryService<TemplateDefinition>
     {

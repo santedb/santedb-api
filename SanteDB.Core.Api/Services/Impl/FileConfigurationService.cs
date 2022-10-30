@@ -26,7 +26,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Reflection;
+using System.Xml;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -41,7 +43,8 @@ namespace SanteDB.Core.Services.Impl
     [ServiceProvider("Local File Configuration Manager")]
     public class FileConfigurationService : IConfigurationManager, 
         IProvideBackupAssets,
-        IRestoreBackupAssets
+        IRestoreBackupAssets,
+        IRequestRestarts
     {
 
         // Asset ID
@@ -50,6 +53,9 @@ namespace SanteDB.Core.Services.Impl
         // Configuration file name
         private readonly String m_configurationFileName;
         private readonly FileBackupAsset m_configurationFileBackupAsset;
+
+        /// <inheritdoc/>
+        public event EventHandler RestartRequested;
 
         /// <summary>
         /// Gets the service name
@@ -71,11 +77,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public Guid[] AssetClassIdentifiers => new Guid[] { CONFIGURATION_FILE_ASSET_ID };
 
-        /// <summary>
-        /// Requrires a restart of this host after a restore
-        /// </summary>
-        public bool RequiresRestartAfterRestore => true;
-
+      
         /// <summary>
         /// Create new file confiugration service.
         /// </summary>
@@ -176,9 +178,42 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Reload()
         {
-            using (var s = File.OpenRead(this.m_configurationFileName))
+            var backupFileName = Path.ChangeExtension(this.m_configurationFileName, ".bak.gz");
+            try
             {
-                Configuration = SanteDBConfiguration.Load(s);
+                using (var s = File.OpenRead(this.m_configurationFileName))
+                {
+                    Configuration = SanteDBConfiguration.Load(s);
+                    // Create a backup of this file since we could successfully load it
+                    s.Seek(0, SeekOrigin.Begin);
+                    using (var backupStream = File.Create(backupFileName))
+                    {
+                        using (var gzStream = new GZipStream(backupStream, CompressionMode.Compress))
+                        {
+                            s.CopyTo(gzStream);
+                            gzStream.Flush();
+                        }
+                    }
+                }
+            }
+            catch(XmlException) // attempt a restore
+            {
+                if(File.Exists(backupFileName))
+                {
+                    using(var backupFile = File.OpenRead(backupFileName))
+                    {
+                        using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
+                        {
+                            using(var configFileStream = File.Create(this.m_configurationFileName))
+                            {
+                                gzStream.CopyTo(configFileStream);
+                                configFileStream.Flush();
+                            }
+                        }
+                    }
+                    this.Reload();
+                }
+                throw;
             }
         }
 
@@ -196,6 +231,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.Configuration.Save(s);
             }
+            this.RestartRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <inheritdoc />

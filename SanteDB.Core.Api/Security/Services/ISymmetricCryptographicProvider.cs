@@ -20,7 +20,7 @@
  */
 using SanteDB.Core.Services;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents a crypto service provider that encrypts things using symmetric encryption

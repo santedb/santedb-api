@@ -126,6 +126,12 @@ namespace SanteDB.Core.Http
                 retVal.Headers.Add("X-Forwarded-For", fwdInfo);
             }
 
+            // Pre-empt the authentication?
+            if(this.Description.Binding.Security.PreemptiveAuthentication && (this.Credentials == null))
+            {
+                this.Credentials = this.Description.Binding.Security.CredentialProvider?.GetCredentials(this);
+            }
+
             return retVal;
         }
 

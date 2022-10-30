@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Interop;
 using System;
 
 namespace SanteDB.Core.Services
@@ -89,15 +90,21 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Creates a new API service provider
         /// </summary>
-        public ApiServiceProviderAttribute(string name, Type behaviorType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
+        public ApiServiceProviderAttribute(string name, Type behaviorType, ServiceEndpointType serviceType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
         {
             this.BehaviorType = behaviorType;
+            this.ServiceType = serviceType;
         }
 
         /// <summary>
         /// Gets or sets the contract type
         /// </summary>
-        public Type BehaviorType { get; set; }
+        public Type BehaviorType { get; }
+
+        /// <summary>
+        /// Gets the service type
+        /// </summary>
+        public ServiceEndpointType ServiceType { get; }
     }
 
 }

@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System.Linq;
 using System.Security;

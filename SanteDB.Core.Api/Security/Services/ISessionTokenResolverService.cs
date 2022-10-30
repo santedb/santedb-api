@@ -21,7 +21,7 @@
 using SanteDB.Core.Services;
 using System;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Session token resolver service

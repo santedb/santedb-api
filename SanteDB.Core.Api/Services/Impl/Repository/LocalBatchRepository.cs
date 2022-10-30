@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Linq.Expressions;

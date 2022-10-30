@@ -28,13 +28,8 @@ namespace SanteDB.Core.Data.Backup
     /// <summary>
     /// Represents a service that can back-up data to/from another location
     /// </summary>
-    public interface IBackupService : IServiceImplementation
+    public interface IBackupService : IServiceImplementation, IRequestRestarts
     {
-
-        /// <summary>
-        /// Fired when the backup service requires a restart
-        /// </summary>
-        event EventHandler RestartRequired;
 
         /// <summary>
         /// Backup media

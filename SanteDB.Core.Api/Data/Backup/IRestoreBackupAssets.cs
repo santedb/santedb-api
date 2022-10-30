@@ -11,10 +11,6 @@ namespace SanteDB.Core.Data.Backup
     public interface IRestoreBackupAssets
     {
 
-        /// <summary>
-        /// True if the application host needs to be restarted after a restore
-        /// </summary>
-        bool RequiresRestartAfterRestore { get; }
 
         /// <summary>
         /// The list of asset class identifiers this restore tool can restore

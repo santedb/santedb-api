@@ -18,12 +18,11 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
     /// Represents a security challenge service which can provide identity
@@ -45,6 +44,11 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Authenticates the specified user with a challenge key and response
         /// </summary>
-        IPrincipal Authenticate(String userName, Guid challengeKey, String response, String tfaSecret);
+        IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret);
     }
+
+    /// <summary>
+    /// A <see cref="ISecurityChallengeIdentityService"/> which can only operate in offline mode
+    /// </summary>
+    public interface ILocalSecurityChallengeIdentityService: ISecurityChallengeIdentityService { }
 }

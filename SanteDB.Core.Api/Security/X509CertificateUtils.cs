@@ -70,6 +70,20 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Install the <paramref name="certificate"/> to the specified <paramref name="storeName"/> in <see cref="StoreLocation.CurrentUser"/>
+        /// </summary>
+        /// <param name="storeName">The name of the certificate store to install the certificate into</param>
+        /// <param name="certificate">The certificate to install</param>
+        public static void InstallCertificate(StoreName storeName, X509Certificate2 certificate)
+        {
+            using (var trustStore = new X509Store(storeName, StoreLocation.CurrentUser))
+            {
+                trustStore.Open(OpenFlags.ReadWrite);
+                trustStore.Add(certificate);
+            }
+        }
+
+        /// <summary>
         /// Find the specified certificate
         /// </summary>
         /// <returns>The certificate.</returns>

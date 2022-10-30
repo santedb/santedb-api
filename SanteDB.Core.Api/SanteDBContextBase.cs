@@ -14,7 +14,7 @@ namespace SanteDB.Core
     /// <summary>
     /// A basic service context upon which other service contexts may be instantiated
     /// </summary>
-    public class SanteDBContextBase : IApplicationServiceContext, IDisposable
+    public abstract class SanteDBContextBase : IApplicationServiceContext, IDisposable
     {
 
         // Tracer
@@ -26,7 +26,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Gets the identifier for this context
         /// </summary>
-        public Guid ContextId { get; protected set; }
+        public Guid ActivityUuid { get; protected set; }
 
         /// <summary>
         /// Gets the start time of the applicaton
@@ -54,11 +54,16 @@ namespace SanteDB.Core
         public virtual string ServiceName => "Core Service Context";
 
         /// <summary>
+        /// Dependency service manager
+        /// </summary>
+        protected DependencyServiceManager DependencyServiceManager => this.m_serviceProvider;
+
+        /// <summary>
         /// Creates a new instance of the host context
         /// </summary>
         protected SanteDBContextBase(SanteDBHostType hostEnvironment, IConfigurationManager configurationManager)
         {
-            ContextId = Guid.NewGuid();
+            this.ActivityUuid = Guid.NewGuid();
             this.HostType = hostEnvironment;
             this.m_serviceProvider.AddServiceProvider(configurationManager);
         }

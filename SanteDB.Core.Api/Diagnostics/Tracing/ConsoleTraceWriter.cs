@@ -100,7 +100,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             }
 
 
-            if (this.m_filter >= level)
+            if (this.m_filter >= level || this.m_filter == EventLevel.LogAlways)
             {
                 this.m_logBacklog.Enqueue(new KeyValuePair<ConsoleColor, String>(color, String.Format("{0:yyyy/MM/dd HH:mm:ss} [{1}] : {2} {3}: 0 : {4}", DateTime.Now, String.IsNullOrEmpty(Thread.CurrentThread.Name) ? $"@{Thread.CurrentThread.ManagedThreadId}" : Thread.CurrentThread.Name, source, level, String.Format(format, args))));
                 this.m_resetEvent.Set();

@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
     /// <summary>
-    /// Auditing Service for SanteDB. <see cref="IAuditService"/> replaces the obsolete <see cref="Audit.AuditUtil"/> static implementation.
+    /// Auditing Service for SanteDB. <see cref="IAuditService"/> replaces the obsolete <see cref="AuditUtil"/> static implementation.
     /// </summary>
     public interface IAuditService : IServiceImplementation
     {
@@ -17,7 +17,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         /// <returns>A builder that can be used to construct and dispatch the audit.</returns>
         IAuditBuilder Audit();
-        
+
 
         /// <summary>
         /// Sends an audit event to be processed. 

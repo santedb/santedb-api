@@ -19,12 +19,11 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Security.Principal;
-using SanteDB.Core.Security.Services;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 
-namespace SanteDB.Core.Security
+namespace SanteDB.Core.Security.Services
 {
 
     /// <summary>

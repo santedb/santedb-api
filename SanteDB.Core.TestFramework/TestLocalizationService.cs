@@ -39,6 +39,14 @@ namespace SanteDB.Core.TestFramework
         public string ServiceName => "Testing Context Localization";
 
         /// <summary>
+        /// Get locales
+        /// </summary>
+        public IEnumerable<string> GetAvailableLocales()
+        {
+            yield break;
+        }
+
+        /// <summary>
         /// Format string
         /// </summary>
         public string GetString(string stringKey, dynamic parameters)

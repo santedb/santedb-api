@@ -59,7 +59,7 @@ namespace SanteDB.Core.TestFramework
         /// </summary>
         private TestApplicationContext() : base(SanteDBHostType.Test, new TestConfigurationService())
         {
-            this.ContextId = Guid.NewGuid();
+            this.ActivityUuid = Guid.NewGuid();
 
             EntitySource.Current = new EntitySource(new PersistenceEntitySource());
 

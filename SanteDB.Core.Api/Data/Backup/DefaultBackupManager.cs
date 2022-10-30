@@ -15,7 +15,7 @@ namespace SanteDB.Core.Data.Backup
     /// <summary>
     /// The default backup manager
     /// </summary>
-    public class DefaultBackupManager : IBackupService, IReportProgressChanged
+    public class DefaultBackupManager : IBackupService, IReportProgressChanged, IRequestRestarts
     {
         // Backup configuration section
         private readonly BackupConfigurationSection m_configuration;
@@ -32,7 +32,7 @@ namespace SanteDB.Core.Data.Backup
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <inheritdoc/>
-        public event EventHandler RestartRequired;
+        public event EventHandler RestartRequested;
 
         /// <summary>
         /// Default backup manager DI constructor
@@ -182,7 +182,6 @@ namespace SanteDB.Core.Data.Backup
                     .ForEach(irba => irba.AssetClassIdentifiers.ToList().ForEach(c => restoreProviderReference.Add(c, irba)));
 
                 int i = 0;
-                bool needsRestart = false;
                 using (var fs = File.OpenRead(backupFile)) {
                     using (var br = BackupReader.Open(fs, password))
                     {
@@ -194,20 +193,14 @@ namespace SanteDB.Core.Data.Backup
                                 if (restoreProviderReference.TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
                                 {
                                     this.m_tracer.TraceInfo("Restoring {0}...", backupAsset.Name);
-                                    if(restoreProvider.Restore(backupAsset))
-                                    {
-                                        needsRestart |= restoreProvider.RequiresRestartAfterRestore;
-                                    }
+                                    restoreProvider.Restore(backupAsset);
                                 }
                             }
                         }
                     }
                 }
 
-                if(needsRestart)
-                {
-                    this.RestartRequired?.Invoke(this, EventArgs.Empty);
-                }
+                this.RestartRequested?.Invoke(this, EventArgs.Empty);
 
                 return true;
             }
