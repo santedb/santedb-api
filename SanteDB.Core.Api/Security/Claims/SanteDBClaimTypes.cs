@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using System;
+using System.Data;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Claims
@@ -101,6 +102,10 @@ namespace SanteDB.Core.Security.Claims
         /// Identifier of the application
         /// </summary>
         public const string SanteDBApplicationIdentifierClaim = "appid";
+        /// <summary>
+        /// The specific user identifier claim issued by an OAuth implementation in SanteDB.
+        /// </summary>
+        public const string SanteDBUserIdentifierClaim = "usrid";
 
         /// <summary>
         /// Claim for conveying the one time password / access code
@@ -209,6 +214,9 @@ namespace SanteDB.Core.Security.Claims
         /// Claim which indicates that the client MUST reset its password
         /// </summary>
         public const string ForceResetPassword = "http://santedb.org/claims/force-reset-secret";
-
+        /// <summary>
+        /// A claim that identifies a security entity with a local only perspective to the system.
+        /// </summary>
+        public const string LocalOnly = "http://santedb.org/claims/localonly";
     }
 }
