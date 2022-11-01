@@ -41,7 +41,8 @@ namespace SanteDB.Core.Services
         /// Joins the specified <paramref name="targetRealm"/>
         /// </summary>
         /// <param name="targetRealm">The target realm to join</param>
-        void Join(IUpstreamRealmSettings targetRealm);
+        /// <param name="replaceExistingRegistration">True if this join request should replace the existing service</param>
+        void Join(IUpstreamRealmSettings targetRealm, bool replaceExistingRegistration);
 
         /// <summary>
         /// Determines if the upstream has been configured

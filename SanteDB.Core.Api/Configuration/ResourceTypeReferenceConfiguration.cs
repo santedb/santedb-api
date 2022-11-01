@@ -54,6 +54,15 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Constructor accepting the resource type
+        /// </summary>
+        /// <param name="resourceName">The resource type being set on this configuration object</param>
+        public ResourceTypeReferenceConfiguration(String resourceName)
+        {
+            this.TypeXml = resourceName;
+        }
+
+        /// <summary>
         /// Gets or sets the resource type
         /// </summary>
         [XmlAttribute("type"), JsonProperty("type")]
