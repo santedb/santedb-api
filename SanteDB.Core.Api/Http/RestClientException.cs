@@ -39,6 +39,14 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
+        /// Gets the HTTP status of the result
+        /// </summary>
+        public HttpStatusCode HttpStatus
+        {
+            get;
+        }
+
+        /// <summary>
         /// Create a new rest client exception
         /// </summary>
         public RestClientException(String message, Exception inner) : this(default(TResult), inner, (inner as RestClientException<TResult>)?.Status ?? WebExceptionStatus.UnknownError, (inner as RestClientException<TResult>)?.Response)
@@ -52,9 +60,13 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create the client exception
         /// </summary>
-        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", inner, status, response)
+        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", null, status, response)
         {
             this.Result = result;
+            if (response is HttpWebResponse hwr)
+            {
+                this.HttpStatus = hwr.StatusCode;
+            }
         }
 
         /// <summary>

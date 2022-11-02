@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using System;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Http
 {
@@ -33,6 +34,6 @@ namespace SanteDB.Core.Http
         /// <returns><c>true</c>, if certificate was validated, <c>false</c> otherwise.</returns>
         /// <param name="certificate">Certificate.</param>
         /// <param name="chain">Chain.</param>
-        bool ValidateCertificate(Object certificate, Object chain);
+        bool ValidateCertificate(X509Certificate2 certificate, X509Chain chain);
     }
 }

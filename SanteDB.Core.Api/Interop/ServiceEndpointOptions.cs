@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Http.Description;
 using SanteDB.Core.Model.Attributes;
 using System;
 using System.ComponentModel;
@@ -188,6 +189,13 @@ namespace SanteDB.Core.Interop
             this.ServiceType = provider.ApiType;
             this.BaseUrl = provider.Url;
             this.Capabilities = provider.Capabilities;
+            this.SecurityScheme = SecurityScheme.None;
+            if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth))
+                this.SecurityScheme |= SecurityScheme.Basic;
+            else if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth))
+                this.SecurityScheme |= SecurityScheme.Bearer;
+            if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.CertificateAuth))
+                this.SecurityScheme |= SecurityScheme.ClientCertificate;
             if (provider.BehaviorType != null)
             {
                 this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);
@@ -211,6 +219,13 @@ namespace SanteDB.Core.Interop
         [XmlAttribute("cap"), JsonProperty("cap")]
         [DisplayName("Capabilities"), Description("The capabilities of this service (compression, bearer authentication, etc.) which is used by clients to negotiate server capacity")]
         public ServiceEndpointCapabilities Capabilities { get; set; }
+
+        /// <summary>
+        /// Security scheme
+        /// </summary>
+        [XmlAttribute("security"), JsonProperty("security")]
+        [DisplayName("Security"), Description("Identifies the security methods on the provider")]
+        public SecurityScheme SecurityScheme { get; set; }
 
         /// <summary>
         /// Base URL type

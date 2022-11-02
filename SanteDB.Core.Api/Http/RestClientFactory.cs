@@ -38,14 +38,32 @@ namespace SanteDB.Core.Http
         public IRestClient GetRestClientFor(ServiceEndpointType serviceEndpointType) => this.GetRestClientFor(serviceEndpointType.ToString());
 
         /// <inheritdoc/>
-        public IRestClient GetRestClientFor(string clientName)
+        public IRestClient GetRestClientFor(String clientName)
+        {
+            if(!this.TryGetRestClientFor(clientName, out var retVal))
+            {
+                throw new KeyNotFoundException(clientName);
+            }
+            return retVal;
+        }
+
+        /// <inheritdoc/>
+        public bool TryGetRestClientFor(ServiceEndpointType endpointType, out IRestClient restClient) => this.TryGetRestClientFor(endpointType.ToString(), out restClient);
+
+        /// <inheritdoc/>
+        public bool TryGetRestClientFor(String clientName, out IRestClient restClient)
         {
             var configuration = this.m_configuration.Client.Find(o => o.Name.Equals(clientName, StringComparison.OrdinalIgnoreCase));
-            if(configuration == null)
+            if (configuration == null)
             {
-                throw new KeyNotFoundException(String.Format(ErrorMessages.REST_CLIENT_NOT_FOUND, clientName));
+                restClient = null;
+                return false;
             }
-            return this.CreateRestClient(configuration);
+            else
+            {
+                restClient = this.CreateRestClient(configuration);
+                return true;
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.Http;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Specialized;
@@ -106,6 +107,10 @@ namespace SanteDB.Core.Services
         /// </summary>
         String LocalClientName { get; }
 
+        /// <summary>
+        /// Gets the local client secret if overridden or being used
+        /// </summary>
+        String LocalClientSecret { get; }
 
     }
 
@@ -151,6 +156,13 @@ namespace SanteDB.Core.Services
         /// Instructs the integration service to retrieve the specified object
         /// </summary>
         IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null);
+
+        /// <summary>
+        /// Harmonizes the template identifier information on <paramref name="iht"/> with the upstream's template definition
+        /// </summary>
+        /// <param name="iht">The template definition</param>
+        /// <returns>The upstated <see cref="IHasTemplate"/></returns>
+        IHasTemplate HarmonizeTemplateId(IHasTemplate iht);
 
         /// <summary>
         /// Gets a specified model.
@@ -202,6 +214,12 @@ namespace SanteDB.Core.Services
         /// <returns>The time drift</returns>
         TimeSpan GetTimeDrift(ServiceEndpointType endpoint);
 
+        /// <summary>
+        /// Create an upstream repository for the specified type
+        /// </summary>
+        /// <param name="type">The type of object to create a repository for</param>
+        /// <returns>The constructed <see cref="UpstreamRepositoryServiceBase{TModel}"/></returns>
+        IRepositoryService GetUpstreamRepository(Type type);
     }
 
 }

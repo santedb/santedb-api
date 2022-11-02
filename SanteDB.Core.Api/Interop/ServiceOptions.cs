@@ -40,7 +40,6 @@ namespace SanteDB.Core.Interop
         {
             this.Resources = new List<ServiceResourceOptions>();
             this.Endpoints = new List<ServiceEndpointOptions>();
-            this.ServerVersion = $"{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyProductAttribute>()?.Product} v{Assembly.GetEntryAssembly().GetName().Version} ({Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion})";
         }
 
         /// <summary>

@@ -56,7 +56,7 @@ namespace SanteDB.Core.Http.Compression
         {
             if (null == schemeHeader)
             {
-                return null;
+                return new NoneCompressionScheme();
             }
             else if (s_compressionSchemesByHeader.TryGetValue(schemeHeader, out var handler))
             {

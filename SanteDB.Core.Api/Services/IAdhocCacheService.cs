@@ -100,6 +100,14 @@ namespace SanteDB.Core.Services
         T Get<T>(String key);
 
         /// <summary>
+        /// Try to fetch <paramref name="key"/> from the cache
+        /// </summary>
+        /// <param name="key">The key of the object to attempt to fetch</param>
+        /// <param name="value">The fetched value</param>
+        /// <returns>True if the object was fetched</returns>
+        bool TryGet<T>(String key, out T value);
+
+        /// <summary>
         /// Removes the specified object from the adhoc
         /// </summary>
         bool Remove(string key);

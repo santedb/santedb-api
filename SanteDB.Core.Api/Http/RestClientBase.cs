@@ -189,7 +189,7 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TResult">The expected response from the server</typeparam>
         public TResult Get<TResult>(string url)
         {
-            return this.Get<TResult>(url, null);
+            return this.Get<TResult>(url, (NameValueCollection)null);
         }
 
         /// <summary>
@@ -198,23 +198,34 @@ namespace SanteDB.Core.Http
         /// <param name="query">The query to be executed on th eserver</param>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <typeparam name="TResult">The expected result from the server</typeparam>
-        public TResult Get<TResult>(string url, params KeyValuePair<string, string>[] query)
+        public TResult Get<TResult>(string url, params KeyValuePair<string, string>[] query) => this.Get<TResult>(url, query.ToNameValueCollection());
+        
+        /// <summary>
+        /// Get the specified <typeparamref name="TResult"/> 
+        /// </summary>
+        /// <typeparam name="TResult">The type of result</typeparam>
+        /// <param name="url">The URL from which the result should be fetched</param>
+        /// <param name="query">The query </param>
+        /// <returns>The result</returns>
+        public TResult Get<TResult>(string url, NameValueCollection query)
         {
             return this.Invoke<Object, TResult>("GET", url, null, null, query);
         }
+
+        /// <inheritdoc/>
+        public byte[] Get(String url) => this.Get(url, null);
 
         /// <summary>
         /// Retrieves a raw byte array of data from the specified location
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <param name="query">The query (as key=value) to send on the GET request</param>
-        public byte[] Get(String url, params KeyValuePair<string, string>[] query)
+        public byte[] Get(String url, NameValueCollection query) 
         {
-            var parameters = query?.ToNameValueCollection();
-
+           
             try
             {
-                var requestEventArgs = new RestRequestEventArgs("GET", url, parameters, null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, query, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -374,15 +385,13 @@ namespace SanteDB.Core.Http
         /// <param name="body">The contents of the request to send to the server</param>
         /// <param name="query">The query to append to the URL</param>
         /// <returns>The server response</returns>
-        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, params KeyValuePair<string, string>[] query)
+        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query)
         {
-            var parameters = query?.ToNameValueCollection();
-
             try
             {
 
 
-                var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
+                var requestEventArgs = new RestRequestEventArgs(method, url, query, contentType, body);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -399,7 +408,7 @@ namespace SanteDB.Core.Http
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, parameters, contentType, null, 500, 0, null));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, query, contentType, null, 500, 0, null));
                 throw;
             }
         }
@@ -568,20 +577,22 @@ namespace SanteDB.Core.Http
             }
         }
 
+        /// <inheritdoc/>
+        public IDictionary<string, string> Head(string resourceName) => this.Head(resourceName, null);
+
         /// <summary>
         /// Perform a head operation against the specified url
         /// </summary>
         /// <param name="query">The query to execute</param>
         /// <param name="resourceName">The name of the resource (url)</param>
         /// <returns>The HTTP headers (result of the HEAD operation)</returns>
-        public IDictionary<string, string> Head(string resourceName, params KeyValuePair<String, String>[] query)
+        public IDictionary<string, string> Head(string resourceName, NameValueCollection query)
         {
-            var parameters = query?.ToNameValueCollection();
 
             try
             {
 
-                var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, parameters, null, null);
+                var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, query, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -604,7 +615,7 @@ namespace SanteDB.Core.Http
                     }
                     else
                     {
-                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
+                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
                         foreach (var itm in o.Result.Headers.AllKeys)
                         {
                             retVal.Add(itm, o.Result.Headers[itm]);
@@ -617,14 +628,14 @@ namespace SanteDB.Core.Http
                     throw fault;
                 }
 
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, 0, retVal));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, 0, retVal));
 
                 return retVal;
             }
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 500, 0, null));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 500, 0, null));
                 throw;
             }
         }

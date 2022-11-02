@@ -25,10 +25,10 @@ namespace SanteDB.Core.Security.Ca
         /// <summary>
         /// Convert the <paramref name="serializedCertificate"/> to a X509Certificate2
         /// </summary>
-        /// <param name="serializedCertificate">The certificate which was obtained from the upstream certificate store</param>
+        /// <param name="publicKey">The certificate which was obtained from the upstream certificate store</param>
         /// <param name="privateKey">The private key which matches the certificate</param>
         /// <returns>The converted certificate</returns>
-        X509Certificate2 ConvertToCertificate(byte[] serializedCertificate, RSAParameters privateKey);
+        X509Certificate2 Recombine(X509Certificate2 publicKey, RSAParameters privateKey);
 
     }
 }

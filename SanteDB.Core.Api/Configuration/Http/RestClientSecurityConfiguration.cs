@@ -71,13 +71,6 @@ namespace SanteDB.Core.Configuration.Http
         }
 
         /// <summary>
-        /// Gets or sets the certificate validator.
-        /// </summary>
-        /// <value>The certificate validator.</value>
-        [XmlIgnore, JsonIgnore]
-        ICertificateValidator IRestClientSecurityDescription.CertificateValidator { get => Activator.CreateInstance(this.CertificateValidatorXml.Type) as ICertificateValidator; }
-
-        /// <summary>
         /// Gets certificate find
         /// </summary>
         X509Certificate2 IRestClientSecurityDescription.ClientCertificate => this.ClientCertificate?.Certificate;
@@ -95,21 +88,16 @@ namespace SanteDB.Core.Configuration.Http
         public ICredentialProvider CredentialProvider { get; set; }
 
         /// <summary>
-        /// Security mode
-        /// </summary>
-        /// <value>The mode.</value>
-        [XmlAttribute("authScheme"), JsonProperty("authScheme")]
-        public SecurityScheme Mode
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// Preemptive authentication
         /// </summary>
         [XmlAttribute("preAuth"), JsonProperty("preAuth")]
         public bool PreemptiveAuthentication { get; set; }
+
+        /// <summary>
+        /// Gets the mode of authentication
+        /// </summary>
+        [XmlAttribute("mode"), JsonProperty("mode")]
+        public SecurityScheme Mode { get; set; }
     }
 
 }

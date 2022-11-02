@@ -33,10 +33,6 @@ namespace SanteDB.Core.Http.Description
         /// </summary>
         string AuthRealm { get; }
 
-        /// <summary>
-        /// Gets the certificate validator
-        /// </summary>
-        ICertificateValidator CertificateValidator { get; }
 
         /// <summary>
         /// Gets the certificate
@@ -80,6 +76,10 @@ namespace SanteDB.Core.Http.Description
         /// <summary>
         /// The HTTP endpoint requires BEARER token security
         /// </summary>
-		Bearer = 2
+		Bearer = 2,
+        /// <summary>
+        /// Use client certificates
+        /// </summary>
+        ClientCertificate = 4
     }
 }
