@@ -30,12 +30,12 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials which are used to authenticate
         /// </summary>
-        Credentials GetCredentials(IRestClient context);
+        RestRequestCredentials GetCredentials(IRestClient context);
 
         /// <summary>
         /// Gets credentials for the specified principal
         /// </summary>
-        Credentials GetCredentials(IPrincipal principal);
+        RestRequestCredentials GetCredentials(IPrincipal principal);
 
     }
 }

@@ -29,7 +29,7 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a credential provider which does basic http
     /// </summary>
-    public class HttpBasicCredentials : Credentials
+    public class HttpBasicCredentials : RestRequestCredentials
     {
         // Password
         private String m_password;

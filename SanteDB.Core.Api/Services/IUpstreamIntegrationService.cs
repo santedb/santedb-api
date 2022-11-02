@@ -199,27 +199,6 @@ namespace SanteDB.Core.Services
         /// </summary>
         IPrincipal AuthenticateAsDevice();
 
-        /// <summary>
-        /// Determines whether the upstream service is available.
-        /// </summary>
-        /// <param name="endpoint">The remote endpoint to determine available for</param>
-        /// <returns>Returns true if the network is available.</returns>
-        bool IsAvailable(ServiceEndpointType endpoint);
-
-
-        /// <summary>
-        /// Get server time drift between this machine and the server
-        /// </summary>
-        /// <param name="endpoint">The service endpoint to determine time drift from</param>
-        /// <returns>The time drift</returns>
-        TimeSpan GetTimeDrift(ServiceEndpointType endpoint);
-
-        /// <summary>
-        /// Create an upstream repository for the specified type
-        /// </summary>
-        /// <param name="type">The type of object to create a repository for</param>
-        /// <returns>The constructed <see cref="UpstreamRepositoryServiceBase{TModel}"/></returns>
-        IRepositoryService GetUpstreamRepository(Type type);
     }
 
 }

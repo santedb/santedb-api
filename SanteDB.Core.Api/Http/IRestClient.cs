@@ -34,7 +34,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials to be used for this client
         /// </summary>
-        Credentials Credentials
+        RestRequestCredentials Credentials
         {
             get;
             set;

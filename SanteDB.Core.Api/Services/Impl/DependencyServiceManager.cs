@@ -353,7 +353,7 @@ namespace SanteDB.Core.Services.Impl
             ServiceInstanceInformation candidateService = null;
             if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false
                 && !this.m_notConfiguredServices.Contains(serviceType)
-                || excludeImplementations?.Any(s => candidateService.Preferred.Contains(s)) == true)
+                || excludeImplementations?.Any(s => candidateService?.Preferred?.Contains(s) == true) == true)
             {
                 lock (this.m_lock)
                 {

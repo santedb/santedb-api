@@ -28,16 +28,16 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a series of credentials which are used when accessing the mobile core
     /// </summary>
-    public abstract class Credentials
+    public abstract class RestRequestCredentials
     {
         // Principal
         private IPrincipal m_principal;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Credentials"/> class.
+        /// Initializes a new instance of the <see cref="RestRequestCredentials"/> class.
         /// </summary>
         /// <param name="principal">Principal.</param>
-        protected Credentials(IPrincipal principal)
+        protected RestRequestCredentials(IPrincipal principal)
         {
             this.m_principal = principal;
         }

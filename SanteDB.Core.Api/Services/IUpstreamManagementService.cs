@@ -13,16 +13,16 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// Get the upstream integration service
+        /// Get the upstream realm settings
         /// </summary>
-        public IUpstreamIntegrationService UpstreamIntegrationService { get; }
+        public IUpstreamRealmSettings UpstreamRealmSettings { get; }
 
         /// <summary>
         /// Create new realm change event args
         /// </summary>
-        public UpstreamRealmChangedEventArgs(IUpstreamIntegrationService upstreamIntegrationService)
+        public UpstreamRealmChangedEventArgs(IUpstreamRealmSettings upstreamRealmSettings)
         {
-            this.UpstreamIntegrationService = upstreamIntegrationService;
+            this.UpstreamRealmSettings = upstreamRealmSettings;
         }
     }
 
@@ -33,7 +33,12 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// The realm settings have changed.
+        /// The realm settings are changing but not committed.
+        /// </summary>
+        event EventHandler<UpstreamRealmChangedEventArgs> RealmChanging;
+
+        /// <summary>
+        /// The realm settings have changed
         /// </summary>
         event EventHandler<UpstreamRealmChangedEventArgs> RealmChanged;
 
