@@ -76,6 +76,11 @@ namespace SanteDB.Core.Security.Services
         void RemovePolicies(Object securable, IPrincipal principal, params string[] oid);
     }
 
+    public interface ILocalPolicyInformationService: IPolicyInformationService
+    {
+        void CreatePolicy(IPolicy policy, IPrincipal principal);
+
+    }
 
 }
 

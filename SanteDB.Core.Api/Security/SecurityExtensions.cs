@@ -223,5 +223,59 @@ namespace SanteDB.Core.Security
             }
             return retVal || HasTrustedRootCert(chain);
         }
+
+        /// <summary>
+        /// Gets the first claim value out of an <see cref="IClaimsIdentity"/> searching in the order of claim types provided in the <paramref name="claimTypes"/> parameters.
+        /// </summary>
+        /// <param name="identity">The identity to search</param>
+        /// <param name="claimTypes">the claim types to search</param>
+        /// <returns>A value for the first instance of the first claim type found or null.</returns>
+        public static string GetFirstClaimValue(this IClaimsIdentity identity, params string[] claimTypes)
+        {
+            if (null == identity || null == claimTypes || claimTypes.Length == 0)
+            {
+                return null;
+            }
+
+            IClaim claim = null;
+            foreach(var claimtype in claimTypes)
+            {
+                claim = identity.FindFirst(claimtype);
+
+                if (null != claim)
+                {
+                    return claim.Value;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the first value of a matching claim type from an <see cref="IClaimsPrincipal"/> searching in the order specified in the parameters.
+        /// </summary>
+        /// <param name="principal">The claims principal to search.</param>
+        /// <param name="claimTypes">The ordered set of claim types to search.</param>
+        /// <returns>A value for the first instance of the first claim type found or null.</returns>
+        public static string GetFirstClaimValue(this IClaimsPrincipal principal, params string[] claimTypes)
+        {
+            if (null == principal || null == claimTypes || claimTypes.Length == 0)
+            {
+                return null;
+            }
+
+            IClaim claim = null;
+            foreach(var claimtype in claimTypes)
+            {
+                claim = principal.FindFirst(claimtype);
+
+                if (null != claim)
+                {
+                    return claim.Value;
+                }
+            }
+
+            return null;
+        }
     }
 }
