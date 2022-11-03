@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -25,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security
 {
@@ -43,8 +45,9 @@ namespace SanteDB.Core.Security
     /// </remarks>
     public class DefaultDataSigningService : IDataSigningService
     {
+
         // Security configuration
-        private SecurityConfigurationSection m_configuration;
+        private readonly SecurityConfigurationSection m_configuration;
 
         /// <summary>
         /// Default data signing service DI constructor
@@ -52,6 +55,7 @@ namespace SanteDB.Core.Security
         public DefaultDataSigningService(IConfigurationManager configurationManager)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
+
         }
 
         /// <summary>
@@ -137,11 +141,13 @@ namespace SanteDB.Core.Security
                             throw new InvalidOperationException("You must have the private key to sign data with this certificate");
                         }
 
-                        var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPrivateKey(configuration.Certificate);
-                        var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
-                        var halg = HashAlgorithm.Create(halgname.Name);
-                        var hashtext = halg.ComputeHash(data);
-                        return csp.SignHash(hashtext, halgname, RSASignaturePadding.Pkcs1);
+                        using (var csp = configuration.Certificate.GetRSAPrivateKey())
+                        {
+                            var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
+                            var halg = HashAlgorithm.Create(halgname.Name);
+                            var hashtext = halg.ComputeHash(data);
+                            return csp.SignHash(hashtext, halgname, RSASignaturePadding.Pkcs1);
+                        }
                     }
                 default:
                     throw new InvalidOperationException($"Cannot generate digital signature {configuration.Algorithm}");

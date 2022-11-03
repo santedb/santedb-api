@@ -26,7 +26,7 @@ namespace SanteDB.Core.Security.Certs
         /// <param name="dn">The distinguished name of the certificate</param>
         /// <param name="keyPair">The private key to generate the CSR for</param>
         /// <returns>The CMC signing request</returns>
-        byte[] CreateSigningRequest(RSAParameters keyPair, X500DistinguishedName dn, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None);
+        byte[] CreateSigningRequest(RSAParameters keyPair, X500DistinguishedName dn, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None, String[] enhancedUsages = null, String[] alternateNames = null);
 
         /// <summary>
         /// Creates a self-signed certificate 
@@ -36,15 +36,16 @@ namespace SanteDB.Core.Security.Certs
         /// <param name="validityPeriod">The validity period</param>
         /// <param name="keyPair">The private/public key pair</param>
         /// <returns>The generated self-signed certificate</returns>
-        X509Certificate2 CreateSelfSignedCertificate(RSAParameters keyPair, X500DistinguishedName dn, TimeSpan validityPeriod, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None);
+        X509Certificate2 CreateSelfSignedCertificate(RSAParameters keyPair, X500DistinguishedName dn, TimeSpan validityPeriod, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None, String[] enhancedUsages = null, String[] alternateNames = null, String friendlyName = null);
 
         /// <summary>
         /// Combines the <paramref name="certificate"/> with the <paramref name="keyParameters"/> 
         /// </summary>
         /// <param name="certificate">The certificate which was obtained from the upstream certificate store</param>
         /// <param name="keyParameters">The private key which matches the certificate</param>
+        /// <param name="friendlyName">The friendly name for the output cert</param>
         /// <returns>The converted certificate</returns>
-        X509Certificate2 Combine(X509Certificate2 certificate, RSAParameters keyParameters);
+        X509Certificate2 Combine(X509Certificate2 certificate, RSAParameters keyParameters, string friendlyName = null);
 
     }
 }

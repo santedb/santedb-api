@@ -21,6 +21,7 @@
 using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
 
@@ -188,7 +189,7 @@ namespace SanteDB.Core.Security.Configuration
                         var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
                         if (matches.Count == 0)
                         {
-                            throw new InvalidOperationException("Certificate not found");
+                            throw new FileNotFoundException($"Certificate {this.FindValue} not found");
                         }
                         else if (matches.Count > 1)
                         {

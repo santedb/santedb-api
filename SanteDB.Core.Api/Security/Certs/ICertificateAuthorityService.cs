@@ -13,6 +13,11 @@ namespace SanteDB.Core.Security.Certs
     {
 
         /// <summary>
+        /// Submit a signing request to this authority
+        /// </summary>
+        ICertificateSigningRequest SubmitSigningRequest(byte[] csr);
+
+        /// <summary>
         /// Get all signing requests for the CA service
         /// </summary>
         IEnumerable<ICertificateSigningRequest> GetSigningRequests(CertificateSigningRequestStatus status);
@@ -79,6 +84,11 @@ namespace SanteDB.Core.Security.Certs
         /// <param name="findValue">The value to match</param>
         /// <returns>The list of matching certificates</returns>
         IEnumerable<X509Certificate2> Find(X509FindType findType, object findValue);
+
+        /// <summary>
+        /// Get the certificate that was generated for <paramref name="certRequest"/>
+        /// </summary>
+        X509Certificate2 GetCertificate(ICertificateSigningRequest certRequest);
 
         /// <summary>
         /// Get the complete revokation list

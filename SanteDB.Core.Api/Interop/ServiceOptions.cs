@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
@@ -69,8 +70,8 @@ namespace SanteDB.Core.Interop
         /// <summary>
         /// Gets or sets the flags on the service
         /// </summary>
-        [XmlElement("flag"), JsonProperty("flags")]
-        public List<String> Flags { get; set; }
+        [XmlElement("settings"), JsonProperty("settings")]
+        public List<AppSettingKeyValuePair> Settings { get; set; }
 
         /// <summary>
 		/// Gets or sets the modified on date time of the service options.
