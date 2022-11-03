@@ -1,4 +1,4 @@
-﻿namespace SanteDB.Core.Security.Ca
+﻿namespace SanteDB.Core.Security.Certs
 {
     /// <summary>
     /// Represents a certificate signing request in a method which is abstracted from implementation

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
-namespace SanteDB.Core.Security.Ca
+namespace SanteDB.Core.Security.Certs
 {
     /// <summary>
     /// Represents an integration to a certificate authority
@@ -22,7 +22,7 @@ namespace SanteDB.Core.Security.Ca
         /// </summary>
         /// <param name="csrId">The identifier of the signing request</param>
         /// <returns>The signing request</returns>
-        ICertificateSigningRequest GetSigningRequest(String csrId);
+        ICertificateSigningRequest GetSigningRequest(string csrId);
 
         /// <summary>
         /// Find a signing request by the specified identifier
@@ -37,7 +37,7 @@ namespace SanteDB.Core.Security.Ca
         /// </summary>
         /// <param name="csrId">The signing request identifier</param>
         /// <returns>The deleted signing request</returns>
-        ICertificateSigningRequest DeleteSigningRequest(String csrId);
+        ICertificateSigningRequest DeleteSigningRequest(string csrId);
 
         /// <summary>
         /// Approve the certificate signing request

@@ -1,4 +1,4 @@
-﻿namespace SanteDB.Core.Security.Ca
+﻿namespace SanteDB.Core.Security.Certs
 {
     /// <summary>
     /// The certificate signing request status
