@@ -1,11 +1,12 @@
-﻿using System.Xml.Serialization;
+﻿using System;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.Http.Description
 {
     /// <summary>
     /// Optimization method
     /// </summary>
-    [XmlType(nameof(HttpCompressionAlgorithm), Namespace = "http://santedb.org/configuration")]
+    [XmlType(nameof(HttpCompressionAlgorithm), Namespace = "http://santedb.org/configuration"), Flags]
     public enum HttpCompressionAlgorithm
     {
         /// <summary>
@@ -30,13 +31,13 @@ namespace SanteDB.Core.Http.Description
         /// Use BZIP 2
         /// </summary>
         [XmlEnum("bz2")]
-        Bzip2 = 3,
+        Bzip2 = 4,
 
         /// <summary>
         /// Use LZMA
         /// </summary>
         [XmlEnum("7z")]
-        Lzma = 4
+        Lzma = 8
     }
 
 }

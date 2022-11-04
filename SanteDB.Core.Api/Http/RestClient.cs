@@ -35,6 +35,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -103,7 +104,17 @@ namespace SanteDB.Core.Http
             // Set appropriate header
             if (this.Description.Binding.Optimize)
             {
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
+                StringBuilder acceptBuilder = new StringBuilder();
+                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
+                    acceptBuilder.Append(",lzma");
+                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Bzip2))
+                    acceptBuilder.Append(",bzip2");
+                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Gzip))
+                    acceptBuilder.Append(",gzip");
+                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
+                    acceptBuilder.Append(",deflate");
+
+                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
             }
 
             // Set user agent
@@ -244,7 +255,14 @@ namespace SanteDB.Core.Http
                         {
                             if (this.Description.Binding.Optimize)
                             {
-                                using (var str = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod).CreateCompressionStream(requestStream))
+                                var compressionScheme = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod);
+                                if(compressionScheme.ImplementedMethod != HttpCompressionAlgorithm.None)
+                                {
+                                    requestObj.Headers.Add("Content-Encoding", compressionScheme.AcceptHeaderName);
+                                    requestObj.Headers.Add("X-CompressRequestStream", compressionScheme.AcceptHeaderName);
+                                }
+
+                                using (var str = compressionScheme.CreateCompressionStream(requestStream))
                                 {
                                     serializer.Serialize(str, body);
                                 }

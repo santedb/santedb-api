@@ -33,6 +33,8 @@ namespace SanteDB.Core.Security
     /// </summary>
     public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider
     {
+        internal const int IV_SIZE = 16;
+
         // Context key
         private byte[] m_contextKey;
 
@@ -133,6 +135,48 @@ namespace SanteDB.Core.Security
                 this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.FindValue ?? defaultKey?.HmacSecret ?? "DEFAULTKEY"));
             }
             return this.m_contextKey;
+        }
+
+        /// <inheritdoc/>    
+        public string Encrypt(string plainText)
+        {
+            return this.Encrypt(Encoding.UTF8.GetBytes(plainText)).Base64UrlEncode();
+        }
+
+        /// <inheritdoc/>    
+        public string Decrypt(string cipherText)
+        {
+            return Encoding.UTF8.GetString(this.Decrypt(cipherText.ParseBase64UrlEncode()));
+        }
+
+        /// <inheritdoc/>    
+        public byte[] Encrypt(byte[] plainText)
+        {
+            var key = this.GetContextKey();
+            var iv = new byte[IV_SIZE];
+            System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(iv);
+
+            var ciphertext = this.Encrypt(plainText, key, iv);
+
+            var result = new byte[IV_SIZE + ciphertext.Length];
+
+            Buffer.BlockCopy(iv, 0, result, 0, IV_SIZE);
+            Buffer.BlockCopy(ciphertext, 0, result, IV_SIZE, ciphertext.Length);
+
+            return result;
+        }
+
+        /// <inheritdoc/>    
+        public byte[] Decrypt(byte[] cipherText)
+        {
+
+            var key = this.GetContextKey();
+            var iv = new byte[IV_SIZE];
+            var encrypteddata = new byte[cipherText.Length - IV_SIZE];
+            Buffer.BlockCopy(cipherText, 0, iv, 0, IV_SIZE);
+            Buffer.BlockCopy(cipherText, IV_SIZE, encrypteddata, 0, encrypteddata.Length);
+
+            return this.Decrypt(encrypteddata, key, iv);
         }
     }
 }
