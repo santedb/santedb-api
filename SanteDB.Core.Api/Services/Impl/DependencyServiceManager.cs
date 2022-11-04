@@ -808,10 +808,12 @@ namespace SanteDB.Core.Services.Impl
         /// <typeparam name="TInterface">The type of interface to construct</typeparam>
         public IEnumerable<TInterface> CreateInjectedOfAll<TInterface>(Assembly fromAssembly = null)
         {
+            var interfacetype = typeof(TInterface);
+
             if (fromAssembly == null)
             {
                 return this.GetAllTypes()
-                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
+                    .Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
                     .Select(t =>
                     {
                         try
@@ -829,7 +831,7 @@ namespace SanteDB.Core.Services.Impl
             else
             {
                 return fromAssembly.ExportedTypes
-                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                    .Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                     .Select(t => this.CreateInjected(t))
                     .OfType<TInterface>();
             }
@@ -854,7 +856,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<T> CreateAll<T>(params object[] parms)
         {
-            return this.GetAllTypes().Where(t => typeof(T).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
+            var ttype = typeof(T);
+
+            return this.GetAllTypes().Where(t => ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
                 .Select(t =>
                 {
                     try
