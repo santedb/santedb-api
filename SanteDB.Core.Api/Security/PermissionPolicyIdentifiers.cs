@@ -198,6 +198,26 @@ namespace SanteDB.Core.Security
         public const string CreatePrivateBackup = CreateAnyBackup + ".1";
 
         /// <summary>
+        /// Unrestricted certificate management
+        /// </summary>
+        public const string UnrestrictedCertificate = UnrestrictedAdministration + ".19";
+
+        /// <summary>
+        /// Permission to sign and issue certificates
+        /// </summary>
+        public const string IssueCertificates = UnrestrictedCertificate + ".1";
+
+        /// <summary>
+        /// Permission to revoke certificates
+        /// </summary>
+        public const string RevokeCertificates = UnrestrictedCertificate + ".2";
+
+        /// <summary>
+        /// Permission to assign a certificate to an entity
+        /// </summary>
+        public const string AssignCertificateToIdentity = UnrestrictedCertificate + ".3";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";

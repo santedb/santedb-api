@@ -26,5 +26,13 @@ namespace SanteDB.Core.Security.Services
         /// <param name="encodedToken"></param>
         /// <returns></returns>
         byte[] Decode(string encodedToken);
+
+        /// <summary>
+        /// Extract the identifier of the session from the encoded token without performing validation
+        /// </summary>
+        /// <param name="encodedToken">The encoded token</param>
+        /// <returns>The extracted session identity</returns>
+        /// <remarks>Allows unconfigured instances to extract the identifier portion of the access token</remarks>
+        byte[] ExtractSessionIdentity(string encodedToken);
     }
 }

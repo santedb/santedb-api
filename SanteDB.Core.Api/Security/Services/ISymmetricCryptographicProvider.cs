@@ -54,5 +54,24 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         byte[] Decrypt(byte[] data, byte[] key, byte[] iv);
 
+        /// <summary>
+        /// Encrypt <paramref name="data"/> with the IV embedded in the return
+        /// </summary>
+        byte[] Encrypt(byte[] data);
+
+        /// <summary>
+        /// Decrypt <paramref name="data"/> with the IV embedded in the return
+        /// </summary>
+        byte[] Decrypt(byte[] data);
+
+        /// <summary>
+        /// Encrypt the string data and return a Base64 encoded version
+        /// </summary>
+        string Encrypt(string data);
+
+        /// <summary>
+        /// Decrypt the string data and return a Base64 encoded version
+        /// </summary>
+        string Decrypt(string data);
     }
 }

@@ -174,9 +174,10 @@ namespace SanteDB.Core.Security.Claims
         public const string NameIdentifier = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
 
         /// <summary>
-        /// Is persistent
+        /// Indicates that the session is temporary and should have a shorter lifetime than longer running
+        /// interactive sessions (this is used when the user is switching roles to perform a single request)
         /// </summary>
-        public const string IsPersistent = "http://santedb.org/claims/persistent";
+        public const string TemporarySession = "http://santedb.org/claims/temporarySession";
 
         /// <summary>
         /// Language claim

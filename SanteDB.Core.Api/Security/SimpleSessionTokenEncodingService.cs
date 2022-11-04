@@ -2,6 +2,7 @@
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using System;
 using System.Linq;
 using System.Security;
 
@@ -69,6 +70,24 @@ namespace SanteDB.Core.Security
             return true;
 
 
+        }
+
+        /// <inheritdoc/>
+        public byte[] ExtractSessionIdentity(string encodedToken)
+        {
+            if (string.IsNullOrWhiteSpace(encodedToken))
+            {
+                throw new ArgumentNullException(nameof(encodedToken));
+            }
+
+            var tokenparts = encodedToken.Split('.').Select(o => o.HexDecode()).ToArray();
+            
+            if (tokenparts.Length != 2)
+            {
+                throw new ArgumentException(nameof(encodedToken));
+            }
+
+            return tokenparts[0];
         }
     }
 }

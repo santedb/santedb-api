@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security
@@ -70,17 +71,61 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Find the specified certificate in any store
+        /// </summary>
+        internal static X509Certificate2 FindCertificateInAny(X509FindType findType, StoreName storeName, string findValue, out StoreLocation location)
+        {
+            foreach(var l in new StoreLocation[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
+            {
+                try
+                {
+                    var cert = FindCertificate(findType, l, storeName, findValue);
+                    location = l;
+                    return cert;
+                }
+                catch (FileNotFoundException) { }
+            }
+            location = 0;
+            return null;
+        }
+
+        /// <summary>
         /// Install the <paramref name="certificate"/> to the specified <paramref name="storeName"/> in <see cref="StoreLocation.CurrentUser"/>
         /// </summary>
         /// <param name="storeName">The name of the certificate store to install the certificate into</param>
         /// <param name="certificate">The certificate to install</param>
-        public static void InstallCertificate(StoreName storeName, X509Certificate2 certificate)
+        /// <param name="location">The location to install the certificate</param>
+        public static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate)
         {
-            using (var trustStore = new X509Store(storeName, StoreLocation.CurrentUser))
+            
+            using (var trustStore = new X509Store(storeName, location))
             {
                 trustStore.Open(OpenFlags.ReadWrite);
-                trustStore.Add(certificate);
+                // Swap the certificate key store flags as appropriate for this location
+                var password = Guid.NewGuid().ToString();
+                var pfxData = certificate.Export(X509ContentType.Pfx, password);
+                var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                trustStore.Add(properCert);
             }
+        }
+
+        /// <summary>
+        /// Attempts to install the certificate in <see cref="StoreLocation.LocalMachine"/> if that fails
+        /// installs it in <see cref="StoreLocation.CurrentUser"/>
+        /// </summary>
+        internal static void InstallCertificateInAny(StoreName storeName, X509Certificate2 certificate, out StoreLocation location)
+        {
+            foreach (var l in new StoreLocation[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
+            {
+                try
+                {
+                    InstallCertificate(l, storeName, certificate);
+                    location = l;
+                    return;
+                }
+                catch  { }
+            }
+            location = 0;
         }
 
         /// <summary>
@@ -105,7 +150,7 @@ namespace SanteDB.Core.Security
                 var matches = store.Certificates.Find(findType, findValue, false);
                 if (matches.Count == 0)
                 {
-                    throw new InvalidOperationException("Certificate not found");
+                    throw new FileNotFoundException("Certificate not found");
                 }
                 else if (matches.Count > 1)
                 {
