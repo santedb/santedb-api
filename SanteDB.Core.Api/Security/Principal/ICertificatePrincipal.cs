@@ -9,7 +9,7 @@ namespace SanteDB.Core.Security.Principal
     /// <summary>
     /// An identity which was created and authenticated using a certificate
     /// </summary>
-    public interface ICertificateIdentity : IIdentity
+    public interface ICertificatePrincipal : IPrincipal
     {
 
         /// <summary>

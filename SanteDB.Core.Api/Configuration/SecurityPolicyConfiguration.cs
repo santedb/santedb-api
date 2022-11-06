@@ -71,17 +71,22 @@ namespace SanteDB.Core.Configuration
         /// The place where authentication certificates should be stored
         /// </summary>
         [XmlEnum("auth.cert.location")]
-        AuthenticationCertificateLocation,
-        /// <summary>
-        /// The place where authentication certificates should be stored
-        /// </summary>
-        [XmlEnum("auth.cert.store")]
-        AuthenticationCertificateStore,
+        DefaultCertificateInstallLocation,
         /// <summary>
         /// How long the authentication cookie is valid for.
         /// </summary>
         [XmlEnum("auth.cookie.length")]
         AuthenticationCookieValidityLength,
+        /// <summary>
+        /// Length of local sessions on dCDR
+        /// </summary>
+        [XmlEnum("downstream.session.length")]
+        DownstreamLocalSessionLength,
+        /// <summary>
+        /// True to allow dCDRs to create their own local accounts
+        /// </summary>
+        [XmlEnum("downstream.user.accounts")]
+        AllowLocalDownstreamUserAccounts,
     }
 
     /// <summary>

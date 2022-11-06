@@ -101,22 +101,7 @@ namespace SanteDB.Core.Http
                 ServicePointManager.ServerCertificateValidationCallback = this.RemoteCertificateValidation;
             }
 
-            // Set appropriate header
-            if (this.Description.Binding.Optimize)
-            {
-                StringBuilder acceptBuilder = new StringBuilder();
-                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
-                    acceptBuilder.Append(",lzma");
-                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Bzip2))
-                    acceptBuilder.Append(",bzip2");
-                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Gzip))
-                    acceptBuilder.Append(",gzip");
-                if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
-                    acceptBuilder.Append(",deflate");
-
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
-            }
-
+            
             // Set user agent
             var asm = Assembly.GetEntryAssembly() ?? typeof(RestClient).Assembly;
             retVal.UserAgent = String.Format("{0} {1} ({2})", asm.GetCustomAttribute<AssemblyTitleAttribute>()?.Title, asm.GetName().Version, asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
@@ -138,7 +123,7 @@ namespace SanteDB.Core.Http
             }
 
             // Pre-empt the authentication?
-            if(this.Description.Binding.Security.PreemptiveAuthentication && (this.Credentials == null))
+            if (this.Description.Binding.Security.PreemptiveAuthentication && (this.Credentials == null))
             {
                 this.Credentials = this.Description.Binding.Security.CredentialProvider?.GetCredentials(this);
             }
@@ -253,10 +238,10 @@ namespace SanteDB.Core.Http
                         // Serialize and compress with deflate
                         using (MemoryStream ms = new MemoryStream())
                         {
-                            if (this.Description.Binding.Optimize)
+                            if (this.Description.Binding.CompressRequests)
                             {
                                 var compressionScheme = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod);
-                                if(compressionScheme.ImplementedMethod != HttpCompressionAlgorithm.None)
+                                if (compressionScheme.ImplementedMethod != HttpCompressionAlgorithm.None)
                                 {
                                     requestObj.Headers.Add("Content-Encoding", compressionScheme.AcceptHeaderName);
                                     requestObj.Headers.Add("X-CompressRequestStream", compressionScheme.AcceptHeaderName);

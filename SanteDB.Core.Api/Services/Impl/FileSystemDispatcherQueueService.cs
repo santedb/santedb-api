@@ -30,6 +30,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Xml.Serialization;
@@ -61,6 +62,13 @@ namespace SanteDB.Core.Services.Impl
         [XmlRoot(nameof(QueueEntry), Namespace = "http://santedb.org/fsqueue")]
         public class QueueEntry
         {
+
+            /// <summary>
+            /// True if compressed
+            /// </summary>
+            [XmlAttribute("compressed")]
+            public bool Compressed { get; set; }
+
             /// <summary>
             /// Data contained
             /// </summary>
@@ -87,9 +95,13 @@ namespace SanteDB.Core.Services.Impl
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(data.GetType());
                 using (var ms = new MemoryStream())
                 {
-                    xsz.Serialize(ms, data);
+                    using (var df = new DeflateStream(ms, CompressionMode.Compress, true))
+                    {
+                        xsz.Serialize(df, data);
+                    }
                     return new QueueEntry()
                     {
+                        Compressed = true,
                         Type = data.GetType().AssemblyQualifiedName,
                         XmlData = ms.ToArray(),
                         CreationTime = DateTime.Now
@@ -105,6 +117,13 @@ namespace SanteDB.Core.Services.Impl
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(System.Type.GetType(this.Type));
                 using (var ms = new MemoryStream(this.XmlData))
                 {
+                    if(this.Compressed)
+                    {
+                        using(var df = new DeflateStream(ms, CompressionMode.Decompress, false))
+                        {
+                            return xsz.Deserialize(df);
+                        }
+                    }
                     return xsz.Deserialize(ms);
                 }
             }

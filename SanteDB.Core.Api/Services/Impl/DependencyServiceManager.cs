@@ -526,7 +526,7 @@ namespace SanteDB.Core.Services.Impl
                     // Add configured services
                     int i = 0;
                     foreach (var svc in this.m_configuration.ServiceProviders
-                        .Select(s => new { serviceType = s, order = s.Type.GetCustomAttributes<PreferredServiceAttribute>().Count() })
+                        .Select(s => new { serviceType = s, order = s.Type.GetCustomAttributes<PreferredServiceAttribute>().Count() + (s.Type.Implements(typeof(IServiceFactory)) ? 100 : 0) })
                         .OrderByDescending(s => s.order)
                         .Select(s => s.serviceType))
                     {
@@ -820,7 +820,7 @@ namespace SanteDB.Core.Services.Impl
                         }
                         catch (Exception e)
                         {
-                            this.m_tracer.TraceWarning($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
+                            this.m_tracer.TraceInfo($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
                             return null;
                         }
                     })

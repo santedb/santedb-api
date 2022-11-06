@@ -36,6 +36,11 @@ namespace SanteDB.Core.Security.Services
         /// <returns>The hash.</returns>
         /// <param name="password">Password.</param>
         String ComputeHash(String password);
+
+        /// <summary>
+        /// Compute hash on byte data
+        /// </summary>
+        byte[] ComputeHash(byte[] data);
     }
 }
 

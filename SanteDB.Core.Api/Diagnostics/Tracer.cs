@@ -147,6 +147,11 @@ namespace SanteDB.Core.Diagnostics
         }
 
         /// <summary>
+        /// Get all trace writer types
+        /// </summary>
+        public static Type[] GetAvailableWriters() => AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(TraceWriter).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+
+        /// <summary>
         /// Get the specified trace writer
         /// </summary>
         public static TWriter GetWriter<TWriter>()

@@ -45,6 +45,7 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Serialization;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security.Audit
 {
@@ -53,6 +54,62 @@ namespace SanteDB.Core.Security.Audit
     /// </summary>
     public static class AuditExtensions
     {
+        /// <summary>
+        /// Convert to an auditable object
+        /// </summary>
+        private static AuditableObject ConvertSystemObjectToAuditableObject(AuditableObjectRole role, AuditableObjectLifecycle lifecycle, object item)
+        {
+            var ao = new AuditableObject()
+            {
+                Type = AuditableObjectType.SystemObject,
+                Role = role,
+                LifecycleType = lifecycle
+            };
+            
+            switch(item)
+            {
+                case Uri ur:
+                    ao.IDTypeCode = AuditableObjectIdType.Uri;
+                    ao.ObjectId = ur.ToString();
+                    break;
+                case X509Certificate2 cert:
+                    ao.IDTypeCode = AuditableObjectIdType.SearchCritereon;
+                    ao.ObjectId = cert.SubjectName.ToString();
+                    ao.NameData = cert.ToString();
+                    break;
+                case SecurityDevice sd:
+                    ao.IDTypeCode = AuditableObjectIdType.Uri;
+                    ao.ObjectId = $"urn:uuid:{sd.Key}";
+                    ao.NameData = sd.Name;
+                    break;
+                case SecurityApplication sa:
+                    ao.IDTypeCode = AuditableObjectIdType.Uri;
+                    ao.ObjectId = $"urn:uuid:{sa.Key}";
+                    ao.NameData = sa.Name;
+                    break;
+                case SecurityUser su:
+                    ao.IDTypeCode = AuditableObjectIdType.Uri;
+                    ao.ObjectId = $"urn:uuid:{su.Key}";
+                    ao.NameData = su.UserName;
+                    break;
+                case SecurityProvenance sp:
+                    ao.IDTypeCode = AuditableObjectIdType.Uri;
+                    ao.ObjectId = $"urn:uuid:{sp.Key}";
+                    ao.ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("app", sp.ApplicationKey.GetValueOrDefault().ToString()),
+                        new ObjectDataExtension("dev", sp.DeviceKey.GetValueOrDefault().ToString()),
+                        new ObjectDataExtension("usr", sp.UserKey.GetValueOrDefault().ToString()),
+                        new ObjectDataExtension("ses", sp.SessionKey.GetValueOrDefault().ToString())
+                    };
+                    break;
+                default:
+                    ao.IDTypeCode = AuditableObjectIdType.NotSpecified;
+                    ao.ObjectId = item.ToString();
+                    break;
+            }
+            return ao;
+        }
 
         /// <summary>
         /// Append the outcome indicator to the audit
@@ -173,9 +230,9 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Add local device information
+        /// Local is destination
         /// </summary>
-        public static IAuditBuilder WithLocalDevice(this IAuditBuilder me)
+        public static IAuditBuilder WithLocalDestination(this IAuditBuilder me)
         {
             if (null == me.Audit.Actors)
             {
@@ -188,9 +245,98 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
-                    new  AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
                 }
             });
+            return me;
+
+        }
+
+        /// <summary>
+        /// Add a destination device information
+        /// </summary>
+        public static IAuditBuilder WithRemoteDestination(this IAuditBuilder me, Uri remoteDestination)
+        {
+            if (null == me.Audit.Actors)
+            {
+                me.Audit.Actors = new List<AuditActorData>();
+            }
+
+            me.Audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointId = remoteDestination.Host,
+                NetworkAccessPointType = remoteDestination.HostNameType == UriHostNameType.Dns ? NetworkAccessPointType.MachineName : NetworkAccessPointType.IPAddress,
+                ActorRoleCode = new List<AuditCode>() {
+                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                }
+            });
+            return me;
+        }
+
+        /// <summary>
+        /// Add a destination device information
+        /// </summary>
+        public static IAuditBuilder WithRemoteDestination(this IAuditBuilder me, RemoteEndpointInfo remoteDestination)
+        {
+            if (null == me.Audit.Actors)
+            {
+                me.Audit.Actors = new List<AuditActorData>();
+            }
+
+            me.Audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointId = remoteDestination.RemoteAddress,
+                NetworkAccessPointType = IPAddress.TryParse(remoteDestination.RemoteAddress, out _) ? NetworkAccessPointType.IPAddress : NetworkAccessPointType.MachineName,
+                ActorRoleCode = new List<AuditCode>() {
+                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                }
+            });
+            return me;
+        }
+
+        /// <summary>
+        /// Add source device information
+        /// </summary>
+        public static IAuditBuilder WithRemoteSource(this IAuditBuilder me, RemoteEndpointInfo remoteEndpoint)
+        {
+            if (null == me.Audit.Actors)
+            {
+                me.Audit.Actors = new List<AuditActorData>();
+            }
+
+            me.Audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointId = remoteEndpoint.RemoteAddress,
+                NetworkAccessPointType = NetworkAccessPointType.IPAddress,
+                AlternativeUserId = remoteEndpoint.ForwardInformation,
+                ActorRoleCode = new List<AuditCode>() {
+                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                }
+            });
+
+            return me;
+        }
+
+        /// <summary>
+        /// Add source device information
+        /// </summary>
+        public static IAuditBuilder WithLocalSource(this IAuditBuilder me)
+        {
+            if (null == me.Audit.Actors)
+            {
+                me.Audit.Actors = new List<AuditActorData>();
+            }
+
+            me.Audit.Actors.Add(new AuditActorData()
+            {
+                NetworkAccessPointId = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetHostName(),
+                NetworkAccessPointType = NetworkAccessPointType.MachineName,
+                UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetMachineName(),
+                ActorRoleCode = new List<AuditCode>() {
+                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                }
+            });
+
             return me;
         }
 
@@ -215,28 +361,25 @@ namespace SanteDB.Core.Security.Audit
                     {
                         me.Audit.Actors.Add(new AuditActorData()
                         {
-                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
-                            NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             UserName = did.Name,
                             ActorRoleCode = new List<AuditCode>()
                             {
-                                new AuditCode("110153", "DCM") { DisplayName = "Source" }
+                                new AuditCode("DEV", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Device" },
+                                new AuditCode("CST", "http://terminology.hl7.org/CodeSystem/v3-ParticipationType") { DisplayName = "Custodian" },
                             },
-                            AlternativeUserId = did.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = did.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                     else if (identity is IApplicationIdentity && identity is IClaimsIdentity aid)
                     {
                         me.Audit.Actors.Add(new AuditActorData()
                         {
-                            NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
-                            NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                             UserName = aid.Name,
                             ActorRoleCode = new List<AuditCode>()
                             {
                                 new AuditCode("110150", "DCM") { DisplayName = "Application" }
                             },
-                            AlternativeUserId = aid.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = aid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                     else if (identity is IClaimsIdentity uid)
@@ -249,7 +392,7 @@ namespace SanteDB.Core.Security.Audit
                             {
                                 new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
                             },
-                            AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                 }
@@ -258,14 +401,17 @@ namespace SanteDB.Core.Security.Audit
             {
                 var actor = new AuditActorData()
                 {
-                    NetworkAccessPointId = RemoteEndpointUtil.Current.GetRemoteClient()?.RemoteAddress,
-                    NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                     UserName = principal.Identity.Name
                 };
 
-                if (principal.Identity is IApplicationIdentity || principal.Identity is IDeviceIdentity)
+                if (principal.Identity is IApplicationIdentity)
                 {
-                    actor.ActorRoleCode.Add(new AuditCode("110153", "DCM") { DisplayName = "Source" });
+                    actor.ActorRoleCode.Add(new AuditCode("110150", "DCM") { DisplayName = "Application" });
+                }
+                else if (principal.Identity is IDeviceIdentity)
+                {
+                    actor.ActorRoleCode.Add(new AuditCode("DEV", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Device" });
+
                 }
                 else
                 {
@@ -331,17 +477,78 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Add act object to the audit
         /// </summary>
-        public static IAuditBuilder WithAct(this IAuditBuilder me, Act act, AuditableObjectLifecycle lifecycle)
+        public static IAuditBuilder WithIdentifiedData(this IAuditBuilder me, AuditableObjectLifecycle lifecycle, IdentifiedData data)
         {
-            me.Audit.AuditableObjects.Add(new AuditableObject()
+            var ao = new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Uri,
-                Role = AuditableObjectRole.Resource,
-                Type = AuditableObjectType.Other,
+                Type = AuditableObjectType.NotSpecified,
                 LifecycleType = lifecycle,
-                ObjectId = $"urn:uuid:{act.Key}",
-                NameData = act.ToString()
-            });
+                ObjectId = $"urn:uuid:{data.Key}",
+                ObjectData = new List<ObjectDataExtension>()
+            };
+
+            switch(data)
+            {
+                case Patient pat:
+                    ao.Role = AuditableObjectRole.Patient;
+                    ao.NameData = pat.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.OfficialRecord)?.ToDisplay();
+                    break;
+                case Provider pvd:
+                    ao.Role = AuditableObjectRole.Provider;
+                    ao.ObjectData.Add(new ObjectDataExtension("specialty", pvd.LoadProperty(o => o.Specialty)?.Mnemonic));
+                    ao.NameData = pvd.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.License)?.ToDisplay();
+                    break;
+                case Person psn:
+                    ao.Role = AuditableObjectRole.Resource;
+                    ao.Type = AuditableObjectType.Person;
+                    ao.NameData = psn.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.OfficialRecord)?.ToDisplay();
+                    break;
+                case Place plc:
+                    ao.Role = AuditableObjectRole.Location;
+                    ao.Type = AuditableObjectType.Other;
+                    ao.NameData = plc.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.Assigned)?.ToDisplay();
+                    break;
+                case Organization org:
+                    ao.Role = AuditableObjectRole.Resource;
+                    ao.Type = AuditableObjectType.Organization;
+                    ao.NameData = org.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.Assigned)?.ToDisplay();
+                    break;
+                case Entity de:
+                    ao.Role = AuditableObjectRole.Resource;
+                    ao.NameData = de.LoadProperty(o => o.Names).FirstOrDefault(o => o.NameUseKey == NameUseKeys.Assigned)?.ToDisplay();
+                    break;
+                case PatientEncounter pe:
+                    ao.Role = AuditableObjectRole.MasterFile;
+                    ao.Type = AuditableObjectType.Other;
+                    break;
+               
+                case Act act:
+                    if(act.ClassConceptKey == ActClassKeys.List || act.ClassConceptKey == ActClassKeys.Battery)
+                    {
+                        ao.Role = AuditableObjectRole.List;
+                    }
+                    else if(act.MoodConceptKey == MoodConceptKeys.Proposal || act.MoodConceptKey == MoodConceptKeys.Intent ||
+                        act.MoodConceptKey == MoodConceptKeys.Promise)
+                    {
+                        ao.Role = AuditableObjectRole.Job;
+                    }
+                    else if(act.MoodConceptKey == MoodConceptKeys.Eventoccurrence)
+                    {
+                        ao.Role = AuditableObjectRole.Report;
+                    }
+                    else
+                    {
+                        return me;
+                    }
+                    ao.Type = AuditableObjectType.Other;
+                    ao.ObjectData.Add(new ObjectDataExtension("mood", act.LoadProperty(o => o.MoodConcept)?.Mnemonic));
+                    ao.ObjectData.Add(new ObjectDataExtension("state", act.LoadProperty(o => o.StatusConcept)?.Mnemonic));
+                    break;
+                default:
+                    return me;
+            }
+            me.Audit.AuditableObjects.Add(ao);
             return me;
         }
 
@@ -367,21 +574,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// With a system object
         /// </summary>
-        public static IAuditBuilder WithSystemObjects(this IAuditBuilder me, AuditableObjectRole role, AuditableObjectLifecycle lifecycle, params Uri[] objectIds)
+        public static IAuditBuilder WithSystemObjects(this IAuditBuilder me, AuditableObjectRole role, AuditableObjectLifecycle lifecycle, params object[] objectIds)
         {
             if (null == me.Audit.AuditableObjects)
             {
                 me.Audit.AuditableObjects = new List<AuditableObject>();
             }
 
-            me.Audit.AuditableObjects.AddRange(objectIds.Select(o => new AuditableObject()
-            {
-                ObjectId = o.ToString(),
-                IDTypeCode = AuditableObjectIdType.Uri,
-                Type = AuditableObjectType.SystemObject,
-                Role = role,
-                LifecycleType = lifecycle
-            }));
+            me.Audit.AuditableObjects.AddRange(objectIds.Select(o=>ConvertSystemObjectToAuditableObject(role, lifecycle, o)));
+            
             return me;
         }
 
@@ -439,14 +640,16 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="query">The query which was being executed</param>
         /// <param name="auditIds">The identifiers of any objects disclosed</param>
         /// <param name="me">The audit build on which the log information should be appened</param>
+        [Obsolete]
         public static IAuditBuilder ForAuditLogUsed(this IAuditBuilder me, ActionType action, OutcomeIndicator outcome, string query, params Guid[] auditIds)
             => me
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.AuditLogUsed)
                 .WithAction(action)
                 .WithOutcome(outcome)
-                .WithLocalDevice()
                 .WithPrincipal()
+                .WithLocalDestination()
+                .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithAuditableObjects(auditIds.Select(o => new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -469,6 +672,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a synchronization occurred
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSynchronization(this IAuditBuilder me, AuditableObjectLifecycle lifecycle, string remoteTarget, OutcomeIndicator outcome, params IdentifiedData[] objects)
         {
             me
@@ -476,7 +680,8 @@ namespace SanteDB.Core.Security.Audit
                 .WithOutcome(outcome)
                 .WithEventIdentifier(lifecycle == AuditableObjectLifecycle.Import ? EventIdentifierType.Import : EventIdentifierType.Export)
                 .WithEventType("Synchronization")
-                .WithLocalDevice();
+                .WithLocalSource()
+                .WithRemoteDestination(new Uri(remoteTarget));
 
             if (lifecycle == AuditableObjectLifecycle.Export)
             {
@@ -514,6 +719,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit an access control decision
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForAccessControlDecision(this IAuditBuilder me, IPrincipal principal, string policy, PolicyGrantType action)
         {
             return me
@@ -521,8 +727,8 @@ namespace SanteDB.Core.Security.Audit
                 .WithOutcome(action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.AccessControlDecision)
-                .WithLocalDevice()
-                .WithPrincipal(principal) //TODO: Check with Justin on this
+                .WithLocalSource()
+                .WithPrincipal(principal)
                 .WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
@@ -539,6 +745,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Autility utility which can be used to send a data audit
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForEventDataAction<TData>(this IAuditBuilder builder, AuditCode typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, string queryPerformed, PolicyDecision grantInfo, params TData[] data)
         {
             return builder
@@ -546,7 +753,8 @@ namespace SanteDB.Core.Security.Audit
                 .WithOutcome(outcome)
                 .WithEventIdentifier(eventType)
                 .WithEventType(typeCode)
-                .WithLocalDevice()
+                .WithLocalDestination()
+                .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal()
                 .WithAuditableObjects(data?.OfType<TData>()?.SelectMany(o =>
                 {
@@ -569,6 +777,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit data action
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForEventDataAction<TData>(this IAuditBuilder builder, EventTypeCodes typeCode, ActionType action, AuditableObjectLifecycle lifecycle, EventIdentifierType eventType, OutcomeIndicator outcome, String queryPerformed, params TData[] data)
             => builder.ForEventDataAction(AuditUtil.CreateAuditActionCode(typeCode), action, lifecycle, eventType, outcome, queryPerformed, null, data);
 
@@ -651,13 +860,15 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="decision">The policy decision which resulted in the disclosure</param>
         /// <param name="disclosed">True if the record was actually disclosed (false if the audit is merely the access is being audited)</param>
         /// <param name="properties">The properties which were disclosed</param>
+        [Obsolete]
         public static IAuditBuilder ForSensitiveDisclosure(this IAuditBuilder builder, IdentifiedData result, PolicyDecision decision, bool disclosed, params string[] properties)
             => builder
                 .WithAction(ActionType.Read)
                 .WithOutcome(disclosed ? OutcomeIndicator.Success : OutcomeIndicator.MinorFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType("SecurityAuditEvent-DisclosureOfSensitiveInformation", "SecurityAuditEventDataEvent", displayName: "Sensitive Data Was Disclosed to User")
-                .WithLocalDevice()
+                .WithRemoteDestination(RemoteEndpointUtil.Current.GetRemoteClient())
+                .WithLocalSource()
                 .WithPrincipal()
                 .WithAuditableObjects(
                     result.ToAuditableObject(AuditableObjectLifecycle.Disclosure),
@@ -675,13 +886,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSecurityDeletionAction(this IAuditBuilder builder, IEnumerable<Object> objects, bool success, IEnumerable<string> changedProperties)
             => builder
                 .WithAction(ActionType.Delete)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityObjectChanged)
-                .WithLocalDevice()
+                .WithLocalDestination()
+                .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
@@ -697,58 +910,64 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit application start
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForApplicationStart(this IAuditBuilder builder)
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(OutcomeIndicator.Success)
                 .WithEventIdentifier(EventIdentifierType.ApplicationActivity)
                 .WithEventType(EventTypeCodes.ApplicationStart)
-                .WithLocalDevice()
+                .WithLocalSource()
             ;
 
         /// <summary>
         /// Audit application stop
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForApplicationStop(this IAuditBuilder builder)
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(OutcomeIndicator.Success)
                 .WithEventIdentifier(EventIdentifierType.ApplicationActivity)
                 .WithEventType(EventTypeCodes.ApplicationStop)
-                .WithLocalDevice()
+                .WithLocalSource()
             ;
 
         /// <summary>
         /// Audit a login of a user principal
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForUserLogin(this IAuditBuilder builder, IPrincipal principal, bool successfulLogin = true)
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(successfulLogin, falseOutcome: OutcomeIndicator.SeriousFail)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.Login)
-                .WithLocalDevice()
+                .WithLocalDestination()
+            .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal(principal)
-                .If(successfulLogin, b2=> b2.WithAuditableObjects(new AuditableObject
-                    {
-                        IDTypeCode = AuditableObjectIdType.UserIdentifier,
-                        ObjectId = principal?.Identity?.Name,
-                        LifecycleType = AuditableObjectLifecycle.NotSet,
-                        Role = AuditableObjectRole.SecurityUser,
-                        Type = AuditableObjectType.SystemObject
-                    })
+                .If(successfulLogin, b2 => b2.WithAuditableObjects(new AuditableObject
+                {
+                    IDTypeCode = AuditableObjectIdType.UserIdentifier,
+                    ObjectId = principal?.Identity?.Name,
+                    LifecycleType = AuditableObjectLifecycle.NotSet,
+                    Role = AuditableObjectRole.SecurityUser,
+                    Type = AuditableObjectType.SystemObject
+                })
                 );
 
         /// <summary>
         /// Audit a logout of a user principal
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForUserLogout(this IAuditBuilder builder, IPrincipal principal)
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(OutcomeIndicator.Success)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.Logout)
-                .WithLocalDevice()
+                .WithLocalDestination()
+            .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal(principal);
 
         /// <summary>
@@ -760,6 +979,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a network request failure
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForNetworkRequestFailure(this IAuditBuilder builder, Exception ex, Uri url, IDictionary<String, String> requestHeaders, IDictionary<String, String> responseHeaders)
         {
             builder
@@ -767,7 +987,8 @@ namespace SanteDB.Core.Security.Audit
                 .WithOutcome(OutcomeIndicator.MinorFail)
                 .WithEventIdentifier(EventIdentifierType.NetworkActivity)
                 .WithEventType(EventTypeCodes.NetworkActivity)
-                .WithLocalDevice()
+                .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
+                .WithLocalDestination()
                 .WithPrincipal()
                 .WithAuditableObjects(new AuditableObject()
                 {
@@ -835,13 +1056,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSessionStart(this IAuditBuilder builder, ISession session, IPrincipal principal, bool success)
         {
             builder.WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStarted)
-                .WithLocalDevice()
+                .WithRemoteDestination(RemoteEndpointUtil.Current.GetRemoteClient())
+                .WithLocalSource()
                 .WithPrincipal(principal);
 
             var policies = session?.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim).Select(o => o.Value);
@@ -892,13 +1115,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that a session has begun
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSessionStop(this IAuditBuilder builder, ISession session, IPrincipal principal, bool success)
         {
             builder.WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStopped)
-                .WithLocalDevice()
+                .WithLocalDestination()
+                .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal(principal);
 
 
@@ -947,13 +1172,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the export of data
         /// </summary>
+        [Obsolete]
         public static void ForDataExport(this IAuditBuilder builder, params object[] exportedData)
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(OutcomeIndicator.Success)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.Export)
-                .WithLocalDevice()
+                .WithRemoteDestination(RemoteEndpointUtil.Current.GetRemoteClient())
+            .WithLocalSource()
                 .WithPrincipal()
                 .WithAuditableObjects(exportedData.Where(o => o != null).Select(o => o.ToAuditableObject(AuditableObjectLifecycle.Export)));
 
@@ -966,6 +1193,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="maskedObject">The object that was masked</param>
         /// <param name="decision">The decision which caused the masking to occur</param>
         /// <param name="builder">The audit builder on which the information should be appended</param>
+        [Obsolete]
         public static IAuditBuilder ForMasking<TModel>(this IAuditBuilder builder, TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             => ForEventDataAction(
                 builder,
@@ -981,6 +1209,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the creation of an object
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForCreate<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
@@ -997,6 +1226,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForUpdate<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
@@ -1013,6 +1243,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit a deletion
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForDelete<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
@@ -1029,6 +1260,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForQuery<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] results)
             => ForEventDataAction(
                 builder,
@@ -1045,6 +1277,7 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit the update of an object
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForRead<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] results)
             => ForEventDataAction(
                 builder,
@@ -1061,13 +1294,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Audit that security objects were created
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSecurityCreationAction(this IAuditBuilder builder, IEnumerable<object> objects, bool success, IEnumerable<string> changedProperties)
             => builder
                 .WithAction(ActionType.Create)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityObjectChanged)
-                .WithLocalDevice()
+                .WithLocalDestination()
+            .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
@@ -1082,13 +1317,15 @@ namespace SanteDB.Core.Security.Audit
         /// <summary>
         /// Create a security attribute action audit
         /// </summary>
+        [Obsolete]
         public static IAuditBuilder ForSecurityAttributeAction(this IAuditBuilder builder, IEnumerable<object> objects, bool success, params string[] changedProperties)
             => builder
                 .WithAction(ActionType.Update)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
                 .WithEventType(EventTypeCodes.SecurityAttributesChanged)
-                .WithLocalDevice()
+                .WithLocalDestination()
+            .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithPrincipal()
                 .WithAuditableObjects(objects.Select(obj => new AuditableObject()
                 {
@@ -1107,7 +1344,7 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject
                 }));
 
-        
+
 
         /// <summary>
         /// Audit an override operation

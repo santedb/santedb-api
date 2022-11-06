@@ -111,6 +111,7 @@ namespace SanteDB.Core.Security.Configuration
         [Browsable(false)]
         public bool FindTypeSpecified { get; set; }
 
+
         /// <summary>
         /// Whether the store name was provided
         /// </summary>

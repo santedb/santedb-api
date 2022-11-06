@@ -221,7 +221,7 @@ namespace SanteDB.Core.Security.Audit
 
                     // Audit that Audits are now being recorded
                     _AuditService.Audit(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStarted))
-                        .WithLocalDevice()
+                        .WithLocalSource()
                         .Send();
                 }
                 catch (Exception ex)
@@ -245,7 +245,7 @@ namespace SanteDB.Core.Security.Audit
             if (!this.m_safeToStop)
             {
                 _AuditService.Audit(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.EpicFail, EventIdentifierType.SecurityAlert, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped))
-                    .WithLocalDevice()
+                    .WithLocalSource()
                     .Send();
             }
             else
@@ -258,7 +258,7 @@ namespace SanteDB.Core.Security.Audit
 
                 // Audit that audits are no longer being recorded
                 _AuditService.Audit(DateTimeOffset.Now, ActionType.Execute, OutcomeIndicator.Success, EventIdentifierType.ApplicationActivity, AuditUtil.CreateAuditActionCode(EventTypeCodes.AuditLoggingStopped))
-                    .WithLocalDevice()
+                    .WithLocalSource()
                     .Send();
             };
 

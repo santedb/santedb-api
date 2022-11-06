@@ -48,8 +48,8 @@ namespace SanteDB.Core.Configuration.Http
         /// is optimized
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>
-        [XmlElement("optimize"), JsonProperty("optimize")]
-        public bool Optimize
+        [XmlElement("optimizeRequests"), JsonProperty("optimizeRequests")]
+        public bool CompressRequests
         {
             get; set;
         }

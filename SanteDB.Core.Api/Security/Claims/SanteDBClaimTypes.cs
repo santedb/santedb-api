@@ -64,7 +64,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// The security identifier claim.
         /// </summary>
-        public const string Sid = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid";
+        public const string SecurityId = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid";
         /// <summary>
         /// Email address claim
         /// </summary>
@@ -86,7 +86,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// The subject string of the certificate used for authentication.
         /// </summary>
-        public const string AuthenticationCertificateSubject = "x509sub";
+        public const string AuthenticationCertificateSubject = "urn:santedb:org:claim:x509sub";
 
         /// <summary>
         /// Granted policy claim
@@ -96,21 +96,22 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Device identifier claim
         /// </summary>
-        public const string SanteDBDeviceIdentifierClaim = "devid";
+        public const string SanteDBDeviceIdentifierClaim = "urn:santedb:org:claim:devid";
 
         /// <summary>
         /// Identifier of the application
         /// </summary>
-        public const string SanteDBApplicationIdentifierClaim = "appid";
+        public const string SanteDBApplicationIdentifierClaim = "urn:santedb:org:claim:appid";
+
         /// <summary>
         /// The specific user identifier claim issued by an OAuth implementation in SanteDB.
         /// </summary>
-        public const string SanteDBUserIdentifierClaim = "usrid";
+        public const string SanteDBUserIdentifierClaim = "urn:santedb:org:claim:usrid";
 
         /// <summary>
         /// Claim for conveying the one time password / access code
         /// </summary>
-        public const string SanteDBOTAuthCode = "otac";
+        public const string SanteDBOTAuthCode = "urn:santedb:org:claim:otac";
 
         /// <summary>
         /// TFA secret expiry
@@ -122,41 +123,30 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public const string SanteDBOverrideClaim = "urn:santedb:org:override";
 
-        /// <summary>
-        /// Patient identifier claim
-        /// </summary>
-        public const string ResourceId = "ResourceId";
 
         /// <summary>
         /// Purpose of use claim
         /// </summary>
         public const string PurposeOfUse = "urn:oasis:names:tc:xacml:2.0:action:purpose";
-        /// <summary>
-        /// Purpose of use claim
-        /// </summary>
-        public const string UserRoleClaim = "SubjectRole";
+
         /// <summary>
         /// Facility id claim
         /// </summary>
-        public const string XspaFacilityUrlClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
+        public const string XspaFacilityClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
         /// <summary>
         /// Organization name claim
         /// </summary>
-        public const string OrganizationId = "SubjectOrganizationID";
-        /// <summary>
-        /// User identifier claim
-        /// </summary>
-        public const string SubjectId = "SubjectId";
-
+        public const string XspaOrganizationIdClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        
         /// <summary>
         /// Identifies the realm that the identity is located in. Any valid realm identifier can be used. If this claim is missing, it means the identity is local to the calling system.
         /// </summary>
-        public const string Realm = "http://santedb.org/claims/realm";
+        public const string Realm = "urn:santedb:org:claim:realm";
         
         /// <summary>
         /// Session id claim
         /// </summary>
-        public const string SanteDBSessionIdClaim = "http://santedb.org/claims/session-id";
+        public const string SanteDBSessionIdClaim = "urn:santedb:org:claim:session";
 
         /// <summary>
         /// Name claims
@@ -177,12 +167,12 @@ namespace SanteDB.Core.Security.Claims
         /// Indicates that the session is temporary and should have a shorter lifetime than longer running
         /// interactive sessions (this is used when the user is switching roles to perform a single request)
         /// </summary>
-        public const string TemporarySession = "http://santedb.org/claims/temporarySession";
+        public const string TemporarySession = "urn:santedb:org:claim:temporary";
 
         /// <summary>
         /// Language claim
         /// </summary>
-        public const string Language = "http://santedb.org/claims/language";
+        public const string Language = "urn:santedb:org:claim:lang";
 
         /// <summary>
         /// Patient identifier claim
@@ -198,13 +188,23 @@ namespace SanteDB.Core.Security.Claims
         public const string XspaUserRoleClaim = "urn:oasis:names:tc:xacml:2.0:subject:role";
 
         /// <summary>
+        /// In SanteDB security principals have authentication data (provided by IIdentityProviders which may be
+        /// external to the SanteDB system) and CDR entities (which always reside in SanteDB). This claim is
+        /// used to provide callers with the mapping. Typically a <see cref="SanteDB.Core.Model.Entities.UserEntity"/>,
+        /// <see cref="SanteDB.Core.Model.Entities.DeviceEntity"/>, <see cref="SanteDB.Core.Model.Entities.ApplicationEntity"/>,
+        /// or <see cref="SanteDB.Core.Model.Roles.Provider"/>. This data is appended to clinical data as the 
+        /// <see cref="SanteDB.Core.Model.Constants.ActParticipationKeys.Authororiginator"/>
+        /// </summary>
+        public const string CdrEntityId = "urn:santedb:org:claim:cdr-id";
+
+        /// <summary>
         /// Organization name claim
         /// </summary>
-        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
+        public const string XspaOrganizationNameClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization";
         /// <summary>
         /// User identifier claim
         /// </summary>
-        public const string XspaUserIdentifierClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
+        public const string XspaSubjectNameClaim = "urn:oasis:names:tc:xacml:1.0:subject:subject-id";
 
         /// <summary>
         /// HTTP header for client claims
@@ -214,10 +214,14 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Claim which indicates that the client MUST reset its password
         /// </summary>
-        public const string ForceResetPassword = "http://santedb.org/claims/force-reset-secret";
+        public const string ForceResetPassword = "urn:santedb:org:claim:resetPassword";
         /// <summary>
         /// A claim that identifies a security entity with a local only perspective to the system.
         /// </summary>
-        public const string LocalOnly = "http://santedb.org/claims/localonly";
+        public const string LocalOnly = "urn:santedb:org:claim:local";
+        /// <summary>
+        /// XSPA National Provider ID
+        /// </summary>
+        public const string XspaUserNpi = "urn:oasis:names:tc:xspa:1.0:subject:npi";
     }
 }

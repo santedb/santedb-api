@@ -36,7 +36,7 @@ namespace SanteDB.Core.Http.Description
         /// Gets a value indicating whether this <see cref="IRestClientBindingDescription"/> is optimize.
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>
-        bool Optimize { get; }
+        bool CompressRequests { get; }
 
         /// <summary>
         /// Gets or sets the security configuration

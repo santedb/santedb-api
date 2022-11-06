@@ -41,10 +41,13 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Encode a password using the SHA256 encoding
         /// </summary>
-        public string ComputeHash(string password)
+        public string ComputeHash(string password) => this.ComputeHash(Encoding.UTF8.GetBytes(password)).HexEncode().ToLower();
+
+        /// <inheritdoc/>
+        public byte[] ComputeHash(byte[] data)
         {
             SHA1 hasher = SHA1.Create();
-            return BitConverter.ToString(hasher.ComputeHash(Encoding.UTF8.GetBytes(password))).Replace("-", "").ToLower();
+            return hasher.ComputeHash(data);
         }
     }
 }

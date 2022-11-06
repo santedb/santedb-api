@@ -658,7 +658,7 @@ namespace SanteDB.Core.Security.Audit
                             {
                                 new AuditCode("110153", "DCM") { DisplayName = "Source" }
                             },
-                            AlternativeUserId = did.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = did.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                     else if (identity is IApplicationIdentity && identity is IClaimsIdentity aid)
@@ -672,7 +672,7 @@ namespace SanteDB.Core.Security.Audit
                             {
                                 new AuditCode("110150", "DCM") { DisplayName = "Application" }
                             },
-                            AlternativeUserId = aid.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = aid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                     else if (identity is IClaimsIdentity uid)
@@ -688,7 +688,7 @@ namespace SanteDB.Core.Security.Audit
                             {
                                 new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
                             },
-                            AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.Sid)?.Value
+                            AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
                     }
                 }

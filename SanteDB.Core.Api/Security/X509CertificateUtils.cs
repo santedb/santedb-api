@@ -19,6 +19,10 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Security.Audit;
+using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
@@ -70,62 +74,64 @@ namespace SanteDB.Core.Security
             return FindCertificate(eFindType, eStoreLocation, eStoreName, findValue);
         }
 
-        /// <summary>
-        /// Find the specified certificate in any store
-        /// </summary>
-        internal static X509Certificate2 FindCertificateInAny(X509FindType findType, StoreName storeName, string findValue, out StoreLocation location)
-        {
-            foreach(var l in new StoreLocation[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
-            {
-                try
-                {
-                    var cert = FindCertificate(findType, l, storeName, findValue);
-                    location = l;
-                    return cert;
-                }
-                catch (FileNotFoundException) { }
-            }
-            location = 0;
-            return null;
-        }
 
         /// <summary>
         /// Install the <paramref name="certificate"/> to the specified <paramref name="storeName"/> in <see cref="StoreLocation.CurrentUser"/>
         /// </summary>
         /// <param name="storeName">The name of the certificate store to install the certificate into</param>
         /// <param name="certificate">The certificate to install</param>
-        /// <param name="location">The location to install the certificate</param>
-        public static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate)
+        public static void InstallCertificate(StoreName storeName, X509Certificate2 certificate)
         {
-            
-            using (var trustStore = new X509Store(storeName, location))
-            {
-                trustStore.Open(OpenFlags.ReadWrite);
-                // Swap the certificate key store flags as appropriate for this location
-                var password = Guid.NewGuid().ToString();
-                var pfxData = certificate.Export(X509ContentType.Pfx, password);
-                var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
-                trustStore.Add(properCert);
-            }
+            var secConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+            var location = secConfiguration.GetSecurityPolicy(Core.Configuration.SecurityPolicyIdentification.DefaultCertificateInstallLocation, StoreLocation.CurrentUser);
+            InstallCertificate(location, storeName, certificate);
         }
 
         /// <summary>
-        /// Attempts to install the certificate in <see cref="StoreLocation.LocalMachine"/> if that fails
-        /// installs it in <see cref="StoreLocation.CurrentUser"/>
+        /// Install a machine certificate for things like HTTP.sys hosting, or other system uses - you may not specify the location only certs go into MY
         /// </summary>
-        internal static void InstallCertificateInAny(StoreName storeName, X509Certificate2 certificate, out StoreLocation location)
+        public static void InstallMachineCertificate(X509Certificate2 certificate)
         {
-            foreach (var l in new StoreLocation[] { StoreLocation.LocalMachine, StoreLocation.CurrentUser })
+            InstallCertificate(StoreLocation.LocalMachine, StoreName.My, certificate);
+        }
+
+        /// <summary>
+        /// Install certificate utility
+        /// </summary>
+        private static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate) {
+
+            // Audit that we have installed our certificate
+            var audit = ApplicationServiceContext.Current.GetService<IAuditService>().Audit()
+                .WithTimestamp()
+                .WithEventType(EventTypeCodes.SecurityAlert)
+                .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
+                .WithAction(Model.Audit.ActionType.Execute)
+                .WithLocalDestination()
+                .WithPrincipal()
+                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.Import, certificate);
+
+            try
             {
-                try
+                using (var trustStore = new X509Store(storeName, location))
                 {
-                    InstallCertificate(l, storeName, certificate);
-                    location = l;
-                    return;
+                    trustStore.Open(OpenFlags.ReadWrite);
+                    // Swap the certificate key store flags as appropriate for this location
+                    var password = Guid.NewGuid().ToString();
+                    var pfxData = certificate.Export(X509ContentType.Pfx, password);
+                    var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                    trustStore.Add(properCert);
+                    audit.WithOutcome(Model.Audit.OutcomeIndicator.Success);
                 }
-                catch  { }
             }
-            location = 0;
+            catch
+            {
+                audit.WithOutcome(Model.Audit.OutcomeIndicator.SeriousFail);
+                throw;
+            }
+            finally
+            {
+                audit.Send();
+            }
         }
 
         /// <summary>

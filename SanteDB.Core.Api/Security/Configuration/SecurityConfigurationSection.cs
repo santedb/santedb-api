@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Model.Map;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -63,6 +64,18 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class SecurityConfigurationSection : IEncryptedConfigurationSection
     {
+        /// <summary>
+        /// Password complexity requirements disclosure
+        /// </summary>
+        public const string PasswordValidationDisclosureName = "sec.pwd";
+        /// <summary>
+        /// Local accounts allowed on device policy
+        /// </summary>
+        public const string LocalAccountAllowedDisclosureName = "sec.local";
+        /// <summary>
+        /// Session length policy
+        /// </summary>
+        public const string LocalSessionLengthDisclosureName = "sec.ses";
 
         /// <summary>
         /// Security configuration section
@@ -160,16 +173,12 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Turn this configuration section into something suitable for sharing
         /// </summary>
-        public SecurityConfigurationSection ForDisclosure()
+        public IEnumerable<AppSettingKeyValuePair> ForDisclosure()
         {
-            return new SecurityConfigurationSection()
-            {
-                PasswordRegex = this.PasswordRegex,
-                PepExemptionPolicy = this.PepExemptionPolicy,
-                SecurityPolicy = new List<SecurityPolicyConfiguration>(this.SecurityPolicy),
-                Signatures = this.Signatures.Select(o => o.ForDisclosure()).ToList(),
-                TrustedCertificates = this.TrustedCertificates
-            };
+            yield return new AppSettingKeyValuePair(PasswordValidationDisclosureName, this.PasswordRegex);
+            yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
+            yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
         }
+
     }
 }

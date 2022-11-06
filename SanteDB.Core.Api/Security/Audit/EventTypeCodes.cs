@@ -98,6 +98,13 @@ namespace SanteDB.Core.Security.Audit
 
         [XmlEnum("SecurityAuditCode-SecondaryUseQuery")]
         SecondaryUseQuery,
+
+        [XmlEnum("SecurityAuditCode-ConfigurationChanged")]
+        ConfigurationChanged,
+
+        [XmlEnum("SecurityAuditCode-SecurityConfigurationChanged")]
+        SecurityConfigurationChanged,
+
     }
 
 #pragma warning restore CS1591

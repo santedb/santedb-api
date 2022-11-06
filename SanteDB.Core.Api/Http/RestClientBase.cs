@@ -32,6 +32,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SanteDB.Core.Http
@@ -169,12 +170,21 @@ namespace SanteDB.Core.Http
 
             this.Credentials?.SetCredentials(retVal);
 
-            // Compress?
-            if (this.Description.Binding.Optimize)
-            {
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
-            }
+            // Set appropriate header
+            StringBuilder acceptBuilder = new StringBuilder();
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
+                acceptBuilder.Append(",lzma");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Bzip2))
+                acceptBuilder.Append(",bzip2");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Gzip))
+                acceptBuilder.Append(",gzip");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
+                acceptBuilder.Append(",deflate");
 
+            if (acceptBuilder.Length > 0)
+            {
+                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
+            }
             retVal.Accept = this.Description.Accept;
 
             return retVal;

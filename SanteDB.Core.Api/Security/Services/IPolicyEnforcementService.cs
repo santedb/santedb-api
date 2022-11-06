@@ -21,6 +21,7 @@
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
+using SanteDB.Core.Exceptions;
 
 namespace SanteDB.Core.Security.Services
 {
@@ -32,18 +33,34 @@ namespace SanteDB.Core.Security.Services
     {
 
         /// <summary>
-        /// Demand access to the policy
+        /// Demand access to the policy for the current <see cref="AuthenticationContext.Current"/>
         /// </summary>
+        /// <param name="policyId">The identifier OID of the policy for which permission is being demanded</param>
+        /// <exception cref="PolicyViolationException">When <see cref="AuthenticationContext.Current"/> does not have permission to <paramref name="policyId"/></exception>
         void Demand(string policyId);
 
         /// <summary>
         /// Demand access to the policy on behalf of principal
         /// </summary>
+        /// <param name="policyId">The identifier OID of the policy for which permission is being demanded</param>
+        /// <param name="principal">The principal for which permission is being demanded</param>
+        /// <exception cref="PolicyViolationException">When <paramref name="principal"/> does not have permission to <paramref name="policyId"/></exception>
         void Demand(String policyId, IPrincipal principal);
 
         /// <summary>
         /// Demand the specified policy and return the result
         /// </summary>
+        /// <remarks>This method differs from <see cref="Demand(string, IPrincipal)"/> in that:
+        /// <list type="bullet">
+        ///     <item>It does not throw a <see cref="PolicyViolationException"/></item>
+        ///     <item>It does not audit the access control decision</item>
+        /// </list>
+        /// Callers should use this to "test" if a principal has permission without generating an audit. If an audit
+        /// is desired, or a decision to halt a process needed, use <see cref="Demand(string, IPrincipal)"/>
+        /// </remarks>
+        /// <param name="policyId">The policy OID for which the demand is occurring</param>
+        /// <param name="principal">The principal for which the policy should be demanded</param>
+        /// <returns>True if <paramref name="principal"/> demand for <paramref name="policyId"/> succeeded </returns>
         bool SoftDemand(String policyId, IPrincipal principal);
     }
 }

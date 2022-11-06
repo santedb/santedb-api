@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -70,6 +71,34 @@ namespace SanteDB.Core.Security.Configuration
 
         private byte[] m_secret = null;
         private byte[] m_decrypedSecret = null;
+
+        /// <summary>
+        /// Security configuration section
+        /// </summary>
+        public SecuritySignatureConfiguration()
+        {
+
+        }
+
+        /// <summary>
+        /// Create configuration with HMAC secret
+        /// </summary>
+        public SecuritySignatureConfiguration(String name, String secret)
+        {
+            this.KeyName = name;
+            this.HmacSecret = secret;
+            this.Algorithm = SignatureAlgorithm.HS256;
+        }
+
+        /// <summary>
+        /// Security signature with certificates
+        /// </summary>
+        public SecuritySignatureConfiguration(String name, StoreLocation storeLocation, StoreName storeName, X509Certificate2 certificate) 
+            : base(storeLocation, storeName, X509FindType.FindByThumbprint, certificate.Thumbprint)
+        {
+            this.KeyName = name;
+            this.Algorithm = SignatureAlgorithm.RS256;
+        }
 
         /// <summary>
         /// Gets or sets the key name

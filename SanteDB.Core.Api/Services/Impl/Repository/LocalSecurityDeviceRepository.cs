@@ -61,7 +61,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             Guid sid = Guid.Empty;
             if (id is IClaimsIdentity cIdentity)
             {
-                var sidClaim = cIdentity.FindFirst(SanteDBClaimTypes.Sid);
+                var sidClaim = cIdentity.FindFirst(SanteDBClaimTypes.SecurityId);
                 Guid.TryParse(sidClaim.Value, out sid);
             }
             else

@@ -67,7 +67,7 @@ namespace SanteDB.Core.Security
                                 }
                                 certificate = certificateGeneratorService.Combine(signedCertificate, privateKey, friendlyName: $"SanteDB Signing Key {k.KeyName}");
 
-                                X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.My, certificate);
+                                X509CertificateUtils.InstallCertificate(StoreName.My, certificate);
                             }
                         }
                         else // self-signed
@@ -75,7 +75,7 @@ namespace SanteDB.Core.Security
                             this.m_tracer.TraceInfo("Will generate and sign {0}", keySubject);
                             var privateKey = certificateGeneratorService.CreateKeyPair(2048);
                             certificate = certificateGeneratorService.CreateSelfSignedCertificate(privateKey, new X500DistinguishedName(keySubject), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
-                            X509CertificateUtils.InstallCertificate(StoreLocation.CurrentUser, StoreName.My, certificate);
+                            X509CertificateUtils.InstallCertificate(StoreName.My, certificate);
                         }
 
                         this.m_tracer.TraceWarning("Replace key {0} with FindByThumbprint={1}", k.KeyName, certificate.Thumbprint);
