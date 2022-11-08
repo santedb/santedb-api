@@ -1393,7 +1393,7 @@ namespace SanteDB.Core.Security.Audit
         /// <param name="eventTypeCode">The event type</param>
         /// <returns>The constructed audit builder</returns>
         public static IAuditBuilder Audit(this IAuditService service, DateTimeOffset timeStamp, ActionType actionCode, OutcomeIndicator outcome, EventIdentifierType eventIdentifier, AuditCode eventTypeCode)
-            => service.Audit()
+            => service?.Audit()
                 .WithTimestamp(timeStamp)
                 .WithAction(actionCode)
                 .WithOutcome(outcome)

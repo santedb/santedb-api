@@ -49,7 +49,7 @@ namespace SanteDB.Core.Configuration.Http
         [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(ICredentialProvider))]
         public TypeReferenceConfiguration CredentialProviderXml
         {
-            get => new TypeReferenceConfiguration(this.CredentialProvider.GetType());
+            get => new TypeReferenceConfiguration(this.CredentialProvider?.GetType());
             set { this.CredentialProvider = Activator.CreateInstance(value.Type) as ICredentialProvider; }
         }
 

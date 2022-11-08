@@ -47,7 +47,19 @@ namespace SanteDB.Core.Security.Configuration
             this.FindType = X509FindType.FindByThumbprint;
             this.StoreLocation = StoreLocation.LocalMachine;
             this.StoreName = StoreName.My;
-            this.FindTypeSpecified = this.StoreLocationSpecified = true;
+            this.StoreNameSpecified = this.FindTypeSpecified = this.StoreLocationSpecified = true;
+        }
+
+        /// <summary>
+        /// Create from X509 certificate
+        /// </summary>
+        public X509ConfigurationElement(X509ConfigurationElement other)
+        {
+            this.FindValue = other.FindValue;
+            this.FindType = other.FindType;
+            this.StoreLocation = other.StoreLocation;
+            this.StoreName = other.StoreName;
+            this.StoreLocationSpecified = this.StoreNameSpecified = this.FindTypeSpecified = true;
         }
 
         /// <summary>

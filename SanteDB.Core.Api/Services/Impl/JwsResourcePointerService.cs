@@ -82,9 +82,9 @@ namespace SanteDB.Core.Services.Impl
         private String GetAppKeyId()
         {
             // Is there a key called jwsdefault? If so, use it as the default signature key
-            if (m_signingService.GetKeys().Contains("jwsdefault"))
+            if (m_signingService.GetKeys().Contains("default"))
             {
-                return "jwsdefault";
+                return "default";
             }
 
             // Otherwise use the configured secure application HMAC key as the default

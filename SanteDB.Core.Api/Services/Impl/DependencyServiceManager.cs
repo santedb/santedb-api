@@ -676,7 +676,7 @@ namespace SanteDB.Core.Services.Impl
 
             this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, UserMessages.STOPPING_CONTEXT));
             int i = 0;
-            foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager)).ToArray())
+            foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager) && !o.ServiceImplementer.Implements(typeof(IApplicationServiceContext))).ToArray())
             {
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs((float)i++ / this.m_serviceRegistrations.Count, UserMessages.STOPPING_CONTEXT));
 

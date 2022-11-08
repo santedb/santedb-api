@@ -120,6 +120,27 @@ namespace SanteDB.Core.Configuration
                 }
             }
         }
+
+        /// <summary>
+        /// Add an application setting
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        public void AddAppSetting(string vkey, string value)
+        {
+            if(this.AppSettings == null )
+            {
+                this.AppSettings = new List<AppSettingKeyValuePair>();
+            }
+            var existing = this.AppSettings.Find(o => o.Key == vkey);
+            if(existing != null)
+            {
+                existing.Value = value;
+            }
+            else
+            {
+                this.AppSettings.Add(new AppSettingKeyValuePair(vkey, value));
+            }
+        }
     }
 
 

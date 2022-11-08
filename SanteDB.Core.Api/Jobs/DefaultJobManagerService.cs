@@ -261,7 +261,7 @@ namespace SanteDB.Core.Jobs
             Trace.TraceInformation("Stopping timer service...");
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
-            this.m_systemTimer.Dispose();
+            this.m_systemTimer?.Dispose();
             this.m_systemTimer = null;
             foreach (var itm in this.m_jobs)
             {

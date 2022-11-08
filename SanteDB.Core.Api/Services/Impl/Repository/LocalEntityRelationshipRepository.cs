@@ -40,7 +40,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Query policy for entities
         /// </summary>
-        protected override string QueryPolicy => PermissionPolicyIdentifiers.QueryClinicalData;
+        protected override string QueryPolicy => PermissionPolicyIdentifiers.ReadMetadata;
 
         /// <summary>
         /// Read policy for entities

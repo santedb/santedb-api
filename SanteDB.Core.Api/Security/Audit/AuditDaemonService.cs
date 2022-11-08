@@ -203,7 +203,7 @@ namespace SanteDB.Core.Security.Audit
             ApplicationServiceContext.Current.Stopping += (o, e) =>
             {
                 this.m_safeToStop = true;
-                this.Stop();
+                //this.Stop();
             };
             ApplicationServiceContext.Current.Started += (o, e) =>
             {

@@ -17,5 +17,10 @@ namespace SanteDB.Core.Security.Certs
         /// Client authentication
         /// </summary>
         public const string ClientAuthentication = "1.3.6.1.5.5.7.3.2";
+        /// <summary>
+        /// Code signing certificates
+        /// </summary>
+        public const string CodeSigning = "1.3.6.1.5.5.7.3.3";
+
     }
 }

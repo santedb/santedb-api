@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -48,6 +49,7 @@ namespace SanteDB.Core.Security
 
         // Security configuration
         private readonly SecurityConfigurationSection m_configuration;
+        private readonly ConcurrentDictionary<String, SecuritySignatureConfiguration> m_usedForSignature = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
 
         /// <summary>
         /// Default data signing service DI constructor
@@ -112,7 +114,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public byte[] SignData(byte[] data, string keyId = null)
         {
-            var configuration = this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"));
+            var configuration = this.GetSigningKey(keyId ?? "default");
             if (configuration == null)
             {
                 throw new KeyNotFoundException($"Signing credentials {keyId} not found");
@@ -155,6 +157,19 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
+        /// Get signing key configuration - this is used as on initial startup the configuration can change
+        /// </summary>
+        private SecuritySignatureConfiguration GetSigningKey(string keyId)
+        {
+            if(!this.m_usedForSignature.TryGetValue(keyId, out var keyUsedForSigning))
+            {
+                keyUsedForSigning = this.m_configuration.Signatures.Find(o => o.KeyName == keyId);
+                this.m_usedForSignature.TryAdd(keyId, keyUsedForSigning);
+            }
+            return keyUsedForSigning;
+        }
+
+        /// <summary>
         /// Verify data
         /// </summary>
         /// <param name="data">The data to verify</param>
@@ -163,7 +178,7 @@ namespace SanteDB.Core.Security
         /// <returns>True if the signature matches</returns>
         public bool Verify(byte[] data, byte[] signature, string keyId = null)
         {
-            var configuration = this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"));
+            var configuration = this.GetSigningKey(keyId ?? "default");
             if (configuration == null)
             {
                 throw new KeyNotFoundException($"Could not find signing credentials {keyId}");

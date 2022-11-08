@@ -87,6 +87,41 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlEnum("downstream.user.accounts")]
         AllowLocalDownstreamUserAccounts,
+        /// <summary>
+        /// Indicates that the local is permitted to cache successful login credentials
+        /// </summary>
+        [XmlEnum("local.user.cache")]
+        AllowCachingOfUserCredentials,
+        /// <summary>
+        /// Indicates that only users from the <see cref="AssignedFacilityUuid"/> are permitted to login
+        /// </summary>
+        [XmlEnum("local.user.anyUserLogin")]
+        AllowNonAssignedUsersToLogin,
+        /// <summary>
+        /// Indicates the owner facility 
+        /// </summary>
+        [XmlEnum("uuid.facility")]
+        AssignedFacilityUuid,
+        /// <summary>
+        /// Indicates the owner user
+        /// </summary>
+        [XmlEnum("uuid.owner")]
+        AssignedOwnerUuid,
+        /// <summary>
+        /// Length of time that security auidts should be retained
+        /// </summary>
+        [XmlEnum("audit.retention")]
+        AuditRetentionTime,
+        /// <summary>
+        /// The device principal
+        /// </summary>
+        [XmlEnum("uuid.devicePrincipal")]
+        AssignedDeviceSecurityId,
+        /// <summary>
+        /// The device entity identifier
+        /// </summary>
+        [XmlEnum("uuid.device")]
+        AssignedDeviceEntityId,
     }
 
     /// <summary>
@@ -165,6 +200,7 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(SecurityPolicyConfiguration), Namespace = "http://santedb.org/configuration")]
     public class SecurityPolicyConfiguration
     {
+        private object m_policyValue;
 
         /// <summary>
         /// Default ctor for serialization
@@ -204,9 +240,24 @@ namespace SanteDB.Core.Configuration
         [XmlElement("date", typeof(DateTime))]
         [XmlElement("list", typeof(List<String>))]
         [XmlElement("string", typeof(String))]
+        [XmlElement("guid", typeof(Guid))]
         [XmlElement("bool", typeof(Boolean))]
         [XmlElement("real", typeof(double))]
-        public Object PolicyValue { get; set; }
+        public Object PolicyValue
+        {
+            get => this.m_policyValue;
+            set
+            {
+                if(value is TimeSpan ts)
+                {
+                    this.m_policyValue = new PolicyValueTimeSpan(ts);
+                }
+                else
+                {
+                    this.m_policyValue = value;
+                }
+            }
+        }
 
     }
 }

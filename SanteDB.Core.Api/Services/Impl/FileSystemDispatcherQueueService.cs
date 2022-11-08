@@ -187,9 +187,9 @@ namespace SanteDB.Core.Services.Impl
             // Listener thread
             this.m_listenerThread = new Thread(() =>
             {
-                while (true)
+                while (ApplicationServiceContext.Current.IsRunning)
                 {
-                    this.m_resetEvent.Wait();
+                    this.m_resetEvent.Wait(1000);
                     while (this.m_notificationQueue.TryDequeue(out var result))
                     {
                         if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
@@ -215,6 +215,36 @@ namespace SanteDB.Core.Services.Impl
         public Queue.DispatcherQueueEntry Dequeue(string queueName)
         {
             return this.DequeueById(queueName, null);
+        }
+
+        /// <summary>
+        /// Determines whether the specified file is locked
+        /// </summary>
+        private bool IsFileLocked(String fileName, out bool isEmpty)
+        {
+            FileStream stream = null;
+            try
+            {
+                stream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                isEmpty = stream.Length == 0;
+            }
+            catch (IOException)
+            {
+                //the file is unavailable because it is:
+                //still being written to
+                //or being processed by another thread
+                //or does not exist (has already been processed)
+                isEmpty = false;
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+
+            //file is not locked
+            return false;
         }
 
         /// <summary>
@@ -250,6 +280,12 @@ namespace SanteDB.Core.Services.Impl
                 {
                     return null;
                 }
+
+                bool isEmpty = false;
+                while(this.IsFileLocked(queueFile, out isEmpty)) {
+                    Thread.Sleep(100);
+                }
+                if (isEmpty) return null;
 
                 this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
