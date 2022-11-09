@@ -30,6 +30,13 @@ namespace SanteDB.Core.Security.Services
     {
 
         /// <summary>
+        /// Gets the context key
+        /// </summary>
+        /// <remarks>The context key is used by the symmetric encryption algorithm and is used to quickly encrypt data to/from the configuration file
+        /// (particularly the HMAC keys) when a RSA certificate is not available for encryption</remarks>
+        byte[] GetContextKey();
+
+        /// <summary>
         /// Generates an initialization vector
         /// </summary>
         byte[] GenerateIV();
@@ -38,11 +45,6 @@ namespace SanteDB.Core.Security.Services
         /// Generates a key
         /// </summary>
         byte[] GenerateKey();
-
-        /// <summary>
-        /// Gets the context key
-        /// </summary>
-        byte[] GetContextKey();
 
         /// <summary>
         /// Encrypts the sepcified data

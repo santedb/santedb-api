@@ -425,7 +425,7 @@ namespace SanteDB.Core.Http
                 catch (Exception e2)
                 {
                     // De-Serialize using 
-                    throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2);
+                    throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2, e.Status, e.Response);
                 }
 
                 Exception exception = null;

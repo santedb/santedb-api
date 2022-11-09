@@ -121,7 +121,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Override claim
         /// </summary>
-        public const string SanteDBOverrideClaim = "urn:santedb:org:override";
+        public const string SanteDBOverrideClaim = "urn:santedb:org:claim:override";
 
 
         /// <summary>
