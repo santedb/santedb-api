@@ -68,7 +68,6 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultNetworkInformationService),
             typeof(SimpleSessionTokenEncodingService),
             typeof(SimpleSessionTokenResolver),
-            typeof(DefaultAuditService),
             typeof(DefaultAuditService)
         };
         private readonly IServiceManager m_serviceManager;
