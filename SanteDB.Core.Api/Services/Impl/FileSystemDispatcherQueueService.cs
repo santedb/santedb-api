@@ -187,7 +187,7 @@ namespace SanteDB.Core.Services.Impl
             // Listener thread
             this.m_listenerThread = new Thread(() =>
             {
-                while (ApplicationServiceContext.Current.IsRunning)
+                while (!this.m_disposed)
                 {
                     this.m_resetEvent.Wait(1000);
                     while (this.m_notificationQueue.TryDequeue(out var result))
@@ -285,9 +285,13 @@ namespace SanteDB.Core.Services.Impl
                 while(this.IsFileLocked(queueFile, out isEmpty)) {
                     Thread.Sleep(100);
                 }
-                if (isEmpty) return null;
+                if (isEmpty)
+                {
+                    File.Delete(queueFile);
+                    return this.Dequeue(queueName);
+                }
 
-                this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
                 try
                 {

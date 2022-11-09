@@ -353,7 +353,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Add the specified section
         /// </summary>
-        public void AddSection<T>(T section)
+        public T AddSection<T>(T section)
         {
             if (section == null)
             {
@@ -364,6 +364,7 @@ namespace SanteDB.Core.Configuration
                 this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(T)));
             }
             this.Sections.Add(section);
+            return section;
         }
 
         /// <summary>
