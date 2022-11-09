@@ -10,7 +10,7 @@ namespace SanteDB.Core.Security
 {
     internal class SimpleSessionTokenEncodingService : ISessionTokenEncodingService
     {
-        readonly IDataSigningService _DataSigningService;
+        protected readonly IDataSigningService _DataSigningService;
         readonly ILocalizationService _LocalizationService;
         readonly Tracer _TraceSource;
 
@@ -21,7 +21,7 @@ namespace SanteDB.Core.Security
             _LocalizationService = localizationService;
         }
 
-        public string ServiceName => "Simple Session Token Encoding Service";
+        public virtual string ServiceName => "Simple Session Token Encoding Service";
 
         public byte[] Decode(string encodedToken)
         {
@@ -37,9 +37,19 @@ namespace SanteDB.Core.Security
 
         public string Encode(byte[] token)
         {
-            var signature = _DataSigningService.SignData(token);
-            return $"{token.HexEncode()}.{signature.HexEncode()}";
+            
+            return $"{token.HexEncode()}.{this.EncodeSignatureBytes(token).HexEncode()}";
         }
+
+        /// <summary>
+        /// Compute the signature for <paramref name="token"/>
+        /// </summary>
+        protected virtual byte[] EncodeSignatureBytes(byte[] token) => _DataSigningService.SignData(token);
+
+        /// <summary>
+        /// Parse the signature bytes
+        /// </summary>
+        protected virtual byte[] DecodeSignatureBytes(byte[] signature) => signature;
 
         public bool TryDecode(string encodedToken, out byte[] token)
         {
@@ -59,7 +69,7 @@ namespace SanteDB.Core.Security
                 return false;
             }
 
-            if (!_DataSigningService.Verify(tokenparts[0], tokenparts[1]))
+            if (!_DataSigningService.Verify(tokenparts[0], this.DecodeSignatureBytes( tokenparts[1])))
             {
                 _TraceSource.TraceVerbose("SimpleSessionTokenEncodingService - Validation failed in TryDecode().");
                 token = null;

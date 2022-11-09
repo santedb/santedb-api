@@ -88,6 +88,7 @@ namespace SanteDB.Core.Security.Configuration
             this.SecurityPolicy = new List<SecurityPolicyConfiguration>();
         }
 
+
         /// <summary>
         /// Password regex
         /// </summary>
@@ -146,6 +147,12 @@ namespace SanteDB.Core.Security.Configuration
         [DisplayName("Security policy configuration")]
         [Description("Policy configuration")]
         public List<SecurityPolicyConfiguration> SecurityPolicy { get; set; }
+
+        /// <summary>
+        /// Context key
+        /// </summary>
+        [XmlElement("context"), Browsable(false)]
+        public byte[] ContextKey { get; set; }
 
         /// <summary>
         /// Gets the enabled security policy

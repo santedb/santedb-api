@@ -30,25 +30,31 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Default ctor
         /// </summary>
-        public LimitExceededException()
+        public LimitExceededException(int retryInSeconds)
         {
-
+            this.RetryAfter = retryInSeconds;
         }
 
         /// <summary>
         /// Create new limit exceeded exception with specified message
         /// </summary>
-        public LimitExceededException(String message) : base(message)
+        public LimitExceededException(String message, int retryInSeconds) : base(message)
         {
-
+            this.RetryAfter = retryInSeconds;
         }
 
         /// <summary>
         /// Create new limit exceeded exception with specified message and cause
         /// </summary>
-        public LimitExceededException(String message, Exception inner) : base(message, inner)
+        public LimitExceededException(String message, int retryInSeconds, Exception inner) : base(message, inner)
         {
+            this.RetryAfter = retryInSeconds;
 
         }
+
+        /// <summary>
+        /// Gets the time which the client should retry
+        /// </summary>
+        public int RetryAfter { get; }
     }
 }

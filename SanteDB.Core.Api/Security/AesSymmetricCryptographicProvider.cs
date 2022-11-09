@@ -24,6 +24,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace SanteDB.Core.Security
@@ -132,7 +133,14 @@ namespace SanteDB.Core.Security
             {
                 // TODO: Actually handle RSA data
                 var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
-                this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.FindValue ?? defaultKey?.HmacSecret ?? "DEFAULTKEY"));
+                if(defaultKey.Algorithm == SignatureAlgorithm.HS256)
+                {
+                    this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? "DEFAULTKEY"));
+                }
+                else
+                {
+                    this.m_contextKey = SHA256.Create().ComputeHash(defaultKey.Certificate.GetRSAPublicKey().ExportParameters(true).D);
+                }
             }
             return this.m_contextKey;
         }
