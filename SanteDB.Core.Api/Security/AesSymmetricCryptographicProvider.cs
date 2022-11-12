@@ -128,18 +128,26 @@ namespace SanteDB.Core.Security
         /// </summary>
         public byte[] GetContextKey()
         {
+            /* This method is used during the decryption of secrests in the configuration. This could result in a stack overflow
+             * due to this method attempting to get secrets, and the configuration decrypting them.
+             * 
+             * Care should be taken if this method is updated.
+             */
+
             // TODO: Is it possible to pull from CPU?
             if (this.m_contextKey == null)
             {
                 // TODO: Actually handle RSA data
                 var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
+
                 if(defaultKey.Algorithm == SignatureAlgorithm.HS256)
                 {
-                    this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? "DEFAULTKEY"));
+                    this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? throw new NotSupportedException("Default key is of type HMAC but does not have a secret set.") /*"DEFAULTKEY"*/));
                 }
                 else
                 {
-                    this.m_contextKey = SHA256.Create().ComputeHash(defaultKey.Certificate.GetRSAPublicKey().ExportParameters(true).D);
+                    //TODO: Don't use the D parameter as it is not always equal when exported and reimported. https://github.com/dotnet/runtime/commit/700a07cae19fe64649c2fb4c6c10e6b9aa85dc29
+                    this.m_contextKey = SHA256.Create().ComputeHash(defaultKey.Certificate.GetRSAPrivateKey().ExportParameters(true).D);
                 }
             }
             return this.m_contextKey;
