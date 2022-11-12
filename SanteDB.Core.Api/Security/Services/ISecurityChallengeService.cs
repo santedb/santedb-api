@@ -64,8 +64,4 @@ namespace SanteDB.Core.Security.Services
 
     }
 
-    /// <summary>
-    /// Represents a security challenge service which cannot use an upstream
-    /// </summary>
-    public interface ILocalSecurityChallengeService : ISecurityChallengeService { }
 }

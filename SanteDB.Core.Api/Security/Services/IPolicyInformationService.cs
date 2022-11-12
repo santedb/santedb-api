@@ -74,13 +74,15 @@ namespace SanteDB.Core.Security.Services
         /// Removes the specified policies from the user account
         /// </summary>
         void RemovePolicies(Object securable, IPrincipal principal, params string[] oid);
-    }
 
-    public interface ILocalPolicyInformationService: IPolicyInformationService
-    {
+        /// <summary>
+        /// Create <paramref name="policy"/> in the policy information point
+        /// </summary>
+        /// <param name="policy">The policy to be created</param>
+        /// <param name="principal">The principal creating the policy</param>
         void CreatePolicy(IPolicy policy, IPrincipal principal);
-
     }
+
 
 }
 

@@ -21,10 +21,12 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// Identifies a mail message as flagged
         /// </summary>
+        [XmlEnum("f")]
         Flagged = 0x2,
         /// <summary>
         /// Identifies the mail message has been marked as complete
         /// </summary>
+        [XmlEnum("c")]
         Complete = 0x4
 
     }

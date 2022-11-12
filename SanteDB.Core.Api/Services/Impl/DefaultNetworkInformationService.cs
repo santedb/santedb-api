@@ -98,7 +98,8 @@ namespace SanteDB.Core.Services.Impl
                 o.OperationalStatus == OperationalStatus.Up,
                 o.Description,
                 o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString(),
-                o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString()
+                o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString(),
+                o.NetworkInterfaceType
             ));
 
         }

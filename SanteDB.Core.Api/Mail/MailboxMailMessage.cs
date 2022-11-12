@@ -25,7 +25,7 @@ namespace SanteDB.Core.Mail
         /// Gets or sets the flags
         /// </summary>
         [XmlElement("flags"), JsonProperty("flags")]
-        public MailStatusFlags Flags { get; set; }
+        public MailStatusFlags MailStatusFlag { get; set; }
 
         /// <summary>
         /// Gets the target of the relationship

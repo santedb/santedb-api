@@ -190,7 +190,7 @@ namespace SanteDB.Core.Services.Impl
                 while (!this.m_disposed)
                 {
                     this.m_resetEvent.Wait(1000);
-                    while (this.m_notificationQueue.TryDequeue(out var result))
+                    while (this.m_notificationQueue.TryDequeue(out var result) && !String.IsNullOrEmpty(this.GetQueueFile(result.QueueName, result.CorrelationId)))
                     {
                         if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
                         {
@@ -261,22 +261,8 @@ namespace SanteDB.Core.Services.Impl
 
                 // Open the queue
                 this.Open(queueName);
-
-                String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
-
-                // Serialize
-                String queueFile = null;
-
-                if (String.IsNullOrEmpty(correlationId))
-                {
-                    queueFile = Directory.EnumerateFiles(queueDirectory).FirstOrDefault();
-                }
-                else
-                {
-                    queueFile = Path.Combine(queueDirectory, correlationId);
-                }
-
-                if (queueFile == null || !File.Exists(queueFile))
+                var queueFile = this.GetQueueFile(queueName, correlationId);
+                if(String.IsNullOrEmpty(queueFile))
                 {
                     return null;
                 }
@@ -313,6 +299,33 @@ namespace SanteDB.Core.Services.Impl
 
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Get queue file
+        /// </summary>
+        private string GetQueueFile(string queueName, string correlationId)
+        {
+
+            String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
+
+            // Serialize
+            String queueFile = null;
+
+            if (String.IsNullOrEmpty(correlationId))
+            {
+                queueFile = Directory.EnumerateFiles(queueDirectory).FirstOrDefault();
+            }
+            else
+            {
+                queueFile = Path.Combine(queueDirectory, correlationId);
+            }
+
+            if (queueFile == null || !File.Exists(queueFile))
+            {
+                return null;
+            }
+            return queueFile;
         }
 
         /// <summary>

@@ -128,18 +128,6 @@ namespace SanteDB.Core.Services
         IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query);
 
         /// <summary>
-        /// Finds the specified data with the specified control parameters
-        /// </summary>
-        /// <param name="query">The query to be executed</param>
-        /// <param name="offset">The offset of the first record</param>
-        /// <param name="count">The count of records to be returned</param>
-        /// <param name="totalResults">The total results matching <paramref name="query"/></param>
-        /// <param name="orderBy">The ordering instructions that are to be appended to the query</param>
-        /// <returns>Returns a list of identified data.</returns>
-        [Obsolete("Use Find(Expression<Func<TModel, bool>>)", true)]
-        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
-
-        /// <summary>
         /// Inserts the specified model information
         /// </summary>
         /// <param name="data">The data to be inserted</param>

@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 
 namespace SanteDB.Core.Services
 {
@@ -32,7 +33,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Network interface ctor
         /// </summary>
-        public NetworkInterfaceInfo(String name, String macAddress, bool isActive, String manufacturer, string ipAddress, string gateway)
+        public NetworkInterfaceInfo(String name, String macAddress, bool isActive, String manufacturer, string ipAddress, string gateway, NetworkInterfaceType networkInterfaceType)
         {
             this.Name = name;
             this.MacAddress = macAddress;
@@ -40,6 +41,7 @@ namespace SanteDB.Core.Services
             this.Manufacturer = manufacturer;
             this.IpAddress = ipAddress;
             this.Gateway = gateway;
+            this.InterfaceType = networkInterfaceType;
         }
 
         /// <summary>
@@ -71,6 +73,7 @@ namespace SanteDB.Core.Services
         /// Gets or sets the gateway 
         /// </summary>
         public String Gateway { get; private set; }
+        public NetworkInterfaceType InterfaceType { get; }
     }
 
     /// <summary>
@@ -83,6 +86,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get interface information 
         /// </summary>
+        /// <param name="interfaceTypes">The types of network interfaces to fetch data for</param>
         IEnumerable<NetworkInterfaceInfo> GetInterfaces();
 
         /// <summary>

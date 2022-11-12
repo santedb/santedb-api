@@ -271,10 +271,6 @@ namespace SanteDB.Core.Security.Services
         AuthenticationMethod GetAuthenticationMethods(String userName);
     }
 
-    /// <summary>
-    /// An identity provider which only handles local authentication
-    /// </summary>
-    public interface ILocalIdentityProviderService : IIdentityProviderService { }
 
 }
 

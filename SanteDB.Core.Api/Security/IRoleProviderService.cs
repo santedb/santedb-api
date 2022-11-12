@@ -67,10 +67,5 @@ namespace SanteDB.Core.Security.Services
 
     }
 
-    public interface ILocalRoleProviderService: IRoleProviderService
-    {
-
-    }
-
 }
 

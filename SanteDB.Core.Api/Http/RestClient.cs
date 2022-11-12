@@ -115,7 +115,7 @@ namespace SanteDB.Core.Http
                 var fwdInfo = remoteData.ForwardInformation;
                 if (!String.IsNullOrEmpty(fwdInfo))
                 {
-                    fwdInfo += $", {remoteData.RemoteAddress}";
+                    fwdInfo = $"{fwdInfo}, {remoteData.RemoteAddress}";
                 }
 
                 retVal.Headers.Add("X-Real-IP", remoteData.RemoteAddress);

@@ -47,8 +47,4 @@ namespace SanteDB.Core.Security.Services
         IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret);
     }
 
-    /// <summary>
-    /// A <see cref="ISecurityChallengeIdentityService"/> which can only operate in offline mode
-    /// </summary>
-    public interface ILocalSecurityChallengeIdentityService: ISecurityChallengeIdentityService { }
 }

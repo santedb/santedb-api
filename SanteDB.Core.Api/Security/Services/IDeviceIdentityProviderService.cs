@@ -152,8 +152,4 @@ namespace SanteDB.Core.Security.Services
         void RemoveClaim(String deviceName, String claimType, IPrincipal principal);
     }
 
-    /// <summary>
-    /// A <see cref="IIdentityProviderService"/> which only supports local authentication
-    /// </summary>
-    public interface ILocalDeviceIdentityProviderService : IDeviceIdentityProviderService { }
 }

@@ -47,6 +47,13 @@ namespace SanteDB.Core.Services
         IQueryResultSet<Mailbox> GetMailboxes(Guid? forUserKey = null);
 
         /// <summary>
+        /// Get a specific mailbox
+        /// </summary>
+        /// <param name="mailboxName">The name of the mailbox</param>
+        /// <returns>The mailbox</returns>
+        Mailbox GetMailbox(String mailboxName);
+
+        /// <summary>
         /// Create a new mailbox for the specified user
         /// </summary>
         /// <param name="name">The name of the mailbox to be created</param>
@@ -55,36 +62,36 @@ namespace SanteDB.Core.Services
         Mailbox CreateMailbox(String name, Guid? ownerKey = null);
 
         /// <summary>
-        /// Get messages from the mailbox <paramref name="mailboxKey"/>
+        /// Get messages from the mailbox <paramref name="mailboxName"/>
         /// </summary>
-        /// <param name="mailboxKey">The mailbox key to fetch messages for</param>
+        /// <param name="mailboxName">The mailbox key to fetch messages for</param>
         /// <returns>The messages</returns>
-        IQueryResultSet<MailMessage> GetMessages(Guid mailboxKey);
+        IQueryResultSet<MailboxMailMessage> GetMessages(String mailboxName);
 
         /// <summary>
-        /// Move <paramref name="messageKey"/> to <paramref name="targetMailboxKey"/>
+        /// Move <paramref name="messageKey"/> to <paramref name="targetMailboxName"/>
         /// </summary>
-        /// <param name="fromMailboxKey">The GUID of the from mailbox to move</param>
         /// <param name="messageKey">The key of the message to be moved</param>
-        /// <param name="targetMailboxKey">The target mailbox</param>
+        /// <param name="targetMailboxName">The target mailbox</param>
         /// <param name="copy">True if the message should be duplicated</param>
         /// <returns>The updated mail message</returns>
-        MailboxMailMessage MoveMessage(Guid fromMailboxKey, Guid messageKey, Guid targetMailboxKey, bool copy = false);
+        MailboxMailMessage MoveMessage(Guid messageKey, String targetMailboxName, bool copy = false);
 
         /// <summary>
         /// Delete the specified message
         /// </summary>
-        /// <param name="fromMailboxKey">The mailbox from which the message should be removed</param>
+        /// <param name="fromMailboxName">The mailbox from which the message should be removed</param>
         /// <param name="messageKey">Delete the specified message key</param>
         /// <returns>The deleted message</returns>
-        MailboxMailMessage DeleteMessage(Guid fromMailboxKey, Guid messageKey);
+        MailboxMailMessage DeleteMessage(String fromMailboxName, Guid messageKey);
 
         /// <summary>
         /// Delete mailbox from current user account
         /// </summary>
-        /// <param name="mailboxKey">The key of the mailbox to be deleted</param>
+        /// <param name="fromMailboxName">The key of the mailbox to be deleted</param>
+        /// <param name="ownerKey">The owner of the mailbox</param>
         /// <returns>The deleted mailbox</returns>
-        Mailbox DeleteMailbox(Guid mailboxKey);
+        Mailbox DeleteMailbox(String fromMailboxName, Guid? ownerKey = null);
 
         /// <summary>
         /// Update the flag for the specified mail message instance
@@ -92,6 +99,6 @@ namespace SanteDB.Core.Services
         /// <param name="mailMessageKey">The message to be updated</param>
         /// <param name="statusFlag">The status to set</param>
         /// <returns>The updated mailbox message flag</returns>
-        MailboxMailMessage UpdateFlag(Guid mailMessageKey, MailStatusFlags statusFlag);
+        MailboxMailMessage UpdateStatusFlag(Guid mailMessageKey, MailStatusFlags statusFlag);
     }
 }

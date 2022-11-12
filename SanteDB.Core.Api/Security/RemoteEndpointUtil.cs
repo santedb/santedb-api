@@ -20,6 +20,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace SanteDB.Core.Security
 {
@@ -47,6 +48,7 @@ namespace SanteDB.Core.Security
         /// Forwarding information
         /// </summary>
         public string ForwardInformation { get; set; }
+
     }
 
     /// <summary>
@@ -109,5 +111,6 @@ namespace SanteDB.Core.Security
             }
             return null;
         }
+
     }
 }
