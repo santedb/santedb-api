@@ -70,7 +70,7 @@ namespace SanteDB.Core.Jobs
     /// <seealso cref="IJob"/>
     /// <seealso cref="IJobScheduleManager"/>
     [Description("Job Management Service")]
-    public interface IJobManagerService : IDaemonService
+    public interface IJobManagerService : IServiceImplementation
     {
 
         /// <summary>
