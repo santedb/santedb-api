@@ -103,7 +103,7 @@ namespace SanteDB.Core.Configuration.Features
                         }
                         else
                         {
-                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.Name;
+                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.FullName;
                             config.Options.Add(optionName, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
                             config.Values.Add(optionName, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
                         }

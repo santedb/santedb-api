@@ -18,6 +18,8 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Privacy;
 using SanteDB.Core.Security.Services;
@@ -122,7 +124,7 @@ namespace SanteDB.Core.Configuration.Features
             config.Values.Add("PasswordHasher", hasher ?? typeof(SanteDB.Core.Security.SHA256PasswordHashingService));
             config.Values.Add("PasswordValidator", validator ?? typeof(RegexPasswordValidator));
             config.Values.Add("PolicyDecisionProvider", pdp ?? typeof(DefaultPolicyDecisionService));
-            config.Values.Add("PolicyInformationProvider", pip ?? (config.Options["PolicyInformationProvider"]() as IEnumerable<Type>).FirstOrDefault());
+            config.Values.Add("PolicyInformationProvider", pip );
 
             if (this.Configuration == null)
             {
@@ -258,7 +260,6 @@ namespace SanteDB.Core.Configuration.Features
                 var appServices = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
                 appServices.RemoveAll(t => typeof(IPasswordValidatorService).IsAssignableFrom(t.Type) ||
                         typeof(IPasswordHashingService).IsAssignableFrom(t.Type) ||
-                        typeof(IPolicyInformationService).IsAssignableFrom(t.Type) ||
                         typeof(IPolicyDecisionService).IsAssignableFrom(t.Type));
 
                 // Now we want to read the configuration 
@@ -279,7 +280,25 @@ namespace SanteDB.Core.Configuration.Features
                 appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordHasher"] as Type));
                 appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordValidator"] as Type));
                 appServices.Add(new TypeReferenceConfiguration(config.Values["PolicyDecisionProvider"] as Type));
-                appServices.Add(new TypeReferenceConfiguration(config.Values["PolicyInformationProvider"] as Type));
+
+                var pipService = config.Values["PolicyInformationProvider"] as Type;
+                if(pipService == null)
+                {
+                    pipService = appServices.Find(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type))?.Type;
+                    if(pipService != null)
+                    {
+                        config.Values["PolicyInformationProvider"] = pipService;
+                    }
+                    else
+                    {
+                        Tracer.GetTracer(this.GetType()).TraceWarning("You should assign a PIP implementation!");
+                    }
+                }
+                else
+                {
+                    appServices.RemoveAll(o=>typeof(IPolicyInformationService).IsAssignableFrom(o.Type));
+                    appServices.Add(new TypeReferenceConfiguration(pipService));
+                }
 
                 // Now set the policy values
                 secSection.SetPolicy(SecurityPolicyIdentification.MaxPasswordAge, (Int32)config.Values["PasswordAge"]);

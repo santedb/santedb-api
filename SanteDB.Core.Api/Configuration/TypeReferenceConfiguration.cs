@@ -53,6 +53,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public TypeReferenceConfiguration(string typeAqn)
         {
+            if (String.IsNullOrEmpty(typeAqn))
+            {
+                throw new ArgumentNullException(nameof(typeAqn));
+            }
             this.TypeXml = typeAqn;
         }
 
@@ -61,6 +65,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public TypeReferenceConfiguration(Type type)
         {
+            if(type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
             this.Type = type;
         }
 

@@ -299,6 +299,10 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static IAuditBuilder WithRemoteSource(this IAuditBuilder me, RemoteEndpointInfo remoteEndpoint)
         {
+            if(null == remoteEndpoint) // there is no remote endpoint information (common for file processing or tests)
+            {
+                return me;
+            }
             if (null == me.Audit.Actors)
             {
                 me.Audit.Actors = new List<AuditActorData>();

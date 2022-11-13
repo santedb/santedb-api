@@ -82,8 +82,8 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate to install</param>
         public static void InstallCertificate(StoreName storeName, X509Certificate2 certificate)
         {
-            var secConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
-            var location = secConfiguration.GetSecurityPolicy(Core.Configuration.SecurityPolicyIdentification.DefaultCertificateInstallLocation, StoreLocation.CurrentUser);
+            var secConfiguration = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
+            var location = secConfiguration?.GetSecurityPolicy(Core.Configuration.SecurityPolicyIdentification.DefaultCertificateInstallLocation, StoreLocation.CurrentUser) ?? StoreLocation.CurrentUser;
             InstallCertificate(location, storeName, certificate);
         }
 
@@ -101,7 +101,7 @@ namespace SanteDB.Core.Security
         private static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate) {
 
             // Audit that we have installed our certificate
-            var audit = ApplicationServiceContext.Current.GetService<IAuditService>().Audit()
+            var audit = ApplicationServiceContext.Current?.GetService<IAuditService>()?.Audit()
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
@@ -120,17 +120,17 @@ namespace SanteDB.Core.Security
                     var pfxData = certificate.Export(X509ContentType.Pfx, password);
                     var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
                     trustStore.Add(properCert);
-                    audit.WithOutcome(Model.Audit.OutcomeIndicator.Success);
+                    audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
                 }
             }
             catch
             {
-                audit.WithOutcome(Model.Audit.OutcomeIndicator.SeriousFail);
+                audit?.WithOutcome(Model.Audit.OutcomeIndicator.SeriousFail);
                 throw;
             }
             finally
             {
-                audit.Send();
+                audit?.Send();
             }
         }
 

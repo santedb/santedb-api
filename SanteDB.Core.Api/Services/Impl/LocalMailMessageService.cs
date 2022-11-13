@@ -108,7 +108,7 @@ namespace SanteDB.Core.Services.Impl
         {
             // Delete the specified mail message key
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            var mailMessageBoxAssoc = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == messageKey && o.SourceEntity.Name.ToLowerInvariant() == fromMailboxName.ToLowerInvariant() && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
+            var mailMessageBoxAssoc = this.m_mailboxMessagePersistence.Query(o => o.Key == messageKey && o.SourceEntity.Name.ToLowerInvariant() == fromMailboxName.ToLowerInvariant() && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
             if (mailMessageBoxAssoc == null)
             {
                 throw new KeyNotFoundException(messageKey.ToString());
@@ -140,7 +140,7 @@ namespace SanteDB.Core.Services.Impl
         {
             // Move a mail message to another mailbox
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == messageKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
+            var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.Key == messageKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
             if (sourceMessage == null)
             {
                
@@ -171,7 +171,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 return this.m_mailboxMessagePersistence.Insert(new MailboxMailMessage()
                 {
-                    TargetKey = messageKey,
+                    TargetKey = sourceMessage.TargetKey,
                     SourceEntityKey = targetMailbox.Key
                 }, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
