@@ -76,5 +76,12 @@ namespace SanteDB.Core.Services
         /// Create a new injected instance of <typeparamref name="TObject"/>
         /// </summary>
         TObject CreateInjected<TObject>();
+
+        /// <summary>
+        /// Notify the service manager of startup progress
+        /// </summary>
+        /// <param name="startupChangeText">The text or message for the startup event</param>
+        /// <param name="startupProgress">The progress change</param>
+        void NotifyStartupProgress(float startupProgress, String startupChangeText);
     }
 }

@@ -71,7 +71,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(GenericLocalMetadataRepository<DeviceEntity>),
                 typeof(GenericLocalMetadataRepository<ApplicationEntity>),
                 typeof(LocalSecurityRepositoryService),
+                typeof(LocalAuditRepository),
                 typeof(LocalProviderRepository),
+                typeof(LocalConceptRepository),
                 typeof(LocalTemplateDefinitionRepositoryService),
                 typeof(LocalTemplateDefinitionRepositoryService),
             };

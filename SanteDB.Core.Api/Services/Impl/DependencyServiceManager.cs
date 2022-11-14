@@ -558,7 +558,6 @@ namespace SanteDB.Core.Services.Impl
                         foreach (var svc in singletonServices)
                         {
                             this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
-
                             this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }
@@ -871,6 +870,12 @@ namespace SanteDB.Core.Services.Impl
                     }
                 })
                 .OfType<T>();
+        }
+
+        /// <inheritdoc/>
+        public void NotifyStartupProgress(float startupProgress, string startupChangeText)
+        {
+            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(startupProgress, startupChangeText));
         }
     }
 }

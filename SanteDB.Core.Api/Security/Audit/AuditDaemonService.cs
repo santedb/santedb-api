@@ -33,7 +33,7 @@ namespace SanteDB.Core.Security.Audit
     /// An implementation of <see cref="IDaemonService"/> which monitors instances of <see cref="IIdentityProviderService"/>
     /// and <see cref="ISessionIdentityProviderService"/> to audit login and logout events in the audit repository
     /// </summary>
-    [ServiceProvider(SERVICE_NAME, required: true)]
+    [ServiceProvider(SERVICE_NAME, Required = true)]
     public class AuditDaemonService : IAuditDaemon
     {
         private const string SERVICE_NAME = "Security Audit Service";

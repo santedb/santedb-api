@@ -84,6 +84,11 @@ namespace SanteDB.Core.Configuration.Data
         Type DbProviderType { get; }
 
         /// <summary>
+        /// Gets the ADO.NET factory
+        /// </summary>
+        Type AdoNetFactoryType { get; }
+
+        /// <summary>
         /// Creates the specified connection string with <paramref name="options"/>
         /// </summary>
         /// <param name="options">The options to be set on the connection string</param>

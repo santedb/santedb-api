@@ -33,7 +33,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// File notification template service
     /// </summary>
-    [ServiceProvider("File System based Notification Template Repository", configurationType: typeof(FileSystemNotificationTemplateConfigurationSection))]
+    [ServiceProvider("File System based Notification Template Repository", Configuration = typeof(FileSystemNotificationTemplateConfigurationSection))]
     public class FileNotificationTemplateRepository : INotificationTemplateRepository
     {
         // Tracer

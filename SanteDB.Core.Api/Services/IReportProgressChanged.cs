@@ -61,4 +61,5 @@ namespace SanteDB.Core.Services
         /// </summary>
         event EventHandler<ProgressChangedEventArgs> ProgressChanged;
     }
+
 }

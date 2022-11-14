@@ -88,6 +88,11 @@ namespace SanteDB.Core.Configuration.Data
             get;
             set;
         }
+
+        /// <summary>
+        /// Get the configuration provider by invariant
+        /// </summary>
+        public static IDataConfigurationProvider GetDataConfigurationProvider(string invariantName) => GetDataConfigurationProviders().FirstOrDefault(o => o.Invariant == invariantName);
     }
 
     /// <summary>

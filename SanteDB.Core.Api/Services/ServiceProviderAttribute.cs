@@ -48,12 +48,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Identifies a service provider
         /// </summary>
-        public ServiceProviderAttribute(String name, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null)
+        public ServiceProviderAttribute(String name)
         {
             this.Name = name;
-            this.Type = type;
-            this.Configuration = configurationType;
-            this.Required = required;
         }
 
         /// <summary>
@@ -90,7 +87,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Creates a new API service provider
         /// </summary>
-        public ApiServiceProviderAttribute(string name, Type behaviorType, ServiceEndpointType serviceType, bool required = false, ServiceInstantiationType type = ServiceInstantiationType.Singleton, Type configurationType = null) : base(name, required, type, configurationType)
+        public ApiServiceProviderAttribute(string name, Type behaviorType, ServiceEndpointType serviceType) : base(name)
         {
             this.BehaviorType = behaviorType;
             this.ServiceType = serviceType;
