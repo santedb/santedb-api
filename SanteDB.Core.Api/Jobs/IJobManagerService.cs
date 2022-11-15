@@ -149,6 +149,11 @@ namespace SanteDB.Core.Jobs
         /// <param name="intervalSpan">The repeat interval of the job</param>
         /// <returns>The schedule of the job</returns>
         IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan);
+        /// <summary>
+        /// Clear the schedule of a job.
+        /// </summary>
+        /// <param name="job">The job to clear the schedule for.</param>
+        void ClearJobSchedule(IJob job);
 
     }
 }
