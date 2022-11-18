@@ -242,7 +242,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository service that applies permission
     /// </summary>
-    public interface ISecuredRepositoryService
+    public interface ISecuredRepositoryService : IRepositoryService
     {
         /// <summary>
         /// Demand write permission

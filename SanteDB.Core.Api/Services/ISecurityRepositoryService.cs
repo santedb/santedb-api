@@ -57,6 +57,13 @@ namespace SanteDB.Core.Services
         Guid GetSid(IIdentity identity);
 
         /// <summary>
+        /// Resolves the name from a security identifier
+        /// </summary>
+        /// <param name="sid">The security identifier</param>
+        /// <returns>The resolved name</returns>
+        String ResolveName(Guid sid);
+
+        /// <summary>
         /// Creates a user with a specified password.
         /// </summary>
         /// <param name="userInfo">The security user.</param>

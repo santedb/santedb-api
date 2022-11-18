@@ -440,5 +440,11 @@ namespace SanteDB.Core.Services.Impl.Repository
                     return this.m_identityProviderService.GetSid(identity.Name);
             }
         }
+
+        /// <inheritdoc/>
+        public string ResolveName(Guid sid) =>
+            this.m_userRepository.Get(sid)?.UserName ??
+            this.m_applicationRepository.Get(sid)?.Name ??
+            this.m_deviceRepository.Get(sid)?.Name;
     }
 }
