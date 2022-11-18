@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Jobs
@@ -46,6 +47,23 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         /// <param name="job">The job to add the schedule to</param>
         /// <param name="jobSchedule">The schedule to set</param>
-        void Add(IJob job, IJobSchedule jobSchedule);
+        IJobSchedule Add(IJob job, IJobSchedule jobSchedule);
+
+        /// <summary>
+        /// Add a schedule which repeats at <paramref name="interval"/> on <paramref name="job"/>
+        /// </summary>
+        /// <param name="job">The job to add the schedule to</param>
+        /// <param name="interval">The interval to fire the job</param>
+        /// <param name="stopDate">The stop date</param>
+        IJobSchedule Add(IJob job, TimeSpan interval, DateTime? stopDate = null);
+
+        /// <summary>
+        /// Add a job schedule to <paramref name="job"/> that repeats on <paramref name="repeatOn"/> starting <paramref name="startDate"/>
+        /// </summary>
+        /// <param name="job">The job to add the schedule to</param>
+        /// <param name="repeatOn">Repeat on days of week</param>
+        /// <param name="startDate">The start date and time of the schedule</param>
+        /// <param name="stopDate">The date to stop the schedule</param>
+        IJobSchedule Add(IJob job, DayOfWeek[] repeatOn, DateTime startDate, DateTime? stopDate = null);
     }
 }
