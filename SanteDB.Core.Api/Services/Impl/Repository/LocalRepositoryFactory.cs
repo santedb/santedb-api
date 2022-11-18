@@ -116,6 +116,12 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
+            if (serviceType == typeof(LocalRepositoryFactory))
+            {
+                serviceInstance = this;
+                return true;
+            }
+
             // Is this service type in the services?
             var st = r_repositoryServices.FirstOrDefault(s => s == serviceType || serviceType.IsAssignableFrom(s));
             if (st == null && (typeof(IRepositoryService).IsAssignableFrom(serviceType) || serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>)))

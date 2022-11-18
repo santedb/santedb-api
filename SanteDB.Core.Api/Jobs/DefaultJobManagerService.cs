@@ -464,6 +464,19 @@ namespace SanteDB.Core.Jobs
             }
         }
 
+        /// <inheritdoc/>
+        public void ClearJobSchedule(IJob job)
+        {
+            var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
+            if (jobInfo == null)
+            {
+                throw new KeyNotFoundException($"Job {job.Id} not registered");
+            }
+
+            this.m_tracer.TraceInfo("Clear job {0} schedule.", job);
+            this.m_jobScheduleManager.Clear(job);
+        }
+
         #endregion ITimerService Members
     }
 }
