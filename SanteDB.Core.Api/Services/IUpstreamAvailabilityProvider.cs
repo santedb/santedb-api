@@ -31,7 +31,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="endpoint">The service endpoint to determine time drift from</param>
         /// <returns>The time drift</returns>
-        TimeSpan GetTimeDrift(ServiceEndpointType endpoint);
+        TimeSpan? GetTimeDrift(ServiceEndpointType endpoint);
 
     }
 }
