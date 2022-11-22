@@ -31,5 +31,8 @@ namespace SanteDB.Core.Security.Claims
         /// <returns>The collection of SanteDB claims</returns>
         IEnumerable<IClaim> MapToInternalIdentityClaims(IDictionary<string, object> externalClaims);
 
+        string MapToExternalClaimType(string internalClaimType);
+        string MapToInternalClaimType(string externalClaimType);
+
     }
 }
