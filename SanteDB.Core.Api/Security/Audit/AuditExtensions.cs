@@ -1131,7 +1131,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithPrincipal(principal);
 
 
-            // Audit the actual session that is created
+            // Audit the actual session that is abandoned.
             var cprincipal = (principal ?? AuthenticationContext.Current.Principal) as IClaimsPrincipal;
             var deviceIdentity = cprincipal?.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
             var applicationIdentity = cprincipal?.Identities.OfType<IApplicationIdentity>().FirstOrDefault();

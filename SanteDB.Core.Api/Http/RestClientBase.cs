@@ -43,8 +43,6 @@ namespace SanteDB.Core.Http
     /// <remarks>This class represets a base class from which specific implementations of a REST client can be implemented</remarks>
     public abstract class RestClientBase : IRestClient
     {
-        // Configuration
-        private IRestClientDescription m_configuration;
 
         // Get tracer
         private static Tracer s_tracer = Tracer.GetTracer(typeof(RestClientBase));
@@ -105,7 +103,7 @@ namespace SanteDB.Core.Http
         /// <param name="config">The configuraiton of this client</param>
         public RestClientBase(IRestClientDescription config)
         {
-            this.m_configuration = config;
+            this.Description = config;
         }
 
         /// <summary>
@@ -526,7 +524,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Get the description (configuration) of this service
         /// </summary>
-        public IRestClientDescription Description { get { return this.m_configuration; } set { this.m_configuration = value; } }
+        public IRestClientDescription Description { get; set; }
 
         #endregion IRestClient implementation
 
