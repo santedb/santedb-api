@@ -8,6 +8,8 @@
     <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Resources\Patients.csv" />
+	  <None Remove="Resources\SimpleDataMap.xml" />
 	  <None Remove="TestConfig.xml" />
 	</ItemGroup>
 
@@ -31,6 +33,8 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\NonStandardBundle.xml" />
+    <EmbeddedResource Include="Resources\Patients.csv" />
+    <EmbeddedResource Include="Resources\SimpleDataMap.xml" />
     <EmbeddedResource Include="TestConfig.xml" />
   </ItemGroup>
   <ItemGroup>

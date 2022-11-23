@@ -127,9 +127,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public string GeneratePointer(IHasIdentifiers entity)
         {
-            if(!(entity is IIdentifiedData identifiedEntity))
+            if(!(entity is IAnnotatedResource identifiedEntity))
             {
-                throw new ArgumentException(nameof(entity), String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, entity.GetType(), typeof(IIdentifiedData)));
+                throw new ArgumentException(nameof(entity), String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, entity.GetType(), typeof(IAnnotatedResource)));
             }
 
             // Setup signatures

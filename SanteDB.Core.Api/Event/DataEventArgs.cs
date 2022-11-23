@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -267,7 +268,7 @@ namespace SanteDB.Core.Event
     /// </summary>
     /// <remarks>This event allows for the cancelation / inspection of queries to the data store prior to being executed</remarks>
     public class DataRetrievingEventArgs<TData> : SecureAccessEventArgs
-        where TData : IdentifiedData
+        where TData : class, IIdentifiedResource
     {
         /// <summary>
         /// Creates a new pre-retrieval event args object
@@ -312,7 +313,7 @@ namespace SanteDB.Core.Event
     /// </summary>
     /// <remarks>This event allows for inpection of data which was retrieved by identifier</remarks>
     public class DataRetrievedEventArgs<TData> : SecureAccessEventArgs
-        where TData : IdentifiedData
+        where TData : class, IIdentifiedResource
     {
         /// <summary>
         /// Post retrieval data

@@ -165,7 +165,7 @@ namespace SanteDB.Core.Services.Impl
                         else if (typeof(IList).IsAssignableFrom(pi.PropertyType) && !pi.PropertyType.IsArray)
                         {
                             // Simple or complex list?
-                            if (typeof(IIdentifiedData).IsAssignableFrom(pi.PropertyType.StripGeneric()))
+                            if (typeof(IAnnotatedResource).IsAssignableFrom(pi.PropertyType.StripGeneric()))
                             {
                                 IEnumerable<IdentifiedData> updatedList = (updatedValue as IEnumerable).OfType<IdentifiedData>(),
                                     existingList = (existingValue as IEnumerable)?.OfType<IdentifiedData>();
@@ -264,7 +264,7 @@ namespace SanteDB.Core.Services.Impl
                     new PatchOperation(PatchOperationType.Test, $"{path}.id", ivd.Key)
                 };
             }
-            else if (existingValue is IIdentifiedData ide)
+            else if (existingValue is IAnnotatedResource ide)
             {
                 return new PatchOperation[]
                 {

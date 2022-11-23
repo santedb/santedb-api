@@ -351,7 +351,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
                 CustomIdTypeCode = new AuditCode(obj.GetType().Name, "http://santedb.org/model"),
-                ObjectId = ((obj as IIdentifiedData)?.Key ?? Guid.Empty).ToString(),
+                ObjectId = ((obj as IAnnotatedResource)?.Key ?? Guid.Empty).ToString(),
                 LifecycleType = AuditableObjectLifecycle.Creation,
                 Role = AuditableObjectRole.SecurityResource,
                 Type = AuditableObjectType.SystemObject
@@ -481,7 +481,7 @@ namespace SanteDB.Core.Security.Audit
                 IDTypeCode = idTypeCode,
                 CustomIdTypeCode = idTypeCode == AuditableObjectIdType.Custom ? new AuditCode(obj.GetType().Name, $"http://santedb.org/model") : null,
                 LifecycleType = lifecycle,
-                ObjectId = (obj as IIdentifiedData)?.Key?.ToString() ?? (obj as AuditEventData)?.Key?.ToString() ?? (obj.GetType().GetRuntimeProperty("Id")?.GetValue(obj)?.ToString()) ?? obj.ToString(),
+                ObjectId = (obj as IAnnotatedResource)?.Key?.ToString() ?? (obj as AuditEventData)?.Key?.ToString() ?? (obj.GetType().GetRuntimeProperty("Id")?.GetValue(obj)?.ToString()) ?? obj.ToString(),
                 Role = roleCode,
                 Type = objType,
                 NameData = obj.ToString()
@@ -546,7 +546,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
                 CustomIdTypeCode = new AuditCode(obj.GetType().Name, "http://santedb.org/model"),
-                ObjectId = ((obj as IIdentifiedData)?.Key ?? Guid.Empty).ToString(),
+                ObjectId = ((obj as IAnnotatedResource)?.Key ?? Guid.Empty).ToString(),
                 LifecycleType = AuditableObjectLifecycle.LogicalDeletion,
                 Role = AuditableObjectRole.SecurityResource,
                 Type = AuditableObjectType.SystemObject
@@ -570,7 +570,7 @@ namespace SanteDB.Core.Security.Audit
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
                 CustomIdTypeCode = new AuditCode(obj.GetType().Name, "http://santedb.org/model"),
-                ObjectId = ((obj as IIdentifiedData)?.Key ?? Guid.Empty).ToString(),
+                ObjectId = ((obj as IAnnotatedResource)?.Key ?? Guid.Empty).ToString(),
                 LifecycleType = AuditableObjectLifecycle.Amendment,
                 ObjectData = changedProperties.Where(o => !String.IsNullOrEmpty(o)).Select(
                     kv => new ObjectDataExtension(

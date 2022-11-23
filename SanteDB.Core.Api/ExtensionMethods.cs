@@ -65,7 +65,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>
         /// </summary>
-        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<Model.Association<T>> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IIdentifiedData, IHasRelationships, new() =>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<Model.Association<T>> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
             ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
 
         /// <summary>

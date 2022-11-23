@@ -18,36 +18,29 @@
  * User: fyfej
  * Date: 2022-5-30
  */
-using Newtonsoft.Json;
-using System.Xml.Serialization;
-
 namespace SanteDB.Core.Data.Import
 {
     /// <summary>
-    /// Represents a basic foreign data object 
+    /// Implementations of this class are expected to be able to transform a single input object
+    /// into a single output object 
     /// </summary>
-    /// 
-    [XmlType(nameof(ForeignDataObject), Namespace = "http://santedb.org/import")]
-    [JsonObject]
-    public abstract class ForeignDataObject
+    /// <remarks>
+    /// Implementations of this class may perform terminology lookups, parsing, translation etc.
+    /// </remarks>
+    public interface IForeignDataElementTransform
     {
 
         /// <summary>
-        /// Gets the name of the for
+        /// Gets the name of the transform
         /// </summary>
-        [XmlElement("name"), JsonProperty("name")]
-        public string Name { get; set; }
+        string Name { get; }
 
         /// <summary>
-        /// Identifies the order of the object in the container
+        /// Transform data from the source foreign data object to an appropriate type
         /// </summary>
-        [XmlElement("order"), JsonProperty("order")]
-        public int Order { get; set; }
-
-        /// <summary>
-        /// Gets or sets the path to this element in the source data
-        /// </summary>
-        [XmlElement("path"), JsonProperty("path")]
-        public string Path { get; set; }
+        /// <param name="input">The input object</param>
+        /// <param name="args">The arguments to the transformer (context specific)</param>
+        /// <returns>The transformed object</returns>
+        object Transform(object input, params object[] args);
     }
 }

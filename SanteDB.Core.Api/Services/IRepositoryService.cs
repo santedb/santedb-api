@@ -21,6 +21,7 @@
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
@@ -103,7 +104,7 @@ namespace SanteDB.Core.Services
     /// to execute all validation and rules as normal.</para>
     /// </remarks>
     [Description("Repository Service")]
-    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
+    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IIdentifiedResource
     {
         /// <summary>
         /// Gets the specified model data
