@@ -6,7 +6,8 @@ namespace SanteDB.Core.Data.Import.Definition
     /// <summary>
     /// The base data map for external data
     /// </summary>
-    [XmlType(nameof(ForeignDataObjectMap), Namespace = "http://santedb.org/import")]
+    [XmlType(nameof(ForeignDataMapBase), Namespace = "http://santedb.org/import")]
+    [XmlInclude(typeof(ForeignDataMap))]
     public abstract class ForeignDataMapBase
     {
 

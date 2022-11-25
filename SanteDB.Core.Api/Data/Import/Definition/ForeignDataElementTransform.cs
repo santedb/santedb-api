@@ -8,7 +8,7 @@ namespace SanteDB.Core.Data.Import.Definition
     /// <summary>
     /// Represents a transform which can be applied against a source object 
     /// </summary>
-    [XmlType(nameof(ForeignDataElementMap), Namespace = "http://santedb.org/import")]
+    [XmlType(nameof(ForeignDataElementTransform), Namespace = "http://santedb.org/import")]
     public class ForeignDataElementTransform
     {
         /// <summary>
