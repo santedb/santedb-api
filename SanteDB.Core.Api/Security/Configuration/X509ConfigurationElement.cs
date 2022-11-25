@@ -55,7 +55,14 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         public X509ConfigurationElement(X509ConfigurationElement other)
         {
-            this.FindValue = other.FindValue;
+            if (string.IsNullOrEmpty(other.FindValue) && null != other.Certificate)
+            {
+                this.FindValue = other.Certificate?.Thumbprint;
+            }
+            else
+            {
+                this.FindValue = other.FindValue;
+            }
             this.FindType = other.FindType;
             this.StoreLocation = other.StoreLocation;
             this.StoreName = other.StoreName;
