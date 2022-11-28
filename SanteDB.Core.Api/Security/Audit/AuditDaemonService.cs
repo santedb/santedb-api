@@ -142,7 +142,7 @@ namespace SanteDB.Core.Security.Audit
                 m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Established)}");
                 sessprov.Established += AuditSessionProviderEstablished;
                 m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Abandoned)}");
-                sessprov.Abandoned += AuditSessionProviderAbandoned;
+                //sessprov.Abandoned += AuditSessionProviderAbandoned;
             }
         }
 
@@ -159,7 +159,7 @@ namespace SanteDB.Core.Security.Audit
             if (sessprov != null)
             {
                 sessprov.Established -= AuditSessionProviderEstablished;
-                sessprov.Abandoned -= AuditSessionProviderAbandoned;
+                //sessprov.Abandoned -= AuditSessionProviderAbandoned;
             }
         }
 

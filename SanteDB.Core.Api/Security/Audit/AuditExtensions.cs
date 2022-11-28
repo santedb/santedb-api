@@ -1122,6 +1122,11 @@ namespace SanteDB.Core.Security.Audit
         [Obsolete]
         public static IAuditBuilder ForSessionStop(this IAuditBuilder builder, ISession session, IPrincipal principal, bool success)
         {
+            if (null == principal)
+            {
+                throw new ArgumentNullException(nameof(principal));
+            }
+
             builder.WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
