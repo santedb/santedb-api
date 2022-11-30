@@ -65,7 +65,7 @@ namespace SanteDB.Core.Configuration
     public sealed class SanteDBConfiguration : SanteDBBaseConfiguration
     {
         // Serializer
-        private static XmlSerializer s_baseSerializer = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration));
+        private static XmlSerializer s_baseSerializer = new XmlSerializer(typeof(SanteDBConfiguration));
 
         /// <summary>
         /// Initialization vector of the configuration section
@@ -173,6 +173,7 @@ namespace SanteDB.Core.Configuration
                             retVal.Sections.AddRange(inclData.Sections);
                         }
                     }
+
                     else
                     {
                         throw new ConfigurationException($"Include {fileName} was not found", retVal);

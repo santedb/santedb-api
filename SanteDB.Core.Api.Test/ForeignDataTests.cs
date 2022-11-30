@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using SanteDB.Core.Data.Import;
-using SanteDB.Core.Data.Import.Format;
+using SanteDB.Core.Services;
+using SanteDB.Core.TestFramework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,10 +18,19 @@ namespace SanteDB.Core.Api.Test
     public class ForeignDataTests
     {
 
+        [OneTimeSetUp]
+        public void Initialize()
+        {
+            TestApplicationContext.TestAssembly = typeof(JwsTest).Assembly;
+            TestApplicationContext.Initialize(TestContext.CurrentContext.TestDirectory);
+            var serviceManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
+            serviceManager.AddServiceProvider(typeof(DefaultForeignDataImporter));
+        }
+
         [Test]
         public void TestCanWriteCSV()
         {
-            Assert.IsTrue(ForeignDataFormatUtil.Current.TryGetFromMimeType("text/csv", out var dataFormat));
+            Assert.IsTrue(ForeignDataImportUtil.Current.TryGetDataFormat("csv", out var dataFormat));
             Assert.IsNotNull(dataFormat);
             byte[] csvData = null;
             using (var stream = new MemoryStream())
@@ -99,7 +109,7 @@ namespace SanteDB.Core.Api.Test
         [Test]
         public void TestCanReadCSV()
         {
-            Assert.IsTrue(ForeignDataFormatUtil.Current.TryGetFromMimeType("text/csv", out var dataFormat));
+            Assert.IsTrue(ForeignDataImportUtil.Current.TryGetDataFormat("csv", out var dataFormat));
             Assert.IsNotNull(dataFormat);
             using (var stream = typeof(ForeignDataTests).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.Patients.csv"))
             {

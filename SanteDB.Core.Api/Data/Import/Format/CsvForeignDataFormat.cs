@@ -31,6 +31,9 @@ namespace SanteDB.Core.Data.Import.Format
             private string[] m_columnNames;
             private object[] m_values;
 
+            /// <inheritdoc/>
+            public string SubsetName => String.Empty;
+
             /// <summary>
             /// Throw <see cref="ObjectDisposedException"/> if this is disposed
             /// </summary>
@@ -57,7 +60,7 @@ namespace SanteDB.Core.Data.Import.Format
                 get
                 {
                     this.ThrowIfDisposed();
-                    this.ThrowIfNotRead("index");
+                    this.ReadSchema();
                     var colIndex = IndexOf(name);
                     if (colIndex == -1)
                     {
@@ -67,25 +70,25 @@ namespace SanteDB.Core.Data.Import.Format
                 }
             }
 
-            /// <summary>
-            /// Throw a <see cref="InvalidOperationException"/> if MoveNext has not been called
-            /// </summary>
-            private void ThrowIfNotRead(String readName)
-            {
-                if (this.m_rowsRead == 0)
-                {
-                    throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, readName));
-                }
-            }
-
             /// <inheritdoc/>
             public object this[int index]
             {
                 get
                 {
                     this.ThrowIfDisposed();
-                    this.ThrowIfNotRead("index");
+                    this.ReadSchema();
                     return m_values[index];
+                }
+            }
+
+            /// <inheritdoc/>
+            public int RowNumber
+            {
+                get
+                {
+                    this.ThrowIfDisposed();
+                    this.ReadSchema();
+                    return this.m_rowsRead;
                 }
             }
 
@@ -95,7 +98,7 @@ namespace SanteDB.Core.Data.Import.Format
                 get
                 {
                     this.ThrowIfDisposed();
-                    this.ThrowIfNotRead(nameof(ColumnCount));
+                    this.ReadSchema();
                     return m_columnNames.Length;
                 }
             }
@@ -104,7 +107,7 @@ namespace SanteDB.Core.Data.Import.Format
             public string GetName(int index)
             {
                 this.ThrowIfDisposed();
-                this.ThrowIfNotRead(nameof(GetName));
+                    this.ReadSchema();
                 return m_columnNames[index];
             }
 
@@ -112,7 +115,7 @@ namespace SanteDB.Core.Data.Import.Format
             public int IndexOf(string name)
             {
                 this.ThrowIfDisposed();
-                this.ThrowIfNotRead(nameof(IndexOf));
+                    this.ReadSchema();
                 return Array.IndexOf(m_columnNames, name);
             }
 
@@ -131,24 +134,40 @@ namespace SanteDB.Core.Data.Import.Format
                     return false;
                 }
 
-                lock (m_syncLock)
+                lock (this.m_syncLock)
                 {
-                    if (m_rowsRead++ == 0)
+                    if (m_columnNames == null)
                     {
-                        m_columnNames = s_columnExtract
-                            .Matches($"{this.m_source.ReadLine()},")
-                            .OfType<Match>()
-                            .Select(o => UnescapeValue(o.Groups[1].Value))
-                            .OfType<string>()
-                            .ToArray();
+                        this.ReadSchema();
                         return MoveNext();
                     }
+
+                    this.m_rowsRead++;
 
                     this.m_values = s_columnExtract.Matches($"{this.m_source.ReadLine()},")
                         .OfType<Match>()
                         .Select(o => UnescapeValue(o.Groups[1].Value))
                         .ToArray();
                     return true;
+                }
+            }
+
+            /// <summary>
+            /// Read schema
+            /// </summary>
+            private void ReadSchema()
+            {
+                if (!this.m_source.EndOfStream && this.m_columnNames == null && this.m_rowsRead == 0)
+                {
+                    lock (this.m_syncLock)
+                    {
+                        m_columnNames = s_columnExtract
+                                .Matches($"{this.m_source.ReadLine()},")
+                                .OfType<Match>()
+                                .Select(o => UnescapeValue(o.Groups[1].Value))
+                                .OfType<string>()
+                                .ToArray();
+                    }
                 }
             }
 
@@ -169,13 +188,13 @@ namespace SanteDB.Core.Data.Import.Format
                 {
                     return bl;
                 }
-                else if (double.TryParse(csvValue, out var dbl))
-                {
-                    return dbl;
-                }
                 else if (long.TryParse(csvValue, out var lv))
                 {
                     return lv;
+                }
+                else if (double.TryParse(csvValue, out var dbl))
+                {
+                    return dbl;
                 }
                 else if (TimeSpan.TryParse(csvValue, out var ts))
                 {
@@ -273,6 +292,11 @@ namespace SanteDB.Core.Data.Import.Format
                         return value.ToString();
                 }
             }
+
+            /// <summary>
+            /// Get the number of records written (excluding the header row)
+            /// </summary>
+            public int RecordsWritten => this.m_rowNumber;
         }
 
         /// <summary>
@@ -358,7 +382,7 @@ namespace SanteDB.Core.Data.Import.Format
         }
 
         /// <inheritdoc/>
-        public string MimeType => "text/csv";
+        public string FileExtension => "csv";
 
         /// <inheritdoc/>
         public IForeignDataFile Open(Stream foreignDataStream)

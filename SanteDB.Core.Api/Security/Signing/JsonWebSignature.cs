@@ -79,7 +79,7 @@ namespace SanteDB.Core.Security.Signing
 
         
         // JWS format regex
-        private static readonly Regex m_jwsFormat = new Regex(@"^((.*?)\.(.*?))\.(.*?)$");
+        private static readonly Regex m_jwsFormat = new Regex(@"^((.*?)\.(.*?))\.(.*?)$", RegexOptions.Compiled);
 
         // The data signing service
         private readonly IDataSigningService m_dataSigningService;

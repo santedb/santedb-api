@@ -166,6 +166,12 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public virtual TEntity Insert(TEntity data)
         {
+
+            if (data == default(TEntity))
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
             // Demand permission
             this.DemandWrite(data);
 
@@ -225,17 +231,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             // Demand permission
             this.DemandDelete(key);
 
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TEntity>>();
-
-            if (persistenceService == null)
-            {
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.servicePersistence", new
-                {
-                    param = nameof(IDataPersistenceService<TEntity>)
-                }));
-            }
-
-            var entity = persistenceService.Get(key, null, AuthenticationContext.Current.Principal);
+            var entity = this.m_dataPersistenceService.Get(key, null, AuthenticationContext.Current.Principal);
 
             if (entity == null)
             {
@@ -262,7 +258,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
 
             entity = businessRulesService?.BeforeDelete(entity) ?? entity;
-            entity = persistenceService.Delete(entity.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            entity = this.m_dataPersistenceService.Delete(entity.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             entity = businessRulesService?.AfterDelete(entity) ?? entity;
 
             this.Deleted?.Invoke(this, new DataPersistedEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal));
@@ -285,15 +281,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             // Demand permission
             this.DemandRead(key);
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TEntity>>();
-
-            if (persistenceService == null)
-            {
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.servicePersistence", new
-                {
-                    param = nameof(IDataPersistenceService<TEntity>)
-                }));
-            }
+            
 
             var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
 
@@ -306,7 +294,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 return this.m_privacyService?.Apply(preRetrieve.Result, AuthenticationContext.Current.Principal) ?? preRetrieve.Result;
             }
 
-            var result = persistenceService.Get(key, versionKey, AuthenticationContext.Current.Principal);
+            var result = this.m_dataPersistenceService.Get(key, versionKey, AuthenticationContext.Current.Principal);
             var retVal = businessRulesService?.AfterRetrieve(result) ?? result;
             var postEvt = new DataRetrievedEventArgs<TEntity>(retVal, AuthenticationContext.Current.Principal);
             this.Retrieved?.Invoke(this, postEvt);
@@ -319,18 +307,14 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public virtual TEntity Save(TEntity data)
         {
+
+            if(data == default(TEntity))
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
             // Demand permission
             this.DemandAlter(data);
-
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TEntity>>();
-
-            if (persistenceService == null)
-            {
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.servicePersistence", new
-                {
-                    param = nameof(IDataPersistenceService<TEntity>)
-                }));
-            }
 
             data = this.Validate(data);
 
@@ -360,16 +344,16 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                if (data.Key.HasValue && persistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
+                if (data.Key.HasValue && this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
-                    data = persistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                    data = this.m_dataPersistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterUpdate(data);
                 }
                 else
                 {
                     data = businessRulesService?.BeforeInsert(data) ?? data;
-                    data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                    data = this.m_dataPersistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterInsert(data);
                 }
 

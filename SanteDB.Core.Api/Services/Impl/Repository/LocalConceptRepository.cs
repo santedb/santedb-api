@@ -36,7 +36,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     public class LocalConceptRepository : GenericLocalRepositoryEx<Concept>, IConceptRepositoryService
     {
         // OID regex
-        private Regex m_oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
+        private static readonly Regex m_oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$", RegexOptions.Compiled);
         private readonly IAdhocCacheService m_adhocCacheService;
         private readonly IDataPersistenceService<ConceptName> m_conceptNameService;
         private readonly IDataPersistenceService<ConceptReferenceTerm> m_referenceTermService;
@@ -118,7 +118,6 @@ namespace SanteDB.Core.Services.Impl.Repository
                 codeSystemDomain = codeSystemDomain.Substring(8);
             }
 
-            Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             var cacheKey = $"{code}.{codeSystemDomain}";
             var retVal = this.m_adhocCacheService?.Get<IEnumerable<ConceptReferenceTerm>>(cacheKey);
 
@@ -131,7 +130,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             {
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Url == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
-            else if (oidRegex.IsMatch(codeSystemDomain))
+            else if (m_oidRegex.IsMatch(codeSystemDomain))
             {
                 retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Oid == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
@@ -201,7 +200,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             {
                 filterExpression = o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
             }
-            else if (this.m_oidRegex.IsMatch(codeSystem))
+            else if (m_oidRegex.IsMatch(codeSystem))
             {
                 filterExpression = o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
             }
@@ -244,13 +243,12 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             IEnumerable<ConceptReferenceTerm> refTermEnt = null;
 
-            Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             Uri uri = null;
             if (String.IsNullOrEmpty(codeSystem)) // all
             {
                 refTermEnt = this.m_referenceTermService.Query(o => o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
-            else if (oidRegex.IsMatch(codeSystem))
+            else if (m_oidRegex.IsMatch(codeSystem))
             {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
@@ -323,13 +321,12 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             ConceptReferenceTerm refTermEnt = null;
 
-            Regex oidRegex = new Regex("^(\\d+?\\.){1,}\\d+$");
             Uri uri = null;
             if (String.IsNullOrEmpty(codeSystem))
             {
                 refTermEnt = this.m_referenceTermService.Query(o => o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
             }
-            else if (oidRegex.IsMatch(codeSystem))
+            else if (m_oidRegex.IsMatch(codeSystem))
             {
                 refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Oid == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
             }

@@ -36,6 +36,12 @@ namespace SanteDB.Core.Data.Import
         IEnumerable<DetectedIssue> GetIssues();
 
         /// <summary>
+        /// Add an issue to this foreign data information class
+        /// </summary>
+        /// <param name="issue">The issue to add to this foreign da</param>
+        void AddIssue(DetectedIssue issue);
+
+        /// <summary>
         /// Get the source stream of the data
         /// </summary>
         /// <returns>The source stream</returns>
@@ -44,10 +50,7 @@ namespace SanteDB.Core.Data.Import
         /// <summary>
         /// Get the rejected file data
         /// </summary>
-        /// <returns></returns>
         Stream GetRejects();
-
-        Stream GetSuccesses();
 
     }
 

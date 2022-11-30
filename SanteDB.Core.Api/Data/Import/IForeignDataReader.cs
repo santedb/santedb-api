@@ -13,6 +13,11 @@ namespace SanteDB.Core.Data.Import
     {
 
         /// <summary>
+        /// Get the subset name for the map
+        /// </summary>
+        String SubsetName { get; }
+
+        /// <summary>
         /// Move to the next record
         /// </summary>
         /// <returns>True if the next record was read from the reader</returns>
@@ -50,5 +55,10 @@ namespace SanteDB.Core.Data.Import
         /// Get the number of columns
         /// </summary>
         int ColumnCount { get; }
+
+        /// <summary>
+        /// The row number in this reader
+        /// </summary>
+        int RowNumber { get; }
     }
 }

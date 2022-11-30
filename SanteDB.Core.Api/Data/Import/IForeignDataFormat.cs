@@ -19,9 +19,9 @@ namespace SanteDB.Core.Data.Import
     {
 
         /// <summary>
-        /// Gets the mime type of this data format
+        /// Gets the file extension of this data format
         /// </summary>
-        String MimeType { get; }
+        String FileExtension { get; }
 
         /// <summary>
         /// Open a <see cref="IForeignDataFile"/> from <paramref name="foreignDataStream"/>

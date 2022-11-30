@@ -50,7 +50,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public RegexPasswordValidator(IConfigurationManager configurationManager)
         {
-            this.m_passwordRegex = new Regex(configurationManager.GetSection<SecurityConfigurationSection>()?.PasswordRegex ?? DefaultPasswordPattern);
+            this.m_passwordRegex = new Regex(configurationManager.GetSection<SecurityConfigurationSection>()?.PasswordRegex ?? DefaultPasswordPattern, RegexOptions.Compiled);
         }
 
         /// <summary>

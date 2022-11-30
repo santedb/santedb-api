@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SanteDB.Core.Data.Import
@@ -20,6 +21,15 @@ namespace SanteDB.Core.Data.Import
         {
             this.m_columnNames = columnNames;
             this.m_values = new object[this.m_columnNames.Length];
+        }
+
+        /// <summary>
+        /// Create a generic data record from another reader
+        /// </summary>
+        public GenericForeignDataRecord(IForeignDataReader copyFrom)
+        {
+            this.m_columnNames = Enumerable.Range(0, copyFrom.ColumnCount).Select(o => copyFrom.GetName(o)).ToArray();
+            this.m_values = Enumerable.Range(0, copyFrom.ColumnCount).Select(o => copyFrom[o]).ToArray();
         }
 
         /// <inheritdoc/>
