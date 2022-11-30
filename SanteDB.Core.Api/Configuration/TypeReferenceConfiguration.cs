@@ -65,10 +65,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public TypeReferenceConfiguration(Type type)
         {
-            if(type == null)
-            {
-                throw new ArgumentNullException(nameof(type));
-            }
+            //if(type == null)
+            //{
+            //    throw new ArgumentNullException(nameof(type));
+            //}
             this.Type = type;
         }
 

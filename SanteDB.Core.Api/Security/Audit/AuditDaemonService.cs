@@ -135,15 +135,15 @@ namespace SanteDB.Core.Security.Audit
                 idsvc.Authenticated += AuditIdentityProviderAuthenticated;
             }
 
-            var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
+            //var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
 
-            if (sessprov != null)
-            {
-                m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Established)}");
-                sessprov.Established += AuditSessionProviderEstablished;
-                m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Abandoned)}");
-                sessprov.Abandoned += AuditSessionProviderAbandoned;
-            }
+            //if (sessprov != null)
+            //{
+            //    m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Established)}");
+            //    sessprov.Established += AuditSessionProviderEstablished;
+            //    m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Abandoned)}");
+            //    sessprov.Abandoned += AuditSessionProviderAbandoned;
+            //}
         }
 
         private void StopListeningToServiceEvents()
@@ -154,13 +154,13 @@ namespace SanteDB.Core.Security.Audit
                 idsvc.Authenticated -= AuditIdentityProviderAuthenticated;
             }
 
-            var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
+            //var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
 
-            if (sessprov != null)
-            {
-                sessprov.Established -= AuditSessionProviderEstablished;
-                sessprov.Abandoned -= AuditSessionProviderAbandoned;
-            }
+            //if (sessprov != null)
+            //{
+            //    sessprov.Established -= AuditSessionProviderEstablished;
+            //    sessprov.Abandoned -= AuditSessionProviderAbandoned;
+            //}
         }
 
         private void StartAuditQueueSubscription()

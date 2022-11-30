@@ -422,7 +422,7 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Implementation specific implementatoin of invoke
+        /// Implementation specific implementation of invoke
         /// </summary>
         /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">The expected response (response hint) from the server</typeparam>

@@ -118,7 +118,7 @@ namespace SanteDB.Core.Security
                     // Swap the certificate key store flags as appropriate for this location
                     var password = Guid.NewGuid().ToString();
                     var pfxData = certificate.Export(X509ContentType.Pfx, password);
-                    var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                    var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
                     trustStore.Add(properCert);
                     audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
                 }

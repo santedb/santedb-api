@@ -38,7 +38,7 @@ namespace SanteDB.Core.Security
         public string Encode(byte[] token)
         {
             
-            return $"{token.HexEncode()}.{this.EncodeSignatureBytes(token).HexEncode()}";
+            return $"{token.Base64UrlEncode()}.{this.EncodeSignatureBytes(token).Base64UrlEncode()}";
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace SanteDB.Core.Security
                 return false;
             }
 
-            var tokenparts = encodedToken.Split('.').Select(o => o.HexDecode()).ToArray();
+            var tokenparts = encodedToken.Split('.').Select(o => o.ParseBase64UrlEncode()).ToArray();
 
             if (tokenparts.Length != 2)
             {
@@ -90,7 +90,7 @@ namespace SanteDB.Core.Security
                 throw new ArgumentNullException(nameof(encodedToken));
             }
 
-            var tokenparts = encodedToken.Split('.').Select(o => o.HexDecode()).ToArray();
+            var tokenparts = encodedToken.Split('.').Select(o => o.ParseBase64UrlEncode()).ToArray();
             
             if (tokenparts.Length != 2)
             {
