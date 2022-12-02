@@ -12,7 +12,7 @@ namespace SanteDB.Core.Notifications.Templating
     public class SimpleNotificationTemplateFiller : INotificationTemplateFiller
     {
         private readonly INotificationTemplateRepository m_notificationTemplateRepository;
-        private readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline);
+        private readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline | RegexOptions.Compiled);
 
         /// <summary>
         /// Get the service name

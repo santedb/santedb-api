@@ -55,7 +55,8 @@ namespace SanteDB.Core.Notifications
                 .GetAllTypes()
                 .Where(t => typeof(INotificationRelay).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                 .Select(t => Activator.CreateInstance(t) as INotificationRelay)
-                .ToDictionary(o => o.Scheme, o => o);
+                .SelectMany(t=>t.SupportedSchemes.Select(s=>(scheme: s, relay: t)))
+                .ToDictionary(o => o.scheme, o => o.relay);
         }
 
         /// <summary>
