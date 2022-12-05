@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +16,7 @@ namespace SanteDB.Core.Data.Import
     /// <remarks>
     /// In a data import, the SanteDB services use the following methodology:
     /// <list type="number">
-    ///     <item>The source data is first uploaded and stored in SanteDB in a staged form using this <see cref="IForeignDataManager"/></item>
+    ///     <item>The source data is first uploaded and stored in SanteDB in a staged form using this <see cref="IForeignDataManagerService"/></item>
     ///     <item>The source data is validated using the <see cref="IForeignDataFormat"/> appropriate for its format, and rules in the <see cref="ForeignDataMap"/> selected</item>
     ///     <item>The source data is set as "ready for import" if the reviewer is satisfied with the outcome of the staging and validation</item>    
     ///     <item>The staged data is then scheduled for processing on a background <see cref="IJob"/> when the SanteDB instance is not busy and staged data is available</item>
@@ -23,7 +24,7 @@ namespace SanteDB.Core.Data.Import
     ///     <item>Any rejected files are placed in a reject file</item>
     /// </list>
     /// </remarks>
-    public interface IForeignDataManager
+    public interface IForeignDataManagerService : IServiceImplementation
     {
         /// <summary>
         /// Stage the <paramref name="inputStream"/> for future processing
@@ -38,7 +39,15 @@ namespace SanteDB.Core.Data.Import
         /// </summary>
         /// <param name="foreignDataId">The foreign data to be imported</param>
         /// <param name="foreignDataMap">The foreign data map that should be used on the import</param>
-        IForeignDataInfo Import(Guid foreignDataId, ForeignDataMap foreignDataMap);
+        /// <param name="status">The state to set on the foreign data map</param>
+        IForeignDataInfo Update(Guid foreignDataId, ForeignDataMap foreignDataMap, ForeignDataStatus status);
+
+        /// <summary>
+        /// Execute the foreign data import info
+        /// </summary>
+        /// <param name="foreignDataId">The foreign data object to be executed</param>
+        /// <returns>The foreign data object</returns>
+        IForeignDataInfo Execute(Guid foreignDataId);
 
         /// <summary>
         /// Get the foreign data import information by UUID

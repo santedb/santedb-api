@@ -11,6 +11,7 @@ namespace SanteDB.Core.Data.Import.Definition
     [XmlType(nameof(ForeignDataElementTransform), Namespace = "http://santedb.org/import")]
     public class ForeignDataElementTransform
     {
+
         /// <summary>
         /// Gets the type of transform to use
         /// </summary>
@@ -28,5 +29,13 @@ namespace SanteDB.Core.Data.Import.Definition
             JsonProperty("args")]
         public List<Object> Arguments { get; set; }
 
+        /// <summary>
+        /// Validate this transformer exists
+        /// </summary>
+        internal bool Validate()
+        {
+            return ForeignDataImportUtil.Current.TryGetElementTransformer(this.Transformer, out _);
+        }
     }
+
 }

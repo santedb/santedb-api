@@ -14,5 +14,10 @@ namespace SanteDB.Core.Data.Import
         /// <param name="foreignDataRecord">The foreign data record to be written</param>
         /// <returns>True if the record was written</returns>
         bool WriteRecord(IForeignDataRecord foreignDataRecord);
+
+        /// <summary>
+        /// Gets the row number of the writer
+        /// </summary>
+        int RecordsWritten { get; }
     }
 }

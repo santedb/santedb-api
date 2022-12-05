@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SanteDB.Core.BusinessRules;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import.Definition
@@ -7,7 +8,6 @@ namespace SanteDB.Core.Data.Import.Definition
     /// The base data map for external data
     /// </summary>
     [XmlType(nameof(ForeignDataMapBase), Namespace = "http://santedb.org/import")]
-    [XmlInclude(typeof(ForeignDataMap))]
     public abstract class ForeignDataMapBase
     {
 
@@ -23,10 +23,5 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("comment"), JsonProperty("comment")]
         public string Documentation { get; set; }
 
-        /// <summary>
-        /// True if the transform should be aborted on error
-        /// </summary>
-        [XmlAttribute("abortOnError"), JsonProperty("abortOnError")]
-        bool AbortOnError { get; set; }
     }
 }

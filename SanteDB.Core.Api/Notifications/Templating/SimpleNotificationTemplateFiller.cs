@@ -12,7 +12,7 @@ namespace SanteDB.Core.Notifications.Templating
     public class SimpleNotificationTemplateFiller : INotificationTemplateFiller
     {
         private readonly INotificationTemplateRepository m_notificationTemplateRepository;
-        private readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline | RegexOptions.Compiled);
 
         /// <summary>
         /// Get the service name
@@ -42,7 +42,7 @@ namespace SanteDB.Core.Notifications.Templating
             return new NotificationTemplate()
             {
                 Id = template.Id,
-                Body = this.m_parmRegex.Replace(template.Body, o =>
+                Body = m_parmRegex.Replace(template.Body, o =>
                 {
                     if (modelDict.TryGetValue(o.Groups[1].Value, out var value))
                     {
@@ -50,7 +50,7 @@ namespace SanteDB.Core.Notifications.Templating
                     }
                     return "";
                 }),
-                Subject = this.m_parmRegex.Replace(template.Subject, o =>
+                Subject = m_parmRegex.Replace(template.Subject, o =>
                 {
                     if (modelDict.TryGetValue(o.Groups[1].Value, out var value))
                     {

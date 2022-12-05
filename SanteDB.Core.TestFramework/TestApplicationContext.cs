@@ -73,7 +73,7 @@ namespace SanteDB.Core.TestFramework
 #if DEBUG
             if (Tracer.GetWriter<DebugDiagnosticsTraceWriter>() == null)
             {
-                Tracer.AddWriter(new DebugDiagnosticsTraceWriter(), System.Diagnostics.Tracing.EventLevel.Verbose);
+                Tracer.AddWriter(new DebugDiagnosticsTraceWriter(), System.Diagnostics.Tracing.EventLevel.Informational);
             }
 #endif
 
