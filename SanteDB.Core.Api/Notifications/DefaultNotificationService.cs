@@ -19,9 +19,11 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace SanteDB.Core.Notifications
 {
@@ -49,14 +51,19 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Default notification service
         /// </summary>
-        public DefaultNotificationService()
+        public DefaultNotificationService(IServiceManager serviceManager)
         {
-            this.m_relays = AppDomain.CurrentDomain
-                .GetAllTypes()
-                .Where(t => typeof(INotificationRelay).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                .Select(t => Activator.CreateInstance(t) as INotificationRelay)
-                .SelectMany(t=>t.SupportedSchemes.Select(s=>(scheme: s, relay: t)))
-                .ToDictionary(o => o.scheme, o => o.relay);
+            this.m_relays = serviceManager
+                .CreateInjectedOfAll<INotificationRelay>()
+                .SelectMany(r=>r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
+                .ToDictionary(o=>o.scheme, o=>o.relay);
+
+            //this.m_relays = AppDomain.CurrentDomain
+            //    .GetAllTypes()
+            //    .Where(t => typeof(INotificationRelay).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+            //    .Select(t => Activator.CreateInstance(t) as INotificationRelay)
+            //    .SelectMany(t=>t.SupportedSchemes.Select(s=>(scheme: s, relay: t)))
+            //    .ToDictionary(o => o.scheme, o => o.relay);
         }
 
         /// <summary>
