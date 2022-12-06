@@ -1,6 +1,7 @@
 ﻿using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -30,45 +31,45 @@ namespace SanteDB.Core.Data.Import
         /// Stage the <paramref name="inputStream"/> for future processing
         /// </summary>
         /// <param name="inputStream">The source data stream in the foreign data format</param>
+        /// <param name="foreignDataMapKey">The foreign data map that should be used on the import</param>
         /// <param name="name">The original name of the source data</param>
         /// <returns>The created foreign data information pointer</returns>
-        IForeignDataInfo Stage(Stream inputStream, String name);
+        IForeignDataSubmission Stage(Stream inputStream, String name, Guid foreignDataMapKey);
 
         /// <summary>
-        /// Flag the <paramref name="foreignDataId"/> for import on the next job execution
+        /// Updates the status of the foreign data information record to indicate it is ready for staging
         /// </summary>
-        /// <param name="foreignDataId">The foreign data to be imported</param>
-        /// <param name="foreignDataMap">The foreign data map that should be used on the import</param>
-        /// <param name="status">The state to set on the foreign data map</param>
-        IForeignDataInfo Update(Guid foreignDataId, ForeignDataMap foreignDataMap, ForeignDataStatus status);
+        /// <param name="foreignDataId">The foriegn data identifier</param>
+        /// <returns>The updated foreign data information</returns>
+        IForeignDataSubmission Schedule(Guid foreignDataId);
 
         /// <summary>
         /// Execute the foreign data import info
         /// </summary>
         /// <param name="foreignDataId">The foreign data object to be executed</param>
         /// <returns>The foreign data object</returns>
-        IForeignDataInfo Execute(Guid foreignDataId);
+        IForeignDataSubmission Execute(Guid foreignDataId);
 
         /// <summary>
         /// Get the foreign data import information by UUID
         /// </summary>
         /// <param name="foreignDataId">The identifier of the foreign data to fetch</param>
         /// <returns>The foreign data structure</returns>
-        IForeignDataInfo Get(Guid foreignDataId);
+        IForeignDataSubmission Get(Guid foreignDataId);
 
         /// <summary>
         /// Find foreign data by identifier
         /// </summary>
         /// <param name="query">The query which should be used to match the foreign data import</param>
         /// <returns>The matching foreign data information</returns>
-        IEnumerable<IForeignDataInfo> Find(Expression<Func<IForeignDataInfo, bool>> query);
+        IQueryResultSet<IForeignDataSubmission> Find(Expression<Func<IForeignDataSubmission, bool>> query);
 
         /// <summary>
         /// Delete foreign data from the server
         /// </summary>
         /// <param name="foreignDataId">The foreign data to be deleted</param>
         /// <returns>The foreign data information that was deleted</returns>
-        IForeignDataInfo Delete(Guid foreignDataId);
+        IForeignDataSubmission Delete(Guid foreignDataId);
         
     }
 }

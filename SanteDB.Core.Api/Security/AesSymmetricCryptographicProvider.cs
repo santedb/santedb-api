@@ -22,6 +22,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -126,18 +127,15 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the context default key
         /// </summary>
+        /// <remarks>
+        /// This method is used during the decryption of secrests in the configuration. This could result in a stack overflow
+        /// due to this method attempting to get secrets, and the configuration decrypting them. Care should be taken if this method is updated.
+        /// </remarks>
         public byte[] GetContextKey()
         {
-            /* This method is used during the decryption of secrests in the configuration. This could result in a stack overflow
-             * due to this method attempting to get secrets, and the configuration decrypting them.
-             * 
-             * Care should be taken if this method is updated.
-             */
-
             // TODO: Is it possible to pull from CPU?
             if (this.m_contextKey == null)
             {
-                // TODO: Actually handle RSA data
                 var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
 
                 if(defaultKey.Algorithm == SignatureAlgorithm.HS256)
@@ -146,11 +144,38 @@ namespace SanteDB.Core.Security
                 }
                 else
                 {
-                    //TODO: Don't use the D parameter as it is not always equal when exported and reimported. https://github.com/dotnet/runtime/commit/700a07cae19fe64649c2fb4c6c10e6b9aa85dc29
-                    this.m_contextKey = SHA256.Create().ComputeHash(defaultKey.Certificate.GetRSAPrivateKey().ExportParameters(true).D);
+                    this.m_contextKey = this.ReadContextKey(defaultKey);
                 }
             }
             return this.m_contextKey;
+        }
+
+        /// <summary>
+        /// Read the context key which is stored in the DataDirectory encrypted on disk
+        /// </summary>
+        private byte[] ReadContextKey(SecuritySignatureConfiguration key)
+        {
+            var contextKeyFile = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "ctxkey.enc");
+            if(!File.Exists(contextKeyFile))
+            {
+                //TODO: Don't use the D parameter as it is not always equal when exported and reimported. https://github.com/dotnet/runtime/commit/700a07cae19fe64649c2fb4c6c10e6b9aa85dc29
+                var keyData = SHA256.Create().ComputeHash(key.Certificate.GetRSAPrivateKey().ExportParameters(true).D);
+                using(var fs = File.Create(contextKeyFile))
+                {
+                    var buffer = key.Certificate.GetRSAPublicKey().Encrypt(keyData, RSAEncryptionPadding.Pkcs1);
+                    fs.Write(buffer, 0, buffer.Length);
+                }
+                return keyData;
+            }
+            else
+            {
+                using(var fs = File.OpenRead(contextKeyFile))
+                {
+                    var buffer = new byte[fs.Length];
+                    fs.Read(buffer, 0, buffer.Length);
+                    return buffer;
+                }
+            }
         }
 
         /// <inheritdoc/>    
@@ -193,6 +218,19 @@ namespace SanteDB.Core.Security
             Buffer.BlockCopy(cipherText, IV_SIZE, encrypteddata, 0, encrypteddata.Length);
 
             return this.Decrypt(encrypteddata, key, iv);
+        }
+
+        /// <inheritdoc/>
+        public Stream CreateEncryptingStream(Stream underlyingStream, byte[] key, byte[] iv)
+        {
+            return new CryptoStream(underlyingStream, this.CreateAlgorithm().CreateEncryptor(key, iv), CryptoStreamMode.Write);
+        }
+
+        /// <inheritdoc/>
+        public Stream CreateDecryptingStream(Stream underlyingStream, byte[] key, byte[] iv)
+        {
+            return new CryptoStream(underlyingStream, this.CreateAlgorithm().CreateDecryptor(key, iv), CryptoStreamMode.Read);
+
         }
     }
 }

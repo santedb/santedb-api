@@ -39,7 +39,14 @@ namespace SanteDB.Core.Data.Import
         /// <param name="fileExtension">The file extension</param>
         /// <param name="foreignDataFormat">The foreign data format</param>
         /// <returns>The foreign data format</returns>
-        public bool TryGetDataFormat(string fileExtension, out IForeignDataFormat foreignDataFormat) => m_formats.TryGetValue(fileExtension, out foreignDataFormat);
+        public bool TryGetDataFormat(string fileExtension, out IForeignDataFormat foreignDataFormat)
+        {
+            if(!fileExtension.StartsWith("."))
+            {
+                fileExtension = $".{fileExtension}";
+            }
+            return m_formats.TryGetValue(fileExtension, out foreignDataFormat);
+        }
 
         /// <summary>
         /// Try to get the element transformer

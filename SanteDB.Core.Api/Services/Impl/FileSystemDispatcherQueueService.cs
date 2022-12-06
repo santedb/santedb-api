@@ -147,6 +147,8 @@ namespace SanteDB.Core.Services.Impl
             }
         }
 
+        private readonly ISymmetricCryptographicProvider m_symmetricCrypto;
+
         // Queue root directory
         private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
@@ -173,8 +175,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Initializes the file system queue
         /// </summary>
-        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
+        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService, ISymmetricCryptographicProvider symmetricCryptographicProvider)
         {
+            this.m_symmetricCrypto = symmetricCryptographicProvider;
             this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>() ??
                 new FileSystemDispatcherQueueConfigurationSection() { QueuePath = "queue" };
             if (!Directory.Exists(this.m_configuration.QueuePath))
@@ -283,7 +286,12 @@ namespace SanteDB.Core.Services.Impl
                 {
                     using (var fs = File.OpenRead(queueFile))
                     {
-                        retVal = QueueEntry.Load(fs);
+                        var iv = new byte[16];
+                        fs.Read(iv, 0, iv.Length);
+                        using (var cs = this.m_symmetricCrypto.CreateDecryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
+                        {
+                            retVal = QueueEntry.Load(cs);
+                        }
                     }
                 }
                 finally
@@ -361,7 +369,12 @@ namespace SanteDB.Core.Services.Impl
 
             using (var fs = File.Create(filePath))
             {
-                QueueEntry.Create(data).Save(fs);
+                var iv = this.m_symmetricCrypto.GenerateIV();
+                fs.Write(iv, 0, iv.Length);
+                using (var cs = this.m_symmetricCrypto.CreateEncryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
+                {
+                    QueueEntry.Create(data).Save(cs);
+                }
             }
 
             this.NotifyQueuePush(queueName, Path.GetFileNameWithoutExtension(filePath));

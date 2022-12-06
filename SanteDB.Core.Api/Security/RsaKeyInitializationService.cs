@@ -21,7 +21,7 @@ namespace SanteDB.Core.Security
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(RsaKeyInitializationService));
 
         /// <inheritdoc/>
-        public string ServiceName => "RSA Key Initialization Service";
+        public string ServiceName => "Auto Convert HS256 -> RS256 Configuration";
 
         /// <summary>
         /// DI constructor

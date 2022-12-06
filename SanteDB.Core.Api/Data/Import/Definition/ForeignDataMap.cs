@@ -25,7 +25,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Gets or sets the unique identifier for the element
         /// </summary>
-        [XmlElement("uuid"), JsonProperty("uuid")]
+        [XmlElement("id"), JsonProperty("id")]
         public Guid? Key { get; set; }
 
         /// <summary>
