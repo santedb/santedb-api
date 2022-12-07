@@ -33,42 +33,34 @@ namespace SanteDB.Core.Notifications
     public class DefaultNotificationService : INotificationService
     {
         // Tracer
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultNotificationService));
+        private readonly Tracer m_tracer;
+
+        private readonly INotificationTemplateRepository m_notificationTemplateRepository;
+        private readonly INotificationTemplateFiller m_notificationTemplateFiller;
 
         // Relay cache
         private IDictionary<String, INotificationRelay> m_relays;
 
-        /// <summary>
-        /// Get all relays
-        /// </summary>
+        /// <inheritdoc />
         public IEnumerable<INotificationRelay> Relays => this.m_relays.Values;
 
-        /// <summary>
-        /// Service name
-        /// </summary>
+        /// <inheritdoc />
         public string ServiceName => "Notification Relay Service";
 
-        /// <summary>
-        /// Default notification service
-        /// </summary>
-        public DefaultNotificationService(IServiceManager serviceManager)
+        /// <inheritdoc />
+        public DefaultNotificationService(IServiceManager serviceManager, INotificationTemplateRepository templateRepository, INotificationTemplateFiller templateFiller)
         {
+            this.m_tracer = new Tracer(nameof(DefaultNotificationService));
             this.m_relays = serviceManager
                 .CreateInjectedOfAll<INotificationRelay>()
                 .SelectMany(r=>r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
                 .ToDictionary(o=>o.scheme, o=>o.relay);
 
-            //this.m_relays = AppDomain.CurrentDomain
-            //    .GetAllTypes()
-            //    .Where(t => typeof(INotificationRelay).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-            //    .Select(t => Activator.CreateInstance(t) as INotificationRelay)
-            //    .SelectMany(t=>t.SupportedSchemes.Select(s=>(scheme: s, relay: t)))
-            //    .ToDictionary(o => o.scheme, o => o.relay);
+            this.m_notificationTemplateRepository = templateRepository;
+            this.m_notificationTemplateFiller = templateFiller;
         }
 
-        /// <summary>
-        /// Get the specified notification relay
-        /// </summary>
+        /// <inheritdoc />
         public INotificationRelay GetNotificationRelay(Uri toAddress)
         {
             if (this.m_relays.TryGetValue(toAddress.Scheme, out INotificationRelay retVal))
@@ -79,15 +71,11 @@ namespace SanteDB.Core.Notifications
             return null;
         }
 
-        /// <summary>
-        /// Get notification relay
-        /// </summary>
+        /// <inheritdoc />
         public INotificationRelay GetNotificationRelay(string toAddress) => this.GetNotificationRelay(new Uri(toAddress));
 
-        /// <summary>
-        /// Send the specified data to the specified addressers
-        /// </summary>
-        public Guid[] Send(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        /// <inheritdoc />
+        public Guid[] SendNotification(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
             var sendRelays = to.Select(o => new Uri(o)).GroupBy(o => o.Scheme);
             List<Guid> retVal = new List<Guid>(to.Length);
@@ -104,6 +92,14 @@ namespace SanteDB.Core.Notifications
             }
 
             return retVal.ToArray();
+        }
+
+        /// <inheritdoc />
+        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        {
+            NotificationTemplate template = m_notificationTemplateFiller.FillTemplate(templateId, templateLanguage, templateModel);
+
+            return SendNotification(to, template.Subject, template.Body, scheduleDelivery, ccAdmins, attachments);
         }
     }
 }

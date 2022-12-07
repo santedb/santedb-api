@@ -21,6 +21,7 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Notifications;
 using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;

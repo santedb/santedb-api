@@ -143,27 +143,7 @@ namespace SanteDB.Core.Security.Services
         public bool Cancel { get; set; }
     }
 
-    /// <summary>
-    /// Identifies a class which can generate TFA secrets
-    /// </summary>
-    [System.ComponentModel.Description("TFA/MFA Secret Generator")]
-    public interface ITwoFactorSecretGenerator : IServiceImplementation
-    {
-        /// <summary>
-        /// Gets the name of the TFA generator
-        /// </summary>
-        String Name { get; }
 
-        /// <summary>
-        /// Generate a TFA secret
-        /// </summary>
-        String GenerateTfaSecret();
-
-        /// <summary>
-        /// Validates the secret 
-        /// </summary>
-        bool Validate(String secret);
-    }
 
     /// <summary>
     /// Identity provider service

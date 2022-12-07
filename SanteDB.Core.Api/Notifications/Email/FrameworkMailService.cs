@@ -102,7 +102,7 @@ namespace SanteDB.Core.Notifications.Email
             else
             {
                 var host = server.Substring(0, idx);
-                var port = int.Parse(host.Substring(idx + 1));
+                var port = int.Parse(server.Substring(idx + 1));
                 return (server, port);
             }
         }
@@ -120,6 +120,7 @@ namespace SanteDB.Core.Notifications.Email
             using (var mm = CreateMailMessage(message))
             {
                 smtpClient.SendAsync(mm, (smtpClient, message, mm));
+                
             }
         }
 
