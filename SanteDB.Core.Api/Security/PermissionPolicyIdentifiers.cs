@@ -218,6 +218,11 @@ namespace SanteDB.Core.Security
         public const string AssignCertificateToIdentity = UnrestrictedCertificate + ".3";
 
         /// <summary>
+        /// Manage foreign data
+        /// </summary>
+        public const string ManageForeignData = UnrestrictedAdministration + ".20";
+
+        /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
         public const string Login = UnrestrictedAll + ".1";

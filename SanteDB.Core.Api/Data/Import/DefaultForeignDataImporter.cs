@@ -71,15 +71,19 @@ namespace SanteDB.Core.Data.Import
                     }
                     else
                     {
-                        var currentRecord = new GenericForeignDataRecord(sourceReader);
-                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = foreignDataObjectMap.Transform.Transformer }), DetectedIssueKeys.OtherIssue);
+                        var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
+                        var description = this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = foreignDataObjectMap.Transform.Transformer });
+                        currentRecord["import_error"] = description;
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", description, DetectedIssueKeys.OtherIssue);
                         rejectWriter.WriteRecord(currentRecord);
                         continue;
                     }
                 }
                 else if (!this.ApplyMapping(foreignDataObjectMap, sourceReader, out mappedObject, out var issue))
                 {
-                    rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                    var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
+                    currentRecord["import_error"] = issue.Text;
+                    rejectWriter.WriteRecord(currentRecord);
                     yield return issue;
                     continue; // skip
                 }

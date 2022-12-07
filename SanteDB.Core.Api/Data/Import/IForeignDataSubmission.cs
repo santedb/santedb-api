@@ -11,7 +11,7 @@ namespace SanteDB.Core.Data.Import
     /// <summary>
     /// Foreign data information wrapper
     /// </summary>
-    public interface IForeignDataInfo : IIdentifiedResource
+    public interface IForeignDataSubmission : IIdentifiedResource
     {
 
         /// <summary>
@@ -27,30 +27,24 @@ namespace SanteDB.Core.Data.Import
         /// <summary>
         /// Gets the foreign data map that was used to import the data
         /// </summary>
-        ForeignDataMap ForeignDataMap { get; }
+        Guid ForeignDataMapKey { get; }
 
         /// <summary>
         /// Get the issues with the imported data
         /// </summary>
         /// <returns>The detected issues for the imported data</returns>
-        IEnumerable<DetectedIssue> GetIssues();
-
-        /// <summary>
-        /// Add an issue to this foreign data information class
-        /// </summary>
-        /// <param name="issue">The issue to add to this foreign da</param>
-        void AddIssue(DetectedIssue issue);
+        IEnumerable<DetectedIssue> Issues { get;  }
 
         /// <summary>
         /// Get the source stream of the data
         /// </summary>
         /// <returns>The source stream</returns>
-        Stream GetSource();
+        Stream GetSourceStream();
 
         /// <summary>
         /// Get the rejected file data
         /// </summary>
-        Stream GetRejects();
+        Stream GetRejectStream();
 
     }
 
@@ -62,23 +56,27 @@ namespace SanteDB.Core.Data.Import
         /// <summary>
         /// The foreign data information has been received and staged
         /// </summary>
-        Staged,
+        Staged = 0,
         /// <summary>
         /// The foreign data is scheduled for execution
         /// </summary>
-        Scheduled,
+        Scheduled = 1,
         /// <summary>
         /// The foreign data is being imported
         /// </summary>
-        Running,
+        Running = 2,
         /// <summary>
         /// The foreign data import was completed with no errors
         /// </summary>
-        CompletedSuccessfully,
+        CompletedSuccessfully = 3,
         /// <summary>
         /// The foreign data import was completed with errors
         /// </summary>
-        CompletedWithErrors
+        CompletedWithErrors = 4,
+        /// <summary>
+        /// The import was rejected
+        /// </summary>
+        Rejected = 5
     }
 
 }

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using SanteDB.Core.Data.Import;
 using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
@@ -39,6 +40,8 @@ namespace SanteDB.Core.Services.Impl
     {
         private readonly Type[] m_defaultServices = new Type[]
         {
+            typeof(FileSystemDataStreamManager),
+            typeof(DefaultForeignDataImporter),
             typeof(DefaultPolicyEnforcementService),
             typeof(LocalTagPersistenceService),
             typeof(LocalProtocolRepositoryService),

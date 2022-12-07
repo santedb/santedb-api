@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using SanteDB.Core.Services;
+using System.IO;
 
 namespace SanteDB.Core.Security.Services
 {
@@ -75,5 +76,23 @@ namespace SanteDB.Core.Security.Services
         /// Decrypt the string data and return a Base64 encoded version
         /// </summary>
         string Decrypt(string data);
+
+        /// <summary>
+        /// Create a decrypting stream
+        /// </summary>
+        /// <param name="underlyingStream">The underlying stream to wrap</param>
+        /// <param name="key">The key to encrypt the stream</param>
+        /// <param name="iv">The initialization vector</param>
+        /// <returns>The wrapped stream</returns>
+        Stream CreateEncryptingStream(Stream underlyingStream, byte[] key, byte[] iv);
+
+        /// <summary>
+        /// Create a decrypting stream
+        /// </summary>
+        /// <param name="underlyingStream">The underlying stream to wrap</param>
+        /// <param name="key">The key to decrypt the stream</param>
+        /// <param name="iv">The initialization vector</param>
+        /// <returns>The wrapped stream</returns>
+        Stream CreateDecryptingStream(Stream underlyingStream, byte[] key, byte[] iv);
     }
 }

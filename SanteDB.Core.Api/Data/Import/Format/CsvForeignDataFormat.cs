@@ -236,7 +236,7 @@ namespace SanteDB.Core.Data.Import.Format
             /// <param name="sourceStream">The stream which contains the data</param>
             public CsvForeignDataWriter(Stream sourceStream)
             {
-                m_stream = new StreamWriter(sourceStream);
+                m_stream = new StreamWriter(sourceStream, System.Text.Encoding.UTF8, 1024, true);
             }
 
             /// <inheritdoc/>
@@ -379,10 +379,17 @@ namespace SanteDB.Core.Data.Import.Format
                 m_stream.Dispose();
                 m_isDisposed = true;
             }
+
+            /// <inheritdoc/>
+            /// <remarks>CSV files don't support subsets (sheets, tables, etc.)</remarks>
+            public IEnumerable<string> GetSubsetNames()
+            {
+                yield return String.Empty;
+            }
         }
 
         /// <inheritdoc/>
-        public string FileExtension => "csv";
+        public string FileExtension => ".csv";
 
         /// <inheritdoc/>
         public IForeignDataFile Open(Stream foreignDataStream)
