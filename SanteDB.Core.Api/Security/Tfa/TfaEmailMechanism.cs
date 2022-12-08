@@ -36,7 +36,7 @@ namespace SanteDB.Security.Tfa.Email
     /// </summary>
     public class TfaEmailMechanism : ITfaMechanism
     {
-        private readonly ITwoFactorSecretGenerator m_twoFactorSecretGenerator;
+        private readonly ITfaCodeProvider m_tfaCodeProvider;
 
         private readonly IIdentityProviderService m_identityProvider;
 
@@ -45,9 +45,9 @@ namespace SanteDB.Security.Tfa.Email
         /// <summary>
         /// TFA Mechanism via e-mail
         /// </summary>
-        public TfaEmailMechanism(ITwoFactorSecretGenerator secretGenerator, IPasswordHashingService passwordHashingService, IIdentityProviderService identityProvider)
+        public TfaEmailMechanism(ITfaCodeProvider tfaCodeProvider, IPasswordHashingService passwordHashingService, IIdentityProviderService identityProvider)
         {
-            this.m_twoFactorSecretGenerator = secretGenerator;
+            this.m_tfaCodeProvider = tfaCodeProvider;
             this.m_identityProvider = identityProvider;
             this.m_hashingProvider = passwordHashingService;
         }
@@ -87,21 +87,16 @@ namespace SanteDB.Security.Tfa.Email
                 throw new ArgumentNullException(nameof(user));
             }
 
-            // Gather the e-mail
-            var filler = ApplicationServiceContext.Current.GetService<INotificationTemplateFiller>();
-            if (filler == null)
-            {
-                throw new InvalidOperationException("Cannot find notification filler service");
-            }
-
             // We want to send the data in which language?
             String language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
             // Generate a TFA secret and add it as a claim on the user
-            var secret = this.m_twoFactorSecretGenerator.GenerateTfaSecret();
+            
 
             if (user is IClaimsIdentity ci)
             {
+                var secret = this.m_tfaCodeProvider.GenerateTfaCode(user);
+
                 // Get user's e-mail
                 var email = ci.FindFirst(SanteDBClaimTypes.Email)?.Value;
                 if (email == null)
@@ -109,19 +104,17 @@ namespace SanteDB.Security.Tfa.Email
                     throw new InvalidOperationException("E-Mail TFA requires e-mail address registered");
                 }
 
-                // Save secret
-                this.m_identityProvider.AddClaim(user.Name, new SanteDBClaim(SanteDBClaimTypes.SanteDBOTAuthCode, this.m_hashingProvider.ComputeHash(secret)), AuthenticationContext.SystemPrincipal, new TimeSpan(0, 5, 0));
                 // Send
-                var template = filler.FillTemplate("tfa.email", language, new
+                var templatemodel = new
                 {
-                    user = user,
+                    user,
                     tfa = secret,
                     principal = AuthenticationContext.Current.Principal
-                });
+                };
 
                 try
                 {
-                    ApplicationServiceContext.Current.GetService<INotificationService>().Send(new string[] { email }, template.Subject, template.Body, null, false, null);
+                    ApplicationServiceContext.Current.GetService<INotificationService>().SendTemplatedNotification(new[] { email }, "tfa.email", language, templatemodel, null, false, null);
                     var censoredEmail = email.Split('@')[1];
                     return $"Code sent to *****@{censoredEmail}";
                 }
