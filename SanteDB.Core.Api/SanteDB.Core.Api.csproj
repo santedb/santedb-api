@@ -258,7 +258,7 @@
   <Choose>
     <When Condition="$(SolutionName.Contains('-ext'))">
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
         <PackageReference Include="SharpCompress" Version="0.30.1" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <ProjectReference Include="..\..\santedb-model\SanteDB.Core.Model\SanteDB.Core.Model.csproj">
@@ -269,7 +269,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
         <PackageReference Include="SanteDB.Core.Model" Version="$(VersionNumber)" />
         <PackageReference Include="SharpCompress" Version="0.30.1" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
