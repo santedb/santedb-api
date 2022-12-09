@@ -48,24 +48,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public FileNotificationTemplateRepository(IConfigurationManager configurationManager)
         {
             m_configuration = configurationManager.GetSection<FileSystemNotificationTemplateConfigurationSection>();
-        }
 
-        /// <summary>
-        /// Gets the service name
-        /// </summary>
-        public string ServiceName => "File System Bsaed Notification Template Repository";
-
-        // Lock box
-        private object m_lock = new object();
-
-        // Repository
-        private List<NotificationTemplate> m_repository = new List<NotificationTemplate>();
-
-        /// <summary>
-        /// Initialize
-        /// </summary>
-        public FileNotificationTemplateRepository()
-        {
             ApplicationServiceContext.Current.Started += (o, e) =>
             {
                 try
@@ -101,6 +84,18 @@ namespace SanteDB.Core.Services.Impl.Repository
                 }
             };
         }
+
+        /// <summary>
+        /// Gets the service name
+        /// </summary>
+        public string ServiceName => "File System Bsaed Notification Template Repository";
+
+        // Lock box
+        private object m_lock = new object();
+
+        // Repository
+        private List<NotificationTemplate> m_repository = new List<NotificationTemplate>();
+
 
         /// <summary>
         /// Find the specified templates

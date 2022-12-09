@@ -34,26 +34,22 @@ namespace SanteDB.Security.Tfa.Email
     /// <summary>
     /// Represents a TFA mechanism which can send/receive TFA requests via e-mail
     /// </summary>
-    public class TfaEmailMechanism : ITfaMechanism
+    public class DefaultTfaMechanism : ITfaMechanism
     {
         private readonly ITfaCodeProvider m_tfaCodeProvider;
-
-        private readonly IIdentityProviderService m_identityProvider;
-
-        private readonly IPasswordHashingService m_hashingProvider;
+        private readonly INotificationService m_notificationService;
 
         /// <summary>
         /// TFA Mechanism via e-mail
         /// </summary>
-        public TfaEmailMechanism(ITfaCodeProvider tfaCodeProvider, IPasswordHashingService passwordHashingService, IIdentityProviderService identityProvider)
+        public DefaultTfaMechanism(ITfaCodeProvider tfaCodeProvider, INotificationService notificationService)
         {
             this.m_tfaCodeProvider = tfaCodeProvider;
-            this.m_identityProvider = identityProvider;
-            this.m_hashingProvider = passwordHashingService;
+            this.m_notificationService = notificationService;
         }
 
         // Tracer
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(TfaEmailMechanism));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultTfaMechanism));
 
         /// <summary>
         /// Get the identifier for the challenge
@@ -73,7 +69,7 @@ namespace SanteDB.Security.Tfa.Email
         {
             get
             {
-                return "org.santedb.tfa.email";
+                return "org.santedb.tfa";
             }
         }
 
@@ -137,7 +133,8 @@ namespace SanteDB.Security.Tfa.Email
         {
             if (user is IClaimsIdentity ci)
             {
-                return ci.FindFirst(SanteDBClaimTypes.SanteDBOTAuthCode)?.Value == this.m_hashingProvider.ComputeHash(tfaSecret);
+                return false;
+                //return ci.FindFirst(SanteDBClaimTypes.SanteDBOTAuthCode)?.Value == this.m_hashingProvider.ComputeHash(tfaSecret);
             }
             else
             {
