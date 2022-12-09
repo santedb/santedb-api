@@ -158,9 +158,9 @@ namespace SanteDB.Core.Security
             var contextKeyFile = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "ctxkey.enc");
             if(!File.Exists(contextKeyFile))
             {
-                //TODO: Don't use the D parameter as it is not always equal when exported and reimported. https://github.com/dotnet/runtime/commit/700a07cae19fe64649c2fb4c6c10e6b9aa85dc29
-                var keyData = SHA256.Create().ComputeHash(key.Certificate.GetRSAPrivateKey().ExportParameters(true).D);
-                using(var fs = File.Create(contextKeyFile))
+                var keyData = new byte[32];
+                System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
+                using (var fs = File.Create(contextKeyFile))
                 {
                     var buffer = key.Certificate.GetRSAPublicKey().Encrypt(keyData, RSAEncryptionPadding.Pkcs1);
                     fs.Write(buffer, 0, buffer.Length);
@@ -173,7 +173,7 @@ namespace SanteDB.Core.Security
                 {
                     var buffer = new byte[fs.Length];
                     fs.Read(buffer, 0, buffer.Length);
-                    return buffer;
+                    return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
                 }
             }
         }

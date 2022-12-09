@@ -113,6 +113,12 @@ namespace SanteDB.Core.Services
         bool Remove(string key);
 
         /// <summary>
+        /// Remove all keys matching <paramref name="patternKey"/>
+        /// </summary>
+        /// <param name="patternKey">The pattern to match</param>
+        void RemoveAll(string patternKey);
+
+        /// <summary>
         /// Returns true if <paramref name="key"/> exists in the cache
         /// </summary>
         bool Exists(String key);
