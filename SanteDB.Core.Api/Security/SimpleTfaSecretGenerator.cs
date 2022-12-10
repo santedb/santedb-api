@@ -20,13 +20,14 @@
  */
 using SanteDB.Core.Security.Services;
 using System;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Security
 {
     /// <summary>
     /// Simple TFA secret generator
     /// </summary>
-    public class SimpleTfaSecretGenerator : ITwoFactorSecretGenerator
+    public class SimpleTfaSecretGenerator : ITfaCodeGenerator
     {
         /// <summary>
         /// Gets the service name
@@ -47,7 +48,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Generate the TFA secret
         /// </summary>
-        public string GenerateTfaSecret()
+        public string GenerateTfaCode(IIdentity identity)
         {
             var secretInt = DateTime.Now.Ticks % 9999;
             return String.Format("{0:000000}", secretInt);

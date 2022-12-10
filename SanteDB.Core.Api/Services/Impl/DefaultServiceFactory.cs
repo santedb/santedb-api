@@ -23,6 +23,7 @@ using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
+using SanteDB.Core.Notifications.Templating;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
@@ -63,6 +64,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(SHA256PasswordHashingService),
             typeof(SimpleTfaSecretGenerator),
             typeof(CachedResourceCheckoutService),
+            typeof(SimpleNotificationTemplateFiller),
             typeof(JwsResourcePointerService),
             typeof(FileSystemDispatcherQueueService),
             typeof(LocalRepositoryFactory),
