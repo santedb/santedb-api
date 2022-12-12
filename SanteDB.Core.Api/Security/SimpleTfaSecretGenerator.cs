@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Security.Services;
 using System;
-using System.Net.Sockets;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security
