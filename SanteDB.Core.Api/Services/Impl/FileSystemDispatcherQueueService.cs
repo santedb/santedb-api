@@ -197,7 +197,7 @@ namespace SanteDB.Core.Services.Impl
                     {
                         if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
                         {
-                            foreach (var cb in callbacks)
+                            foreach (var cb in callbacks.ToArray())
                             {
                                 cb(result);
                             }
