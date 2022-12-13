@@ -27,7 +27,8 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Simple TFA secret generator
     /// </summary>
-    public class SimpleTfaSecretGenerator : ITfaCodeGenerator
+    [Obsolete]
+    public class SimpleTfaSecretGenerator : ITfaCodeProvider
     {
         /// <summary>
         /// Gets the service name
@@ -45,22 +46,16 @@ namespace SanteDB.Core.Security
             }
         }
 
-        /// <summary>
-        /// Generate the TFA secret
-        /// </summary>
         public string GenerateTfaCode(IIdentity identity)
         {
             var secretInt = DateTime.Now.Ticks % 9999;
             return String.Format("{0:000000}", secretInt);
         }
 
-        /// <summary>
-        /// Validate the secret
-        /// </summary>
-        public bool Validate(string secret)
+
+        public bool VerifyTfaCode(IIdentity identity, string code, DateTimeOffset? timeProvided = null)
         {
-            int toss;
-            return secret.Length == 6 && Int32.TryParse(secret, out toss);
+            return code.Length == 6 && Int32.TryParse(code, out _);
         }
     }
 }

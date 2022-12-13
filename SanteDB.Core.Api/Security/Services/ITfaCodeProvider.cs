@@ -17,6 +17,9 @@ namespace SanteDB.Core.Security.Services
 
     public interface ITfaCodeProvider : ITfaCodeGenerator, ITfaCodeVerifier
     {
+        //TfaSecret BeginTfaRegistration();
+        //TfaSecret FinishTfaRegistration();
+
 
     }
 
