@@ -51,7 +51,7 @@ namespace SanteDB.Core.Security.Signing
         /// Algorithm for signature
         /// </summary>
         [JsonProperty("alg")]
-        public SignatureAlgorithm? Algorithm { get; set; }
+        public String Algorithm { get; set; }
 
         /// <summary>
         /// Type
@@ -64,6 +64,12 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         [JsonProperty("kid")]
         public String KeyId { get; set; }
+
+        /// <summary>
+        /// Get identifier
+        /// </summary>
+        [JsonProperty("x5t")]
+        public String KeyThumbprint { get; set; }
 
         /// <summary>
         /// Compression algorithm
@@ -227,8 +233,9 @@ namespace SanteDB.Core.Security.Signing
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {
-                this.Header.Algorithm = this.m_dataSigningService.GetSignatureAlgorithm(keyId);
-                this.Header.KeyId = this.m_dataSigningService.GetPublicKeyIdentifier(keyId);
+                this.Header.Algorithm = this.m_dataSigningService.GetSignatureAlgorithm(keyId).ToString();
+                this.Header.KeyId = keyId;
+                this.Header.KeyThumbprint = this.m_dataSigningService.GetPublicKeyThumbprint(keyId);
             }
             return this;
         }
