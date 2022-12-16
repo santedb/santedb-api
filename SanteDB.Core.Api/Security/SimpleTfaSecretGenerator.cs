@@ -46,7 +46,7 @@ namespace SanteDB.Core.Security
             }
         }
 
-        public string GenerateTfaCode(IIdentity identity)
+        public string GenerateTfaCode(IIdentity identity, string address = null)
         {
             var secretInt = DateTime.Now.Ticks % 9999;
             return String.Format("{0:000000}", secretInt);

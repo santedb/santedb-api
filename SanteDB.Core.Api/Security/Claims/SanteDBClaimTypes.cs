@@ -112,6 +112,10 @@ namespace SanteDB.Core.Security.Claims
         /// Claim for conveying the one time password / access code
         /// </summary>
         public const string SanteDBOTAuthCode = "urn:santedb:org:claim:otac";
+        /// <summary>
+        /// Claim for sotring a secret for the Rfc4226 algorithm.
+        /// </summary>
+        public const string SanteDBRfc4226Secret = "urn:santedb:org:claim:otpsecret";
 
         /// <summary>
         /// TFA secret expiry

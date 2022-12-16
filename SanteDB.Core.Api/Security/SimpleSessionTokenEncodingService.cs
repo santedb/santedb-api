@@ -94,7 +94,7 @@ namespace SanteDB.Core.Security
             
             if (tokenparts.Length != 2)
             {
-                throw new ArgumentException(nameof(encodedToken));
+                throw new ArgumentException("Format of the Token is invalid.", nameof(encodedToken));
             }
 
             return tokenparts[0];
