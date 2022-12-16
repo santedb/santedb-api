@@ -75,6 +75,6 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get the public key identifier
         /// </summary>
-        string GetPublicKeyIdentifier(string keyId = null);
+        string GetPublicKeyThumbprint(string keyId = null);
     }
 }

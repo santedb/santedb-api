@@ -107,7 +107,14 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the public key identifier for the object
         /// </summary>
-        public string GetPublicKeyIdentifier(string keyId = null) => this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"))?.Certificate?.Thumbprint ?? keyId;
+        public string GetPublicKeyThumbprint(string keyId = null) {
+            var key = this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"));
+            if(key?.Certificate != null)
+            {
+                return SHA1.Create().ComputeHash(key.Certificate.GetPublicKey()).Base64UrlEncode();
+            }
+            return null;
+        }
 
         /// <summary>
         /// Sign data with the specified key data
