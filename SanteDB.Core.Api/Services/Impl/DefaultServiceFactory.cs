@@ -28,6 +28,7 @@ using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Security.Tfa;
 using SanteDB.Core.Services.Impl.Repository;
 using System;
 using System.Linq;
@@ -60,9 +61,9 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultDataSigningService),
             typeof(DefaultPolicyDecisionService),
             typeof(DefaultPolicyEnforcementService),
-            typeof(DefaultTfaRelayService),
+            typeof(DefaultTfaService),
             typeof(SHA256PasswordHashingService),
-            typeof(SimpleTfaSecretGenerator),
+            typeof(Rfc4226TfaCodeProvider),
             typeof(CachedResourceCheckoutService),
             typeof(SimpleNotificationTemplateFiller),
             typeof(JwsResourcePointerService),

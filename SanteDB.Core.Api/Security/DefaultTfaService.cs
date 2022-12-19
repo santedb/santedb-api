@@ -33,20 +33,20 @@ namespace SanteDB.Core.Security
     /// Represents a default implementation of a TFA relay service which scans the entire application domain for
     /// mechanisms and allows calling of them all
     /// </summary>
-    [ServiceProvider("Default TFA Relay Provider")]
-    public class DefaultTfaRelayService : ITfaRelayService
+    [ServiceProvider("Default TFA Provider")]
+    public class DefaultTfaService : ITfaService
     {
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultTfaRelayService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultTfaService));
 
         /// <summary>
         /// Gets the service name
         /// </summary>
-        public string ServiceName => "Default TFA Relay Provider";
+        public string ServiceName => "Default TFA  Provider";
 
         /// <summary>
         /// Construct the default relay service
         /// </summary>
-        public DefaultTfaRelayService(IServiceManager serviceManager)
+        public DefaultTfaService(IServiceManager serviceManager)
         {
             this.Mechanisms = serviceManager.CreateInjectedOfAll<ITfaMechanism>();
         }

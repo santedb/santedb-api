@@ -22,8 +22,10 @@ using SanteDB.Core.Data;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
+using SanteDB.Core.Notifications;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -164,6 +166,14 @@ namespace SanteDB.Core
         }
 
         /// <summary>
+        /// Gets the <see cref="INotificationService"/> instance from <paramref name="context"/>.
+        /// </summary>
+        /// <param name="context">The service context to get the <see cref="INotificationService"/> from.</param>
+        /// <returns>The <see cref="INotificationService"/> in the <paramref name="context"/>.</returns>
+        public static INotificationService GetNotificationService(this IApplicationServiceContext context)
+            => context.GetService<INotificationService>();
+
+        /// <summary>
         /// Get the audit service.
         /// </summary>
         /// <param name="me">The application context.</param>
@@ -241,6 +251,55 @@ namespace SanteDB.Core
         public static void SetTimeout(this IRestClient me, int millisecondTimeout)
         {
             me.Description.Endpoint.ForEach(o => { o.Timeout = new TimeSpan(0, 0, 0, 0, millisecondTimeout); });
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="Dictionary{TKey, TValue}"/> from an <see cref="IEnumerable{T}"/>
+        ///     according to specified key selector function. Diplicate keys will not be added to the dictionary.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source.</typeparam>
+        /// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/> to create a <see cref="Dictionary{TKey, TValue}"/> from.</param>
+        /// <param name="keySelector">A function to extract a key from each element.</param>
+        /// <returns>
+        ///     A <see cref="Dictionary{TKey, TValue}"/> that contains values of type <typeparamref name="TSource"/> selected from the input sequence.
+        /// </returns>
+        public static Dictionary<TKey, TSource> ToDictionaryIgnoringDuplicates<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+            => ToDictionaryIgnoringDuplicates(source, keySelector, v => v);
+
+
+        /// <summary>
+        ///     Creates a <see cref="Dictionary{TKey, TValue}"/> from an <see cref="IEnumerable{T}"/>
+        ///     according to specified key selector and element selector functions. Diplicate keys will not be added to the dictionary.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source.</typeparam>
+        /// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+        /// <typeparam name="TElement">The type of the value returned by elementSelector.</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/> to create a <see cref="Dictionary{TKey, TValue}"/> from.</param>
+        /// <param name="keySelector">A function to extract a key from each element.</param>
+        /// <param name="valueSelector">A transform function to produce a result element value from each element.</param>
+        /// <returns>
+        ///     A <see cref="Dictionary{TKey, TValue}"/> that contains values of type <typeparamref name="TElement"/> selected from the input sequence.
+        /// </returns>
+        public static Dictionary<TKey, TElement> ToDictionaryIgnoringDuplicates<TSource, TKey, TElement>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> valueSelector)
+        {
+            if (null == source)
+            {
+                return null;
+            }
+
+            var dict = new Dictionary<TKey, TElement>();
+
+            foreach (var item in source)
+            {
+                var key = keySelector(item);
+                if (!dict.ContainsKey(key))
+                {
+                    dict.Add(key, valueSelector(item));
+                }
+            }
+
+            return dict;
         }
     }
 }

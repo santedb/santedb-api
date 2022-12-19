@@ -6,9 +6,11 @@ using System.Text;
 namespace SanteDB.Core.Security.Services
 {
     /// <summary>
-    /// Interface for a two factor code generator.
+    /// An interface capable of generating unique codes for two factor verification and they validating the codes generated.
+    /// 
+    /// It is intended that the code is transported to the user after generation and then the user will relay the code back using a different communication channel (hence, two-factor).
     /// </summary>
-    public interface ITfaCodeGenerator
+    public interface ITfaCodeProvider
     {
         /// <summary>
         /// Generate a code for a specific user.
@@ -16,14 +18,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="identity">The identity to generate the code for.</param>
         /// <param name="address">Optional address to specifically gather a secret for. </param>
         /// <returns>The generated code for the identity.</returns>
-        string GenerateTfaCode(IIdentity identity, string address = null);
-    }
-
-    /// <summary>
-    /// Interface for a two factor code verifier. 
-    /// </summary>
-    public interface ITfaCodeVerifier
-    {
+        string GenerateTfaCode(IIdentity identity);
         /// <summary>
         /// Verify a two factor code is correct for a given user
         /// </summary>
@@ -34,16 +29,10 @@ namespace SanteDB.Core.Security.Services
         bool VerifyTfaCode(IIdentity identity, string code, DateTimeOffset? timeProvided = null);
     }
 
-    public interface ITfaCodeProvider : ITfaCodeGenerator, ITfaCodeVerifier
-    {
-
-
-    }
-
     public interface ITfaSecretManager
     {
-        string StartTfaRegistration(IIdentity identity, string address, int codeLength, IPrincipal principal);
-        bool FinishTfaRegistration(IIdentity identity, string address, string code, IPrincipal principal);
+        string StartTfaRegistration(IIdentity identity, int codeLength, IPrincipal principal);
+        bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal);
     }
 
     

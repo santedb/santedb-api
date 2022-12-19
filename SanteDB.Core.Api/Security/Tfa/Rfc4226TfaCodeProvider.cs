@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
@@ -10,60 +11,65 @@ using System.Text;
 
 namespace SanteDB.Core.Security.Tfa
 {
-    public class Rfc4226CodeProvider : ITfaCodeProvider, ITfaSecretManager
+    /// <summary>
+    /// An implementation of the <see cref="ITfaCodeProvider"/> that adhers to RFC4226 for HOTP secret generation and also implements RFC 6238 for TOTP.
+    /// </summary>
+    public class Rfc4226TfaCodeProvider : ITfaCodeProvider, ITfaSecretManager
     {
         readonly IApplicationServiceContext _ServiceContext;
+        readonly Tracer _Tracer;
 
-        public Rfc4226CodeProvider(IApplicationServiceContext serviceContext)
+        public Rfc4226TfaCodeProvider(IApplicationServiceContext serviceContext)
         {
+            _Tracer = new Tracer(nameof(Rfc4226TfaCodeProvider));
             _ServiceContext = serviceContext;
         }
 
-        public string GenerateTfaCode(IIdentity identity, string address = null)
+        public string GenerateTfaCode(IIdentity identity)
         {
             var secrets = GetSecretsForIdentity(identity)?.Where(s => s.Initialized);
 
-            var selectedsecret = secrets?.FirstOrDefault(s=>address == null || s.Address.Equals(address, StringComparison.OrdinalIgnoreCase));
+            var selectedsecret = secrets?.FirstOrDefault(s=>s.Initialized);
 
-            var counter = 0L;
-
-            if (selectedsecret.TimeBase != 0) //TOTP
+            if (null == selectedsecret)
             {
-                counter = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - selectedsecret.StartValue) / selectedsecret.TimeBase;
-            }
-            else //HOTP
-            {
-                counter = selectedsecret.Counter;
+                throw new ArgumentException("No tfa secrets are registered on the identity.", nameof(identity));
             }
 
+            var counter = GetSecretCounter(selectedsecret);
+
+
+            if (selectedsecret.Mode == Rfc4226Mode.HotpIncrementOnGenerate)
+            {
+                selectedsecret.Counter++;
+                UpdateSecretsForIdentity(identity, secrets, AuthenticationContext.SystemPrincipal);
+            }
             return GenerateCode(counter, selectedsecret.Secret, selectedsecret.CodeLength);
         }
 
         public bool VerifyTfaCode(IIdentity identity, string code, DateTimeOffset? timeProvided = null)
         {
-            var secrets = GetSecretsForIdentity(identity)?.Where(s=>s.Initialized);
+            var secrets = GetSecretsForIdentity(identity)?.Where(s => s.Initialized);
 
             if (secrets?.Count() < 1)
             {
-                //TODO: Log this condition.
+                _Tracer.TraceInfo("VerifyTfaCode called but no initialized secrets exist for the user {0}.", identity.Name);
                 return false;
             }
 
             long counter = 0;
 
-            foreach(var secret in secrets)
+            foreach (var secret in secrets)
             {
-                if (secret.TimeBase != 0)
-                {
-                    counter = ((timeProvided ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds() - secret.StartValue) / secret.TimeBase;
-                }
-                else
-                {
-                    counter = secret.Counter;
-                }
+                counter = GetSecretCounter(secret);
 
                 if (GenerateCodesForVerification(counter, secret.Secret, secret.CodeLength, 1)?.Contains(code) == true)
                 {
+                    if (secret.Mode == Rfc4226Mode.HotpIncrementOnValidate)
+                    {
+                        secret.Counter++;
+                        UpdateSecretsForIdentity(identity, secrets, AuthenticationContext.SystemPrincipal);
+                    }
                     return true;
                 }
             }
@@ -71,11 +77,19 @@ namespace SanteDB.Core.Security.Tfa
             return false;
         }
 
+        /// <summary>
+        /// Gets the valid codes for a given counter value and key, including valid codes around the counter value defined by the slew.
+        /// </summary>
+        /// <param name="counter">The counter value that is being compared.</param>
+        /// <param name="key">The key to use to generate the codes.</param>
+        /// <param name="numberOfDigits">The number of digits the code should be. Valid values are 6, 7, and 8 as defined in RFC 4226.</param>
+        /// <param name="counterSlew">The slew in counter values defines teh allowed range of counter values. For example, a <paramref name="counterSlew"/> of 1 will generate 3 codes.</param>
+        /// <returns>An enumerable containing the codes that are valid for the counter including any counter values around the counter based on the slew.</returns>
         private static IEnumerable<string> GenerateCodesForVerification(long counter, byte[] key, int numberOfDigits, int counterSlew)
         {
             yield return GenerateCode(counter, key, numberOfDigits);
 
-            for(var slew = 1; slew <= counterSlew; slew++)
+            for (var slew = 1; slew <= counterSlew; slew++)
             {
                 yield return GenerateCode(counter - slew, key, numberOfDigits);
                 yield return GenerateCode(counter + slew, key, numberOfDigits);
@@ -205,7 +219,7 @@ namespace SanteDB.Core.Security.Tfa
             return secrets;
         }
 
-        private void UpdateSecretsForIdentity(IIdentity identity, List<Rfc4226SecretClaim> claims, IPrincipal principal)
+        private void UpdateSecretsForIdentity(IIdentity identity, IEnumerable<Rfc4226SecretClaim> claims, IPrincipal principal)
         {
             if (null == identity)
             {
@@ -221,20 +235,20 @@ namespace SanteDB.Core.Security.Tfa
 
             identityprovider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
 
-            if (claims?.Count > 0)
+            if (claims?.Count() > 0)
             {
-                foreach(var claim in claims)
+                foreach (var claim in claims)
                 {
                     identityprovider.AddClaim(identity.Name, new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim)), principal);
                 }
             }
         }
 
-        public string StartTfaRegistration(IIdentity identity, string address, int codeLength, IPrincipal principal)
+        public string StartTfaRegistration(IIdentity identity, int codeLength, IPrincipal principal)
         {
             var secret = new Rfc4226SecretClaim();
 
-            using(var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
             {
                 var key = new byte[20];
                 rng.GetBytes(key);
@@ -242,13 +256,12 @@ namespace SanteDB.Core.Security.Tfa
             }
 
             secret.CodeLength = codeLength;
-            secret.Address = address;
+            secret.Mode = Rfc4226Mode.TotpThirtySecondInterval;
             //TODO: Make these configurable.
             secret.StartValue = 0;
-            secret.TimeBase = 30;
             secret.Initialized = false;
 
-            var counter = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / secret.TimeBase;
+            var counter = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 30L;
 
             AddSecretClaim(identity, secret, principal);
 
@@ -256,7 +269,7 @@ namespace SanteDB.Core.Security.Tfa
 
         }
 
-        public bool FinishTfaRegistration(IIdentity identity, string address, string code, IPrincipal principal)
+        public bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal)
         {
             if (null == identity)
             {
@@ -265,19 +278,14 @@ namespace SanteDB.Core.Security.Tfa
 
             var secrets = GetSecretsForIdentity(identity);
 
-            var secret = secrets?.FirstOrDefault(s => s.Address == address);
+            var secret = secrets?.SingleOrDefault(s => !s.Initialized);
 
             if (null == secret)
             {
-                throw new ArgumentException("Invalid Address", nameof(address));
+                throw new ArgumentException("Identity has no Tfa Registrations in progress.", nameof(identity));
             }
 
-            long counter = 0;
-
-            if (secret.TimeBase != 0)
-            {
-                counter = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / secret.TimeBase;
-            }
+            long counter = GetSecretCounter(secret);
 
             if (GenerateCodesForVerification(counter, secret.Secret, secret.CodeLength, 5)?.Contains(code) == true)
             {
@@ -292,6 +300,22 @@ namespace SanteDB.Core.Security.Tfa
                 return false;
             }
 
+        }
+
+        private static long GetSecretCounter(Rfc4226SecretClaim secret)
+        {
+            switch (secret.Mode)
+            {
+                case Rfc4226Mode.HotpIncrementOnGenerate:
+                case Rfc4226Mode.HotpIncrementOnValidate:
+                    return secret.Counter;
+                case Rfc4226Mode.TotpThirtySecondInterval:
+                    return (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 30L;
+                case Rfc4226Mode.TotpSixtySecondInterval:
+                    return (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 60L;
+                default:
+                    throw new ArgumentException("Invalid Rfc4226 Mode.", nameof(secret.Mode));
+            }
         }
     }
 }

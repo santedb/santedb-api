@@ -54,7 +54,7 @@ namespace SanteDB.Core.Notifications
             this.m_relays = serviceManager
                 .CreateInjectedOfAll<INotificationRelay>()
                 .SelectMany(r=>r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
-                .ToDictionary(o=>o.scheme, o=>o.relay);
+                .ToDictionaryIgnoringDuplicates(o=>o.scheme, o=>o.relay);
 
             this.m_notificationTemplateRepository = templateRepository;
             this.m_notificationTemplateFiller = templateFiller;

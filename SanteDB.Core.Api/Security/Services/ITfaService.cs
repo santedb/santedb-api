@@ -28,7 +28,7 @@ namespace SanteDB.Core.Security.Services
     /// <summary>
     /// Represents a two-factor authentication relay service
     /// </summary>
-    public interface ITfaRelayService : IServiceImplementation
+    public interface ITfaService : IServiceImplementation
     {
 
         /// <summary>
@@ -41,10 +41,6 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         bool ValidateSecret(Guid mechanismId, IIdentity user, String secret);
 
-        /// <summary>
-        /// Gets the tfa mechanisms supported by this relay service
-        /// </summary>
         IEnumerable<ITfaMechanism> Mechanisms { get; }
-
     }
 }
