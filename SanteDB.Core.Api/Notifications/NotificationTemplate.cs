@@ -29,6 +29,7 @@ namespace SanteDB.Core.Notifications
     /// Represents a notification template source
     /// </summary>
     [XmlType(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
+    [XmlRoot(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
     [JsonObject]
     public class NotificationTemplate
     {
