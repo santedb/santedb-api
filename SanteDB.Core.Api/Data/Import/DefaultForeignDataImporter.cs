@@ -2,14 +2,21 @@
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Data.Import.Format;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -23,14 +30,16 @@ namespace SanteDB.Core.Data.Import
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultForeignDataImporter));
         private readonly ILocalizationService m_localizationService;
         private readonly IDictionary<String, IForeignDataElementTransform> m_transforms;
+        private readonly IThreadPoolService m_threadPool;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DefaultForeignDataImporter(ILocalizationService localizationService, IServiceManager serviceManager)
+        public DefaultForeignDataImporter(ILocalizationService localizationService, IServiceManager serviceManager, IThreadPoolService threadPoolService)
         {
             this.m_localizationService = localizationService;
             this.m_transforms = serviceManager.CreateInjectedOfAll<IForeignDataElementTransform>().ToDictionary(o => o.Name, o => o);
+            this.m_threadPool = threadPoolService;
         }
 
         /// <inheritdoc/>
@@ -59,13 +68,34 @@ namespace SanteDB.Core.Data.Import
                 repositoryService = ApplicationServiceContext.Current.GetService(repositoryServiceType) as IRepositoryService;
             }
 
+            var duplicateCheckParms = new Dictionary<String, Func<Object>>(foreignDataObjectMap.DuplicateCheck.Count);
+            for (int i = 0; i < sourceReader.ColumnCount; i++)
+            {
+                var parmNo = i;
+                duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+            }
             int records = 0;
+            var sw = new Stopwatch();
+            sw.Start();
             while (sourceReader.MoveNext())
             {
+
                 IdentifiedData mappedObject = null;
+
+                // Is there a duplicate check? If so map them
+                var duplicateChecks = foreignDataObjectMap.DuplicateCheck?.Select(o => QueryExpressionParser.BuildLinqExpression(foreignDataObjectMap.Resource.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
+
+                this.m_tracer.TraceInfo("Processing {0} from import...", records++);
+
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, records, records / (((sw.ElapsedMilliseconds / 1000)+1)))));
+                if (duplicateChecks.Any())
+                {
+                    mappedObject = duplicateChecks.Select(o => repositoryService.Find(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
+                }
+
                 if (foreignDataObjectMap.Transform != null) // Pass it to the transform
                 {
-                    if (this.ApplyTransformer(foreignDataObjectMap.Transform, sourceReader, out var result) && result is IdentifiedData id)
+                    if (this.ApplyTransformer(foreignDataObjectMap.Transform, new GenericForeignDataRecord(sourceReader), sourceReader, out var result) && result is IdentifiedData id)
                     {
                         mappedObject = id;
                     }
@@ -75,49 +105,79 @@ namespace SanteDB.Core.Data.Import
                         var description = this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = foreignDataObjectMap.Transform.Transformer });
                         currentRecord["import_error"] = description;
                         yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", description, DetectedIssueKeys.OtherIssue);
-                        rejectWriter.WriteRecord(currentRecord);
+                        rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
                         continue;
                     }
                 }
-                else if (!this.ApplyMapping(foreignDataObjectMap, sourceReader, out mappedObject, out var issue))
+                else if (!this.ApplyMapping(foreignDataObjectMap, sourceReader, ref mappedObject, out var issue))
                 {
                     var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
                     currentRecord["import_error"] = issue.Text;
-                    rejectWriter.WriteRecord(currentRecord);
                     yield return issue;
-                    continue; // skip
+                    rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                    continue;
                 }
 
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, String.Format(UserMessages.IMPORTING, records++)));
-                repositoryService?.Save(mappedObject);
-
+                using (DataPersistenceControlContext.Create(autoInsert: true, autoUpdate: true))
+                {
+                    DetectedIssue errorIssue = null;
+                    try
+                    {
+                        repositoryService?.Save(mappedObject);
+                    }
+                    catch (DetectedIssueException ex)
+                    {
+                        errorIssue = ex.Issues.First();
+                    }
+                    catch(Exception ex)
+                    {
+                        var ce = ex;
+                        var errorMessage = String.Empty;
+                        while(ce != null)
+                        {
+                            errorMessage += ce.Message;
+                            ce = ce.InnerException;
+                            if(ce != null)
+                            {
+                                errorMessage += " CAUSE: ";
+                            }
+                        }
+                        errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", errorMessage, Guid.Empty);
+                        this.m_tracer.TraceWarning("Could not persist import record - {0}", ex.Message);
+                    }
+                    if (errorIssue != null)
+                    {
+                        yield return errorIssue;
+                        rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                    }
+                }
             }
         }
 
         /// <inheritdoc/>
         public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader)
         {
-            if(foreignDataObjectMap == null)
+            if (foreignDataObjectMap == null)
             {
                 throw new ArgumentNullException(nameof(foreignDataObjectMap));
             }
-            else if(sourceReader == null)
+            else if (sourceReader == null)
             {
                 throw new ArgumentNullException(nameof(sourceReader));
             }
 
             // Validate the map itself
-            foreach(var val in foreignDataObjectMap.Validate())
+            foreach (var val in foreignDataObjectMap.Validate())
             {
                 yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "mapIssue", val.Message, Guid.Empty);
             }
 
             // Validate the map against the source
-            if(foreignDataObjectMap.Maps?.Any() == true)
+            if (foreignDataObjectMap.Maps?.Any() == true)
             {
-                foreach(var itm in foreignDataObjectMap.Maps)
+                foreach (var itm in foreignDataObjectMap.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))
                 {
-                    if(sourceReader.IndexOf(itm.Source) < 0)
+                    if (sourceReader.IndexOf(itm.Source) < 0)
                     {
                         yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {itm.Source}", Guid.Empty);
                     }
@@ -133,22 +193,22 @@ namespace SanteDB.Core.Data.Import
         /// <param name="mappedObject">The mapped object</param>
         /// <param name="issue">The issue which caused the result to fail</param>
         /// <returns>True if the mapping succeeds</returns>
-        private bool ApplyMapping(ForeignDataObjectMap mapping, IForeignDataReader sourceReader, out IdentifiedData mappedObject, out DetectedIssue issue)
+        private bool ApplyMapping(ForeignDataObjectMap mapping, IForeignDataReader sourceReader, ref IdentifiedData mappedObject, out DetectedIssue issue)
         {
             try
             {
-                mappedObject = Activator.CreateInstance(mapping.Resource.Type) as IdentifiedData;
+                mappedObject = mappedObject ?? Activator.CreateInstance(mapping.Resource.Type) as IdentifiedData;
                 // Apply the necessary instructions
                 foreach (var map in mapping.Maps)
                 {
 
-                    if (String.IsNullOrEmpty(map.Source)) // Generated column
+                    if (!String.IsNullOrEmpty(map.FixedValue)) // fixed value
                     {
-                        throw new NotImplementedException(); // TODO: For transforms which look up keys and stuff
+                        mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath, map.FixedValue, replace: false);
                     }
                     else
                     {
-                        if(String.IsNullOrEmpty(map.TargetHdsiPath))
+                        if (String.IsNullOrEmpty(map.TargetHdsiPath))
                         {
                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING_TARGET));
                         }
@@ -160,7 +220,7 @@ namespace SanteDB.Core.Data.Import
                             issue = new DetectedIssue(DetectedIssuePriorityType.Warning, "required", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_MAP_REQUIRED_MISSING, new { row = sourceReader.RowNumber, field = map.Source }), DetectedIssueKeys.FormalConstraintIssue);
                             return false;
                         }
-                        else if(isValueNull) // no need to process
+                        else if (isValueNull) // no need to process
                         {
                             continue;
                         }
@@ -168,19 +228,19 @@ namespace SanteDB.Core.Data.Import
                         object targetValue = sourceValue;
                         foreach (var tx in map.Transforms)
                         {
-                            if (!this.ApplyTransformer(tx, targetValue, out targetValue))
+                            if (!this.ApplyTransformer(tx, new GenericForeignDataRecord(sourceReader), targetValue, out targetValue))
                             {
                                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
                             }
                         }
 
-                        if(targetValue == null && map.TargetMissingSpecified)
+                        if (targetValue == null && map.TargetMissingSpecified)
                         {
                             issue = new DetectedIssue(map.TargetMissing, "maperr", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue }), DetectedIssueKeys.BusinessRuleViolationIssue);
                             return false;
                         }
 
-                        mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath, targetValue, replace: false);
+                        mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath, targetValue, replace: map.ReplaceExisting);
 
                     }
 
@@ -203,17 +263,25 @@ namespace SanteDB.Core.Data.Import
         /// <param name="input">The input value to pass to the transform</param>
         /// <param name="output">The output of th etransform</param>
         /// <returns>True if the transform succeeded</returns>
-        private bool ApplyTransformer(ForeignDataElementTransform transform, Object input, out object output)
+        private bool ApplyTransformer(ForeignDataElementTransform transform, IForeignDataRecord sourceRecord, Object input, out object output)
         {
-            if(ForeignDataImportUtil.Current.TryGetElementTransformer(transform.Transformer, out var foreignDataElementTransform))
+            if (String.IsNullOrEmpty(transform.When) || input.ToString().Equals(transform.When))
             {
-                output = foreignDataElementTransform.Transform(input, transform.Arguments.ToArray());
-                return true;
+                if (ForeignDataImportUtil.Current.TryGetElementTransformer(transform.Transformer, out var foreignDataElementTransform))
+                {
+                    output = foreignDataElementTransform.Transform(input, sourceRecord, transform.Arguments.ToArray());
+                    return true;
+                }
+                else
+                {
+                    throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING, new { transform = transform.Transformer }));
+                }
             }
             else
             {
-                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING, new { transform = transform.Transformer }));
+                output = input;
             }
+            return true;
         }
 
     }

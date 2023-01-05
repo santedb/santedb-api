@@ -31,7 +31,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Gets or sets the name of the element
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlElement("name"), JsonProperty("name")]
         public String Name { get; set; }
 
         /// <summary>

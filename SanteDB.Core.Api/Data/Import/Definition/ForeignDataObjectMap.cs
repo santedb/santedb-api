@@ -29,10 +29,22 @@ namespace SanteDB.Core.Data.Import.Definition
         public List<ForeignDataElementMap> Maps { get; set; }
 
         /// <summary>
+        /// Gets or sets the duplicate checks for this object
+        /// </summary>
+        [XmlArray("existing"), XmlArrayItem("where"),  JsonProperty("existing")]
+        public List<String> DuplicateCheck { get; set; }
+
+        /// <summary>
         /// An object transformer which is applied to the source data 
         /// </summary>
         [XmlElement("transform"), JsonProperty("transform")]
         public ForeignDataElementTransform Transform { get; set; }
+
+        /// <summary>
+        /// Indicates whether records in the dataset can be imported concurrently (not dependencies on one another - examples: patients, or persons)
+        /// </summary>
+        [XmlAttribute("concurrentImport"), JsonProperty("concurrentImport")]
+        public bool ConcurrentImport { get; set; }
 
         /// <summary>
         /// Validate this transform

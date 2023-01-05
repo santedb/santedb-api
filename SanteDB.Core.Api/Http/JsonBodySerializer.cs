@@ -23,31 +23,31 @@ using Newtonsoft.Json.Converters;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.IO;
+using System.Net.Mime;
 
 namespace SanteDB.Core.Http
 {
     /// <summary>
     /// Represents a body serializer that uses JSON
     /// </summary>
-    internal class JsonBodySerializer : IBodySerializer
+    public class JsonBodySerializer : IBodySerializer
     {
-        // Serializer
-        private JsonSerializer m_serializer;
-
-        // The type
-        private Type m_type;
+        /// <summary>
+        /// Json formatter
+        /// </summary>
+        public virtual string ContentType => "application/json";
 
         /// <summary>
         /// Gets the underlying serializer
         /// </summary>
-        public object Serializer => this.m_serializer;
+        public virtual object GetSerializer(Type typeHint) => this.GetSerializerInternal();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SanteDB.Core.Http.JsonBodySerializer"/> class.
+        /// Get serializer for json
         /// </summary>
-        public JsonBodySerializer(Type type)
+        private JsonSerializer GetSerializerInternal()
         {
-            this.m_serializer = new JsonSerializer()
+            var retVal = new JsonSerializer()
             {
                 DateFormatHandling = DateFormatHandling.IsoDateFormat,
                 NullValueHandling = NullValueHandling.Ignore,
@@ -55,9 +55,8 @@ namespace SanteDB.Core.Http
                 TypeNameHandling = TypeNameHandling.Auto,
                 SerializationBinder = new ModelSerializationBinder()
             };
-
-            this.m_serializer.Converters.Add(new StringEnumConverter());
-            this.m_type = type;
+            retVal.Converters.Add(new StringEnumConverter());
+            return retVal;
         }
 
         #region IBodySerializer implementation
@@ -65,24 +64,45 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Serialize
         /// </summary>
-        public void Serialize(System.IO.Stream s, object o)
+        public virtual void Serialize(System.IO.Stream s, object o, out ContentType contentType)
         {
+            contentType = new ContentType($"{this.ContentType}; charset=utf-8");
             using (TextWriter tw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
             using (JsonTextWriter jw = new JsonTextWriter(tw))
             {
-                this.m_serializer.Serialize(jw, o);
+                this.GetSerializerInternal().Serialize(jw, o);
             }
         }
 
         /// <summary>
         /// De-serialize the body
         /// </summary>
-        public object DeSerialize(System.IO.Stream s)
+        public virtual object DeSerialize(System.IO.Stream s, ContentType contentType, Type typeHint)
         {
-            using (TextReader tr = new StreamReader(s, System.Text.Encoding.UTF8, true, 2048, true))
-            using (JsonTextReader jr = new JsonTextReader(tr))
+            try
             {
-                return this.m_serializer.Deserialize(jr, this.m_type);
+                using (TextReader tr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8"), true, 2048, true))
+                using (JsonTextReader jr = new JsonTextReader(tr))
+                {
+
+                    return this.GetSerializerInternal().Deserialize(jr, typeHint);
+                }
+            }
+            catch
+            {
+                if (s.CanSeek)
+                {
+                    s.Seek(0, SeekOrigin.Begin);
+                    using (TextReader tr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8"), true, 2048, true))
+                    using (JsonTextReader jr = new JsonTextReader(tr))
+                    {
+                        return this.GetSerializerInternal().Deserialize(jr, Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
+                    }
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 

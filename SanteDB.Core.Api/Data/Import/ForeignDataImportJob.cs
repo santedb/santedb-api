@@ -1,11 +1,13 @@
 ﻿using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -15,36 +17,39 @@ namespace SanteDB.Core.Data.Import
     /// </summary>
     public class ForeignDataImportJob : IJob
     {
-
+        /// <summary>
+        /// JOB ID
+        /// </summary>
+        public static readonly Guid JOB_ID = Guid.Parse("2EBF8094-6628-4CEC-93B8-3D623F227722");
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ForeignDataImportJob));
         private readonly IJobStateManagerService m_jobStateManager;
         private readonly IForeignDataManagerService m_fdManager;
-        private readonly IForeignDataImporter m_fdTransformer;
         private float m_fdManagerProgress = 0.0f;
-        private float m_fdImportProgress = 0.0f;
+        private string m_fdManagerState = String.Empty;
+        private bool m_cancelRequested = false;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public ForeignDataImportJob(IJobStateManagerService jobStateManagerService, 
-            IForeignDataManagerService foreignDataManagerService,
-            IForeignDataImporter foreignDataTransformerService)
+        public ForeignDataImportJob(IJobStateManagerService jobStateManagerService,
+            IForeignDataManagerService foreignDataManagerService)
         {
             this.m_jobStateManager = jobStateManagerService;
             this.m_fdManager = foreignDataManagerService;
-            this.m_fdTransformer = foreignDataTransformerService;
-            if(this.m_fdTransformer is IReportProgressChanged irpc)
+            if (this.m_fdManager is IReportProgressChanged irpc2)
             {
-                irpc.ProgressChanged += (o, e) => this.m_fdImportProgress = e.Progress;
+                irpc2.ProgressChanged += (o, e) =>
+                {
+                    this.m_fdManagerProgress = e.Progress;
+                    this.m_fdManagerState = e.State.ToString();
+                };
             }
-            if(this.m_fdManager is IReportProgressChanged irpc2)
-            {
-                irpc2.ProgressChanged += (o, e) => this.m_fdManagerProgress = e.Progress;
-            }
+
+
         }
 
         /// <inheritdoc/>
-        public Guid Id => Guid.Parse("2EBF8094-6628-4CEC-93B8-3D623F227722");
+        public Guid Id => JOB_ID;
 
         /// <inheritdoc/>
         public string Name => "Foreign Data Import Background Job";
@@ -53,7 +58,7 @@ namespace SanteDB.Core.Data.Import
         public string Description => "Processes staged foreign data imports";
 
         /// <inheritdoc/>
-        public bool CanCancel => false;
+        public bool CanCancel => true;
 
         /// <inheritdoc/>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
@@ -61,7 +66,9 @@ namespace SanteDB.Core.Data.Import
         /// <inheritdoc/>
         public void Cancel()
         {
-            throw new NotSupportedException();
+            this.m_cancelRequested = true;
+            this.m_jobStateManager.SetState(this, JobStateType.Cancelled);
+
         }
 
         /// <inheritdoc/>
@@ -73,16 +80,30 @@ namespace SanteDB.Core.Data.Import
 
                 var scheduledJobs = this.m_fdManager.Find(o => o.Status == ForeignDataStatus.Scheduled).ToArray();
                 var progressPerFile = 1.0f / (float)scheduledJobs.Length;
+                int fileIndex = 0;
 
-                for (int i = 0; i < scheduledJobs.Length; i++)
+                using (new Timer((o) => this.m_jobStateManager.SetProgress(this, this.m_fdManagerState, this.m_fdManagerProgress * progressPerFile + fileIndex * progressPerFile), null, 100, 1000))
                 {
-                    this.m_jobStateManager.SetProgress(this, String.Format(UserMessages.IMPORTING_NAME, scheduledJobs[i].Name), this.m_fdManagerProgress + i * progressPerFile);
-                    this.m_fdManager.Execute(scheduledJobs[i].Key.Value);
-                }
+                    using (AuthenticationContext.EnterSystemContext())
+                    {
+                        this.m_cancelRequested = false;
+                        for (fileIndex = 0; fileIndex < scheduledJobs.Length && !this.m_cancelRequested; fileIndex++)
+                        {
+                            this.m_fdManager.Execute(scheduledJobs[fileIndex].Key.Value);
+                        }
 
-                this.m_jobStateManager.SetState(this, JobStateType.Completed);
+                    }
+                }
+                if (this.m_cancelRequested)
+                {
+                    this.m_jobStateManager.SetState(this, JobStateType.Cancelled);
+                }
+                else
+                {
+                    this.m_jobStateManager.SetState(this, JobStateType.Completed);
+                }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error executing transform job: {0}", ex);
                 this.m_jobStateManager.SetState(this, JobStateType.Aborted);

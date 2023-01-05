@@ -36,6 +36,14 @@
         <add required="true">
           <source>Middle</source>
           <target>name[OfficialRecord].component[Given].value</target>
+          <transforms>
+            <add transformer="NoCase"/>
+            <add transformer="Expression">
+              <args>
+                <string>Middle.Substring(0,1)</string>
+              </args>
+            </add>
+          </transforms>
         </add>
         <add required="true">
           <source>Insurance</source>

@@ -67,6 +67,9 @@ namespace SanteDB.Core.Http
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
+        /// <inheritdoc/>
+        public string Accept { get; set; }
+
         /// <summary>
         /// Convert headers
         /// </summary>
@@ -104,6 +107,7 @@ namespace SanteDB.Core.Http
         public RestClientBase(IRestClientDescription config)
         {
             this.Description = config;
+            this.Accept = config.Accept;
         }
 
         /// <summary>
@@ -183,7 +187,7 @@ namespace SanteDB.Core.Http
             {
                 retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
             }
-            retVal.Accept = this.Description.Accept;
+            retVal.Accept = this.Accept;
 
             return retVal;
         }
@@ -365,7 +369,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL on which the invokation should occur</param>
         public TResult Invoke<TBody, TResult>(string method, string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>(method, url, this.Description.Accept, body, null);
+            return this.Invoke<TBody, TResult>(method, url, this.Accept, body, null);
         }
 
         /// <summary>
@@ -399,7 +403,7 @@ namespace SanteDB.Core.Http
             {
 
 
-                var requestEventArgs = new RestRequestEventArgs(method, url, query, contentType, body);
+                var requestEventArgs = new RestRequestEventArgs(method, url, query, contentType ?? this.Accept, body);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -446,7 +450,7 @@ namespace SanteDB.Core.Http
         /// <returns>The result from the server</returns>
         public TResult Post<TBody, TResult>(string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>("POST", url, this.Description.Accept, body);
+            return this.Invoke<TBody, TResult>("POST", url, this.Accept, body);
         }
 
         /// <summary>
@@ -484,7 +488,7 @@ namespace SanteDB.Core.Http
         /// <returns>The response from th eserver</returns>
         public TResult Put<TBody, TResult>(string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>("PUT", url, this.Description.Accept, body);
+            return this.Invoke<TBody, TResult>("PUT", url, this.Accept, body);
         }
 
         /// <summary>
@@ -544,7 +548,7 @@ namespace SanteDB.Core.Http
         /// <returns>The new ETAG of the patched resource</returns>
         public String Patch<TPatch>(string url, String ifMatch, TPatch patch)
         {
-            return this.Patch<TPatch>(url, ifMatch, this.Description.Accept, patch);
+            return this.Patch<TPatch>(url, this.Accept, ifMatch, patch);
         }
 
         /// <summary>

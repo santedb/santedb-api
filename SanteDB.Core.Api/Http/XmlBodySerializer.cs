@@ -21,6 +21,8 @@
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Mime;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -29,87 +31,69 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a body serializer that uses XmlSerializer
     /// </summary>
-    internal class XmlBodySerializer : IBodySerializer
+    public class XmlBodySerializer : IBodySerializer
     {
         // Fault serializer
         private static XmlSerializer m_faultSerializer = XmlModelSerializerFactory.Current.CreateSerializer(Type.GetType("SanteDB.Rest.Common.Fault.RestServiceFault, SanteDB.Rest.Common"));
 
-        // Serializer
-        private XmlSerializer m_serializer;
-
-        // Type
-        private Type m_type;
-
         /// <summary>
-        /// Creates a new body serializer
+        /// Content type
         /// </summary>
-        public XmlBodySerializer(Type type)
-        {
-            this.m_type = type;
-            this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(type);
-        }
+        public string ContentType => "application/xml";
 
         /// <summary>
         /// Gets the serializer
         /// </summary>
-        public object Serializer { get; }
+        public object GetSerializer(Type typeHint) => this.GetSerializerInternal(typeHint);
+
+        /// <summary>
+        /// Get serializer
+        /// </summary>
+        private XmlSerializer GetSerializerInternal(Type typeHint) => XmlModelSerializerFactory.Current.CreateSerializer(typeHint);
 
         #region IBodySerializer implementation
 
         /// <summary>
         /// Serialize the object
         /// </summary>
-        public void Serialize(System.IO.Stream s, object o)
+        public void Serialize(System.IO.Stream s, object o, out ContentType contentType)
         {
-            if (o.GetType() == this.m_type)
+            contentType = new ContentType($"{this.ContentType}; charset=utf-8");
+            using (var sw = new StreamWriter(s, System.Text.Encoding.UTF8))
+            using (var xw = XmlWriter.Create(sw))
             {
-                if (this.m_serializer == null)
-                {
-                    this.m_serializer = XmlModelSerializerFactory.Current.CreateSerializer(this.m_type);
-                }
-
-                this.m_serializer.Serialize(s, o);
-            }
-            else // Slower
-            {
-                XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(o.GetType());
-                xsz.Serialize(s, o);
+                this.GetSerializerInternal(o.GetType()).Serialize(xw, o);
             }
         }
 
         /// <summary>
         /// Serialize the reply stream
         /// </summary>
-        public object DeSerialize(System.IO.Stream s)
+        public object DeSerialize(System.IO.Stream s, ContentType contentType, Type typeHint)
         {
-            XmlSerializer serializer = null;
-            using (XmlReader bodyReader = XmlReader.Create(s))
+            using (var sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8")))
+            using (var xr = XmlReader.Create(sr))
             {
-                while (bodyReader.NodeType != XmlNodeType.Element)
+                while (xr.NodeType != XmlNodeType.Element)
                 {
-                    bodyReader.Read();
+                    xr.Read();
                 }
 
-                // Service fault?
-                // Find candidate type
-                if (this.m_serializer?.CanDeserialize(bodyReader) == true)
+                var serializer = this.GetSerializerInternal(typeHint);
+                if(serializer.CanDeserialize(xr))
                 {
-                    serializer = this.m_serializer;
+                    return serializer.Deserialize(xr);
                 }
-                else if (bodyReader.LocalName == "RestServiceFault" &&
-                   bodyReader.NamespaceURI == "http://santedb.org/fault")
+                else if (xr.LocalName == "RestServiceFault" &&
+                   xr.NamespaceURI == "http://santedb.org/fault")
                 {
-                    serializer = m_faultSerializer;
+                    return m_faultSerializer.Deserialize(xr);
                 }
                 else
                 {
-                    serializer = XmlModelSerializerFactory.Current.GetSerializer(bodyReader);
-                    if (serializer == null)
-                    {
-                        throw new KeyNotFoundException($"Could not determine how to de-serialize {bodyReader.NamespaceURI}#{bodyReader.Name}");
-                    }
+                    return XmlModelSerializerFactory.Current.GetSerializer(xr)?.Deserialize(xr) 
+                        ?? throw new InvalidOperationException($"{xr.LocalName} has no serializer!");
                 }
-                return serializer.Deserialize(bodyReader);
             }
         }
 

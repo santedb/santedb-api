@@ -40,7 +40,8 @@ namespace SanteDB.Core.Data.Import
         /// </summary>
         /// <param name="input">The input object</param>
         /// <param name="args">The arguments to the transformer (context specific)</param>
+        /// <param name="sourceRecord">The source reader</param>
         /// <returns>The transformed object</returns>
-        object Transform(object input, params object[] args);
+        object Transform(object input, IForeignDataRecord sourceRecord, params object[] args);
     }
 }

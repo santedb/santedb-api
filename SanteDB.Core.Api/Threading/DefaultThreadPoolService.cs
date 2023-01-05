@@ -196,7 +196,7 @@ namespace SanteDB.Core.Services.Impl
                         {
                             if (this.m_threadPool[i] == null)
                             {
-                                this.m_threadPool[i] = this.CreateThreadPoolThread();
+                                this.m_threadPool[i] = this.CreateThreadPoolThread(i);
                                 this.m_threadPool[i].Start();
                             }
                         }
@@ -216,7 +216,7 @@ namespace SanteDB.Core.Services.Impl
                 m_threadPool = new Thread[this.m_minPoolWorkers];
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
-                    m_threadPool[i] = this.CreateThreadPoolThread();
+                    m_threadPool[i] = this.CreateThreadPoolThread(i);
                     m_threadPool[i].Start();
                 }
             }
@@ -225,11 +225,11 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Create a thread pool thread
         /// </summary>
-        private Thread CreateThreadPoolThread()
+        private Thread CreateThreadPoolThread(int threadNumber)
         {
             return new Thread(this.DispatchLoop)
             {
-                Name = String.Format("SanteDB-ThreadPoolThread"),
+                Name = String.Format($"SanteDB-ThreadPoolThread-{threadNumber}"),
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
             };
@@ -247,7 +247,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 try
                 {
-                    this.m_resetEvent.Wait(30000);
+                    this.m_resetEvent.Wait(3000);
 
                     if (threadPoolIndex >= this.m_minPoolWorkers &&
                         this.m_queue.IsEmpty &&

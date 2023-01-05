@@ -28,7 +28,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         public string Name => "ReferenceTermLookup";
 
         /// <inheritdoc/>
-        public object Transform(object input, params object[] args)
+        public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
             if(args.Length != 1)
             {

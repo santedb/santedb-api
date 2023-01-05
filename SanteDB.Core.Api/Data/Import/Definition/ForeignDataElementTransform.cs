@@ -13,6 +13,12 @@ namespace SanteDB.Core.Data.Import.Definition
     {
 
         /// <summary>
+        /// When the source value matches this value apply the transform
+        /// </summary>
+        [XmlAttribute("when"), JsonProperty("when")]
+        public string When { get; set; }
+
+        /// <summary>
         /// Gets the type of transform to use
         /// </summary>
         [XmlAttribute("transformer"), JsonProperty("transformer")]

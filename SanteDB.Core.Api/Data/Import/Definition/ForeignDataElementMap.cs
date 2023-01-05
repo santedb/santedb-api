@@ -15,6 +15,13 @@ namespace SanteDB.Core.Data.Import.Definition
     public class ForeignDataElementMap : ForeignDataMapBase
     {
 
+
+        /// <summary>
+        /// Gets or sets the fixed value
+        /// </summary>
+        [XmlElement("fixed"), JsonProperty("fixed")]
+        public string FixedValue { get; set; }
+
         /// <summary>
         /// True if the source is required
         /// </summary>
@@ -44,6 +51,12 @@ namespace SanteDB.Core.Data.Import.Definition
         /// </summary>
         [XmlArray("transforms"), XmlArrayItem("add"), JsonProperty("transforms")]
         public List<ForeignDataElementTransform> Transforms { get; set; }
+
+        /// <summary>
+        /// Replace the current value
+        /// </summary>
+        [XmlAttribute("replace"), JsonProperty("replace")]
+        public bool ReplaceExisting { get; set; }
 
         /// <summary>
         /// Validate this map

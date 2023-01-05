@@ -21,6 +21,7 @@
 using SanteDB.Core.Diagnostics;
 using System;
 using System.IO;
+using System.Net.Mime;
 using System.Reflection;
 
 namespace SanteDB.Core.Http
@@ -58,21 +59,26 @@ namespace SanteDB.Core.Http
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FormBodySerializer));
 
+
+        /// <inheritdoc/>
+        public string ContentType => "application/x-www-form-urlencoded";
+
         /// <summary>
         /// Gets the underlying serializer
         /// </summary>
-        public object Serializer => null;
+        public object GetSerializer(Type typeHint) => null;
 
         #region IBodySerializer implementation
 
         /// <summary>
         /// Serialize the specified object
         /// </summary>
-        public void Serialize(System.IO.Stream s, object o)
+        public void Serialize(System.IO.Stream s, object o, out ContentType contentType)
         {
+            contentType = new ContentType($"{this.ContentType}; charset=utf-8");
             // Get runtime properties
             bool first = true;
-            using (StreamWriter sw = new StreamWriter(s))
+            using (StreamWriter sw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
             {
                 foreach (var pi in o.GetType().GetRuntimeProperties())
                 {
@@ -104,11 +110,9 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// De-serialize
         /// </summary>
-        /// <returns>The serialize.</returns>
-        /// <param name="s">S.</param>
-        public object DeSerialize(System.IO.Stream s)
+        public object DeSerialize(Stream s, ContentType contentType, Type typeHint)
         {
-            using (StreamReader sr = new StreamReader(s))
+            using (StreamReader sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet), true, 2048, true))
             {
                 return sr.ReadToEnd().ParseQueryString();
             }

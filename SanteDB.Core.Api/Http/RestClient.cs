@@ -25,12 +25,14 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
+using SharpCompress.IO;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Mime;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
@@ -101,7 +103,7 @@ namespace SanteDB.Core.Http
                 ServicePointManager.ServerCertificateValidationCallback = this.RemoteCertificateValidation;
             }
 
-            
+
             // Set user agent
             var asm = Assembly.GetEntryAssembly() ?? typeof(RestClient).Assembly;
             retVal.UserAgent = String.Format("{0} {1} ({2})", asm.GetCustomAttribute<AssemblyTitleAttribute>()?.Title, asm.GetName().Version, asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
@@ -116,6 +118,10 @@ namespace SanteDB.Core.Http
                 if (!String.IsNullOrEmpty(fwdInfo))
                 {
                     fwdInfo = $"{fwdInfo}, {remoteData.RemoteAddress}";
+                } 
+                else
+                {
+                    fwdInfo = remoteData.RemoteAddress;
                 }
 
                 retVal.Headers.Add("X-Real-IP", remoteData.RemoteAddress);
@@ -205,75 +211,64 @@ namespace SanteDB.Core.Http
             // Body was provided?
             try
             {
+                var mimeContentType = new ContentType(contentType);
                 // Try assigned credentials
                 IBodySerializer serializer = null;
                 if (body != null)
                 {
-                    // GET Stream,
-                    Stream requestStream = null;
-                    try
+                    if (contentType == null && typeof(TResult) != typeof(Object))
                     {
+                        throw new ArgumentNullException(nameof(contentType));
+                    }
+
+                    serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(mimeContentType);
+                    // Serialize and compress with deflate
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        if (this.Description.Binding.CompressRequests)
+                        {
+                            var compressionScheme = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod);
+                            if (compressionScheme.ImplementedMethod != HttpCompressionAlgorithm.None)
+                            {
+                                requestObj.Headers.Add("Content-Encoding", compressionScheme.AcceptHeaderName);
+                                requestObj.Headers.Add("X-CompressRequestStream", compressionScheme.AcceptHeaderName);
+                            }
+
+                            using (var str = compressionScheme.CreateCompressionStream(NonDisposingStream.Create(ms)))
+                            {
+                                serializer.Serialize(str, body, out mimeContentType);
+                            }
+                        }
+                        else
+                        {
+                            serializer.Serialize(ms, body, out mimeContentType);
+                        }
+
+                        // Trace
+                        if (this.Description.Trace)
+                        {
+                            this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(ms.ToArray()));
+                        }
+
                         // Get request object
+                        ms.Seek(0, SeekOrigin.Begin);
                         var cancellationTokenSource = new CancellationTokenSource();
                         cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
+                        requestObj.ContentType = mimeContentType.ToString();
                         using (var requestTask = Task.Run(async () => { return await requestObj.GetRequestStreamAsync(); }, cancellationTokenSource.Token))
                         {
                             try
                             {
-                                requestStream = requestTask.Result;
+                                using (requestTask.Result)
+                                {
+                                    ms.CopyTo(requestTask.Result);
+                                }
                             }
                             catch (AggregateException e)
                             {
                                 requestObj.Abort();
                                 throw e.InnerExceptions.First();
                             }
-                        }
-
-                        if (contentType == null && typeof(TResult) != typeof(Object))
-                        {
-                            throw new ArgumentNullException(nameof(contentType));
-                        }
-
-                        serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(contentType, typeof(TBody));
-                        // Serialize and compress with deflate
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            if (this.Description.Binding.CompressRequests)
-                            {
-                                var compressionScheme = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod);
-                                if (compressionScheme.ImplementedMethod != HttpCompressionAlgorithm.None)
-                                {
-                                    requestObj.Headers.Add("Content-Encoding", compressionScheme.AcceptHeaderName);
-                                    requestObj.Headers.Add("X-CompressRequestStream", compressionScheme.AcceptHeaderName);
-                                }
-
-                                using (var str = compressionScheme.CreateCompressionStream(requestStream))
-                                {
-                                    serializer.Serialize(str, body);
-                                }
-                            }
-                            else
-                            {
-                                serializer.Serialize(ms, body);
-                            }
-
-                            // Trace
-                            if (this.Description.Trace)
-                            {
-                                this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(ms.ToArray()));
-                            }
-
-                            using (var nms = new MemoryStream(ms.ToArray()))
-                            {
-                                nms.CopyTo(requestStream);
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        if (requestStream != null)
-                        {
-                            requestStream.Dispose();
                         }
                     }
                 }
@@ -315,23 +310,19 @@ namespace SanteDB.Core.Http
                     else
                     {
                         // De-serialize
-                        var responseContentType = response.ContentType;
-                        if (String.IsNullOrEmpty(responseContentType))
+                        if (String.IsNullOrEmpty(response.ContentType))
                         {
                             return default(TResult);
                         }
+                        var responseContentType = new ContentType(response.ContentType);
 
-                        if (responseContentType.Contains(";"))
-                        {
-                            responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
-                        }
 
                         if (response.StatusCode == HttpStatusCode.NotModified)
                         {
                             return default(TResult);
                         }
 
-                        serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
+                        serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType);
 
                         TResult retVal = default(TResult);
                         // Compression?
@@ -356,12 +347,12 @@ namespace SanteDB.Core.Http
                             {
                                 using (var str = CompressionUtil.GetCompressionScheme(response.Headers[HttpResponseHeader.ContentEncoding]).CreateDecompressionStream(ms))
                                 {
-                                    retVal = (TResult)serializer.DeSerialize(str);
+                                    retVal = (TResult)serializer.DeSerialize(str, responseContentType, typeof(TResult));
                                 }
                             }
                             else
                             {
-                                retVal = (TResult)serializer.DeSerialize(ms);
+                                retVal = (TResult)serializer.DeSerialize(ms, responseContentType, typeof(TResult));
                             }
                             //retVal = (TResult)serializer.DeSerialize(ms);
                         }
@@ -396,11 +387,7 @@ namespace SanteDB.Core.Http
                 // Deserialize
                 object errorResult = null;
 
-                var responseContentType = errorResponse.ContentType;
-                if (responseContentType.Contains(";"))
-                {
-                    responseContentType = responseContentType.Substring(0, responseContentType.IndexOf(";"));
-                }
+                var responseContentType = new ContentType(e.Response.ContentType);
 
                 var ms = new MemoryStream(); // copy response to memory
                 using (var str = CompressionUtil.GetCompressionScheme(errorResponse.Headers[HttpResponseHeader.ContentEncoding]).CreateDecompressionStream(errorResponse.GetResponseStream()))
@@ -411,15 +398,15 @@ namespace SanteDB.Core.Http
 
                 try
                 {
-                    var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType, typeof(TResult));
+                    var serializer = this.Description.Binding.ContentTypeMapper.GetSerializer(responseContentType);
 
                     if (!String.IsNullOrEmpty(errorResponse.Headers[HttpResponseHeader.ContentEncoding]))
                     {
-                        errorResult = serializer.DeSerialize(ms);
+                        errorResult = serializer.DeSerialize(ms, responseContentType, typeof(TResult));
                     }
                     else
                     {
-                        errorResult = serializer.DeSerialize(ms);
+                        errorResult = serializer.DeSerialize(ms, responseContentType, typeof(TResult));
                     }
                 }
                 catch (Exception e2)

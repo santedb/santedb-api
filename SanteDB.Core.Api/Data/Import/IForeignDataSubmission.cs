@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections;
@@ -11,22 +12,31 @@ namespace SanteDB.Core.Data.Import
     /// <summary>
     /// Foreign data information wrapper
     /// </summary>
-    public interface IForeignDataSubmission : IIdentifiedResource
+    public interface IForeignDataSubmission : IIdentifiedResource, INonVersionedData
     {
 
         /// <summary>
         /// Gets the name of the foreign data information
         /// </summary>
+        [QueryParameter("name")]
         String Name { get; }
+
+        /// <summary>
+        /// Gets or sets the description
+        /// </summary>
+        [QueryParameter("description")]
+        String Description { get; }
 
         /// <summary>
         /// Gets the status of the foreign data information
         /// </summary>
+        [QueryParameter("status")]
         ForeignDataStatus Status { get; }
 
         /// <summary>
         /// Gets the foreign data map that was used to import the data
         /// </summary>
+        [QueryParameter("map")]
         Guid ForeignDataMapKey { get; }
 
         /// <summary>

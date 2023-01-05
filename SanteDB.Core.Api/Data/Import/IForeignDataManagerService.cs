@@ -33,8 +33,9 @@ namespace SanteDB.Core.Data.Import
         /// <param name="inputStream">The source data stream in the foreign data format</param>
         /// <param name="foreignDataMapKey">The foreign data map that should be used on the import</param>
         /// <param name="name">The original name of the source data</param>
+        /// <param name="description">A human description of the file</param>
         /// <returns>The created foreign data information pointer</returns>
-        IForeignDataSubmission Stage(Stream inputStream, String name, Guid foreignDataMapKey);
+        IForeignDataSubmission Stage(Stream inputStream, String name, String description, Guid foreignDataMapKey);
 
         /// <summary>
         /// Updates the status of the foreign data information record to indicate it is ready for staging

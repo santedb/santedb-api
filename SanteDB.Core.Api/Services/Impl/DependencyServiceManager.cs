@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-5-30
  */
+using RestSrvr;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
@@ -500,6 +501,8 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
+            DiagnosticsProbeManager.Current.Dispose();
+            RestServerThreadPool.Current.Dispose();
         }
 
         /// <summary>

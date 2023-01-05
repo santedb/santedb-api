@@ -37,7 +37,7 @@ namespace SanteDB.Core.Jobs
     /// 
     /// </remarks>
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
-    public class DefaultJobManagerService : IJobManagerService, IServiceFactory
+    public class DefaultJobManagerService : IJobManagerService, IServiceFactory, IDaemonService
     {
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
@@ -159,27 +159,40 @@ namespace SanteDB.Core.Jobs
             // Invoke the starting event handler
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            if (this.m_configuration != null)
+            ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                foreach (var configuration in this.m_configuration.Jobs)
+                if (this.m_configuration != null)
                 {
-                    var job = configuration.Type.CreateInjected() as IJob;
-                    var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
-                    this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
-                    this.m_jobs.Add(ji);
-
-                    if (configuration.Schedule?.Any() == true)
+                    foreach (var configuration in this.m_configuration.Jobs)
                     {
-                        this.m_jobScheduleManager.Clear(job);
-                        configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
-                    }
+                        var job = configuration.Type.CreateInjected() as IJob;
 
-                    if (configuration.StartType == JobStartType.Immediate)
-                    {
-                        this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                        var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
+                        this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
+                        this.m_jobs.Add(ji);
+
+                        if (configuration.Schedule?.Any() == true)
+                        {
+                            this.m_jobScheduleManager.Clear(job);
+                            configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
+                        }
+
+                        if (configuration.StartType == JobStartType.Immediate)
+                        {
+                            this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                        }
                     }
                 }
-            }
+
+                foreach(var job in this.m_jobs)
+                {
+                    // The job is marked as running - this is a problem if the host shut down improperly
+                    if (this.m_jobStateManager.GetJobState(job.Job).CurrentState == JobStateType.Running)
+                    {
+                        this.m_jobStateManager.SetState(job.Job, JobStateType.NotRun);
+                    }
+                }
+            };
 
             // Setup timers based on the jobs
             this.m_systemTimer = new System.Timers.Timer(300000); // timer runs every 5 minutes
@@ -268,6 +281,10 @@ namespace SanteDB.Core.Jobs
                 if (itm.Job is IDisposable disp)
                 {
                     disp.Dispose();
+                }
+                if (this.m_jobStateManager.GetJobState(itm.Job).CurrentState == JobStateType.Running) 
+                {
+                    this.m_jobStateManager.SetState(itm.Job, JobStateType.Stopped);
                 }
             }
 

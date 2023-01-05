@@ -142,7 +142,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public bool Stop()
         {
-            this.Started?.Invoke(this, EventArgs.Empty);
+            this.Stopping?.Invoke(this, EventArgs.Empty);
 
             foreach (var itm in this.m_attachedRules)
             {

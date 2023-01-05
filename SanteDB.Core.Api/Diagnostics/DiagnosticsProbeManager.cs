@@ -28,7 +28,7 @@ namespace SanteDB.Core.Diagnostics
     /// <summary>
     /// The performance monitor class
     /// </summary>
-    public class DiagnosticsProbeManager
+    public class DiagnosticsProbeManager : IDisposable
     {
         /// <summary>
         /// Counters
@@ -110,6 +110,20 @@ namespace SanteDB.Core.Diagnostics
                 if (!this.m_probes.Any(p => p.Uuid == probe.Uuid))
                 {
                     this.m_probes.Add(probe);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Dispose probes
+        /// </summary>
+        public void Dispose()
+        {
+            foreach(var probe in this.m_probes)
+            {
+                if(probe is IDisposable disp)
+                {
+                    disp.Dispose();
                 }
             }
         }

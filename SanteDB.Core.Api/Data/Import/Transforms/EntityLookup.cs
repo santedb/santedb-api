@@ -34,7 +34,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         public string Name => "EntityLookup";
 
         /// <inheritdoc/>
-        public object Transform(object input, params object[] args)
+        public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
             if(args.Length != 2)
             {
@@ -56,7 +56,7 @@ namespace SanteDB.Core.Data.Import.Transforms
                 result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", new Dictionary<string, Func<object>>()
                 {
                     {  "input", () => input }
-                })).Select<Guid?>(keySelector).SingleOrDefault();
+                }, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
 
                 this.m_adhocCache?.Add(key, result ?? Guid.Empty);
                 return result;

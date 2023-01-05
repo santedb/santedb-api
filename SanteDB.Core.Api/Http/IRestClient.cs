@@ -41,6 +41,12 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
+        /// Gets or sets the format to accept data in
+        /// </summary>
+        /// <remarks>The <see cref="Description"/> is used for the default</remarks>
+        String Accept { get; set; }
+
+        /// <summary>
         /// Gets the specified item
         /// </summary>
         /// <typeparam name="TResult">The type of model item to retrieve</typeparam>

@@ -23,7 +23,7 @@ namespace SanteDB.Core.Api.Test
                     new EntityName(NameUseKeys.Legal, "TEST")
                 }
             };
-            var b = a.DeepCopy();
+            var b = a.Clone();
             Assert.IsInstanceOf<Entity>(b);
             Assert.AreEqual(a.Names.Count, (b as Entity).Names.Count);
             a.Names.Add(new EntityName(NameUseKeys.Alphabetic, "ANOTHER"));

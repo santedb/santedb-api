@@ -20,6 +20,7 @@
  */
 using System;
 using System.IO;
+using System.Net.Mime;
 
 namespace SanteDB.Core.Http
 {
@@ -30,19 +31,24 @@ namespace SanteDB.Core.Http
     {
 
         /// <summary>
+        /// Get the content type that this serializes
+        /// </summary>
+        String ContentType { get; }
+
+        /// <summary>
         /// Gets the serializer for this body serializer
         /// </summary>
-        object Serializer { get; }
+        object GetSerializer(Type typeHint);
 
         /// <summary>
         /// Serialize the specified object
         /// </summary>
-        void Serialize(Stream s, Object o);
+        void Serialize(Stream requestOrResponseStream, Object objectToSerialize, out ContentType contentType);
 
         /// <summary>
         /// Serialize the reply stream
         /// </summary>
-        Object DeSerialize(Stream s);
+        Object DeSerialize(Stream requestOrResponseStream, ContentType contentType, Type typeHint);
     }
 
     /// <summary>
@@ -53,7 +59,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the body serializer based on the content type
         /// </summary>
-        IBodySerializer GetSerializer(String contentType, Type type);
+        IBodySerializer GetSerializer(ContentType contentType);
 
     }
 }
