@@ -153,7 +153,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new generic local repository with specified privacy service
         /// </summary>
-        public GenericLocalRepository(IPrivacyEnforcementService privacyService, IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TEntity> dataPersistence)
+        public GenericLocalRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TEntity> dataPersistence, IPrivacyEnforcementService privacyService = null)
         {
             this.m_privacyService = privacyService;
             this.m_policyService = policyService;

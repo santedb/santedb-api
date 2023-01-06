@@ -44,6 +44,8 @@ namespace SanteDB.Core
     /// </summary>
     public static class ExtensionMethods
     {
+
+
         /// <summary>
         /// Create injected class
         /// </summary>

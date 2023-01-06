@@ -53,5 +53,9 @@ namespace SanteDB.Core.Services
         /// <returns>The constructed clinical protocol</returns>
         IClinicalProtocol GetProtocol(Guid protocolUuid);
 
+        /// <summary>
+        /// Remove protocol from the protocol library
+        /// </summary>
+        IClinicalProtocol RemoveProtocol(Guid protocolUuid);
     }
 }

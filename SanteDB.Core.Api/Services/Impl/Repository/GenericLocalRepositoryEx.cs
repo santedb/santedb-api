@@ -36,7 +36,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Create a new privacy service
         /// </summary>
-        public GenericLocalRepositoryEx(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TModel> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(privacyService, policyService, localizationService, dataPersistenceService)
+        public GenericLocalRepositoryEx(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TModel> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
         {
         }
 

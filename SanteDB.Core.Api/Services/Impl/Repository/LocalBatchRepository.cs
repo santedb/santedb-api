@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new batch repository
         /// </summary>
-        public LocalBatchRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Bundle> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(privacyService, policyService, localizationService, dataPersistenceService)
+        public LocalBatchRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Bundle> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
         {
         }
 

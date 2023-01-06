@@ -246,7 +246,7 @@ namespace SanteDB.Core.Protocol
                 }
                 else if (!patient.Key.HasValue) // Not persisted
                 {
-                    currentProcessing = patient.Clone() as Patient;
+                    currentProcessing = patient.DeepCopy() as Patient;
                 }
 
                 // Initialize for protocol execution
@@ -265,19 +265,20 @@ namespace SanteDB.Core.Protocol
                 lock (currentProcessing)
                 {
                     var thdPatient = currentProcessing.DeepCopy() as Patient;
-                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.Participations.ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)));
+                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.LoadProperty(o => o.Participations).ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)));
 
                     // Let's ensure that there are some properties loaded eh?
                     if (this.IgnoreViewModelInitializer)
                     {
-                        foreach (var itm in thdPatient.LoadCollection<ActParticipation>("Participations"))
+                        foreach (var itm in thdPatient.LoadProperty(o => o.Participations))
                         {
-                            itm.LoadProperty<Act>("TargetAct").LoadProperty<Concept>("TypeConcept");
-                            foreach (var itmPtcpt in itm.LoadProperty<Act>("TargetAct").LoadCollection<ActParticipation>("Participations"))
+                            var act = itm.LoadProperty(o => o.Act);
+                            act.LoadProperty(o => o.TypeConcept);
+                            act.LoadProperty(o => o.MoodConcept);
+                            foreach (var itmPtcpt in act.LoadProperty(o => o.Participations))
                             {
-                                itmPtcpt.LoadProperty<Concept>("ParticipationRole");
-                                itmPtcpt.LoadProperty<Entity>("PlayerEntity").LoadProperty<Concept>("TypeConcept");
-                                itmPtcpt.LoadProperty<Entity>("PlayerEntity").LoadProperty<Concept>("MoodConcept");
+                                itmPtcpt.LoadProperty(o => o.ParticipationRole);
+                                itmPtcpt.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
                             };
                         }
                     }

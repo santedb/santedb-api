@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     public class LocalProtocolRepositoryService : GenericLocalRepository<Model.Acts.Protocol>, IClinicalProtocolRepositoryService
     {
         /// <inheritdoc/>
-        public LocalProtocolRepositoryService(IPrivacyEnforcementService privacyService, IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Model.Acts.Protocol> dataPersistence) : base(privacyService, policyService, localizationService, dataPersistence)
+        public LocalProtocolRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Model.Acts.Protocol> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
         {
         }
 
@@ -105,12 +105,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             expression = Expression.Lambda<Func<Model.Acts.Protocol, bool>>(expressionBody, expressionParameter);
 
-            return new TransformQueryResultSet<Model.Acts.Protocol, IClinicalProtocol>(this.Find(expression), (a) =>
-                  {
-                      var proto = Activator.CreateInstance(a.HandlerClass) as IClinicalProtocol;
-                      proto.Load(a);
-                      return proto;
-                  });
+            return new TransformQueryResultSet<Model.Acts.Protocol, IClinicalProtocol>(this.Find(expression), (a) => this.CreatePublicProtocol(a));
         }
 
         /// <summary>
@@ -121,9 +116,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             var protocolData = this.Get(protocolUuid);
             if (protocolData != null)
             {
-                var retVal = Activator.CreateInstance(protocolData.HandlerClass) as IClinicalProtocol;
-                retVal.Load(protocolData);
-                return retVal;
+                return this.CreatePublicProtocol(protocolData);
             }
             else
             {
@@ -131,5 +124,21 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
         }
 
+        /// <summary>
+        /// Creates a public protocol
+        /// </summary>
+        private IClinicalProtocol CreatePublicProtocol(Model.Acts.Protocol protocolData)
+        {
+            var retVal = Activator.CreateInstance(protocolData.HandlerClass) as IClinicalProtocol;
+            retVal.Load(protocolData);
+            return retVal;
+        }
+
+        /// <inheritdoc/>
+        public IClinicalProtocol RemoveProtocol(Guid protocolUuid)
+        {
+            var retVal = this.Delete(protocolUuid);
+            return this.CreatePublicProtocol(retVal);
+        }
     }
 }
