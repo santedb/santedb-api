@@ -87,7 +87,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Fire that progress has changed
         /// </summary>
-        protected void FireProgressChanged(object state, float progress)
+        protected void FireProgressChanged(String state, float progress)
         {
             ProgressChangedEventArgs e = new ProgressChangedEventArgs(progress, state);
             this.ProgressChanged?.Invoke(this, e);

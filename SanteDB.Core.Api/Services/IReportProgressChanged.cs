@@ -37,14 +37,14 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Contextual information (such as text) which is appended to the progress on user interfaces or REST messages
         /// </summary>
-        public Object State { get; }
+        public String State { get; }
 
         /// <summary>
         /// Creates a new progress changed event
         /// </summary>
         /// <param name="progress">The progress of the operation which is being reported on</param>
         /// <param name="state">The state object to report with the progress</param>
-        public ProgressChangedEventArgs(float progress, object state)
+        public ProgressChangedEventArgs(float progress, string state)
         {
             this.Progress = progress;
             this.State = state;

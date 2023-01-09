@@ -34,7 +34,7 @@ namespace SanteDB.Core
         /// </summary>
         Server = 1,
         /// <summary>
-        /// Environment is using client side API
+        /// Environment is a client which bundles a user interface with the dCDR
         /// </summary>
         Client = 2,
         /// <summary>
@@ -42,7 +42,7 @@ namespace SanteDB.Core
         /// </summary>
         Other = 3,
         /// <summary>
-        /// Environment is a test environment (like unit test)
+        /// Environment is a test environment (like unit tests or debugger)
         /// </summary>
         Test = 4,
         /// <summary>
