@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+#if DEBUG
 
 namespace SanteDB.Core.Diagnostics.Performance
 {
@@ -33,3 +34,4 @@ namespace SanteDB.Core.Diagnostics.Performance
 
     }
 }
+#endif
