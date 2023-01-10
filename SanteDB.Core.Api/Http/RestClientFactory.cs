@@ -61,6 +61,7 @@ namespace SanteDB.Core.Http
             }
             else
             {
+                configuration.ProxyAddress = this.m_configuration.ProxyAddress;
                 restClient = this.CreateRestClient(configuration);
                 return true;
             }
