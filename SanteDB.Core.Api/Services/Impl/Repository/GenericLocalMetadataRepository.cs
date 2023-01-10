@@ -33,7 +33,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Create a new local metadata repository
         /// </summary>
-        public GenericLocalMetadataRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TMetadata> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService) // No need for privacy on metadata
+        public GenericLocalMetadataRepository(IPolicyEnforcementService policyService, IDataPersistenceService<TMetadata> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService) // No need for privacy on metadata
         {
         }
 

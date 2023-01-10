@@ -17,7 +17,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Local entity repository
         /// </summary>
-        public LocalEntityRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Entity> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
+        public LocalEntityRepository(IPolicyEnforcementService policyService, IDataPersistenceService<Entity> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
         }
 

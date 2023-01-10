@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Local AA
         /// </summary>
-        public LocalIdentityDomainRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<IdentityDomain> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public LocalIdentityDomainRepository(IPolicyEnforcementService policyService, IDataPersistenceService<IdentityDomain> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 

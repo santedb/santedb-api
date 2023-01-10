@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -36,7 +37,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a DI security user repository
         /// </summary>
-        public LocalSecurityUserRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<SecurityUser> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
+        public LocalSecurityUserRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<SecurityUser> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
         }
 
@@ -67,25 +68,12 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             var iids = ApplicationServiceContext.Current.GetService<IIdentityProviderService>();
 
-            // Verify password meets requirements
-            if (ApplicationServiceContext.Current.GetService<IPasswordValidatorService>()?.Validate(data.Password) == false)
-            {
-                throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "err.password", this.m_localizationService.GetString("error.server.core.validationFail", new
-                {
-                    param = "Password"
-                }), DetectedIssueKeys.SecurityIssue));
-            }
-
             // Create the identity
             var id = iids.CreateIdentity(data.UserName, data.Password, AuthenticationContext.Current.Principal);
 
             // Now ensure local db record exists
             var retVal = this.Find(o => o.UserName == data.UserName).FirstOrDefault();
-            if (retVal == null)
-            {
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.userCreated"));
-            }
-            else
+            if (retVal != null)
             {
                 // The identity provider only creates a minimal identity, let's beef it up
                 retVal.Email = data.Email;
@@ -101,7 +89,10 @@ namespace SanteDB.Core.Services.Impl.Repository
                 retVal.UserClass = data.UserClass;
                 base.Save(retVal);
             }
-
+            else
+            {
+                throw new InvalidOperationException("INVALID_STATE");
+            }
             return retVal;
         }
 

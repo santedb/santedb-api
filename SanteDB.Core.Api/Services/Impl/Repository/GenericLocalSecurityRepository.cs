@@ -33,7 +33,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Create new local security repository
         /// </summary>
-        public GenericLocalSecurityRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TSecurityEntity> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public GenericLocalSecurityRepository(IPolicyEnforcementService policyService, IDataPersistenceService<TSecurityEntity> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 

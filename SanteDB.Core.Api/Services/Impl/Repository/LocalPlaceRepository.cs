@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Privacy enforcement service
         /// </summary>
-        public LocalPlaceRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Place> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public LocalPlaceRepository(IPolicyEnforcementService policyService, IDataPersistenceService<Place> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 

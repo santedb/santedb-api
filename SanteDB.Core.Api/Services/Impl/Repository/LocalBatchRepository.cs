@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new batch repository
         /// </summary>
-        public LocalBatchRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Bundle> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
+        public LocalBatchRepository(IPolicyEnforcementService policyService, IDataPersistenceService<Bundle> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
         }
 
@@ -44,7 +44,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public override IQueryResultSet<Bundle> Find(Expression<Func<Bundle, bool>> query)
         {
-            throw new NotSupportedException(this.m_localizationService.GetString("error.type.NotSupportedException"));
+            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public override Bundle Get(Guid key)
         {
-            throw new NotSupportedException(this.m_localizationService.GetString("error.type.NotSupportedException"));
+            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public override Bundle Get(Guid key, Guid versionKey)
         {
-            throw new NotSupportedException(this.m_localizationService.GetString("error.type.NotSupportedException"));
+            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <returns></returns>
         public override Bundle Delete(Guid key)
         {
-            throw new NotSupportedException(this.m_localizationService.GetString("error.type.NotSupportedException"));
+            throw new NotSupportedException();
         }
 
         /// <summary>
