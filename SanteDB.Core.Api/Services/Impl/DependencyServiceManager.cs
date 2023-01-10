@@ -501,6 +501,7 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
+            this.m_tracer.TraceInfo("Disposing of HTTP Thread Pool and Probes..");
             DiagnosticsProbeManager.Current.Dispose();
             RestServerThreadPool.Current.Dispose();
         }
