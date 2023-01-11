@@ -221,6 +221,16 @@ namespace SanteDB.Core.Security
                     retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindBySubjectName, me.Subject, false).Count > 0;
                 }
             }
+
+            // Check for my own certificates
+            if (!retVal)
+            {
+                using (var trustedPublisherStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                {
+                    trustedPublisherStore.Open(OpenFlags.ReadOnly);
+                    retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
+                }
+            }
             return retVal || HasTrustedRootCert(chain);
         }
 
