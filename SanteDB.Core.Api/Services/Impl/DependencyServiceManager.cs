@@ -826,7 +826,7 @@ namespace SanteDB.Core.Services.Impl
                         }
                         catch (Exception e)
                         {
-                            this.m_tracer.TraceInfo($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
+                            this.m_tracer.TraceWarning($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
                             return null;
                         }
                     })
