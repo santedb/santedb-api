@@ -25,7 +25,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Mappings for this object
         /// </summary>
-        [XmlArray("maps"), XmlArrayItem("add"), JsonProperty("maps")]
+        [XmlArray("maps"), XmlArrayItem("map"), JsonProperty("maps")]
         public List<ForeignDataElementMap> Maps { get; set; }
 
         /// <summary>
@@ -40,11 +40,6 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("transform"), JsonProperty("transform")]
         public ForeignDataElementTransform Transform { get; set; }
 
-        /// <summary>
-        /// Indicates whether records in the dataset can be imported concurrently (not dependencies on one another - examples: patients, or persons)
-        /// </summary>
-        [XmlAttribute("concurrentImport"), JsonProperty("concurrentImport")]
-        public bool ConcurrentImport { get; set; }
 
         /// <summary>
         /// Validate this transform

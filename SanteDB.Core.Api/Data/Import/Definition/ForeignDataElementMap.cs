@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Gets or sets the transformations on the source column
         /// </summary>
-        [XmlArray("transforms"), XmlArrayItem("add"), JsonProperty("transforms")]
+        [XmlArray("transforms"), XmlArrayItem("transform"), JsonProperty("transforms")]
         public List<ForeignDataElementTransform> Transforms { get; set; }
 
         /// <summary>
