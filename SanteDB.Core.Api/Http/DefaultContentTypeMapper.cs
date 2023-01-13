@@ -100,6 +100,10 @@ namespace SanteDB.Core.Http
             {
                 return serializer;
             }
+            else if(contentType.MediaType.Contains("+") && s_serializers.TryGetValue(contentType.MediaType.Split('+')[0], out serializer))
+            {
+                return serializer;
+            }
             else
             {
                 throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");

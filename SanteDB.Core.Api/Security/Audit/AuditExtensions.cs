@@ -925,7 +925,8 @@ namespace SanteDB.Core.Security.Audit
                 default:
                     return null;
             }
-            
+
+            retVal.LifecycleType = lifecycle;
             return retVal;
         }
 

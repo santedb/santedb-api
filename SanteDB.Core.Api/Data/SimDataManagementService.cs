@@ -508,5 +508,10 @@ namespace SanteDB.Core.Data
             return true;
         }
 
+        /// <inheritdoc/>
+        public IDataManagedLinkProvider<T> GetLinkProvider<T>() where T : IdentifiedData => null;
+
+        /// <inheritdoc/>
+        public IDataManagedLinkProvider GetLinkProvider(Type forType) => null;
     }
 }
