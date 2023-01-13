@@ -43,7 +43,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Gets or sets the data maps
         /// </summary>
-        [XmlArray("maps"), XmlArrayItem("add"), JsonProperty("maps")]
+        [XmlArray("maps"), XmlArrayItem("map"), JsonProperty("maps")]
         public List<ForeignDataObjectMap> Maps { get; set; }
 
         /// <summary>
