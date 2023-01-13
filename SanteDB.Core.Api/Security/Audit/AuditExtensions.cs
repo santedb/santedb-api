@@ -566,7 +566,7 @@ namespace SanteDB.Core.Security.Audit
             me.Audit.AuditableObjects.Add(new AuditableObject()
             {
                 IDTypeCode = AuditableObjectIdType.Custom,
-                CustomIdTypeCode = new AuditCode("SecurityAuditCodes", "HTTP-Headers"),
+                CustomIdTypeCode = new AuditCode("HTTP-Headers", "SecurityAuditCodes"),
                 Role = AuditableObjectRole.Query,
                 Type = AuditableObjectType.SystemObject,
                 QueryData = request.Url.ToString(),
@@ -756,7 +756,7 @@ namespace SanteDB.Core.Security.Audit
                         return bundle.Item.Select(i => i.ToAuditableObject(lifecycle));
                     else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
                 }
-            ));
+            ).OfType<AuditableObject>());
         }
 
 
@@ -779,7 +779,7 @@ namespace SanteDB.Core.Security.Audit
                     if (o is Bundle bundle)
                         return bundle.Item.Select(i => i.ToAuditableObject(lifecycle));
                     else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
-                }))
+                }).OfType<AuditableObject>())
                 .WithAuditableObjects(
                     !string.IsNullOrEmpty(queryPerformed) ? new AuditableObject
                     {
@@ -802,95 +802,130 @@ namespace SanteDB.Core.Security.Audit
 
         private static AuditableObject ToAuditableObject<TData>(this TData obj, AuditableObjectLifecycle? lifecycle = null)
         {
-            var idTypeCode = AuditableObjectIdType.Custom;
-            var roleCode = AuditableObjectRole.Resource;
-            var objType = AuditableObjectType.Other;
-            var customIdTypeCode = new AuditCode();
-            var objId = string.Empty;
+            var retVal = new AuditableObject();
 
             switch (obj)
             {
                 case Patient p:
-                    idTypeCode = AuditableObjectIdType.PatientNumber;
-                    roleCode = AuditableObjectRole.Patient;
-                    objType = AuditableObjectType.Person;
-                    objId = String.Join("~", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    retVal.Role = AuditableObjectRole.Patient;
+                    retVal.Type = AuditableObjectType.Person;
+                    retVal.ObjectId = p.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.PatientNumber;
+                    retVal.NameData = String.Join(",", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case UserEntity ue:
-                    idTypeCode = AuditableObjectIdType.UserIdentifier;
-                    objType = AuditableObjectType.Person;
-                    roleCode = AuditableObjectRole.User;
-                    objId = ue.LoadProperty(o => o.SecurityUser).UserName;
+                    retVal.Role = AuditableObjectRole.User;
+                    retVal.Type = AuditableObjectType.Person;
+                    retVal.ObjectId = ue.SecurityUserKey.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
+                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser).UserName;
                     break;
                 case Provider pvd:
-                    idTypeCode = AuditableObjectIdType.Custom;
-                    customIdTypeCode = new AuditCode("PVD", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Provider" };
-                    objType = AuditableObjectType.Person;
-                    roleCode = AuditableObjectRole.Doctor;
-                    objId = String.Join("~", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    retVal.Role = AuditableObjectRole.Doctor;
+                    retVal.Type = AuditableObjectType.Person;
+                    retVal.ObjectId = pvd.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("PVD", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Provider" };
+                    retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    break;
+                case Organization org:
+                    retVal.Role = AuditableObjectRole.MasterFile;
+                    retVal.Type = AuditableObjectType.Organization;
+                    retVal.ObjectId = org.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("ORG", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Organization" };
+                    retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    break;
+                case Place plc:
+                    retVal.Role = AuditableObjectRole.Location;
+                    retVal.Type = AuditableObjectType.Organization;
+                    retVal.ObjectId = plc.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("PLC", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Place" };
+                    retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Entity e:
-                    idTypeCode = AuditableObjectIdType.Custom;
-                    customIdTypeCode = new AuditCode("ENT", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Entity" };
-                    objType = AuditableObjectType.Other;
-                    roleCode = AuditableObjectRole.MasterFile;
-                    objId = e.Key.ToString();
+                    retVal.Role = AuditableObjectRole.MasterFile;
+                    retVal.Type = AuditableObjectType.Other;
+                    retVal.ObjectId = e.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("ENT", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Entity" };
+                    retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Act act:
-                    idTypeCode = AuditableObjectIdType.EncounterNumber;
-                    roleCode = AuditableObjectRole.Report;
+                    var termService = ApplicationServiceContext.Current.GetService<IConceptRepositoryService>();
+                    var classification = termService.GetConceptReferenceTerm(act.ClassConceptKey.Value, "http://santedb.org/conceptset/v3-ActClassClinicalDocument", true);
+                    retVal.Role = AuditableObjectRole.Report;
+                    retVal.Type = AuditableObjectType.Other;
+                    retVal.ObjectId = act.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification.GetDisplayName("en") };
+                    retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                         lifecycle = AuditableObjectLifecycle.Deidentification;
-                    objId = String.Join("~", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case SecurityUser su:
-                    idTypeCode = AuditableObjectIdType.UserIdentifier;
-                    roleCode = AuditableObjectRole.SecurityUser;
-                    objType = AuditableObjectType.SystemObject;
-                    objId = su.UserName;
+                    retVal.Role = AuditableObjectRole.SecurityUser;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.ObjectId = su.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
+                    retVal.NameData = su.UserName;
+                    break;
+                case SecurityRole sr:
+                    retVal.Role = AuditableObjectRole.SecurityGroup;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.ObjectId = sr.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.AccountNumber;
+                    retVal.NameData = sr.Name;
+                    break;
+                case SecurityPolicy sp:
+                    retVal.Role = AuditableObjectRole.SecurityGranularityDefinition;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.ObjectId = sp.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("SecurityPolicy", "http://santedb.org/model");
+                    retVal.NameData = sp.Oid;
                     break;
                 case AuditEventData aed:
-                    idTypeCode = AuditableObjectIdType.Custom;
-                    customIdTypeCode = new AuditCode("AUDIT", "SanteDBObjectTypes") { DisplayName = "Audit Event" };
-                    roleCode = AuditableObjectRole.SecurityResource;
-                    objType = AuditableObjectType.SystemObject;
-                    objId = aed.Key.ToString();
+                    retVal.Role = AuditableObjectRole.Report;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.ObjectId = aed.Key.ToString();
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.CustomIdTypeCode = new AuditCode("SecurityAudit", "http://santedb.org/model");
+                    retVal.NameData = aed.ToString();
                     break;
                 case Guid g:
-                    idTypeCode = AuditableObjectIdType.Uri;
-                    roleCode = AuditableObjectRole.MasterFile;
-                    objType = AuditableObjectType.SystemObject;
-                    objId = $"urn:uuid:{g}";
+
+                    retVal.Role = AuditableObjectRole.MasterFile;
+                    retVal.Type = AuditableObjectType.Other;
+                    retVal.ObjectId = $"urn:uuid:{g}";
+                    retVal.IDTypeCode = AuditableObjectIdType.Uri;
                     break;
                 case PolicyDecision pde:
-                    idTypeCode = AuditableObjectIdType.Uri;
-                    roleCode = AuditableObjectRole.SecurityGranularityDefinition;
-                    objType = AuditableObjectType.SystemObject;
-                    objId = $"urn:oid:{pde.Details?.First().PolicyId}";
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.Role = AuditableObjectRole.Report;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.CustomIdTypeCode = new AuditCode("PolicyDecision", "http://santedb.org/model");
+                    retVal.ObjectId = $"urn:oid:{pde.Details?.First().PolicyId}";
+                    retVal.ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("securable", pde.Securable.ToString()),
+                        new ObjectDataExtension("outcome", pde.Outcome.ToString()),
+                        new ObjectDataExtension("details", String.Join(",",pde.Details.Select(o=>$"{o.PolicyId}={o.Outcome}")))
+                    };
                     break;
                 case IForeignDataSubmission fds:
-                    idTypeCode = AuditableObjectIdType.Custom;
-                    customIdTypeCode = new AuditCode("AlienData", "SanteDBObjectTypes") { DisplayName = "Foreign Data File" };
-                    roleCode = AuditableObjectRole.JobStream;
-                    objType = AuditableObjectType.SystemObject;
-                    objId = fds.Name;
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.Role = AuditableObjectRole.JobStream;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.CustomIdTypeCode = new AuditCode("Alien", "http://santedb.org/model") { DisplayName = "Foreign Data Import File" };
+                    retVal.ObjectId = fds.Key.ToString();
+                    retVal.NameData = fds.Name;
                     break;
+                default:
+                    return null;
             }
-            var retVal = new AuditableObject()
-            {
-                IDTypeCode = idTypeCode,
-                CustomIdTypeCode = idTypeCode == AuditableObjectIdType.Custom ? customIdTypeCode : null,
-                LifecycleType = lifecycle,
-                ObjectId = objId,
-                Role = roleCode,
-                Type = objType,
-                NameData = obj.ToString()
-            };
-
-            if (obj is PolicyDecision pd)
-            {
-                retVal.ObjectData = pd.Details.Select(o => new ObjectDataExtension(o.PolicyId, new byte[] { (byte)o.Outcome })).ToList();
-            }
+            
             return retVal;
         }
 
