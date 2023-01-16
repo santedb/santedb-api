@@ -179,5 +179,8 @@ namespace SanteDB.Core.Configuration
         [XmlAttribute("value"), JsonProperty("value")]
         public String Value { get; set; }
 
+        /// <inheritdoc />
+        public override string ToString() => $"{Key}={Value}";
+
     }
 }
