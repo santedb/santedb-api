@@ -151,10 +151,9 @@ namespace SanteDB.Core.Data.Quality
                 bool result = assert.Evaluation == AssertionEvaluationType.Any ? false : true;
                 try
                 {
-                    foreach (var expression in assert.Expressions)
+                    foreach (var expression in assert.GetDelegates<TModel>())
                     {
-                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(expression.ParseQueryString(), null, safeNullable: true, forceLoad: true);
-                        var linqResult = (bool)linq.Compile().DynamicInvoke(data);
+                        var linqResult = expression(data);
                         switch (assert.Evaluation)
                         {
                             case AssertionEvaluationType.All:

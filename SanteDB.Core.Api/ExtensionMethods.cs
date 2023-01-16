@@ -55,28 +55,34 @@ namespace SanteDB.Core
         }
 
         /// <summary>
-        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedTarget(T)"/>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
         /// </summary>
-        public static T ResolveManagedTarget<T>(this T forSource) where T : IdentifiedData =>
-            ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.ResolveManagedTarget(forSource) ?? forSource;
+        public static T ResolveManagedRecord<T>(this T forSource) where T : IdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveManagedRecord(forSource) ?? forSource;
 
         /// <summary>
-        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedSource(T)"/>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveOwnedRecord(T)"/>
         /// </summary>
-        public static T ResolveManagedSource<T>(this T forSource) where T : IdentifiedData =>
-            ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.ResolveManagedSource(forSource) ?? forSource;
+        public static T ResolveOwnedRecord<T>(this T forSource, IPrincipal ownerPrincipal) where T : IdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
+
+        /// <summary>
+        /// Non generic method of <see cref="ResolveOwnedRecord{T}(T, IPrincipal)"/>
+        /// </summary>
+        public static IdentifiedData ResolveOwnedRecord(this IdentifiedData forSource, IPrincipal ownerPrincipal)
+            => ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType()).ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
 
         /// <summary>
         /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>
         /// </summary>
         public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<Model.Association<T>> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
-            ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
 
         /// <summary>
         /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
         /// </summary>
         public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : IdentifiedData =>
-            ApplicationServiceContext.Current.GetService<IDataManagedLinkProvider<T>>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
 
 
         /// <summary>

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2022-9-7
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
@@ -36,7 +37,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Create a new privacy service
         /// </summary>
-        public GenericLocalRepositoryEx(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TModel> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
+        public GenericLocalRepositoryEx(IPolicyEnforcementService policyService, IDataPersistenceService<TModel> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
         }
 
@@ -65,7 +66,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                throw new InvalidOperationException(this.m_localizationService.GetString("error.server.core.supportTouch"));
+                throw new NotSupportedException(ErrorMessages.NOT_SUPPORTED);
             }
         }
     }

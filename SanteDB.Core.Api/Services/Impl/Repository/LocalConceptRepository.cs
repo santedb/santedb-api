@@ -45,13 +45,12 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// Privacy enforcement service
         /// </summary>
         public LocalConceptRepository(IPolicyEnforcementService policyService,
-            ILocalizationService localizationService,
             IDataPersistenceService<Concept> persistenceService,
             IDataPersistenceService<ConceptReferenceTerm> referenceTermService,
             IDataPersistenceService<ConceptName> conceptNameService,
             IDataPersistenceService<ConceptSet> conceptSetPersistence,
             IPrivacyEnforcementService privacyService = null,
-            IAdhocCacheService adhocCacheService = null) : base(policyService, localizationService, persistenceService, privacyService)
+            IAdhocCacheService adhocCacheService = null) : base(policyService, persistenceService, privacyService)
         {
             this.m_adhocCacheService = adhocCacheService;
             this.m_conceptNameService = conceptNameService;
@@ -279,8 +278,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public bool Implies(Concept a, Concept b)
         {
-            this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
-            throw new NotImplementedException(this.m_localizationService.GetString("error.type.NotImplementedException"));
+            throw new NotImplementedException();
         }
 
         /// <summary>

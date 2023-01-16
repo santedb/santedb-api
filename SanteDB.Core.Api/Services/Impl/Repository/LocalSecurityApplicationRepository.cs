@@ -37,7 +37,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// DI constructor
         /// </summary>
-        public LocalSecurityApplicationRepository(IApplicationIdentityProviderService identityProvider, IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<SecurityApplication> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, persistenceService, privacyService)
+        public LocalSecurityApplicationRepository(IApplicationIdentityProviderService identityProvider, IPolicyEnforcementService policyService, IDataPersistenceService<SecurityApplication> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
         {
             this.m_identityProvider = identityProvider;
         }

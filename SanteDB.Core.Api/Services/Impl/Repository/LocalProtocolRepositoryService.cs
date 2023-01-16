@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     public class LocalProtocolRepositoryService : GenericLocalRepository<Model.Acts.Protocol>, IClinicalProtocolRepositoryService
     {
         /// <inheritdoc/>
-        public LocalProtocolRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Model.Acts.Protocol> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public LocalProtocolRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<Model.Acts.Protocol> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 
@@ -120,7 +120,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                throw new KeyNotFoundException(this.m_localizationService.GetString(ErrorMessageStrings.NOT_FOUND, new { type = "ClinicalProtocol", id = protocolUuid }));
+                throw new KeyNotFoundException($"ClinicalProtocol/{protocolUuid}");
             }
         }
 

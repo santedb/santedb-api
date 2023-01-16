@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Privacy for a user entity
         /// </summary>
-        public LocalUserEntityRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<UserEntity> userEntity, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, userEntity, privacyService)
+        public LocalUserEntityRepository(IPolicyEnforcementService policyService, IDataPersistenceService<UserEntity> userEntity, IPrivacyEnforcementService privacyService = null) : base(policyService, userEntity, privacyService)
         {
         }
 

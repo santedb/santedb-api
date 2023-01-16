@@ -33,7 +33,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new generic local concept repository
         /// </summary>
-        public GenericLocalConceptRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TModel> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, persistenceService, privacyService)
+        public GenericLocalConceptRepository(IPolicyEnforcementService policyService, IDataPersistenceService<TModel> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
         {
         }
 

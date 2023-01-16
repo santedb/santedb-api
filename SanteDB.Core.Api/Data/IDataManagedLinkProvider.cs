@@ -2,6 +2,7 @@
 using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Security.Principal;
 using System.Text;
 
 namespace SanteDB.Core.Data
@@ -29,10 +30,40 @@ namespace SanteDB.Core.Data
     }
 
     /// <summary>
+    /// Data maanged link provider
+    /// </summary>
+    public interface IDataManagedLinkProvider
+    {
+        /// <summary>
+        /// When a data management pattern (like MDM) masks or performs specialized linking or synthesization in the database
+        /// this method will allow callers to have the data provider synthesize that data.
+        /// </summary>
+        /// <remarks>
+        /// Sometimes when relationships point to a source or target via an <see cref="ITargetedAssociation"/> 
+        /// the source or target will point to a container or linking record. Implementations of this method should
+        /// resolve the correct managed record for <paramref name="forSource"/> or return <paramref name="forSource"/>
+        /// if the object is unmanaged.
+        /// </remarks>
+        /// <param name="forSource">The record returned from the persistence layer</param>
+        /// <returns>The resolved target object</returns>
+        IdentifiedData ResolveManagedRecord(IdentifiedData forSource);
+
+        /// <summary>
+        /// When a data management pattern (like MDM) performs compartmentalization of source data 
+        /// there is a need for the caller to get the record which is owned by <paramref name="ownerPrincipal"/>
+        /// to perform an update (this is common in MDM data imports and migrations)
+        /// </summary>
+        /// <param name="forTarget">The record returned from the persistence layer</param>
+        /// <param name="ownerPrincipal">The owner principal which the method should return</param>
+        /// <returns>The resolved record under management which is owned by <paramref name="ownerPrincipal"/></returns>
+        IdentifiedData ResolveOwnedRecord(IdentifiedData forTarget, IPrincipal ownerPrincipal);
+    }
+
+    /// <summary>
     /// Represents a specific data manager within a <see cref="IDataManagementPattern"/> which is responsible for resolving and linking together logical
     /// objects
     /// </summary>
-    public interface IDataManagedLinkProvider<T>
+    public interface IDataManagedLinkProvider<T> : IDataManagedLinkProvider
         where T : IdentifiedData
     {
         /// <summary>
@@ -46,20 +77,28 @@ namespace SanteDB.Core.Data
         event EventHandler<DataManagementLinkEventArgs> ManagedLinkRemoved;
 
         /// <summary>
-        /// When a data management pattern (like MDM) masks or performs specialized linking in the database
-        /// this method will allow callers to discern the true record.
+        /// When a data management pattern (like MDM) masks or performs specialized linking or synthesization in the database
+        /// this method will allow callers to have the data provider synthesize that data.
         /// </summary>
+        /// <remarks>
+        /// Sometimes when relationships point to a source or target via an <see cref="ITargetedAssociation"/> 
+        /// the source or target will point to a container or linking record. Implementations of this method should
+        /// resolve the correct managed record for <paramref name="forSource"/> or return <paramref name="forSource"/>
+        /// if the object is unmanaged.
+        /// </remarks>
         /// <param name="forSource">The record returned from the persistence layer</param>
         /// <returns>The resolved target object</returns>
-        T ResolveManagedTarget(T forSource);
+        T ResolveManagedRecord(T forSource);
 
         /// <summary>
-        /// When a data management pattern (like MDM) masks or performs specialized linking in the database
-        /// and a target has been returned, this method will allow callers to discern the record in the database.
+        /// When a data management pattern (like MDM) performs compartmentalization of source data 
+        /// there is a need for the caller to get the record which is owned by <paramref name="ownerPrincipal"/>
+        /// to perform an update (this is common in MDM data imports and migrations)
         /// </summary>
         /// <param name="forTarget">The record returned from the persistence layer</param>
-        /// <returns>The resolved target object</returns>
-        T ResolveManagedSource(T forTarget);
+        /// <param name="ownerPrincipal">The owner principal which the method should return</param>
+        /// <returns>The resolved record under management which is owned by <paramref name="ownerPrincipal"/></returns>
+        T ResolveOwnedRecord(T forTarget, IPrincipal ownerPrincipal);
 
         /// <summary>
         /// Get the managed reference links for the collection of relationships

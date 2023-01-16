@@ -33,7 +33,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new template repository
         /// </summary>
-        public LocalTemplateDefinitionRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TemplateDefinition> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistence, privacyService)
+        public LocalTemplateDefinitionRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<TemplateDefinition> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 

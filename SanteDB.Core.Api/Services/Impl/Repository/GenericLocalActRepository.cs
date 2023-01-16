@@ -43,7 +43,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// DI constructor
         /// </summary>
-        public GenericLocalActRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TAct> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, dataPersistenceService, privacyService)
+        public GenericLocalActRepository(IPolicyEnforcementService policyService, IDataPersistenceService<TAct> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
         }
 
@@ -68,10 +68,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             if (data == null)
             {
-                throw new ArgumentNullException(this.m_localizationService.GetString("error.type.ArgumentNullException.param", new
-                {
-                    param = nameof(data)
-                }));
+                throw new ArgumentNullException(nameof(data));
             }
 
             base.Validate(data);

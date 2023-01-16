@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Create a new patient repository
         /// </summary>
-        public LocalPatientRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<Patient> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, persistenceService, privacyService)
+        public LocalPatientRepository(IPolicyEnforcementService policyService, IDataPersistenceService<Patient> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
         {
         }
 

@@ -27,7 +27,7 @@ namespace SanteDB.Core.Data.Import.Transforms
 
             if(input is long longInput)
             {
-                if (int.TryParse(args[0].ToString(), out var offset))
+                if (args[0] is int offset)
                 {
                     longInput *= offset;
                 }

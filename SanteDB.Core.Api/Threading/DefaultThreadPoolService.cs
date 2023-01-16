@@ -268,12 +268,12 @@ namespace SanteDB.Core.Services.Impl
                             try
                             {
                                 lastActivityJobTime = DateTime.Now.Ticks;
-                                Interlocked.Increment(ref m_busyWorkers);
+                                Interlocked.Increment(ref this.m_busyWorkers);
                                 wi.Callback(wi.State);
                             }
                             finally
                             {
-                                Interlocked.Decrement(ref m_busyWorkers);
+                                Interlocked.Decrement(ref this.m_busyWorkers);
                             }
                         }
                     }
@@ -331,7 +331,7 @@ namespace SanteDB.Core.Services.Impl
         public void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingQueue)
         {
             totalWorkers = this.m_threadPool.Length;
-            availableWorkers = totalWorkers - (int)this.m_busyWorkers;
+            availableWorkers = totalWorkers - (int)Interlocked.Read(ref this.m_busyWorkers);
             waitingQueue = this.m_queue.Count;
         }
     }

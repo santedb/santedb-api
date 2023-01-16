@@ -136,11 +136,6 @@ namespace SanteDB.Core.Services.Impl.Repository
         private IPrivacyEnforcementService m_privacyService;
 
         /// <summary>
-        /// Reference to the localization service
-        /// </summary>
-        protected readonly ILocalizationService m_localizationService;
-
-        /// <summary>
         /// Reference to the policy enforcement service
         /// </summary>
         protected IPolicyEnforcementService m_policyService;
@@ -153,11 +148,10 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Creates a new generic local repository with specified privacy service
         /// </summary>
-        public GenericLocalRepository(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<TEntity> dataPersistence, IPrivacyEnforcementService privacyService = null)
+        public GenericLocalRepository(IPolicyEnforcementService policyService, IDataPersistenceService<TEntity> dataPersistence, IPrivacyEnforcementService privacyService = null)
         {
             this.m_privacyService = privacyService;
             this.m_policyService = policyService;
-            this.m_localizationService = localizationService;
             this.m_dataPersistenceService = dataPersistence;
         }
 
@@ -216,10 +210,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         private void ThrowPrivacyValidationException(TEntity data)
         {
             throw new DetectedIssueException(
-                new DetectedIssue(DetectedIssuePriorityType.Error, "privacy", this.m_localizationService.GetString("error.server.core.validationFail", new
-                {
-                    param = "QueryExecutionFail"
-                }), DetectedIssueKeys.PrivacyIssue)
+                new DetectedIssue(DetectedIssuePriorityType.Error, "privacy", ErrorMessages.PRIVACY_VIOLATION_DETECTED, DetectedIssueKeys.PrivacyIssue)
             );
         }
 
@@ -235,10 +226,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             if (entity == null)
             {
-                throw new KeyNotFoundException(this.m_localizationService.GetString("error.type.KeyNotFoundException.notFound", new
-                {
-                    param = $"Entity {key}"
-                }));
+                throw new KeyNotFoundException(key.ToString());
             }
 
             // Fire pre-persistence triggers
@@ -521,7 +509,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.INVALID_EXPRESSION_TYPE, new { expected = typeof(Expression<Func<TEntity, bool>>), actual = query.GetType() }));
+                throw new InvalidOperationException(String.Format(ErrorMessages.INVALID_EXPRESSION_TYPE, typeof(Expression<Func<TEntity, bool>>), query.GetType()));
             }
         }
 

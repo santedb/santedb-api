@@ -501,6 +501,7 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
+            this.m_tracer.TraceInfo("Disposing of HTTP Thread Pool and Probes..");
             DiagnosticsProbeManager.Current.Dispose();
             RestServerThreadPool.Current.Dispose();
         }
@@ -825,7 +826,7 @@ namespace SanteDB.Core.Services.Impl
                         }
                         catch (Exception e)
                         {
-                            this.m_tracer.TraceInfo($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
+                            this.m_tracer.TraceWarning($"CreateInjectedOfAll<> cannot create {t} due to {e.Message}");
                             return null;
                         }
                     })

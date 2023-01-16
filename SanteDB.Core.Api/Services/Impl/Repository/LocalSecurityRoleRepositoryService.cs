@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Local security DI constructor
         /// </summary>
-        public LocalSecurityRoleRepositoryService(IPolicyEnforcementService policyService, ILocalizationService localizationService, IDataPersistenceService<SecurityRole> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, localizationService, persistenceService, privacyService)
+        public LocalSecurityRoleRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<SecurityRole> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
         {
         }
 
