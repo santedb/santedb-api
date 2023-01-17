@@ -146,7 +146,7 @@ namespace SanteDB.Core.Configuration.Features
             config.Options.Add("SessionRefresh", () => Enumerable.Range(15, 180).Where(o => o % 15 == 0).Select(o => new PolicyValueTimeSpan(0, o, 0)));
             config.Values.Add("PasswordAge", configSection.GetSecurityPolicy<Int32>(SecurityPolicyIdentification.MaxPasswordAge, 3650));
             config.Values.Add("PasswordHistory", configSection.GetSecurityPolicy<bool>(SecurityPolicyIdentification.PasswordHistory, false));
-            config.Values.Add("FailedLogins", configSection.GetSecurityPolicy(SecurityPolicyIdentification.PasswordHistory, 5));
+            config.Values.Add("FailedLogins", configSection.GetSecurityPolicy(SecurityPolicyIdentification.MaxInvalidLogins, 10));
             config.Values.Add("SessionLength", configSection.GetSecurityPolicy<PolicyValueTimeSpan>(SecurityPolicyIdentification.SessionLength, new PolicyValueTimeSpan(0, 30, 0)));
             config.Values.Add("SessionRefresh", configSection.GetSecurityPolicy<PolicyValueTimeSpan>(SecurityPolicyIdentification.RefreshLength, new PolicyValueTimeSpan(0, 30, 0)));
             return hasher != null && validator != null && pdp != null && pip != null ? FeatureInstallState.Installed : FeatureInstallState.PartiallyInstalled;

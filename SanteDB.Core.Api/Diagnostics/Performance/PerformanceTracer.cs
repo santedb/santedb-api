@@ -18,9 +18,9 @@ namespace SanteDB.Core.Diagnostics.Performance
 
         public static void WritePerformanceTrace(long milliseconds)
         {
-            var stack = new StackTrace(false).GetFrame(1).GetMethod();
-            if (milliseconds > 500)
+            if (milliseconds > 1000)
             {
+                var stack = new StackTrace(false).GetFrame(1).GetMethod();
                 lock (syncLock)
                 {
                     using (var tw = File.AppendText("perfmon.csv"))

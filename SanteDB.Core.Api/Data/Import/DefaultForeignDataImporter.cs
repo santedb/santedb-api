@@ -78,7 +78,7 @@ namespace SanteDB.Core.Data.Import
                 var parmNo = i;
                 duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
             }
-            int records = 0, sampleRecords = 0;
+            int records = 0;
             var sw = new Stopwatch();
             sw.Start();
             while (sourceReader.MoveNext())
@@ -92,13 +92,7 @@ namespace SanteDB.Core.Data.Import
 
                     this.m_tracer.TraceInfo("Processing {0} from import...", records);
 
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, records++, 1000.0f * (float)(sampleRecords++) / (float)sw.ElapsedMilliseconds)));
-                    if (sw.ElapsedMilliseconds > 10000)
-                    {
-                        sw.Stop();
-                        sw.Restart();
-                        sampleRecords = 0;
-                    }
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, records++, 1000.0f * (float)records / (float)sw.ElapsedMilliseconds)));
                     if (duplicateChecks.Any())
                     {
                         mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;

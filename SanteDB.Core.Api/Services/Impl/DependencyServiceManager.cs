@@ -834,10 +834,10 @@ namespace SanteDB.Core.Services.Impl
             }
             else
             {
-                return fromAssembly.ExportedTypes
-                    .Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                    .Select(t => this.CreateInjected(t))
-                    .OfType<TInterface>();
+                return fromAssembly.GetExportedTypesSafe().Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                        .Select(t => this.CreateInjected(t))
+                        .OfType<TInterface>();
+
             }
         }
 

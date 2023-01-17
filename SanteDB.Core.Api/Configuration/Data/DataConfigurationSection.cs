@@ -59,19 +59,7 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         public static IEnumerable<IDataConfigurationProvider> GetDataConfigurationProviders()
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Where(o => !o.IsDynamic)
-                .SelectMany(a =>
-                {
-                    try
-                    {
-                        return a.ExportedTypes;
-                    }
-                    catch
-                    {
-                        return new List<Type>();
-                    }
-                })
+            return AppDomain.CurrentDomain.GetAllTypes()
                 .Where(t => t != null && typeof(IDataConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                 .Select(i => Activator.CreateInstance(i) as IDataConfigurationProvider)
                 .ToArray();
