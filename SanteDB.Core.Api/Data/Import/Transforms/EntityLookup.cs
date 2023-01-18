@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model.Entities;
+﻿using SanteDB.Core.Model;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -36,32 +37,44 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
-            if(args.Length != 2)
+            if(args.Length != 2 && args.Length != 3)
             {
                 throw new ArgumentOutOfRangeException("arg2", "Missing arguments");
             }
+            var modelType = this.m_serialization.BindToType(typeof(Person).Assembly.FullName, args[0].ToString());
+            var lookupRepoType = typeof(IRepositoryService<>).MakeGenericType(modelType);
+            var lookupRepo = ApplicationServiceContext.Current.GetService(lookupRepoType) as IRepositoryService;
 
             var key = $"lu.{args[0]}.{args[1]}?{input}";
             var result = this.m_adhocCache?.Get<Guid?>(key);
-            if (result != null)
+            if (result == null)
             {
-                return result == Guid.Empty ? null : result;
+
+                var parms = new Dictionary<String, Func<Object>>();
+                for (int i = 0; i < sourceRecord.ColumnCount; i++)
+                {
+                    var parmNo = i;
+                    parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
+                }
+                parms.Add("input", () => input);
+
+                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
+                result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
+                this.m_adhocCache?.Add(key, result ?? Guid.Empty);
+
+            }
+
+            if(args.Length == 3 && result.HasValue)
+            {
+                // TODO: Cache these expressions
+                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), false, typeof(object));
+                var obj = lookupRepo.Get(result.Value) as IdentifiedData;
+                return keySelector.Compile().DynamicInvoke(obj);
             }
             else
             {
-                var modelType = this.m_serialization.BindToType(typeof(Person).Assembly.FullName, args[0].ToString());
-                var lookupRepoType = typeof(IRepositoryService<>).MakeGenericType(modelType);
-                var lookupRepo = ApplicationServiceContext.Current.GetService(lookupRepoType) as IRepositoryService;
-                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
-                result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", new Dictionary<string, Func<object>>()
-                {
-                    {  "input", () => input }
-                }, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
-
-                this.m_adhocCache?.Add(key, result ?? Guid.Empty);
                 return result;
             }
-
         }
     }
 }

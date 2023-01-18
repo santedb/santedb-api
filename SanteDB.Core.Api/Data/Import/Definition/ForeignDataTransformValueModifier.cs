@@ -8,15 +8,9 @@ namespace SanteDB.Core.Data.Import.Definition
     /// <summary>
     /// Represents a transform which can be applied against a source object 
     /// </summary>
-    [XmlType(nameof(ForeignDataElementTransform), Namespace = "http://santedb.org/import")]
-    public class ForeignDataElementTransform
+    [XmlType(nameof(ForeignDataTransformValueModifier), Namespace = "http://santedb.org/import")]
+    public class ForeignDataTransformValueModifier : ForeignDataValueModifier
     {
-
-        /// <summary>
-        /// When the source value matches this value apply the transform
-        /// </summary>
-        [XmlAttribute("when"), JsonProperty("when")]
-        public string When { get; set; }
 
         /// <summary>
         /// Gets the type of transform to use

@@ -259,4 +259,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\restsrvr\RestSrvr\RestSrvr.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Schema\ForeignDataMap.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
