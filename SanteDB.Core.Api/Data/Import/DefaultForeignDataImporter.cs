@@ -96,7 +96,6 @@ namespace SanteDB.Core.Data.Import
                         // Conditional mapping?
                         if(resourceMap.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
                         {
-                            yield return new DetectedIssue(DetectedIssuePriorityType.Information, "skip", $"Only when condition indicates a skip of record {sourceReader.RowNumber}", DetectedIssueKeys.AlreadyDoneIssue);
                             continue;
                         }
 
@@ -130,7 +129,7 @@ namespace SanteDB.Core.Data.Import
                                 var description = this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = resourceMap.Transform.Transformer });
                                 currentRecord["import_error"] = description;
                                 yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", description, DetectedIssueKeys.OtherIssue);
-                                rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                                rejectWriter.WriteRecord(currentRecord);
                                 skipProcessing = true;
                                 break;
                             }
@@ -140,7 +139,7 @@ namespace SanteDB.Core.Data.Import
                             var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
                             currentRecord["import_error"] = issue.Text;
                             yield return issue;
-                            rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                            rejectWriter.WriteRecord(currentRecord);
                             skipProcessing = true;
                             break;
                         }
@@ -193,7 +192,9 @@ namespace SanteDB.Core.Data.Import
                     if (errorIssue != null)
                     {
                         yield return errorIssue;
-                        rejectWriter.WriteRecord(new GenericForeignDataRecord(sourceReader));
+                        var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
+                        currentRecord["import_error"] = errorIssue.Text;
+                        rejectWriter.WriteRecord(currentRecord);
                     }
                 }
             }
@@ -204,12 +205,23 @@ namespace SanteDB.Core.Data.Import
         /// </summary>
         private bool CheckWhenCondition(ForeignDataMapOnlyWhenCondition s, IForeignDataReader sourceReader)
         {
-            return sourceReader[s.Source]?.ToString().Equals(s.Value) == true;
+            if (s.Value.Contains("*"))
+            {
+                return sourceReader[s.Source] != null;
+            }
+            else
+            {
+                return s.Value?.Contains(sourceReader[s.Source]?.ToString()) == true;
+            }
         }
 
         /// <inheritdoc/>
         public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader)
         {
+            if(!sourceReader.MoveNext())
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Error, "empty", "File appears to be empty", Guid.Empty);
+            }
             if (foreignDataObjectMap == null)
             {
                 throw new ArgumentNullException(nameof(foreignDataObjectMap));
@@ -228,14 +240,70 @@ namespace SanteDB.Core.Data.Import
             // Validate the map against the source
             if (foreignDataObjectMap.Resource?.Any() == true)
             {
-                foreach (var itm in foreignDataObjectMap.Resource.SelectMany(o=>o.Maps).Where(o => !String.IsNullOrEmpty(o.Source)))
+                var duplicateCheckParms = new Dictionary<String, Func<Object>>();
+                for (int i = 0; i < sourceReader.ColumnCount; i++)
                 {
-                    if (sourceReader.IndexOf(itm.Source) < 0)
+                    var parmNo = i;
+                    duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+                }
+                IdentifiedData outputFake = null;
+                duplicateCheckParms.Add("output", () => outputFake);
+                
+                foreach (var res in foreignDataObjectMap.Resource)
+                {
+                    outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
+                    foreach (var itm in res.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))
                     {
-                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {itm.Source}", Guid.Empty);
+                        if (sourceReader.IndexOf(itm.Source) < 0)
+                        {
+                            yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {itm.Source}", Guid.Empty);
+                        }
+                    }
+
+                    foreach(var wh in res.OnlyWhen)
+                    {
+                        if(sourceReader.IndexOf(wh.Source) < 0)
+                        {
+                            yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {wh.Source}", Guid.Empty);
+                        }
+                    }
+
+                    foreach(var dc in res.DuplicateCheck)
+                    {
+                        DetectedIssue issue = null;
+                        try
+                        {
+                            QueryExpressionParser.BuildLinqExpression(res.Type, dc.ParseQueryString(), "p", variables: duplicateCheckParms);
+                        }
+                        catch (Exception e)
+                        {
+                            issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {this.CreateMessage(e)}", Guid.Empty);
+                        }
+                        if(issue != null)
+                        {
+                            yield return issue;
+                        }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Create message from exception
+        /// </summary>
+        private string CreateMessage(Exception exception)
+        {
+            StringBuilder retVal = new StringBuilder();
+            while(exception != null)
+            {
+                retVal.Append(exception.Message);
+                exception = exception.InnerException;
+                if(exception != null)
+                {
+                    retVal.Append(" CAUSE: ");
+                }
+            }
+            return retVal.ToString();
         }
 
         /// <summary>
@@ -260,8 +328,7 @@ namespace SanteDB.Core.Data.Import
                     // Conditional mapping?
                     if (map.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
                     {
-                        issue = new DetectedIssue(DetectedIssuePriorityType.Information, "skip", $"Only when condition indicates a skip of record {sourceReader.RowNumber}", DetectedIssueKeys.AlreadyDoneIssue);
-                        return true;
+                        continue;
                     }
 
                     if (String.IsNullOrEmpty(map.TargetHdsiPath))
@@ -312,7 +379,7 @@ namespace SanteDB.Core.Data.Import
                                     case ForeignDataOutputReferenceModifier or:
                                         if (or.ExternalResource != null)
                                         {
-                                            targetValue = or.FindExtern(insertBundle.Item);
+                                            targetValue = or.FindExtern(insertBundle.Item, sourceReader, targetValue);
                                         }
                                         else
                                         {
@@ -328,7 +395,10 @@ namespace SanteDB.Core.Data.Import
                     if (targetValue == null && map.TargetMissingSpecified)
                     {
                         issue = new DetectedIssue(map.TargetMissing, "maperr", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue }), DetectedIssueKeys.BusinessRuleViolationIssue);
-                        return false;
+                        if (map.TargetMissing != DetectedIssuePriorityType.Information)
+                        {
+                            return false;
+                        }
                     }
 
                     mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath, targetValue, replace: map.ReplaceExisting);
@@ -340,7 +410,7 @@ namespace SanteDB.Core.Data.Import
             }
             catch (Exception e)
             {
-                issue = new DetectedIssue(DetectedIssuePriorityType.Error, "err", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_GEN_ERR, new { row = sourceReader.RowNumber, ex = e.Message }), DetectedIssueKeys.OtherIssue);
+                issue = new DetectedIssue(DetectedIssuePriorityType.Error, "err", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_GEN_ERR, new { row = sourceReader.RowNumber, ex = this.CreateMessage(e) }), DetectedIssueKeys.OtherIssue);
                 mappedObject = null;
                 return false;
             }

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import.Definition
@@ -14,7 +15,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// must equal 
         /// </summary>
         [XmlElement("value"), JsonProperty("value")]
-        public string Value { get; set; }
+        public List<string> Value { get; set; }
 
     }
 }

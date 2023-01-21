@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Data.Import.Transforms
 {
@@ -18,6 +19,7 @@ namespace SanteDB.Core.Data.Import.Transforms
     {
 
         // Serialization binder
+        private readonly Regex m_parmExtract = new Regex(@"\$(\w*?)[&\.\?]", RegexOptions.Compiled);
         private readonly ModelSerializationBinder m_serialization = new ModelSerializationBinder();
         private readonly IAdhocCacheService m_adhocCache;
 
@@ -44,27 +46,34 @@ namespace SanteDB.Core.Data.Import.Transforms
             var modelType = this.m_serialization.BindToType(typeof(Person).Assembly.FullName, args[0].ToString());
             var lookupRepoType = typeof(IRepositoryService<>).MakeGenericType(modelType);
             var lookupRepo = ApplicationServiceContext.Current.GetService(lookupRepoType) as IRepositoryService;
+            var parms = new Dictionary<String, Func<Object>>();
+            for (int i = 0; i < sourceRecord.ColumnCount; i++)
+            {
+                var parmNo = i;
+                parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
+            }
+            parms.Add("input", () => input);
 
-            var key = $"lu.{args[0]}.{args[1]}?{input}";
+            var key = this.m_parmExtract.Replace($"lu.{args[0]}.{args[1]}?{input}", o=>
+            {
+                if(parms.TryGetValue(o.Groups[1].Value, out var fn))
+                {
+                    return fn().ToString();
+                }
+                return String.Empty;
+            });
             var result = this.m_adhocCache?.Get<Guid?>(key);
             if (result == null)
             {
 
-                var parms = new Dictionary<String, Func<Object>>();
-                for (int i = 0; i < sourceRecord.ColumnCount; i++)
-                {
-                    var parmNo = i;
-                    parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
-                }
-                parms.Add("input", () => input);
-
+                
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
                 result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
                 this.m_adhocCache?.Add(key, result ?? Guid.Empty);
 
             }
 
-            if(args.Length == 3 && result.HasValue)
+            if(args.Length == 3 && result.GetValueOrDefault() != Guid.Empty)
             {
                 // TODO: Cache these expressions
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), false, typeof(object));
@@ -73,6 +82,10 @@ namespace SanteDB.Core.Data.Import.Transforms
             }
             else
             {
+                if(result.GetValueOrDefault() == Guid.Empty)
+                {
+                    return null;
+                }
                 return result;
             }
         }

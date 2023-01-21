@@ -25,13 +25,15 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Find collection extern
         /// </summary>
-        public Guid? FindExtern(IEnumerable<IdentifiedData> inCollection)
+        public Guid? FindExtern(IEnumerable<IdentifiedData> inCollection, IForeignDataReader sourceRecord, object inputValue)
         {
             if(this.m_lookupExpression == null)
             {
-                var expr = QueryExpressionParser.BuildLinqExpression(this.ExternalResource.Type, this.ExpressionXml.ParseQueryString());
+                var parms = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => sourceRecord.GetName(o)).ToDictionary<String, String, Func<Object>>(o => o, o => () => sourceRecord[o]);
+                parms.Add("input", () => inputValue);
+                var expr = QueryExpressionParser.BuildLinqExpression(this.ExternalResource.Type, this.ExpressionXml.ParseQueryString(), "__instance", variables: parms, safeNullable: true, forceLoad: true);
                 var inpar = Expression.Parameter(typeof(IdentifiedData));
-                this.m_lookupExpression = Expression.Lambda<Func<IdentifiedData, bool>>(Expression.Invoke(expr.Body, Expression.Convert(inpar, expr.Parameters[0].Type)), inpar).Compile();
+                this.m_lookupExpression = Expression.Lambda<Func<IdentifiedData, bool>>(Expression.Invoke(expr, Expression.Convert(inpar, expr.Parameters[0].Type)), inpar).Compile();
             }
             return inCollection.FirstOrDefault(o=> this.ExternalResource.Type.IsAssignableFrom(o.GetType()) && this.m_lookupExpression(o))?.Key;
         }

@@ -16,13 +16,12 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
-            if(args.Length != 1)
-            {
-                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_COUNT_MISMATCH, 1, args.Length));
-            }
-
+           
             if (input is int intData || int.TryParse(input.ToString(), out intData)) {
-                switch (sourceRecord[args[0].ToString()])
+
+                var sourceDate = args.Length == 1 ? sourceRecord[args[0].ToString()] : DateTime.Now;
+
+                switch (sourceDate)
                 {
                     case DateTime dt:
                         return dt.AddYears(-intData);
