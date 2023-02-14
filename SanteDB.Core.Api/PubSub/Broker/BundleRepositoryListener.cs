@@ -66,6 +66,8 @@ namespace SanteDB.Core.PubSub.Broker
                     case Model.DataTypes.BatchOperationType.Delete:
                         queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Delete, itm);
                         break;
+                    case Model.DataTypes.BatchOperationType.Ignore:
+                        return;
                 }
 
                 this.m_queue.Enqueue(PubSubBroker.QueueName, queueEntry);

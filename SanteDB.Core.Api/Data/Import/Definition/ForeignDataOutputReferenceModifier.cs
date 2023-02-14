@@ -21,6 +21,8 @@ namespace SanteDB.Core.Data.Import.Definition
         // Cached lookup
         private Func<IdentifiedData, bool> m_lookupExpression;
         private Func<IdentifiedData, dynamic> m_selectExpression;
+        private object m_inputValueSingleton;
+        private readonly object m_lockObject = new object();
 
         /// <summary>
         /// Find collection extern
@@ -30,12 +32,17 @@ namespace SanteDB.Core.Data.Import.Definition
             if(this.m_lookupExpression == null)
             {
                 var parms = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => sourceRecord.GetName(o)).ToDictionary<String, String, Func<Object>>(o => o, o => () => sourceRecord[o]);
-                parms.Add("input", () => inputValue);
-                var expr = QueryExpressionParser.BuildLinqExpression(this.ExternalResource.Type, this.ExpressionXml.ParseQueryString(), "__instance", variables: parms, safeNullable: true, forceLoad: true);
+                parms.Add("input", () => this.m_inputValueSingleton);
+                var expr = QueryExpressionParser.BuildLinqExpression(this.ExternalResource.Type, this.ExpressionXml.ParseQueryString(), "__instance", variables: parms, safeNullable: true, forceLoad: true, lazyExpandVariables: true);
                 var inpar = Expression.Parameter(typeof(IdentifiedData));
                 this.m_lookupExpression = Expression.Lambda<Func<IdentifiedData, bool>>(Expression.Invoke(expr, Expression.Convert(inpar, expr.Parameters[0].Type)), inpar).Compile();
             }
-            return inCollection.FirstOrDefault(o=> this.ExternalResource.Type.IsAssignableFrom(o.GetType()) && this.m_lookupExpression(o))?.Key;
+
+            lock (this.m_lockObject)
+            {
+                this.m_inputValueSingleton = inputValue;
+                return inCollection.FirstOrDefault(o => this.ExternalResource.Type.IsAssignableFrom(o.GetType()) && this.m_lookupExpression(o))?.Key;
+            }
         }
 
         /// <summary>

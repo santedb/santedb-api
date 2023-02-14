@@ -55,6 +55,20 @@ namespace SanteDB.Core.Data.Import.Format
             }
 
             /// <inheritdoc/>
+            object IForeignDataRecord.this[string name]
+            {
+                get => this[name];
+                set => throw new NotSupportedException();
+            }
+
+            /// <inheritdoc/>
+            object IForeignDataRecord.this[int index]
+            {
+                get => this[index];
+                set => throw new NotSupportedException();
+            }
+
+            /// <inheritdoc/>
             public object this[string name]
             {
                 get

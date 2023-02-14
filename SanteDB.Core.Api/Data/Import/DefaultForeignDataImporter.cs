@@ -66,9 +66,9 @@ namespace SanteDB.Core.Data.Import
             }
 
             // Now we want to map a map of our services
-            var persistenceServices = foreignDataObjectMap.Resource.ToDictionary(o => o.TypeXml, o =>
+            var persistenceServices = foreignDataObjectMap.Resource.GroupBy(o => o.TypeXml).ToDictionary(o => o.Key, o =>
             {
-                var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.Type);
+                var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.First().Type);
                 return ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
             });
             var duplicateCheckParms = new Dictionary<String, Func<Object>>();
@@ -94,7 +94,7 @@ namespace SanteDB.Core.Data.Import
                     {
 
                         // Conditional mapping?
-                        if(resourceMap.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
+                        if (resourceMap.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
                         {
                             continue;
                         }
@@ -103,15 +103,15 @@ namespace SanteDB.Core.Data.Import
                         var persistenceService = persistenceServices[resourceMap.TypeXml];
 
                         // Is there a duplicate check? If so map them
-                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o=>!o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
+                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
                         this.m_tracer.TraceInfo("Processing {0} from import...", records);
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, records++, 1000.0f * (float)records / (float)sw.ElapsedMilliseconds)));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
                         if (duplicateChecks.Any())
                         {
                             mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
                             mappedObject = mappedObject?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
-                            if(mappedObject != null)
+                            if (mappedObject != null)
                             {
                                 mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Update;
                             }
@@ -119,7 +119,7 @@ namespace SanteDB.Core.Data.Import
 
                         if (resourceMap.Transform != null) // Pass it to the transform
                         {
-                            if (this.ApplyTransformer(resourceMap.Transform, new GenericForeignDataRecord(sourceReader), sourceReader, out var result) && result is IdentifiedData id)
+                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, sourceReader, out var result) && result is IdentifiedData id)
                             {
                                 mappedObject = id;
                             }
@@ -145,21 +145,28 @@ namespace SanteDB.Core.Data.Import
                         }
 
 
-                        if(mappedObject.BatchOperation != Model.DataTypes.BatchOperationType.Update &&
-                            resourceMap.DuplicateCheck?.Any(o=>o.Contains("$output")) == true)
+                        if (mappedObject.BatchOperation != Model.DataTypes.BatchOperationType.Update &&
+                            resourceMap.DuplicateCheck?.Any(o => o.Contains("$output")) == true)
                         {
                             duplicateChecks = resourceMap.DuplicateCheck?.Where(o => o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
-                            var shouldSkip = duplicateChecks.Any(o => persistenceService.Query(o).Any());
-                            if(shouldSkip == true)
+
+                            var existingRecord = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
+                            existingRecord = existingRecord?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
+                            if (existingRecord == null)
+                            {
+                                existingRecord = duplicateChecks.Select(o => insertBundle.Item.Where(i => resourceMap.Type == i.GetType()).FirstOrDefault(c => o.Compile().DynamicInvoke(c).Equals(true)))?.FirstOrDefault() as IdentifiedData;
+                            }
+                            if(existingRecord != null)
                             {
                                 mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Ignore;
+                                mappedObject.Key = existingRecord.Key;
                             }
                         }
                         insertBundle.Add(mappedObject);
                     }
 
                     // Issue processing so don't process
-                    if(skipProcessing)
+                    if (skipProcessing)
                     {
                         continue;
                     }
@@ -218,7 +225,7 @@ namespace SanteDB.Core.Data.Import
         /// <inheritdoc/>
         public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader)
         {
-            if(!sourceReader.MoveNext())
+            if (!sourceReader.MoveNext())
             {
                 yield return new DetectedIssue(DetectedIssuePriorityType.Error, "empty", "File appears to be empty", Guid.Empty);
             }
@@ -248,7 +255,7 @@ namespace SanteDB.Core.Data.Import
                 }
                 IdentifiedData outputFake = null;
                 duplicateCheckParms.Add("output", () => outputFake);
-                
+
                 foreach (var res in foreignDataObjectMap.Resource)
                 {
                     outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
@@ -260,15 +267,15 @@ namespace SanteDB.Core.Data.Import
                         }
                     }
 
-                    foreach(var wh in res.OnlyWhen)
+                    foreach (var wh in res.OnlyWhen)
                     {
-                        if(sourceReader.IndexOf(wh.Source) < 0)
+                        if (sourceReader.IndexOf(wh.Source) < 0)
                         {
                             yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {wh.Source}", Guid.Empty);
                         }
                     }
 
-                    foreach(var dc in res.DuplicateCheck)
+                    foreach (var dc in res.DuplicateCheck)
                     {
                         DetectedIssue issue = null;
                         try
@@ -279,7 +286,7 @@ namespace SanteDB.Core.Data.Import
                         {
                             issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {this.CreateMessage(e)}", Guid.Empty);
                         }
-                        if(issue != null)
+                        if (issue != null)
                         {
                             yield return issue;
                         }
@@ -294,11 +301,11 @@ namespace SanteDB.Core.Data.Import
         private string CreateMessage(Exception exception)
         {
             StringBuilder retVal = new StringBuilder();
-            while(exception != null)
+            while (exception != null)
             {
                 retVal.Append(exception.Message);
                 exception = exception.InnerException;
-                if(exception != null)
+                if (exception != null)
                 {
                     retVal.Append(" CAUSE: ");
                 }
@@ -319,7 +326,7 @@ namespace SanteDB.Core.Data.Import
         {
             try
             {
-                mappedObject = mappedObject ?? Activator.CreateInstance(mapping.Type) as IdentifiedData;
+                mappedObject = mappedObject ?? mapping.Skeleton?.DeepCopy() as IdentifiedData ?? Activator.CreateInstance(mapping.Type) as IdentifiedData;
                 mappedObject.Key = mappedObject.Key ?? Guid.NewGuid();
                 // Apply the necessary instructions
                 foreach (var map in mapping.Maps)
@@ -365,7 +372,7 @@ namespace SanteDB.Core.Data.Import
                                 switch (modifier)
                                 {
                                     case ForeignDataTransformValueModifier tx:
-                                        if (!this.ApplyTransformer(tx, new GenericForeignDataRecord(sourceReader), targetValue, out targetValue))
+                                        if (!this.ApplyTransformer(tx, sourceReader, targetValue, out targetValue))
                                         {
                                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
                                         }
@@ -394,7 +401,7 @@ namespace SanteDB.Core.Data.Import
 
                     if (targetValue == null && map.TargetMissingSpecified)
                     {
-                        issue = new DetectedIssue(map.TargetMissing, "maperr", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue }), DetectedIssueKeys.BusinessRuleViolationIssue);
+                        issue = new DetectedIssue(map.TargetMissing, "maperr", map.ErrorMessage ?? this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue, target = map.TargetHdsiPath }), DetectedIssueKeys.BusinessRuleViolationIssue);
                         if (map.TargetMissing != DetectedIssuePriorityType.Information)
                         {
                             return false;

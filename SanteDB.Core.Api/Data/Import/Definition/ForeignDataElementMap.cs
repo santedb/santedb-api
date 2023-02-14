@@ -42,6 +42,13 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlIgnore, JsonIgnore]
         public bool TargetMissingSpecified { get; set; }
 
+
+        /// <summary>
+        /// Error message
+        /// </summary>
+        [XmlAttribute("errorMessage"), JsonProperty("errorMessage")]
+        public string ErrorMessage { get; set; }
+
         /// <summary>
         /// When the mapping fails and the target property is missing
         /// </summary>
