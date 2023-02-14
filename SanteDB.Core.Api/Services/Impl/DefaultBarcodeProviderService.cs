@@ -22,7 +22,7 @@ namespace SanteDB.Core.Services.Impl
         public DefaultBarcodeProviderService(IServiceManager serviceManager)
         {
             var barcodeProviders = serviceManager.CreateInjectedOfAll<IBarcodeGenerator>();
-            this.m_barcodeProviders = barcodeProviders.ToDictionary(o => o.BarcodeAlgorithm, o => o);
+            this.m_barcodeProviders = barcodeProviders.ToDictionaryIgnoringDuplicates(o => o.BarcodeAlgorithm, o => o);
         }
 
         /// <inheritdoc/>
