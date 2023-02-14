@@ -102,7 +102,7 @@ namespace SanteDB.Core.Data
             var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid?) }) as System.Reflection.MethodInfo;
 
             Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey)))), parm);
-            return persistenceService?.Find(expr);
+            return persistenceService?.Find(expr) ?? new MemoryQueryResultSet(new Object[0]);
         }
 
         /// <summary>

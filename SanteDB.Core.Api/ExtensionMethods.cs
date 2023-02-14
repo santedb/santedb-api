@@ -70,7 +70,7 @@ namespace SanteDB.Core
         /// Non generic method of <see cref="ResolveOwnedRecord{T}(T, IPrincipal)"/>
         /// </summary>
         public static IdentifiedData ResolveOwnedRecord(this IdentifiedData forSource, IPrincipal ownerPrincipal)
-            => ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType()).ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
+            => ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
 
         /// <summary>
         /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>

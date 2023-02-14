@@ -103,6 +103,9 @@ namespace SanteDB.Core.Jobs
         // Tracer for job manager
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(XmlFileJobStateManager));
 
+        // Lock
+        private object m_lock = new object();
+
         /// <summary>
         /// Creates a new job state manager and loads the persisted state file
         /// </summary>
@@ -212,9 +215,12 @@ namespace SanteDB.Core.Jobs
         {
             try
             {
-                using (var fs = File.Create(this.m_jobStateLocation))
+                lock (this.m_lock)
                 {
-                    this.m_xsz.Serialize(fs, this.m_jobStates.ToList());
+                    using (var fs = File.Create(this.m_jobStateLocation))
+                    {
+                        this.m_xsz.Serialize(fs, this.m_jobStates.ToList());
+                    }
                 }
             }
             catch (Exception e)

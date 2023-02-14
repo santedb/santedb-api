@@ -15,13 +15,21 @@ namespace SanteDB.Core.Data.Import.Definition
     public class ForeignDataElementMap : ForeignDataMapBase
     {
 
+        /// <summary>
+        /// Only when the conditions are true
+        /// </summary>
+        [XmlElement("when"), JsonProperty("when")]
+        public List<ForeignDataMapOnlyWhenCondition> OnlyWhen { get; set; }
 
         /// <summary>
-        /// Gets or sets the fixed value
+        /// Gets or sets the value modifiers
         /// </summary>
-        [XmlElement("fixed"), JsonProperty("fixed")]
-        public string FixedValue { get; set; }
-
+        [XmlElement("fixed", typeof(ForeignDataFixedValueModifier)),
+            XmlElement("lookup", typeof(ForeignDataLookupValueModifier)),
+            XmlElement("xref", typeof(ForeignDataOutputReferenceModifier)),
+            XmlElement("transform", typeof(ForeignDataTransformValueModifier)), JsonProperty("values")]
+        public List<ForeignDataValueModifier> ValueModifiers { get; set; }
+       
         /// <summary>
         /// True if the source is required
         /// </summary>
@@ -46,12 +54,7 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("target"), JsonProperty("target")]
         public string TargetHdsiPath { get; set; }
 
-        /// <summary>
-        /// Gets or sets the transformations on the source column
-        /// </summary>
-        [XmlArray("transforms"), XmlArrayItem("transform"), JsonProperty("transforms")]
-        public List<ForeignDataElementTransform> Transforms { get; set; }
-
+       
         /// <summary>
         /// Replace the current value
         /// </summary>
@@ -81,11 +84,11 @@ namespace SanteDB.Core.Data.Import.Definition
                 yield return new ValidationResultDetail(ResultDetailType.Error, $"Target path {this.TargetHdsiPath} is not valid {buildError.Message}", buildError, this.Source);
             }
 
-            foreach(var map in this.Transforms)
+            foreach(var map in this.ValueModifiers)
             {
-                if(!map.Validate())
+                if(map is ForeignDataTransformValueModifier fdx && !fdx.Validate())
                 {
-                    yield return new ValidationResultDetail(ResultDetailType.Warning, $"Validator {map.Transformer} failed validation", null, this.Source);
+                    yield return new ValidationResultDetail(ResultDetailType.Warning, $"Validator {fdx.Transformer} failed validation", null, this.Source);
                 }
             }
         }
