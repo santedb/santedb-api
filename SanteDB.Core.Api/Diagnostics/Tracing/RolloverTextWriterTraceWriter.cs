@@ -92,7 +92,8 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 ApplicationServiceContext.Current.GetService<IServiceManager>()?.AddServiceProvider(typeof(RolloverLogManagerService));
             }
 
-            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", Assembly.GetEntryAssembly().GetName().Name, Assembly.GetEntryAssembly().GetName().Version, filter);
+            var assemblyname = Assembly.GetEntryAssembly()?.GetName();
+            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
         }
 
         /// <summary>

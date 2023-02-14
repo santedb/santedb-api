@@ -46,6 +46,15 @@ namespace SanteDB.Core.Diagnostics
         }
 
         /// <summary>
+        /// Removes a writer from the trace stack.
+        /// </summary>
+        /// <param name="tw">The writer to remove from the stack.</param>
+        public static void RemoveWriter(TraceWriter tw)
+        {
+            m_writers.RemoveAll(kv => kv.Key == tw);
+        }
+
+        /// <summary>
         /// Dispose trace writers
         /// </summary>
         public static void DisposeWriters()

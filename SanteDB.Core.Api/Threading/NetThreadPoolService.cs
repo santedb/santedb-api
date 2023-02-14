@@ -40,7 +40,7 @@ namespace SanteDB.Core.Services.Impl
         public String ServiceName => ".NET Thread Pool Integration";
 
         // Tracer for thread pool
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(NetThreadPoolService));
 
         // Dispatched workers
         private int m_dispatchedWorkers = 0;
