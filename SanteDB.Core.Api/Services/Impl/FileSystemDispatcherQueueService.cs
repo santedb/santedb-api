@@ -29,6 +29,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -161,6 +162,8 @@ namespace SanteDB.Core.Services.Impl
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
 
+        private CancellationTokenSource m_ListenThreadCancellationTokenSource;
+
         /// <summary>
         /// Queue file
         /// </summary>
@@ -187,12 +190,35 @@ namespace SanteDB.Core.Services.Impl
 
             this.m_pepService = pepService;
 
+            this.m_ListenThreadCancellationTokenSource = new CancellationTokenSource();
+
             // Listener thread
-            this.m_listenerThread = new Thread(() =>
+            this.m_listenerThread = new Thread((object state) =>
             {
-                while (!this.m_disposed)
+                CancellationToken token;
+
+                if (state is CancellationToken cts)
                 {
-                    this.m_resetEvent.Wait(1000);
+                    token = cts;
+                }
+                else
+                {
+                    token = CancellationToken.None;
+                }
+
+                while (!(this.m_disposed || token.IsCancellationRequested))
+                {
+                    try
+                    {
+                        this.m_resetEvent.Wait(1000, token);
+                    }
+                    catch (OperationCanceledException) { }
+
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
                     while (this.m_notificationQueue.TryDequeue(out var result) && !String.IsNullOrEmpty(this.GetQueueFile(result.QueueName, result.CorrelationId)))
                     {
                         if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
@@ -203,12 +229,18 @@ namespace SanteDB.Core.Services.Impl
                             }
                         }
                     }
+
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
                     this.m_resetEvent.Reset();
                 }
             });
             this.m_listenerThread.IsBackground = true;
             this.m_listenerThread.Name = "FileSystemListener";
-            this.m_listenerThread.Start();
+            this.m_listenerThread.Start(m_ListenThreadCancellationTokenSource.Token);
 
         }
 
@@ -418,8 +450,16 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_watchers.Clear();
                 this.m_watchers = null;
+                m_ListenThreadCancellationTokenSource.Cancel();
 
-                this.m_listenerThread.Abort();
+                //try
+                //{
+                //    this.m_listenerThread.Abort();
+                //}
+                //catch (PlatformNotSupportedException)
+                //{
+                //    //TODO: We need to properly cancel the threads using a cancellationtoken.
+                //}
             }
         }
 

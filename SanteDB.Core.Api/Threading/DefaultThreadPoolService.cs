@@ -319,7 +319,14 @@ namespace SanteDB.Core.Services.Impl
             {
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
-                    m_threadPool[i]?.Abort();
+                    try
+                    {
+                        m_threadPool[i]?.Abort();
+                    }
+                    catch (PlatformNotSupportedException)
+                    {
+                        //TODO: we need to properly cancel the pool threads using a cancellationtoken.
+                    }
                     m_threadPool[i] = null;
                 }
             }
