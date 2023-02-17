@@ -33,5 +33,13 @@ namespace SanteDB.Core.Services
         /// Save tag to source key
         /// </summary>
         void Save(Guid sourceKey, ITag tag);
+
+        /// <summary>
+        /// Save the tag against <paramref name="sourceKey"/>
+        /// </summary>
+        /// <param name="sourceKey">The source <see cref="ITaggable"/> to add <paramref name="tagName"/></param>
+        /// <param name="tagName">The name of the tag</param>
+        /// <param name="tagValue">The value of the tag</param>
+        void Save(Guid sourceKey, String tagName, String tagValue);
     }
 }
