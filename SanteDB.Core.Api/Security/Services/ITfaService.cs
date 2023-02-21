@@ -41,6 +41,9 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         bool ValidateSecret(Guid mechanismId, IIdentity user, String secret);
 
+        /// <summary>
+        /// Get TFA mechanisms
+        /// </summary>
         IEnumerable<ITfaMechanism> Mechanisms { get; }
     }
 }

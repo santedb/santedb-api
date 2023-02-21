@@ -21,6 +21,7 @@ namespace SanteDB.Core.Notifications.Email
         readonly EmailNotificationConfigurationSection _Configuration;
         readonly string _Host;
         readonly int _Port;
+        readonly bool _UseSsl;
         readonly ICredentialsByHost _Credentials;
         readonly Tracer _Tracer;
 
@@ -28,7 +29,7 @@ namespace SanteDB.Core.Notifications.Email
         {
             _Tracer = new Tracer(nameof(FrameworkMailService));
             _Configuration = configurationManager.GetSection<EmailNotificationConfigurationSection>();
-            (_Host, _Port) = ParseServerString(_Configuration?.Smtp?.Server);
+            (_Host, _Port, _UseSsl) = ParseServerString(_Configuration?.Smtp?.Server);
 
             if (!string.IsNullOrEmpty(_Configuration.Smtp.Username))
             {
@@ -43,39 +44,40 @@ namespace SanteDB.Core.Notifications.Email
             {
                 Host = _Host,
                 Port = _Port,
-                EnableSsl = _Configuration.Smtp.Ssl,
-                Credentials = _Credentials,
+                EnableSsl = _UseSsl || _Configuration.Smtp.Ssl,
                 UseDefaultCredentials = _Credentials == null,
                 DeliveryMethod = SmtpDeliveryMethod.Network
             };
+            smtpClient.Credentials = _Credentials;
 
-            smtpClient.SendCompleted += (sender, e) =>
-            {
-                if (e.Cancelled)
-                {
-                    _Tracer.TraceVerbose("Cancelled sending email.");
-                }
-                else if (e.Error != null)
-                {
-                    _Tracer.TraceError("Exception sending email: {0}", e.Error.ToString());
-                }
-                else
-                {
-                    _Tracer.TraceVerbose("Send email success.");
-                }
+            // Keep getting disposed object access exceptions - implemented this over in send in a sync manner until we can fix
+            //smtpClient.SendCompleted += (sender, e) =>
+            //{
+            //    if (e.Cancelled)
+            //    {
+            //        _Tracer.TraceVerbose("Cancelled sending email.");
+            //    }
+            //    else if (e.Error != null)
+            //    {
+            //        _Tracer.TraceError("Exception sending email: {0}", e.Error.ToString());
+            //    }
+            //    else
+            //    {
+            //        _Tracer.TraceVerbose("Send email success.");
+            //    }
 
-                if (sender is IDisposable disposable)
-                {
-                    try
-                    {
-                        disposable.Dispose();
-                    }
-                    catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                    {
-                        _Tracer.TraceError("Error when calling dispose on SMTP client instance: {0}", ex.ToString());
-                    }
-                }
-            };
+            //    if (sender is IDisposable disposable)
+            //    {
+            //        try
+            //        {
+            //            disposable.Dispose();
+            //        }
+            //        catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            //        {
+            //            _Tracer.TraceError("Error when calling dispose on SMTP client instance: {0}", ex.ToString());
+            //        }
+            //    }
+            //};
 
             return smtpClient;
 
@@ -86,25 +88,15 @@ namespace SanteDB.Core.Notifications.Email
         /// </summary>
         /// <param name="server"></param>
         /// <returns></returns>
-        private static (string host, int port) ParseServerString(string server)
+        private static (string host, int port, bool ssl) ParseServerString(string server)
         {
             if (string.IsNullOrWhiteSpace(server))
             {
-                return (null, 25);
+                return (null, 25, false);
             }
 
-            var idx = server.LastIndexOf(":");
-
-            if (idx < 0)
-            {
-                return (server, 25);
-            }
-            else
-            {
-                var host = server.Substring(0, idx);
-                var port = int.Parse(server.Substring(idx + 1));
-                return (server, port);
-            }
+            var serverUri = new Uri(server);
+            return (serverUri.Host, serverUri.Port, serverUri.Scheme == "smtp+tls");
         }
 
 
@@ -115,12 +107,12 @@ namespace SanteDB.Core.Notifications.Email
                 throw new ArgumentNullException(nameof(message));
             }
 
-            var smtpClient = OpenSmtpClient();
-
-            using (var mm = CreateMailMessage(message))
+            using (var smtpClient = OpenSmtpClient())
             {
-                smtpClient.SendAsync(mm, (smtpClient, message, mm));
-                
+                using (var mm = CreateMailMessage(message))
+                {
+                    smtpClient.Send(mm); // -> Until the disposed object issue is fixed, (smtpClient, message, mm));
+                }
             }
         }
 

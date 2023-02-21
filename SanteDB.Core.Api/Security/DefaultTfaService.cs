@@ -48,7 +48,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public DefaultTfaService(IServiceManager serviceManager)
         {
-            this.Mechanisms = serviceManager.CreateInjectedOfAll<ITfaMechanism>();
+            this.Mechanisms = serviceManager.CreateInjectedOfAll<ITfaMechanism>().ToList();
         }
 
         /// <summary>

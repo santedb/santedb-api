@@ -87,7 +87,7 @@ namespace SanteDB.Core.Notifications
                 }
                 else
                 {
-                    this.m_tracer.TraceWarning("Cannot find relay on scheme {0}", itm.Key);
+                    throw new InvalidOperationException($"Cannot find relay on scheme {itm.Key}");
                 }
             }
 

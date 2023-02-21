@@ -23,6 +23,7 @@ using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications;
+using SanteDB.Core.Notifications.Email;
 using SanteDB.Core.Notifications.Templating;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Security;
@@ -58,10 +59,10 @@ namespace SanteDB.Core.Services.Impl
             typeof(LocalMailMessageService),
             typeof(SimpleCarePlanService),
             typeof(AesSymmetricCrypographicProvider),
+            typeof(FrameworkMailService),
             typeof(DefaultDataSigningService),
             typeof(DefaultPolicyDecisionService),
             typeof(DefaultPolicyEnforcementService),
-            typeof(DefaultTfaService),
             typeof(SHA256PasswordHashingService),
             typeof(Rfc4226TfaCodeProvider),
             typeof(CachedResourceCheckoutService),

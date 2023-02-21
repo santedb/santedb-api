@@ -50,7 +50,7 @@ namespace SanteDB.Core.Notifications.Templating
                     }
                     return "";
                 }),
-                Subject = m_parmRegex.Replace(template.Subject, o =>
+                Subject = m_parmRegex.Replace(template.Subject ?? String.Empty, o =>
                 {
                     if (modelDict.TryGetValue(o.Groups[1].Value, out var value))
                     {

@@ -13,15 +13,17 @@ namespace SanteDB.Core.Security.Tfa
     public class TfaEmailMechanism : ITfaMechanism
     {
         private static readonly Guid s_MechanismId = Guid.Parse("D919457D-E015-435C-BD35-42E425E2C60C");
-        private static readonly string s_TemplateName = "tfa.email";
+        private static readonly string s_TemplateName = "org.santedb.notifications.mfa.email";
 
         readonly INotificationService _NotificationService;
         readonly ITfaCodeProvider _TfaCodeProvider;
+        private readonly ITfaSecretManager _TfaSecretManager;
 
-        public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider)
+        public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager)
         {
             _NotificationService = notificationService;
             _TfaCodeProvider = tfaCodeProvider;
+            _TfaSecretManager = secretManager;
         }
 
         public Guid Id => s_MechanismId;
@@ -48,21 +50,29 @@ namespace SanteDB.Core.Security.Tfa
                     email = "mailto:" + email;
                 }
 
-                var secret = _TfaCodeProvider.GenerateTfaCode(ci);
-
-                var templatemodel = new
+                string secret = null;
+                try
                 {
-                    user,
-                    tfa = secret,
-                    secret,
-                    code = secret,
-                    principal = AuthenticationContext.Current.Principal
+                    secret = _TfaCodeProvider.GenerateTfaCode(ci);
+                }
+                catch (ArgumentException)
+                {
+                    secret = _TfaSecretManager.StartTfaRegistration(ci, 6, AuthenticationContext.SystemPrincipal);
+                    _TfaSecretManager.FinishTfaRegistration(ci, secret, AuthenticationContext.SystemPrincipal);
+                    secret = _TfaCodeProvider.GenerateTfaCode(ci);
+                }
+
+                var templatemodel = new Dictionary<String, Object>()
+                {
+                    {"user",  user.Name },
+                    { "code", secret },
+                    { "principal", AuthenticationContext.Current.Principal }
                 };
 
                 try
                 {
                     _NotificationService.SendTemplatedNotification(new[] { email }, s_TemplateName, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, templatemodel, null, false);
-                    var censoredemail = email.Split(new[] { "@" }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    var censoredemail = email.Split('@')[1];
                     return $"Code sent to ******@{censoredemail}";
                 }
                 catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
