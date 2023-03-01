@@ -57,7 +57,7 @@ namespace SanteDB.Core.Security.Tfa
                 }
                 catch (ArgumentException)
                 {
-                    secret = _TfaSecretManager.StartTfaRegistration(ci, 6, AuthenticationContext.SystemPrincipal);
+                    secret = _TfaSecretManager.StartTfaRegistration(ci, 6, Rfc4226Mode.HotpIncrementOnGenerate, AuthenticationContext.SystemPrincipal);
                     _TfaSecretManager.FinishTfaRegistration(ci, secret, AuthenticationContext.SystemPrincipal);
                     secret = _TfaCodeProvider.GenerateTfaCode(ci);
                 }

@@ -244,7 +244,7 @@ namespace SanteDB.Core.Security.Tfa
             }
         }
 
-        public string StartTfaRegistration(IIdentity identity, int codeLength, IPrincipal principal)
+        public string StartTfaRegistration(IIdentity identity, int codeLength, Rfc4226Mode rfc4226Mode, IPrincipal principal)
         {
             var secret = new Rfc4226SecretClaim();
 
@@ -256,7 +256,7 @@ namespace SanteDB.Core.Security.Tfa
             }
 
             secret.CodeLength = codeLength;
-            secret.Mode = Rfc4226Mode.TotpThirtySecondInterval;
+            secret.Mode = rfc4226Mode;
             //TODO: Make these configurable.
             secret.StartValue = 0;
             secret.Initialized = false;

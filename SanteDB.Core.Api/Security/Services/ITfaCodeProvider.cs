@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SanteDB.Core.Security.Tfa;
+using System;
 using System.Collections.Generic;
 using System.Security.Principal;
 using System.Text;
@@ -31,7 +32,7 @@ namespace SanteDB.Core.Security.Services
 
     public interface ITfaSecretManager
     {
-        string StartTfaRegistration(IIdentity identity, int codeLength, IPrincipal principal);
+        string StartTfaRegistration(IIdentity identity, int codeLength, Rfc4226Mode rfc4226Mode, IPrincipal principal);
         bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal);
     }
 
