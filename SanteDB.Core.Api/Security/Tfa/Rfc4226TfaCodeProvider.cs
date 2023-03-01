@@ -261,7 +261,7 @@ namespace SanteDB.Core.Security.Tfa
             secret.StartValue = 0;
             secret.Initialized = false;
 
-            var counter = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 30L;
+            var counter = GetSecretCounter(secret);
 
             AddSecretClaim(identity, secret, principal);
 
