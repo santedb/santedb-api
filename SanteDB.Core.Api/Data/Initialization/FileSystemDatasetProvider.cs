@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,11 +26,19 @@ namespace SanteDB.Core.Data.Initialization
                 return Directory.GetFiles(dataPath, "*.dataset").Select(o =>
                 {
                     this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
-                    using (var fs = File.OpenRead(o))
+                    try
                     {
-                        return Dataset.Load(fs);
+                        using (var fs = File.OpenRead(o))
+                        {
+                            return Dataset.Load(fs);
+                        }
                     }
-                });
+                    catch (Exception e)
+                    {
+                        this.m_tracer.TraceError("Could not load {0} - {1}", o, e);
+                        return null;
+                    }
+                }).OfType<Dataset>();
             }
             else
             {
