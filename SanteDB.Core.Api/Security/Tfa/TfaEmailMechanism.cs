@@ -12,6 +12,9 @@ namespace SanteDB.Core.Security.Tfa
 {
     public class TfaEmailMechanism : ITfaMechanism
     {
+        /// <summary>
+        /// Gets the mechanism ID for this implementation
+        /// </summary>
         public static readonly Guid MechanismId = Guid.Parse("D919457D-E015-435C-BD35-42E425E2C60C");
         private static readonly string s_TemplateName = "org.santedb.notifications.mfa.email";
 
