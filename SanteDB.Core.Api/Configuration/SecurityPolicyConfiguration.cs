@@ -122,6 +122,11 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlEnum("uuid.device")]
         AssignedDeviceEntityId,
+        /// <summary>
+        /// Abandon session on PWD change
+        /// </summary>
+        [XmlEnum("session.abandon.pwd")]
+        AbandonSessionAfterPasswordReset
     }
 
     /// <summary>
