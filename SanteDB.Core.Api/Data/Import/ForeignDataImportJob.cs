@@ -21,7 +21,11 @@ namespace SanteDB.Core.Data.Import
         /// JOB ID
         /// </summary>
         public static readonly Guid JOB_ID = Guid.Parse("2EBF8094-6628-4CEC-93B8-3D623F227722");
+        private static readonly Guid REBUILD_FTI_JOB_ID = Guid.Parse("4D7A0641-762F-45BC-83AF-2001887648B1");
+        private static readonly Guid REBUILD_MATL_VW_JOB_ID = Guid.Parse("B5D6A459-C0FC-4D2F-A653-733C849BEAB9");
+
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ForeignDataImportJob));
+        private readonly IJobManagerService m_jobManager;
         private readonly IJobStateManagerService m_jobStateManager;
         private readonly IForeignDataManagerService m_fdManager;
         private float m_fdManagerProgress = 0.0f;
@@ -32,8 +36,10 @@ namespace SanteDB.Core.Data.Import
         /// DI constructor
         /// </summary>
         public ForeignDataImportJob(IJobStateManagerService jobStateManagerService,
+            IJobManagerService jobManagerService,
             IForeignDataManagerService foreignDataManagerService)
         {
+            this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
             this.m_fdManager = foreignDataManagerService;
             if (this.m_fdManager is IReportProgressChanged irpc2)
@@ -101,6 +107,8 @@ namespace SanteDB.Core.Data.Import
                 else
                 {
                     this.m_jobStateManager.SetState(this, JobStateType.Completed);
+                    this.m_jobManager.StartJob(this.m_jobManager.Jobs.First(o => o.Id == REBUILD_FTI_JOB_ID), new object[0]);
+                    this.m_jobManager.StartJob(this.m_jobManager.Jobs.First(o => o.Id == REBUILD_MATL_VW_JOB_ID), new object[0]);
                 }
             }
             catch (Exception ex)

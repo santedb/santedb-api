@@ -86,5 +86,13 @@ namespace SanteDB.Core.Data.Import.Definition
                 }
             }
         }
+
+        /// <summary>
+        /// Save the map
+        /// </summary>
+        public void Save(Stream ms)
+        {
+            s_serializer.Serialize(ms, this);
+        }
     }
 }
