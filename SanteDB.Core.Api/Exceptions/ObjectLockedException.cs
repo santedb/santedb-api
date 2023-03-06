@@ -45,6 +45,7 @@ namespace SanteDB.Core.Exceptions
         public ObjectLockedException(String lockUser) : base($"Object Locked by {lockUser}")
         {
             this.LockedUser = lockUser;
+            this.Data.Add("user", lockUser);
         }
     }
 }

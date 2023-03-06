@@ -19,6 +19,7 @@
  * Date: 2022-5-30
  */
 using System;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
@@ -38,5 +39,15 @@ namespace SanteDB.Core.Services
         /// Release the lock on the specified key
         /// </summary>
         bool Checkin<T>(Guid key);
+
+        /// <summary>
+        /// Attempts to perform a soft checkout - this is equivalent to attempting to take a lock 
+        /// but not actually taking it
+        /// </summary>
+        /// <typeparam name="T">The type of object to check</typeparam>
+        /// <param name="key">The key of the object referenced by <typeparamref name="T"/></param>
+        /// <param name="currentOwner">The current owner of the lock if one exists</param>
+        /// <returns>True if the object is checked out</returns>
+        bool IsCheckedout<T>(Guid key, out IIdentity currentOwner);
     }
 }

@@ -416,7 +416,11 @@ namespace SanteDB.Core.Http
                 }
 
                 Exception exception = null;
-                if (errorResponse is TResult tr)
+                if(errorResult is TResult tr2)
+                {
+                    exception = new RestClientException<TResult>(tr2, e, e.Status, e.Response);
+                }
+                else if (errorResponse is TResult tr)
                 {
                     exception = new RestClientException<TResult>(tr, e, e.Status, e.Response);
                 }

@@ -118,9 +118,9 @@ namespace SanteDB.Core.Services.Impl
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(System.Type.GetType(this.Type));
                 using (var ms = new MemoryStream(this.XmlData))
                 {
-                    if(this.Compressed)
+                    if (this.Compressed)
                     {
-                        using(var df = new DeflateStream(ms, CompressionMode.Decompress, false))
+                        using (var df = new DeflateStream(ms, CompressionMode.Decompress, false))
                         {
                             return xsz.Deserialize(df);
                         }
@@ -297,13 +297,14 @@ namespace SanteDB.Core.Services.Impl
                 // Open the queue
                 this.Open(queueName);
                 var queueFile = this.GetQueueFile(queueName, correlationId);
-                if(String.IsNullOrEmpty(queueFile))
+                if (String.IsNullOrEmpty(queueFile))
                 {
                     return null;
                 }
 
                 bool isEmpty = false;
-                while(this.IsFileLocked(queueFile, out isEmpty)) {
+                while (this.IsFileLocked(queueFile, out isEmpty))
+                {
                     Thread.Sleep(100);
                 }
                 if (isEmpty)
@@ -316,15 +317,8 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry retVal = null;
                 try
                 {
-                    using (var fs = File.OpenRead(queueFile))
-                    {
-                        var iv = new byte[16];
-                        fs.Read(iv, 0, iv.Length);
-                        using (var cs = this.m_symmetricCrypto.CreateDecryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
-                        {
-                            retVal = QueueEntry.Load(cs);
-                        }
-                    }
+                    retVal = this.ReadQueueEntry(queueFile);
+
                 }
                 finally
                 {
@@ -338,6 +332,22 @@ namespace SanteDB.Core.Services.Impl
                 this.m_tracer.TraceError("Error de-queueing {0} - {1}", queueName, e);
 
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Read a queue entry
+        /// </summary>
+        private QueueEntry ReadQueueEntry(string queueFile)
+        {
+            using (var fs = File.OpenRead(queueFile))
+            {
+                var iv = new byte[16];
+                fs.Read(iv, 0, iv.Length);
+                using (var cs = this.m_symmetricCrypto.CreateDecryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
+                {
+                    return QueueEntry.Load(cs);
+                }
             }
         }
 
@@ -499,10 +509,7 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry entry = null;
                 try
                 {
-                    using (var fs = File.OpenRead(f))
-                    {
-                        entry = QueueEntry.Load(fs);
-                    }
+                    entry = this.ReadQueueEntry(f);
                 }
                 catch
                 {
@@ -543,11 +550,8 @@ namespace SanteDB.Core.Services.Impl
             var filePath = Path.Combine(this.m_configuration.QueuePath, queueName, correlationId);
             if (File.Exists(filePath))
             {
-                using (var fs = File.OpenRead(filePath))
-                {
-                    var entry = QueueEntry.Load(fs);
-                    return new DispatcherQueueEntry(correlationId, queueName, entry.CreationTime, entry.Type, entry.XmlData);
-                }
+                var entry = this.ReadQueueEntry(filePath);
+                return new DispatcherQueueEntry(correlationId, queueName, entry.CreationTime, entry.Type, entry.XmlData);
             }
             throw new KeyNotFoundException($"{queueName}\\{correlationId} doesn't exist");
         }
