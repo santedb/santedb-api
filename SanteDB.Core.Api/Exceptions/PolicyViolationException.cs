@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
@@ -55,6 +55,19 @@ namespace SanteDB.Core.Exceptions
             catch { }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
+        /// </summary>
+        /// <param name="policy">Policy identifier.</param>
+        /// <param name="outcome">Outcome.</param>
+        /// <param name="principal">The principal that the action was attempted as</param>
+        public PolicyViolationException(IPrincipal principal, IPolicy policy, PolicyGrantType outcome)
+        {
+            this.PolicyId = policy.Oid;
+            this.PolicyDecision = principal.Identity.Name == "ANONYMOUS" ? PolicyGrantType.Elevate : outcome;
+            this.Principal = principal;
+            this.m_policyName = policy.Name;
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>

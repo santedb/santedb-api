@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using System;
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Jobs
         [XmlAttribute("job")]
         public Guid JobId
         {
-            get;set;
+            get; set;
         }
 
         /// <summary>
@@ -103,12 +103,15 @@ namespace SanteDB.Core.Jobs
         // Tracer for job manager
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(XmlFileJobStateManager));
 
+        // Lock
+        private object m_lock = new object();
+
         /// <summary>
         /// Creates a new job state manager and loads the persisted state file
         /// </summary>
         public XmlFileJobStateManager()
         {
-            this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "xstate.xml");
+            this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xstate.xml");
             if (File.Exists(this.m_jobStateLocation))
             {
                 try
@@ -133,7 +136,7 @@ namespace SanteDB.Core.Jobs
         public IJobState GetJobState(IJob job)
         {
             var jobState = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobState == null)
+            if (jobState == null)
             {
                 jobState = new XmlJobState()
                 {
@@ -149,7 +152,7 @@ namespace SanteDB.Core.Jobs
         public void SetProgress(IJob job, string statusText, float progress)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobData == null)
+            if (jobData == null)
             {
                 this.m_jobStates.Add(new XmlJobState()
                 {
@@ -171,7 +174,7 @@ namespace SanteDB.Core.Jobs
         public void SetState(IJob job, JobStateType state)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
-            if(jobData == null)
+            if (jobData == null)
             {
                 jobData = new XmlJobState()
                 {
@@ -181,12 +184,12 @@ namespace SanteDB.Core.Jobs
                 };
                 this.m_jobStates.Add(jobData);
             }
-            
+
             // Determine state transition
-            switch(state)
+            switch (state)
             {
                 case JobStateType.Running:
-                    if(!jobData.IsRunning())
+                    if (!jobData.IsRunning())
                     {
                         jobData.LastStartTime = DateTime.Now;
                         jobData.LastStopTime = null;
@@ -212,12 +215,15 @@ namespace SanteDB.Core.Jobs
         {
             try
             {
-                using(var fs = File.Create(this.m_jobStateLocation))
+                lock (this.m_lock)
                 {
-                    this.m_xsz.Serialize(fs, this.m_jobStates.ToList());
+                    using (var fs = File.Create(this.m_jobStateLocation))
+                    {
+                        this.m_xsz.Serialize(fs, this.m_jobStates.ToList());
+                    }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceError("Error saving job states: {0}", e);
                 throw new Exception("Error persisting job status", e);

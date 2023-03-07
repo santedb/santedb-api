@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
@@ -62,7 +62,19 @@ namespace SanteDB.Core.PubSub
         /// Record was un-merged
         /// </summary>
         [XmlEnum("unmerge")]
-        UnMerge = 0x10
+        UnMerge = 0x10,
+
+        /// <summary>
+        /// Record was linked
+        /// </summary>
+        [XmlEnum("link")]
+        Link = 0x20,
+
+        /// <summary>
+        /// Record was un-linked    
+        /// </summary>
+        [XmlEnum("unlink")]
+        UnLink = 0x40
     }
 
     /// <summary>

@@ -16,13 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-12-9
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.PubSub
 {

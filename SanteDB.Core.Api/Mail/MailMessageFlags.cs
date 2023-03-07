@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 namespace SanteDB.Core.Mail
 {
@@ -36,9 +36,9 @@ namespace SanteDB.Core.Mail
         Alert = 0x1,
 
         /// <summary>
-        /// Indicates whether someone has acknowledged the alert
+        /// Indicates whether the mail is low priority
         /// </summary>
-        Acknowledged = 0x2,
+        LowPriority = 0x2,
 
         /// <summary>
         /// Indicates the alert is high priority but doesn't require immediate action
@@ -56,12 +56,7 @@ namespace SanteDB.Core.Mail
         Transient = 0x10,
 
         /// <summary>
-        /// Indicates the message is archived
-        /// </summary>
-        Archived = 0x20,
-
-        /// <summary>
-        /// Idicates a high priority alert.
+        /// Indicates a high priority alert.
         /// </summary>
         HighPriorityAlert = HighPriority | Alert
     }

@@ -16,12 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using RestSrvr;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
+using SanteDB.Core.i18n;
+using SanteDB.Core.Notifications;
 using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;
@@ -52,7 +53,7 @@ namespace SanteDB.Core.Services.Impl
     /// </list>
     /// <para>Note: You must have an <see cref="IConfigurationManager"/> instance registered in the application service context prior to calling the <c>Start()</c> method on this class</para>
     /// </remarks>
-    public class DependencyServiceManager : IServiceManager, IServiceProvider, IDaemonService, IDisposable
+    public class DependencyServiceManager : IServiceManager, IServiceProvider, IDaemonService, IDisposable, IReportProgressChanged
     {
         // DI Stack
         private ThreadLocal<Stack<Type>> m_dependencyInjectionStack = new ThreadLocal<Stack<Type>>();
@@ -75,7 +76,7 @@ namespace SanteDB.Core.Services.Impl
         private class ServiceInstanceInformation : IDisposable
         {
             // Tracer
-            private Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
+            private readonly Tracer m_tracer = Tracer.GetTracer(typeof(ServiceInstanceInformation));
 
             // Singleton instance
             private object m_singletonInstance = null;
@@ -83,8 +84,15 @@ namespace SanteDB.Core.Services.Impl
             // Lock object
             private object m_lockBox = new object();
 
+
             // Service manager
             private DependencyServiceManager m_serviceManager;
+
+            // Implemented services
+            private HashSet<Type> m_implementedServices;
+
+            // Dependent service
+            private Type[] m_injectedServices;
 
             /// <summary>
             /// Create a new service instance
@@ -101,7 +109,8 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.ServiceImplementer = serviceImplementationClass;
                 this.InstantiationType = serviceImplementationClass.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
-                this.ImplementedServices = serviceImplementationClass.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)).ToArray();
+                this.Preferred = this.ServiceImplementer.GetCustomAttributes<PreferredServiceAttribute>().Select(o => o.ServiceType).ToArray();
+                this.m_implementedServices = new HashSet<Type>(serviceImplementationClass.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
             /// <summary>
@@ -112,7 +121,8 @@ namespace SanteDB.Core.Services.Impl
                 this.ServiceImplementer = singleton.GetType();
                 this.InstantiationType = this.ServiceImplementer.GetCustomAttribute<ServiceProviderAttribute>()?.Type ?? ServiceInstantiationType.Singleton;
                 this.m_singletonInstance = singleton;
-                this.ImplementedServices = this.ServiceImplementer.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)).ToArray();
+                this.Preferred = this.ServiceImplementer.GetCustomAttributes<PreferredServiceAttribute>().Select(o => o.ServiceType).ToArray();
+                this.m_implementedServices = new HashSet<Type>(this.ServiceImplementer.GetInterfaces().Where(o => typeof(IServiceImplementation).IsAssignableFrom(o)));
             }
 
             /// <summary>
@@ -121,23 +131,38 @@ namespace SanteDB.Core.Services.Impl
             internal object GetCreatedInstance() => this.m_singletonInstance;
 
             /// <summary>
+            /// Types that this is preferred for
+            /// </summary>
+            public Type[] Preferred { get; }
+
+            /// <summary>
+            /// Get the dependent services (singletons only)
+            /// </summary>
+            public Type[] InjectedServices => this.m_injectedServices;
+
+            /// <summary>
             /// Get an instance of the object
             /// </summary>
             public object GetInstance()
             {
                 // Is there already an object activator?
                 lock (this.m_lockBox)
+                {
                     if (this.m_singletonInstance != null)
+                    {
                         return this.m_singletonInstance;
+                    }
                     else if (this.InstantiationType == ServiceInstantiationType.Singleton)
                     {
-                        this.m_singletonInstance = this.m_serviceManager.CreateInjected(this.ServiceImplementer);
+                        this.m_singletonInstance = this.m_serviceManager.CreateInjectedInternal(this.ServiceImplementer, out var dependencies);
+                        this.m_injectedServices = dependencies;
                         return this.m_singletonInstance;
                     }
                     else
                     {
                         return this.m_serviceManager.CreateInjected(this.ServiceImplementer);
                     }
+                }
             }
 
             /// <summary>
@@ -146,7 +171,9 @@ namespace SanteDB.Core.Services.Impl
             public void Dispose()
             {
                 if (this.m_singletonInstance is IDisposable disposable)
+                {
                     disposable.Dispose();
+                }
             }
 
             /// <summary>
@@ -157,12 +184,15 @@ namespace SanteDB.Core.Services.Impl
             /// <summary>
             /// Gets the implemented services
             /// </summary>
-            public IEnumerable<Type> ImplementedServices { get; }
+            public IEnumerable<Type> ImplementedServices => this.m_implementedServices;
 
             /// <summary>
             /// Service implementer
             /// </summary>
             public Type ServiceImplementer { get; }
+
+            /// <inheritdoc/>
+            public override string ToString() => $"{this.InstantiationType} - {this.ServiceImplementer.FullName}";
         }
 
         /// <summary>
@@ -171,13 +201,14 @@ namespace SanteDB.Core.Services.Impl
         public DependencyServiceManager()
         {
             this.AddServiceProvider(this);
+            this.AddServiceFactory(new DefaultServiceFactory(this));
         }
 
         // Disposed?
         private bool m_isDisposed = false;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DependencyServiceManager));
 
         // Lock for the sync
         private object m_lock = new object();
@@ -211,6 +242,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public event EventHandler Stopped;
 
+        /// <inheritdoc/>
+        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
         /// <summary>
         /// True if the service is running
         /// </summary>
@@ -229,7 +263,9 @@ namespace SanteDB.Core.Services.Impl
             lock (this.m_lock)
             {
                 if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceType))
+                {
                     this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceType);
+                }
                 else
                 {
                     this.ValidateServiceSignature(serviceType);
@@ -240,8 +276,30 @@ namespace SanteDB.Core.Services.Impl
                     {
                         this.AddServiceFactory(sii.GetInstance() as IServiceFactory);
                     }
+                    this.AddCacheServices(sii);
                 }
                 this.m_notConfiguredServices.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Add service provider
+        /// </summary>
+        private void AddServiceProvider(ServiceInstanceInformation serviceInfo)
+        {
+            if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceInfo.ServiceImplementer))
+            {
+                this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceInfo.ServiceImplementer);
+            }
+            else
+            {
+                this.m_serviceRegistrations.Add(serviceInfo);
+                if (typeof(IServiceFactory).IsAssignableFrom(serviceInfo.ServiceImplementer))
+                {
+                    this.AddServiceFactory(serviceInfo.GetInstance() as IServiceFactory);
+                }
+
+                this.AddCacheServices(serviceInfo);
             }
         }
 
@@ -252,16 +310,30 @@ namespace SanteDB.Core.Services.Impl
         {
             lock (this.m_lock)
             {
-                if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
-                    this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
-                this.ValidateServiceSignature(serviceInstance.GetType());
-                this.m_serviceRegistrations.Add(new ServiceInstanceInformation(serviceInstance, this));
-                this.m_notConfiguredServices.Clear();
-
-                if (serviceInstance is IServiceFactory sf)
+                // Duplicate check 
+                if (this.m_serviceRegistrations.Any(s => s.ServiceImplementer == serviceInstance.GetType()))
                 {
-                    this.AddServiceFactory(sf);
+                    this.m_tracer.TraceWarning("Service {0} has already been registered...", serviceInstance.GetType());
                 }
+                else
+                {
+                    if (serviceInstance is IConfigurationManager cmgr && this.m_configuration == null)
+                    {
+                        this.m_configuration = cmgr.GetSection<ApplicationServiceContextConfigurationSection>();
+                    }
+
+                    this.ValidateServiceSignature(serviceInstance.GetType());
+                    var serviceInfo = new ServiceInstanceInformation(serviceInstance, this);
+                    this.m_serviceRegistrations.Add(serviceInfo);
+                    this.m_notConfiguredServices.Clear();
+
+                    if (serviceInstance is IServiceFactory sf)
+                    {
+                        this.AddServiceFactory(sf);
+                    }
+                    this.AddCacheServices(serviceInfo);
+                }
+
             }
         }
 
@@ -273,23 +345,38 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Get the specified service
         /// </summary>
-        public object GetService(Type serviceType)
+        public object GetService(Type serviceType) => this.GetServiceInternal(serviceType);
+
+        /// <summary>
+        /// Get service with <paramref name="excludeImplementations"/>
+        /// </summary>
+        private object GetServiceInternal(Type serviceType, Type[] excludeImplementations = null)
         {
             ServiceInstanceInformation candidateService = null;
-            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false && !this.m_notConfiguredServices.Contains(serviceType))
+            if (this.m_cachedServices?.TryGetValue(serviceType, out candidateService) == false
+                && !this.m_notConfiguredServices.Contains(serviceType)
+                || excludeImplementations?.Any(s => candidateService?.Preferred?.Contains(s) == true) == true)
             {
                 lock (this.m_lock)
                 {
-                    candidateService = this.m_serviceRegistrations.FirstOrDefault(s => s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer));
+                    candidateService = this.m_serviceRegistrations.FirstOrDefault(s => (s.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(s.ServiceImplementer)) && excludeImplementations?.Any(a => s.Preferred.Contains(a)) != true);
                     if (candidateService == null) // Attempt a load from configuration
                     {
                         var cServiceType = this.m_configuration.ServiceProviders.FirstOrDefault(s => s.Type != null && serviceType.IsAssignableFrom(s.Type));
                         if (cServiceType != null)
                         {
                             candidateService = new ServiceInstanceInformation(cServiceType.Type, this);
-                            this.m_serviceRegistrations.Add(candidateService);
+                            if (excludeImplementations?.Any(a => candidateService.Preferred.Contains(a)) != true)
+                            {
+                                this.m_serviceRegistrations.Add(candidateService);
+                                this.AddServiceProvider(candidateService);
+                            }
+                            else
+                            {
+                                candidateService = null; // skip and move on
+                            }
                         }
-                        else // Attempt to call the service factories to create it
+                        if (candidateService == null) // Attempt to call the service factories to create it
                         {
                             var created = false;
                             foreach (var factory in this.m_serviceFactories)
@@ -299,7 +386,7 @@ namespace SanteDB.Core.Services.Impl
                                 if (created)
                                 {
                                     candidateService = new ServiceInstanceInformation(serviceInstance, this);
-                                    this.m_cachedServices.TryAdd(serviceType, candidateService);
+                                    this.AddServiceProvider(candidateService);
                                     break;
                                 }
                             }
@@ -308,12 +395,31 @@ namespace SanteDB.Core.Services.Impl
                                 this.m_notConfiguredServices.Add(serviceType);
                             }
                         }
+
                     }
-                    if (candidateService != null)
-                        this.m_cachedServices.TryAdd(serviceType, candidateService);
+
                 }
             }
             return candidateService?.GetInstance();
+        }
+
+        /// <summary>
+        /// Add service <paramref name="candidateService"/> to cached services
+        /// </summary>
+        private void AddCacheServices(ServiceInstanceInformation candidateService)
+        {
+
+            // Is the candidate service a preferred service? If so remove the others
+            foreach (var preferredService in candidateService.Preferred)
+            {
+                this.m_cachedServices.TryRemove(preferredService, out _);
+            }
+
+            foreach (var itm in candidateService.ImplementedServices)
+            {
+                this.m_cachedServices.TryAdd(itm, candidateService);
+            }
+
         }
 
         /// <summary>
@@ -322,7 +428,9 @@ namespace SanteDB.Core.Services.Impl
         public IEnumerable<object> GetServices()
         {
             lock (this.m_lock)
-                return this.m_serviceRegistrations.Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).Select(o => o.GetInstance());
+            {
+                return this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).Select(o => o.GetInstance());
+            }
         }
 
         /// <summary>
@@ -331,7 +439,7 @@ namespace SanteDB.Core.Services.Impl
         public void RemoveServiceProvider(Type serviceType)
         {
             var serviceProviders = this.m_serviceRegistrations.Where(sr => sr.ImplementedServices.Contains(serviceType) || serviceType.IsAssignableFrom(sr.ServiceImplementer)).ToArray();
-            this.m_tracer.TraceInfo("Removing {0}...", serviceType);
+            this.m_tracer.TraceVerbose("Removing {0}...", serviceType);
             // iterate and dispose :)
             foreach (var sp in serviceProviders)
             {
@@ -349,10 +457,25 @@ namespace SanteDB.Core.Services.Impl
 
                 // Remove
                 lock (this.m_lock)
+                {
                     this.m_serviceRegistrations.Remove(sp);
+                }
+
                 foreach (var i in sp.ImplementedServices)
+                {
                     if (this.m_cachedServices.TryGetValue(i, out ServiceInstanceInformation v) && v.ServiceImplementer == sp.ServiceImplementer)
+                    {
                         this.m_cachedServices.TryRemove(i, out ServiceInstanceInformation _);
+                    }
+
+
+                    // Any dependency information for this with no other implementers
+                    foreach (var itm in this.m_serviceRegistrations.Where(r => r.InjectedServices?.Contains(i) == true)) // this was injected into that so remove that
+                    {
+                        this.m_cachedServices.TryRemove(itm.ServiceImplementer, out _);
+                    }
+                }
+
             }
         }
 
@@ -361,15 +484,26 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            if (this.m_isDisposed == true) return;
+            if (this.m_isDisposed == true)
+            {
+                return;
+            }
+
             this.m_isDisposed = true;
             if (this.m_serviceRegistrations != null)
-                foreach (var sp in this.m_serviceRegistrations)
+            {
+                foreach (var sp in this.m_serviceRegistrations.ToArray())
+                {
                     if (sp.ServiceImplementer != typeof(DependencyServiceManager))
                     {
-                        this.m_tracer.TraceInfo("Disposing {0}...", sp.ServiceImplementer);
+                        this.m_tracer.TraceVerbose("Disposing {0}...", sp.ServiceImplementer);
                         sp.Dispose();
                     }
+                }
+            }
+            this.m_tracer.TraceInfo("Disposing of HTTP Thread Pool and Probes..");
+            DiagnosticsProbeManager.Current.Dispose();
+            RestServerThreadPool.Current.Dispose();
         }
 
         /// <summary>
@@ -383,28 +517,38 @@ namespace SanteDB.Core.Services.Impl
 
                 try
                 {
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, UserMessages.STARTING_CONTEXT));
                     if (this.GetService<IConfigurationManager>() == null)
+                    {
                         throw new InvalidOperationException("Cannot find configuration manager!");
+                    }
+
                     if (this.m_configuration == null)
+                    {
                         this.m_configuration = this.GetService<IConfigurationManager>().GetSection<ApplicationServiceContextConfigurationSection>();
+                    }
 
                     // Add configured services
-                    foreach (var svc in this.m_configuration.ServiceProviders)
+                    int i = 0;
+                    foreach (var svc in this.m_configuration.ServiceProviders
+                        .Select(s => new { serviceType = s, order = s.Type.GetCustomAttributes<PreferredServiceAttribute>().Count() + (s.Type.Implements(typeof(IServiceFactory)) ? 100 : 0) })
+                        .OrderByDescending(s => s.order)
+                        .Select(s => s.serviceType))
                     {
+
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, UserMessages.STARTING_CONTEXT));
+
                         if (svc.Type == null)
+                        {
                             this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
+                        }
                         else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
+                        {
                             this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
+                        }
                         else
                         {
-                            if (svc.Type == null)
-                                this.m_tracer.TraceWarning("Cannot find service {0}, skipping", svc.TypeXml);
-                            else if (this.m_serviceRegistrations.Any(p => p.ServiceImplementer == svc.Type))
-                                this.m_tracer.TraceWarning("Duplicate registration of type {0}, skipping", svc.TypeXml);
-                            else
-                            {
-                                this.AddServiceProvider(svc.Type);
-                            }
+                            this.AddServiceProvider(svc.Type);
                         }
                     }
 
@@ -414,31 +558,44 @@ namespace SanteDB.Core.Services.Impl
 
                         startWatch.Start();
                         this.m_tracer.TraceInfo("Loading singleton services");
-                        foreach (var svc in this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton))
+                        i = 0;
+                        var singletonServices = this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).ToArray();
+                        foreach (var svc in singletonServices)
                         {
-                            this.m_tracer.TraceInfo("Instantiating {0}...", svc.ServiceImplementer.FullName);
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
+                            this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }
 
                         this.m_tracer.TraceInfo("Starting Daemon services");
-                        foreach (var dc in this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService))
+                        var daemonServices = this.m_serviceRegistrations.ToArray().Where(o => o.ImplementedServices.Contains(typeof(IDaemonService))).Select(o => o.GetInstance() as IDaemonService).ToArray();
+                        i = 0;
+                        foreach (var dc in daemonServices)
                         {
-                            if (dc == null) continue;
-                            this.m_tracer.TraceInfo("Starting daemon {0}...", dc.ServiceName);
+                            if (dc == null)
+                            {
+                                continue;
+                            }
+
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / daemonServices.Length) * 0.3f + 0.6f, String.Format(UserMessages.START_DAEMON, dc.ServiceName)));
+
+                            this.m_tracer.TraceInfo("Starting {0}...", dc.ServiceName);
                             if (dc != this && !dc.Start())
+                            {
                                 throw new Exception($"Service {dc} reported unsuccessful start");
+                            }
                         }
 
-                        if (this.Started != null)
-                            this.Started(this, null);
+                        this.Started?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 finally
                 {
                     startWatch.Stop();
                 }
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(1.0f, UserMessages.STARTING_CONTEXT));
+
                 this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
-                this.Started?.Invoke(this, EventArgs.Empty);
                 this.IsRunning = true;
             }
             return this.IsRunning;
@@ -455,7 +612,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.m_tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
             }
-            else if (!this.m_configuration?.AllowUnsignedAssemblies == true)
+            else if (this.m_configuration?.AllowUnsignedAssemblies != true)
             {
                 // Verified assembly?
                 if (!this.m_verifiedAssemblies.Contains(asmFile))
@@ -466,7 +623,7 @@ namespace SanteDB.Core.Services.Impl
                         extraCerts.Import(asmFile);
 
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
-                        this.m_tracer.TraceInfo("Validating {0} published by {1}", asmFile, certificate.Subject);
+                        this.m_tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
                         valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
                         if (!valid)
                         {
@@ -514,22 +671,26 @@ namespace SanteDB.Core.Services.Impl
 
             this.Stopping?.Invoke(this, null);
 
-            if (!this.IsRunning) return true;
+            if (!this.IsRunning)
+            {
+                return true;
+            }
 
             this.IsRunning = false;
 
-            foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager)).ToArray())
+            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, UserMessages.STOPPING_CONTEXT));
+            int i = 0;
+            foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager) && !o.ServiceImplementer.Implements(typeof(IApplicationServiceContext))).ToArray())
             {
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs((float)i++ / this.m_serviceRegistrations.Count, UserMessages.STOPPING_CONTEXT));
+
                 if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetCreatedInstance() is IDaemonService daemon)
                 {
-                    this.m_tracer.TraceInfo("Stopping daemon service {0}...", svc.ServiceImplementer.Name);
+                    this.m_tracer.TraceInfo("Stopping {0}...", svc.ServiceImplementer.Name);
                     daemon.Stop();
                 }
-                if (svc is IDisposable dsp)
-                {
-                    this.m_tracer.TraceInfo("Disposing service {0}...", svc.ServiceImplementer.Name);
-                    dsp.Dispose();
-                }
+                this.m_tracer.TraceVerbose("Disposing service {0}...", svc.ServiceImplementer.Name);
+                svc.Dispose();
             }
 
             this.Stopped?.Invoke(this, null);
@@ -539,12 +700,21 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Create injected type
         /// </summary>
-        public object CreateInjected(Type type)
+        public object CreateInjected(Type type) => this.CreateInjectedInternal(type, out _);
+
+        /// <summary>
+        /// Create injected type
+        /// </summary>
+        /// <param name="type">The type to be injected</param>
+        /// <param name="injectedServices">The injected depencies</param>
+        internal object CreateInjectedInternal(Type type, out Type[] injectedServices)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type), "Cannot find type for dependency injection");
             }
+
+            var preferredForServices = type.GetCustomAttributes<PreferredServiceAttribute>().Select(t => t.ServiceType).ToArray();
 
             // DI stack value
             this.m_dependencyInjectionStack.Value = this.m_dependencyInjectionStack.Value ?? new Stack<Type>();
@@ -566,32 +736,46 @@ namespace SanteDB.Core.Services.Impl
                     // Is it a parameterless constructor?
                     var constructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 0);
                     if (constructor != null)
+                    {
                         activator = Expression.Lambda<Func<Object>>(Expression.New(constructor)).Compile();
+                        injectedServices = Type.EmptyTypes;
+                    }
                     else
                     {
                         // Get a constructor that we can fulfill
                         constructor = constructors.SingleOrDefault();
                         if (constructor == null)
+                        {
                             throw new MissingMemberException($"Cannot find default constructor on {type}");
+                        }
 
                         var parameterTypes = constructor.GetParameters().Select(p => new { Type = p.ParameterType, Required = !p.HasDefaultValue, Default = p.DefaultValue }).ToArray();
                         var parameterValues = new Expression[parameterTypes.Length];
+                        injectedServices = new Type[parameterTypes.Length];
+
                         for (int i = 0; i < parameterValues.Length; i++)
                         {
                             var dependencyInfo = parameterTypes[i];
-                            var candidateService = ApplicationServiceContext.Current.GetService(dependencyInfo.Type); // We do this because we don't want GetService<> to initialize the type;
+                            var dependentServiceType = injectedServices[i] = dependencyInfo.Type;
+                            // Is the dependent service anything for which we are the preferred service? If so find another instance
+                            object candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
+
                             if (candidateService == null && dependencyInfo.Required)
                             {
                                 throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
                             }
                             else
                             {
+                                if (candidateService != null && preferredForServices.Any(s => s.IsAssignableFrom(candidateService.GetType()))) // Replace with a specific implementation
+                                {
+                                    dependentServiceType = candidateService.GetType();
+                                }
                                 var expr = Expression.Convert(Expression.Call(
                                     Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
                                     (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
-                                    Expression.Constant(dependencyInfo.Type)), dependencyInfo.Type);
+                                    Expression.Constant(dependentServiceType)), dependencyInfo.Type);
                                 //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
-                                parameterValues[i] = expr;
+                                parameterValues[i] = expr; // Expression.Convert(Expression.Constant(candidateService), dependentServiceType); //expr;
                             }
                         }
 
@@ -601,6 +785,11 @@ namespace SanteDB.Core.Services.Impl
 
                     this.m_activators.TryAdd(type, activator);
                 }
+                else
+                {
+                    injectedServices = activator.Method.GetParameters().Select(o => o.ParameterType).ToArray();
+                }
+                injectedServices = injectedServices.OfType<Type>().ToArray(); // filter out nulls
                 return activator();
             }
             finally
@@ -623,10 +812,12 @@ namespace SanteDB.Core.Services.Impl
         /// <typeparam name="TInterface">The type of interface to construct</typeparam>
         public IEnumerable<TInterface> CreateInjectedOfAll<TInterface>(Assembly fromAssembly = null)
         {
+            var interfacetype = typeof(TInterface);
+
             if (fromAssembly == null)
             {
                 return this.GetAllTypes()
-                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                    .Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
                     .Select(t =>
                     {
                         try
@@ -643,10 +834,10 @@ namespace SanteDB.Core.Services.Impl
             }
             else
             {
-                return fromAssembly.ExportedTypes
-                    .Where(t => typeof(TInterface).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                    .Select(t => this.CreateInjected(t))
-                    .OfType<TInterface>();
+                return fromAssembly.GetExportedTypesSafe().Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                        .Select(t => this.CreateInjected(t))
+                        .OfType<TInterface>();
+
             }
         }
 
@@ -662,6 +853,34 @@ namespace SanteDB.Core.Services.Impl
                     this.m_serviceFactories.Add(serviceFactory);
                 }
             }
+        }
+
+        /// <summary>
+        /// Create all instances of <typeparamref name="T"/>
+        /// </summary>
+        public IEnumerable<T> CreateAll<T>(params object[] parms)
+        {
+            var ttype = typeof(T);
+
+            return this.GetAllTypes().Where(t => ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
+                .Select(t =>
+                {
+                    try
+                    {
+                        return Activator.CreateInstance(t, parms);
+                    }
+                    catch
+                    {
+                        return Activator.CreateInstance(t);
+                    }
+                })
+                .OfType<T>();
+        }
+
+        /// <inheritdoc/>
+        public void NotifyStartupProgress(float startupProgress, string startupChangeText)
+        {
+            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(startupProgress, startupChangeText));
         }
     }
 }

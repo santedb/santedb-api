@@ -16,15 +16,26 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-5
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Interfaces;
+using SanteDB.Core.Data;
+using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Security;
+using SanteDB.Core.Notifications;
+using SanteDB.Core.Queue;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
+using System.Security.Principal;
 
 namespace SanteDB.Core
 {
@@ -33,6 +44,8 @@ namespace SanteDB.Core
     /// </summary>
     public static class ExtensionMethods
     {
+
+
         /// <summary>
         /// Create injected class
         /// </summary>
@@ -40,6 +53,37 @@ namespace SanteDB.Core
         {
             return ApplicationServiceContext.Current.GetService<IServiceManager>().CreateInjected(me);
         }
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
+        /// </summary>
+        public static T ResolveManagedRecord<T>(this T forSource) where T : IdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveManagedRecord(forSource) ?? forSource;
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveOwnedRecord(T)"/>
+        /// </summary>
+        public static T ResolveOwnedRecord<T>(this T forSource, IPrincipal ownerPrincipal) where T : IdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
+
+        /// <summary>
+        /// Non generic method of <see cref="ResolveOwnedRecord{T}(T, IPrincipal)"/>
+        /// </summary>
+        public static IdentifiedData ResolveOwnedRecord(this IdentifiedData forSource, IPrincipal ownerPrincipal)
+            => ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
+
+        /// <summary>
+        /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>
+        /// </summary>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<Model.Association<T>> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
+
+        /// <summary>
+        /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
+        /// </summary>
+        public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : IdentifiedData =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
+
 
         /// <summary>
         /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
@@ -88,5 +132,182 @@ namespace SanteDB.Core
         /// <returns>True if the status of the job state implies the job is running</returns>
         public static bool IsRunning(this IJobState me) => me.CurrentState == JobStateType.Running || me.CurrentState == JobStateType.Starting;
 
+        /// <summary>
+		/// Get application provider service
+		/// </summary>
+		/// <param name="me">The current application context.</param>
+		/// <returns>Returns an instance of the <see cref="IApplicationIdentityProviderService"/>.</returns>
+		public static IApplicationIdentityProviderService GetApplicationProviderService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IApplicationIdentityProviderService>();
+        }
+
+        /// <summary>
+        /// Gets the assigning authority repository service.
+        /// </summary>
+        /// <param name="me">The current application context.</param>
+        /// <returns>Returns an instance of the <see cref="IIdentityDomainRepositoryService"/>.</returns>
+        public static IIdentityDomainRepositoryService GetAssigningAuthorityService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IIdentityDomainRepositoryService>();
+        }
+
+        /// <summary>
+        /// Gets the business rules service for a specific information model.
+        /// </summary>
+        /// <typeparam name="T">The type of information for which to retrieve the business rules engine instance.</typeparam>
+        /// <param name="me">The application context.</param>
+        /// <returns>Returns an instance of the business rules service.</returns>
+        public static IBusinessRulesService<T> GetBusinessRulesService<T>(this IApplicationServiceContext me) where T : IdentifiedData
+        {
+            return me.GetService<IBusinessRulesService<T>>();
+        }
+
+        /// <summary>
+        /// Get the concept service.
+        /// </summary>
+        /// <param name="me">The current application context.</param>
+        /// <returns>Returns an instance of the <see cref="IConceptRepositoryService"/>.</returns>
+        public static IConceptRepositoryService GetConceptService(this IApplicationServiceContext me)
+        {
+            return me.GetService<IConceptRepositoryService>();
+        }
+
+        /// <summary>
+        /// Gets the <see cref="INotificationService"/> instance from <paramref name="context"/>.
+        /// </summary>
+        /// <param name="context">The service context to get the <see cref="INotificationService"/> from.</param>
+        /// <returns>The <see cref="INotificationService"/> in the <paramref name="context"/>.</returns>
+        public static INotificationService GetNotificationService(this IApplicationServiceContext context)
+            => context.GetService<INotificationService>();
+
+        /// <summary>
+        /// Get the audit service.
+        /// </summary>
+        /// <param name="me">The application context.</param>
+        /// <returns>Returns an instance of the <see cref="IAuditService"/>.</returns>
+        public static IAuditService GetAuditService(this IApplicationServiceContext me) => me.GetService<IAuditService>();
+
+        /// <summary>
+        /// Gets the user identifier for a given identity.
+        /// </summary>
+        /// <returns>Returns a string which represents the users identifier, or null if unable to retrieve the users identifier.</returns>
+        public static string GetUserId(IIdentity source)
+        {
+            return GetUserId<string>(source);
+        }
+
+        /// <summary>
+        /// Gets the user identifier for a given identity.
+        /// </summary>
+        /// <typeparam name="T">The type of the identifier of the user.</typeparam>
+        /// <returns>Returns the users identifier, or null if unable to retrieve the users identifier.</returns>
+        public static T GetUserId<T>(IIdentity source) where T : IConvertible
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source), "Value cannot be null");
+            }
+
+            var userId = default(T);
+
+            var nameIdentifierClaimValue = (source as IClaimsIdentity)?.Claims.FirstOrDefault(c => c.Type == SanteDBClaimTypes.NameIdentifier)?.Value;
+
+            if (nameIdentifierClaimValue != null)
+            {
+                userId = (T)Convert.ChangeType(nameIdentifierClaimValue, typeof(T), CultureInfo.InvariantCulture);
+            }
+
+            return userId;
+        }
+
+        /// <summary>
+        /// Convert to policy instance
+        /// </summary>
+        public static SecurityPolicyInstance ToPolicyInstance(this IPolicyInstance me)
+        {
+            return new SecurityPolicyInstance(
+                new SecurityPolicy()
+                {
+                    CanOverride = me.Policy.CanOverride,
+                    Oid = me.Policy.Oid,
+                    Name = me.Policy.Name
+                },
+                (PolicyGrantType)(int)me.Rule
+            );
+        }
+
+        /// <summary>
+        /// Tries to dequeue a message from the dispatcher queue. Returns <c>true</c> if successful, <c>false</c> otherwise.
+        /// </summary>
+        /// <param name="svc">The service implementation to dequeue from.</param>
+        /// <param name="queueName">The name of the queue to dequeue from.</param>
+        /// <param name="queueEntry">Out; the entry that was dequeued.</param>
+        /// <returns>True if the operation succeeded, false otherwise.</returns>
+        public static bool TryDequeue(this IDispatcherQueueManagerService svc, string queueName, out DispatcherQueueEntry queueEntry)
+        {
+            var entry = svc.Dequeue(queueName);
+            queueEntry = entry;
+            return null != entry;
+        }
+
+        /// <summary>
+        /// Set timeout on <paramref name="me"/> to <paramref name="millisecondTimeout"/>
+        /// </summary>
+        /// <param name="me">The rest client to set the timeout  on</param>
+        /// <param name="millisecondTimeout">The timeout to set</param>
+        public static void SetTimeout(this IRestClient me, int millisecondTimeout)
+        {
+            me.Description.Endpoint.ForEach(o => { o.Timeout = new TimeSpan(0, 0, 0, 0, millisecondTimeout); });
+        }
+
+        /// <summary>
+        ///     Creates a <see cref="Dictionary{TKey, TValue}"/> from an <see cref="IEnumerable{T}"/>
+        ///     according to specified key selector function. Diplicate keys will not be added to the dictionary.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source.</typeparam>
+        /// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/> to create a <see cref="Dictionary{TKey, TValue}"/> from.</param>
+        /// <param name="keySelector">A function to extract a key from each element.</param>
+        /// <returns>
+        ///     A <see cref="Dictionary{TKey, TValue}"/> that contains values of type <typeparamref name="TSource"/> selected from the input sequence.
+        /// </returns>
+        public static Dictionary<TKey, TSource> ToDictionaryIgnoringDuplicates<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+            => ToDictionaryIgnoringDuplicates(source, keySelector, v => v);
+
+
+        /// <summary>
+        ///     Creates a <see cref="Dictionary{TKey, TValue}"/> from an <see cref="IEnumerable{T}"/>
+        ///     according to specified key selector and element selector functions. Diplicate keys will not be added to the dictionary.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements of source.</typeparam>
+        /// <typeparam name="TKey">The type of the key returned by keySelector.</typeparam>
+        /// <typeparam name="TElement">The type of the value returned by elementSelector.</typeparam>
+        /// <param name="source">An <see cref="IEnumerable{T}"/> to create a <see cref="Dictionary{TKey, TValue}"/> from.</param>
+        /// <param name="keySelector">A function to extract a key from each element.</param>
+        /// <param name="valueSelector">A transform function to produce a result element value from each element.</param>
+        /// <returns>
+        ///     A <see cref="Dictionary{TKey, TValue}"/> that contains values of type <typeparamref name="TElement"/> selected from the input sequence.
+        /// </returns>
+        public static Dictionary<TKey, TElement> ToDictionaryIgnoringDuplicates<TSource, TKey, TElement>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> valueSelector)
+        {
+            if (null == source)
+            {
+                return null;
+            }
+
+            var dict = new Dictionary<TKey, TElement>();
+
+            foreach (var item in source)
+            {
+                var key = keySelector(item);
+                if (!dict.ContainsKey(key))
+                {
+                    dict.Add(key, valueSelector(item));
+                }
+            }
+
+            return dict;
+        }
     }
 }

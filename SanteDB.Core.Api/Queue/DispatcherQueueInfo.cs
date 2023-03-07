@@ -16,10 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-19
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model;
 using System;
 using System.Xml.Serialization;
 

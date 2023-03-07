@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -44,12 +44,19 @@ namespace SanteDB.Core.Security.Claims
         public SanteDBClaimsIdentity(String userName, bool isAuthenticated, string authenticationMethod, IEnumerable<IClaim> claims = null)
         {
             if (claims != null)
+            {
                 this.m_claims = new List<IClaim>(claims);
+            }
             else
+            {
                 this.m_claims = new List<IClaim>();
+            }
 
             if (!this.m_claims.Exists(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType))
+            {
                 this.m_claims.Add(new SanteDBClaim(SanteDBClaimTypes.DefaultNameClaimType, userName));
+            }
+
             this.IsAuthenticated = isAuthenticated;
             this.AuthenticationType = authenticationMethod;
         }
@@ -73,21 +80,25 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Add a claim
         /// </summary>
-        public void AddClaim(IClaim claim)
+        protected void AddClaim(IClaim claim)
         {
-            if(!this.m_claims.Any(c=>c.Type == claim.Type && c.Value == claim.Value))
+            if (!this.m_claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
+            {
                 this.m_claims.Add(claim);
+            }
         }
 
         /// <summary>
         /// Add a claim
         /// </summary>
-        public void AddClaims(IEnumerable<IClaim> claims)
+        protected void AddClaims(IEnumerable<IClaim> claims)
         {
             foreach (var claim in claims)
             {
                 if (!this.m_claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
+                {
                     this.m_claims.Add(claim);
+                }
             }
         }
 
@@ -110,7 +121,7 @@ namespace SanteDB.Core.Security.Claims
         /// <summary>
         /// Remove the specified claim
         /// </summary>
-        public void RemoveClaim(IClaim claim)
+        protected void RemoveClaim(IClaim claim)
         {
             this.m_claims.Remove(claim);
         }

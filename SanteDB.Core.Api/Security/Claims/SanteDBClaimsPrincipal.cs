@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -72,6 +72,14 @@ namespace SanteDB.Core.Security.Claims
         }
 
         /// <summary>
+        /// Identities
+        /// </summary>
+        public SanteDBClaimsPrincipal(IEnumerable<IIdentity> identities)
+        {
+            this.m_identities = identities.Select(o => o is IClaimsIdentity ? o : new SanteDBClaimsIdentity(o)).OfType<IClaimsIdentity>().ToList();
+        }
+
+        /// <summary>
         /// Gets the claims in all the identities
         /// </summary>
         /// <value>The claims.</value>
@@ -81,7 +89,10 @@ namespace SanteDB.Core.Security.Claims
             {
                 var claims = this.m_identities.SelectMany(o => o.Claims).ToList();
                 while (claims.Count(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType) > 1)
+                {
                     claims.Remove(claims.Last(o => o.Type == SanteDBClaimTypes.DefaultNameClaimType));
+                }
+
                 return claims;
             }
         }
@@ -123,9 +134,13 @@ namespace SanteDB.Core.Security.Claims
         public void AddIdentity(IIdentity identity)
         {
             if (identity is IClaimsIdentity)
+            {
                 this.m_identities.Add(identity as IClaimsIdentity);
+            }
             else
+            {
                 this.m_identities.Add(new SanteDBClaimsIdentity(identity));
+            }
         }
 
         /// <summary>

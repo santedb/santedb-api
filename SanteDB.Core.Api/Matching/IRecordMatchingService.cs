@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-9-15
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace SanteDB.Core.Matching
         /// <param name="ignoreList">The list of keys which should be ignored (in addition to the IRecordMergingService instructions)</param>
         /// <param name="collector">If the blocking is to be debugged this is the collector</param>
         /// <returns>The record which match the blocking configuration for type <typeparamref name="T"/></returns>
-        IEnumerable<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList, IRecordMatchingDiagnosticSession collector = null) where T : IdentifiedData;
+        IQueryResultSet<T> Block<T>(T input, string configurationId, IEnumerable<Guid> ignoreList, IRecordMatchingDiagnosticSession collector = null) where T : IdentifiedData;
 
         /// <summary>
         /// Instructs the record matcher to run a detailed classification on the matching blocks in <paramref name="blocks"/>

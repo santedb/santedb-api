@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -119,5 +119,11 @@ namespace SanteDB.Core.Services
         /// <param name="queryId">The unique query identifier for which the tag value is being set</param>
         /// <param name="value">The value of the tag to set on the query</param>
         void SetQueryTag(Guid queryId, object value);
+
+        /// <summary>
+        /// Abort the query <paramref name="queryId"/>
+        /// </summary>
+        /// <param name="queryId"></param>
+        void AbortQuerySet(Guid queryId);
     }
 }

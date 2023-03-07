@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
@@ -125,5 +125,8 @@ namespace SanteDB.Core.BusinessRules
         /// <seealso cref="DetectedIssueKeys"/>
         [XmlAttribute("type"), JsonProperty("type")]
         public Guid TypeKey { get; set; }
+
+        /// <inheritdoc/>
+        public override string ToString() => $"{this.Priority} ({this.Id}) - {this.Text}";
     }
 }

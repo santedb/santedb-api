@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
@@ -25,7 +25,6 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Quality
@@ -35,11 +34,12 @@ namespace SanteDB.Core.Data.Quality
     /// </summary>
     public class DataQualityExtensionCleanJob : IJob
     {
-
         // Clean obsolete tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
         // State manager
         private readonly IJobStateManagerService m_stateManagerService;
+        private readonly IDataPersistenceServiceEx<EntityExtension> m_entityExtensionPersistence;
+        private readonly IDataPersistenceServiceEx<ActExtension> m_actExtensionPersistence;
 
         /// <summary>
         /// Gets the id of the job
@@ -57,8 +57,10 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService)
+        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService, IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence, IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
         {
+            this.m_entityExtensionPersistence = entityExtensionPersistence;
+            this.m_actExtensionPersistence = actExtensionPersistence;
             this.m_stateManagerService = stateManagerService;
         }
 
@@ -85,36 +87,19 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
-
             this.m_tracer.TraceInfo("Starting clean of data quality extensions...");
             try
             {
                 this.m_stateManagerService.SetState(this, JobStateType.Running);
 
-                var entityService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityExtension>>();
-                var actService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActExtension>>();
+
 
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
-                int ofs = 0, tr = 1;
-                while (ofs < tr)
+                using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
                 {
-                    var results = entityService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
-                    foreach (EntityExtension r in results)
-                        entityService.Obsolete(r, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    ofs += 100;
+                    this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
-
-                this.m_tracer.TraceInfo("Cleaning Act extensions...");
-                ofs = 0;
-                tr = 1;
-                while (ofs < tr)
-                {
-                    var results = actService.Query(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, ofs, 100, out tr, AuthenticationContext.SystemPrincipal) as IEnumerable;
-                    foreach (ActExtension r in results)
-                        actService.Obsolete(r, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    ofs += 100;
-                }
-
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
                 this.m_stateManagerService.SetState(this, JobStateType.Completed);

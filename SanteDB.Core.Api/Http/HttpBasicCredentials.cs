@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Principal;
 using System.Text;
 
@@ -28,7 +29,7 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a credential provider which does basic http
     /// </summary>
-    public class HttpBasicCredentials : Credentials
+    public class HttpBasicCredentials : RestRequestCredentials
     {
         // Password
         private String m_password;
@@ -50,7 +51,10 @@ namespace SanteDB.Core.Http
         public HttpBasicCredentials(IPrincipal principal, string password) : base(principal)
         {
             if (!principal.Identity.IsAuthenticated)
+            {
                 throw new InvalidOperationException("Principal must be authenticated");
+            }
+
             this.m_userName = principal.Identity.Name;
             this.m_password = password;
 
@@ -59,13 +63,10 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the HTTP headers
         /// </summary>
-        public override Dictionary<string, string> GetHttpHeaders()
+        public override void SetCredentials(HttpWebRequest request)
         {
             var authString = String.Format("{0}:{1}", this.m_userName, this.m_password);
-            return new Dictionary<string, string>()
-            {
-                {  "Authorization", String.Format("BASIC {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(authString))) }
-            };
+            request.Headers.Add(HttpRequestHeader.Authorization, String.Format("BASIC {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(authString))));
         }
     }
 }

@@ -16,14 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -100,9 +99,13 @@ namespace SanteDB.Core.Security
             if (!DateTime.TryParse(me.Value, out var value))
             {
                 if (Int32.TryParse(me.Value, out int offset))
+                {
                     value = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(offset).ToLocalTime();
+                }
                 else
+                {
                     throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
+                }
             }
             return value;
         }
@@ -131,7 +134,7 @@ namespace SanteDB.Core.Security
         {
             try
             {
-                using (var store = new X509Store(StoreLocation.LocalMachine))
+                using (var store = new X509Store(StoreLocation.CurrentUser))
                 {
                     store.Open(OpenFlags.ReadOnly);
                     // Chain isn't valid but we should allow SSI code signing cert if it appears in the chain
@@ -149,18 +152,14 @@ namespace SanteDB.Core.Security
 
                                 if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Trust"))
                                 {
-                                    storeName = StoreName.Root;
+                                    storeName = StoreName.AuthRoot;
                                 }
                                 else if (crt.StartsWith($"{typeof(SecurityExtensions).Namespace}.Certs.Inter"))
                                 {
                                     storeName = StoreName.CertificateAuthority;
                                 }
 
-                                using (var trustStore = new X509Store(storeName, StoreLocation.LocalMachine))
-                                {
-                                    trustStore.Open(OpenFlags.ReadWrite);
-                                    trustStore.Add(certTrust);
-                                }
+                                X509CertificateUtils.InstallCertificate(storeName, certTrust);
                             }
                         }
                     }
@@ -222,7 +221,71 @@ namespace SanteDB.Core.Security
                     retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindBySubjectName, me.Subject, false).Count > 0;
                 }
             }
+
+            // Check for my own certificates
+            if (!retVal)
+            {
+                using (var trustedPublisherStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                {
+                    trustedPublisherStore.Open(OpenFlags.ReadOnly);
+                    retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
+                }
+            }
             return retVal || HasTrustedRootCert(chain);
+        }
+
+        /// <summary>
+        /// Gets the first claim value out of an <see cref="IClaimsIdentity"/> searching in the order of claim types provided in the <paramref name="claimTypes"/> parameters.
+        /// </summary>
+        /// <param name="identity">The identity to search</param>
+        /// <param name="claimTypes">the claim types to search</param>
+        /// <returns>A value for the first instance of the first claim type found or null.</returns>
+        public static string GetFirstClaimValue(this IClaimsIdentity identity, params string[] claimTypes)
+        {
+            if (null == identity || null == claimTypes || claimTypes.Length == 0)
+            {
+                return null;
+            }
+
+            IClaim claim = null;
+            foreach(var claimtype in claimTypes)
+            {
+                claim = identity.FindFirst(claimtype);
+
+                if (null != claim)
+                {
+                    return claim.Value;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the first value of a matching claim type from an <see cref="IClaimsPrincipal"/> searching in the order specified in the parameters.
+        /// </summary>
+        /// <param name="principal">The claims principal to search.</param>
+        /// <param name="claimTypes">The ordered set of claim types to search.</param>
+        /// <returns>A value for the first instance of the first claim type found or null.</returns>
+        public static string GetFirstClaimValue(this IClaimsPrincipal principal, params string[] claimTypes)
+        {
+            if (null == principal || null == claimTypes || claimTypes.Length == 0)
+            {
+                return null;
+            }
+
+            IClaim claim = null;
+            foreach(var claimtype in claimTypes)
+            {
+                claim = principal.FindFirst(claimtype);
+
+                if (null != claim)
+                {
+                    return claim.Value;
+                }
+            }
+
+            return null;
         }
     }
 }

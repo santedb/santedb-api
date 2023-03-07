@@ -16,13 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Queue;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System.Linq;
 
@@ -39,7 +37,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Bundle repository listener ctor
         /// </summary>
-        public BundleRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager) : base(pubSubManager, queueService, serviceManager)
+        public BundleRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<Bundle> repositoryService) : base(pubSubManager, queueService, serviceManager, repositoryService, null)
         {
             this.m_queue = queueService;
         }
@@ -68,6 +66,8 @@ namespace SanteDB.Core.PubSub.Broker
                     case Model.DataTypes.BatchOperationType.Delete:
                         queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Delete, itm);
                         break;
+                    case Model.DataTypes.BatchOperationType.Ignore:
+                        return;
                 }
 
                 this.m_queue.Enqueue(PubSubBroker.QueueName, queueEntry);
@@ -85,7 +85,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Notify obsoleted
         /// </summary>
-        protected override void OnObsoleted(object sender, DataPersistedEventArgs<Bundle> evt)
+        protected override void OnDeleted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
             this.OnInserted(sender, evt);
         }

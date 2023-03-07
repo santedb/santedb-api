@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 
@@ -34,22 +35,27 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Merge was completed as instructed
         /// </summary>
-        Success,
-
-        /// <summary>
-        /// Merge was submitted but is not complete
-        /// </summary>
-        Submitted,
+        Success = 0x0,
 
         /// <summary>
         /// Merge was cancelled
         /// </summary>
-        Cancelled,
+        Aborted = 0x1,
 
         /// <summary>
         /// An alternate merging strategy was used
         /// </summary>
-        Alternate
+        Alternate = 0x2,
+
+        /// <summary>
+        /// A link was used instead 
+        /// </summary>
+        LinkInsteadOfMerge = 0x4,
+
+        /// <summary>
+        /// A destructive merge was used
+        /// </summary>
+        DestructiveMerge = 0x8
     }
 
     /// <summary>
@@ -100,12 +106,12 @@ namespace SanteDB.Core.Services
         /// Get merge candidate keys
         /// </summary>
         /// <param name="masterKey">The key of the master</param>
-        IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey);
+        IQueryResultSet<IdentifiedData> GetMergeCandidates(Guid masterKey);
 
         /// <summary>
         /// Get all merge candidates
         /// </summary>
-        IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates(int count, int offset, out int totalResults);
+        IQueryResultSet<ITargetedAssociation> GetGlobalMergeCandidates();
 
         /// <summary>
         /// Gets the ignore list for the specified master record
@@ -115,7 +121,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets the ignore list for the specified master record
         /// </summary>
-        IEnumerable<IdentifiedData> GetIgnored(Guid masterKey);
+        IQueryResultSet<IdentifiedData> GetIgnored(Guid masterKey);
 
         /// <summary>
         /// Indicates that the engine should ignore the specified false positives

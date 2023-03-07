@@ -16,9 +16,8 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -59,7 +58,7 @@ namespace SanteDB.Core.Services.Impl
         private object s_lock = new object();
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
 
         /// <summary>
         /// Maximum concurrency for the thread pool
@@ -197,7 +196,7 @@ namespace SanteDB.Core.Services.Impl
                         {
                             if (this.m_threadPool[i] == null)
                             {
-                                this.m_threadPool[i] = this.CreateThreadPoolThread();
+                                this.m_threadPool[i] = this.CreateThreadPoolThread(i);
                                 this.m_threadPool[i].Start();
                             }
                         }
@@ -217,7 +216,7 @@ namespace SanteDB.Core.Services.Impl
                 m_threadPool = new Thread[this.m_minPoolWorkers];
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
-                    m_threadPool[i] = this.CreateThreadPoolThread();
+                    m_threadPool[i] = this.CreateThreadPoolThread(i);
                     m_threadPool[i].Start();
                 }
             }
@@ -226,11 +225,11 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Create a thread pool thread
         /// </summary>
-        private Thread CreateThreadPoolThread()
+        private Thread CreateThreadPoolThread(int threadNumber)
         {
             return new Thread(this.DispatchLoop)
             {
-                Name = String.Format("SanteDB-ThreadPoolThread"),
+                Name = String.Format($"SanteDB-ThreadPoolThread-{threadNumber}"),
                 IsBackground = true,
                 Priority = ThreadPriority.AboveNormal
             };
@@ -248,7 +247,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 try
                 {
-                    this.m_resetEvent.Wait(30000);
+                    this.m_resetEvent.Wait(3000);
 
                     if (threadPoolIndex >= this.m_minPoolWorkers &&
                         this.m_queue.IsEmpty &&
@@ -269,12 +268,12 @@ namespace SanteDB.Core.Services.Impl
                             try
                             {
                                 lastActivityJobTime = DateTime.Now.Ticks;
-                                Interlocked.Increment(ref m_busyWorkers);
+                                Interlocked.Increment(ref this.m_busyWorkers);
                                 wi.Callback(wi.State);
                             }
                             finally
                             {
-                                Interlocked.Decrement(ref m_busyWorkers);
+                                Interlocked.Decrement(ref this.m_busyWorkers);
                             }
                         }
                     }
@@ -297,7 +296,9 @@ namespace SanteDB.Core.Services.Impl
         private void ThrowIfDisposed()
         {
             if (this.m_disposing)
+            {
                 throw new ObjectDisposedException(nameof(DefaultThreadPoolService));
+            }
         }
 
         /// <summary>
@@ -305,7 +306,10 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void Dispose()
         {
-            if (this.m_disposing) return;
+            if (this.m_disposing)
+            {
+                return;
+            }
 
             this.m_disposing = true;
 
@@ -315,7 +319,14 @@ namespace SanteDB.Core.Services.Impl
             {
                 for (int i = 0; i < m_threadPool.Length; i++)
                 {
-                    m_threadPool[i]?.Abort();
+                    try
+                    {
+                        m_threadPool[i]?.Abort();
+                    }
+                    catch (PlatformNotSupportedException)
+                    {
+                        //TODO: we need to properly cancel the pool threads using a cancellationtoken.
+                    }
                     m_threadPool[i] = null;
                 }
             }
@@ -327,7 +338,7 @@ namespace SanteDB.Core.Services.Impl
         public void GetWorkerStatus(out int totalWorkers, out int availableWorkers, out int waitingQueue)
         {
             totalWorkers = this.m_threadPool.Length;
-            availableWorkers = totalWorkers - (int)this.m_busyWorkers;
+            availableWorkers = totalWorkers - (int)Interlocked.Read(ref this.m_busyWorkers);
             waitingQueue = this.m_queue.Count;
         }
     }

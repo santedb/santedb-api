@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
@@ -42,17 +42,10 @@ namespace SanteDB.Core.Services
     {
 
         /// <summary>
-        /// Generate a barcode from the specified identifier
+        /// Get the <see cref="IBarcodeGenerator"/> for <paramref name="barcodeAlgorithm"/>
         /// </summary>
-        /// <typeparam name="TEntity">The type of entity to which the identifier is attached</typeparam>
-        Stream Generate<TEntity>(IEnumerable<IdentifierBase<TEntity>> identifers)
-            where TEntity : VersionedEntityData<TEntity>, new();
-
-        /// <summary>
-        /// Generate the barcode from raw data
-        /// </summary>
-        /// <param name="rawData"></param>
-        /// <returns></returns>
-        Stream Generate(String rawData);
+        /// <param name="barcodeAlgorithm">The algorithm for which the generator is to be retrieved</param>
+        /// <returns>The barocde generator</returns>
+        IBarcodeGenerator GetBarcodeGenerator(String barcodeAlgorithm);
     }
 }

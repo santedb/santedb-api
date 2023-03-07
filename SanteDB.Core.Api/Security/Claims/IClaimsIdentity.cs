@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -45,19 +45,5 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         IEnumerable<IClaim> FindAll(String claimType);
 
-        /// <summary>
-        /// Add a single claim
-        /// </summary>
-        void AddClaim(IClaim claim);
-
-        /// <summary>
-        /// Add multiple claims
-        /// </summary>
-        void AddClaims(IEnumerable<IClaim> claims);
-
-        /// <summary>
-        /// Remove a claim
-        /// </summary>
-        void RemoveClaim(IClaim claim);
     }
 }

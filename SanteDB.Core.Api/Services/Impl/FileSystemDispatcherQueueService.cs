@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-19
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -28,10 +28,11 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
 
@@ -40,12 +41,13 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// A persistent queue service that uses the file system (use when there's no other infrastructure)
     /// </summary>
+    [DisplayName("File System Dispatcher"), Description("Persistent queue service using a file system directory for storage")]
     public class FileSystemDispatcherQueueService : IDispatcherQueueManagerService, IDisposable
     {
 
         // Ticks for system time
         private long m_ctr = DateTime.Now.Ticks;
-        
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -61,6 +63,13 @@ namespace SanteDB.Core.Services.Impl
         [XmlRoot(nameof(QueueEntry), Namespace = "http://santedb.org/fsqueue")]
         public class QueueEntry
         {
+
+            /// <summary>
+            /// True if compressed
+            /// </summary>
+            [XmlAttribute("compressed")]
+            public bool Compressed { get; set; }
+
             /// <summary>
             /// Data contained
             /// </summary>
@@ -87,9 +96,13 @@ namespace SanteDB.Core.Services.Impl
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(data.GetType());
                 using (var ms = new MemoryStream())
                 {
-                    xsz.Serialize(ms, data);
+                    using (var df = new DeflateStream(ms, CompressionMode.Compress, true))
+                    {
+                        xsz.Serialize(df, data);
+                    }
                     return new QueueEntry()
                     {
+                        Compressed = true,
                         Type = data.GetType().AssemblyQualifiedName,
                         XmlData = ms.ToArray(),
                         CreationTime = DateTime.Now
@@ -105,6 +118,13 @@ namespace SanteDB.Core.Services.Impl
                 XmlSerializer xsz = XmlModelSerializerFactory.Current.CreateSerializer(System.Type.GetType(this.Type));
                 using (var ms = new MemoryStream(this.XmlData))
                 {
+                    if (this.Compressed)
+                    {
+                        using (var df = new DeflateStream(ms, CompressionMode.Decompress, false))
+                        {
+                            return xsz.Deserialize(df);
+                        }
+                    }
                     return xsz.Deserialize(ms);
                 }
             }
@@ -128,6 +148,8 @@ namespace SanteDB.Core.Services.Impl
             }
         }
 
+        private readonly ISymmetricCryptographicProvider m_symmetricCrypto;
+
         // Queue root directory
         private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
@@ -139,6 +161,8 @@ namespace SanteDB.Core.Services.Impl
 
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
+
+        private CancellationTokenSource m_ListenThreadCancellationTokenSource;
 
         /// <summary>
         /// Queue file
@@ -154,35 +178,69 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Initializes the file system queue
         /// </summary>
-        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
+        public FileSystemDispatcherQueueService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService, ISymmetricCryptographicProvider symmetricCryptographicProvider)
         {
-            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>();
+            this.m_symmetricCrypto = symmetricCryptographicProvider;
+            this.m_configuration = configurationManager.GetSection<FileSystemDispatcherQueueConfigurationSection>() ??
+                new FileSystemDispatcherQueueConfigurationSection() { QueuePath = "queue" };
             if (!Directory.Exists(this.m_configuration.QueuePath))
+            {
                 Directory.CreateDirectory(this.m_configuration.QueuePath);
+            }
+
             this.m_pepService = pepService;
 
+            this.m_ListenThreadCancellationTokenSource = new CancellationTokenSource();
+
             // Listener thread
-            this.m_listenerThread = new Thread(() =>
+            this.m_listenerThread = new Thread((object state) =>
             {
-                while (true)
+                CancellationToken token;
+
+                if (state is CancellationToken cts)
                 {
-                    this.m_resetEvent.Wait();
-                    while (this.m_notificationQueue.TryDequeue(out var result))
+                    token = cts;
+                }
+                else
+                {
+                    token = CancellationToken.None;
+                }
+
+                while (!(this.m_disposed || token.IsCancellationRequested))
+                {
+                    try
+                    {
+                        this.m_resetEvent.Wait(1000, token);
+                    }
+                    catch (OperationCanceledException) { }
+
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    while (this.m_notificationQueue.TryDequeue(out var result) && !String.IsNullOrEmpty(this.GetQueueFile(result.QueueName, result.CorrelationId)))
                     {
                         if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
                         {
-                            foreach (var cb in callbacks)
+                            foreach (var cb in callbacks.ToArray())
                             {
                                 cb(result);
                             }
                         }
                     }
+
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
                     this.m_resetEvent.Reset();
                 }
             });
             this.m_listenerThread.IsBackground = true;
             this.m_listenerThread.Name = "FileSystemListener";
-            this.m_listenerThread.Start();
+            this.m_listenerThread.Start(m_ListenThreadCancellationTokenSource.Token);
 
         }
 
@@ -195,6 +253,36 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Determines whether the specified file is locked
+        /// </summary>
+        private bool IsFileLocked(String fileName, out bool isEmpty)
+        {
+            FileStream stream = null;
+            try
+            {
+                stream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                isEmpty = stream.Length == 0;
+            }
+            catch (IOException)
+            {
+                //the file is unavailable because it is:
+                //still being written to
+                //or being processed by another thread
+                //or does not exist (has already been processed)
+                isEmpty = false;
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+
+            //file is not locked
+            return false;
+        }
+
+        /// <summary>
         /// Dequeue by identifier
         /// </summary>
         public Queue.DispatcherQueueEntry DequeueById(string queueName, string correlationId)
@@ -202,35 +290,35 @@ namespace SanteDB.Core.Services.Impl
             try
             {
                 if (String.IsNullOrEmpty(queueName))
+                {
                     throw new ArgumentNullException(nameof(queueName));
+                }
 
                 // Open the queue
                 this.Open(queueName);
-
-                String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
-
-                // Serialize
-                String queueFile = null;
-
-                if (String.IsNullOrEmpty(correlationId))
+                var queueFile = this.GetQueueFile(queueName, correlationId);
+                if (String.IsNullOrEmpty(queueFile))
                 {
-                    queueFile = Directory.GetFiles(queueDirectory).FirstOrDefault();
-                }
-                else
-                {
-                    queueFile = Path.Combine(queueDirectory, correlationId);
+                    return null;
                 }
 
-                if (queueFile == null || !File.Exists(queueFile)) return null;
+                bool isEmpty = false;
+                while (this.IsFileLocked(queueFile, out isEmpty))
+                {
+                    Thread.Sleep(100);
+                }
+                if (isEmpty)
+                {
+                    File.Delete(queueFile);
+                    return this.Dequeue(queueName);
+                }
 
                 this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
                 try
                 {
-                    using (var fs = File.OpenRead(queueFile))
-                    {
-                        retVal = QueueEntry.Load(fs);
-                    }
+                    retVal = this.ReadQueueEntry(queueFile);
+
                 }
                 finally
                 {
@@ -248,14 +336,61 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <summary>
+        /// Read a queue entry
+        /// </summary>
+        private QueueEntry ReadQueueEntry(string queueFile)
+        {
+            using (var fs = File.OpenRead(queueFile))
+            {
+                var iv = new byte[16];
+                fs.Read(iv, 0, iv.Length);
+                using (var cs = this.m_symmetricCrypto.CreateDecryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
+                {
+                    return QueueEntry.Load(cs);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get queue file
+        /// </summary>
+        private string GetQueueFile(string queueName, string correlationId)
+        {
+
+            String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
+
+            // Serialize
+            String queueFile = null;
+
+            if (String.IsNullOrEmpty(correlationId))
+            {
+                queueFile = Directory.EnumerateFiles(queueDirectory).FirstOrDefault();
+            }
+            else
+            {
+                queueFile = Path.Combine(queueDirectory, correlationId);
+            }
+
+            if (queueFile == null || !File.Exists(queueFile))
+            {
+                return null;
+            }
+            return queueFile;
+        }
+
+        /// <summary>
         /// Queue an item to the queue
         /// </summary>
         public void Enqueue(string queueName, object data)
         {
             if (String.IsNullOrEmpty(queueName))
+            {
                 throw new ArgumentNullException(nameof(queueName));
+            }
             else if (data == null)
+            {
                 throw new ArgumentNullException(nameof(data));
+            }
 
             // Open the queue
             this.Open(queueName);
@@ -275,10 +410,17 @@ namespace SanteDB.Core.Services.Impl
             }
 
             using (var fs = File.Create(filePath))
-                QueueEntry.Create(data).Save(fs);
+            {
+                var iv = this.m_symmetricCrypto.GenerateIV();
+                fs.Write(iv, 0, iv.Length);
+                using (var cs = this.m_symmetricCrypto.CreateEncryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
+                {
+                    QueueEntry.Create(data).Save(cs);
+                }
+            }
 
             this.NotifyQueuePush(queueName, Path.GetFileNameWithoutExtension(filePath));
-            this.m_tracer.TraceInfo("Successfully queued {0}", fname);
+            this.m_tracer.TraceVerbose("Successfully queued {0}", fname);
         }
 
         /// <summary>
@@ -296,11 +438,15 @@ namespace SanteDB.Core.Services.Impl
         public void Open(string queueName)
         {
             if (this.m_watchers?.ContainsKey(queueName) == true)
+            {
                 return; // already open
+            }
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
             if (!Directory.Exists(queueDirectory))
+            {
                 Directory.CreateDirectory(queueDirectory);
+            }
         }
 
         /// <summary>
@@ -314,8 +460,16 @@ namespace SanteDB.Core.Services.Impl
 
                 this.m_watchers.Clear();
                 this.m_watchers = null;
+                m_ListenThreadCancellationTokenSource.Cancel();
 
-                this.m_listenerThread.Abort();
+                //try
+                //{
+                //    this.m_listenerThread.Abort();
+                //}
+                //catch (PlatformNotSupportedException)
+                //{
+                //    //TODO: We need to properly cancel the threads using a cancellationtoken.
+                //}
             }
         }
 
@@ -341,7 +495,7 @@ namespace SanteDB.Core.Services.Impl
             foreach (var d in Directory.GetDirectories(this.m_configuration.QueuePath))
             {
                 var di = new DirectoryInfo(d);
-                yield return new DispatcherQueueInfo() { Id = Path.GetFileName(d), Name = Path.GetFileName(d), QueueSize = di.GetFiles().Length, CreationTime = di.CreationTime };
+                yield return new DispatcherQueueInfo() { Id = Path.GetFileName(d), Name = Path.GetFileName(d), QueueSize = di.EnumerateFiles().Count(), CreationTime = di.CreationTime };
             }
         }
 
@@ -350,13 +504,12 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<Queue.DispatcherQueueEntry> GetQueueEntries(string queueName)
         {
-            foreach (var f in Directory.GetFiles(Path.Combine(this.m_configuration.QueuePath, queueName)))
+            foreach (var f in Directory.EnumerateFiles(Path.Combine(this.m_configuration.QueuePath, queueName)))
             {
                 QueueEntry entry = null;
                 try
                 {
-                    using (var fs = File.OpenRead(f))
-                        entry = QueueEntry.Load(fs);
+                    entry = this.ReadQueueEntry(f);
                 }
                 catch
                 {
@@ -375,9 +528,11 @@ namespace SanteDB.Core.Services.Impl
 
             try
             {
-                var filesToRemove = Directory.GetFiles(Path.Combine(this.m_configuration.QueuePath, queueName));
+                var filesToRemove = Directory.EnumerateFiles(Path.Combine(this.m_configuration.QueuePath, queueName));
                 foreach (var f in filesToRemove)
+                {
                     File.Delete(f);
+                }
             }
             catch (Exception e)
             {
@@ -395,11 +550,8 @@ namespace SanteDB.Core.Services.Impl
             var filePath = Path.Combine(this.m_configuration.QueuePath, queueName, correlationId);
             if (File.Exists(filePath))
             {
-                using (var fs = File.OpenRead(filePath))
-                {
-                    var entry = QueueEntry.Load(fs);
-                    return new DispatcherQueueEntry(correlationId, queueName, entry.CreationTime, entry.Type, entry.XmlData);
-                }
+                var entry = this.ReadQueueEntry(filePath);
+                return new DispatcherQueueEntry(correlationId, queueName, entry.CreationTime, entry.Type, entry.XmlData);
             }
             throw new KeyNotFoundException($"{queueName}\\{correlationId} doesn't exist");
         }

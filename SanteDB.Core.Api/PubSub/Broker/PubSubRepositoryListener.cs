@@ -16,23 +16,18 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Parameters;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Queue;
-using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.PubSub.Broker
@@ -93,11 +88,11 @@ namespace SanteDB.Core.PubSub.Broker
             get => this.NotificationDate.ToString("o");
             set
             {
-                if(String.IsNullOrEmpty(value))
+                if (String.IsNullOrEmpty(value))
                 {
                     this.NotificationDate = DateTimeOffset.MinValue;
                 }
-                else if(DateTimeOffset.TryParse(value, out var result))
+                else if (DateTimeOffset.TryParse(value, out var result))
                 {
                     this.NotificationDate = result;
                 }
@@ -131,6 +126,7 @@ namespace SanteDB.Core.PubSub.Broker
 
         // The repository this listener listens to
         private INotifyRepositoryService<TModel> m_repository;
+        private readonly IDataManagedLinkProvider<TModel> m_managedLinkService;
 
         // Queue service
         private IDispatcherQueueManagerService m_queueService;
@@ -147,25 +143,34 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
         {
             this.m_pubSubManager = pubSubManager;
-            this.m_repository = ApplicationServiceContext.Current.GetService<IRepositoryService<TModel>>() as INotifyRepositoryService<TModel>;
+            this.m_repository = repositoryService;
+            this.m_managedLinkService = managedLinkProvider;
             this.m_queueService = queueService;
             this.m_serviceManager = serviceManager;
 
             if (this.m_repository == null)
+            {
                 throw new InvalidOperationException($"Cannot actively subscribe to {typeof(TModel).FullName} as this repository does not raise events");
+            }
 
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
-            this.m_repository.Obsoleted += OnObsoleted;
-
+            this.m_repository.Deleted += OnDeleted;
+            
             this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
             if (this.m_mergeService != null)
             {
                 this.m_mergeService.Merged += OnMerged;
                 this.m_mergeService.UnMerged += OnUnmerged;
+            }
+
+            if(this.m_managedLinkService != null)
+            {
+                this.m_managedLinkService.ManagedLinkEstablished += OnLinked;
+                this.m_managedLinkService.ManagedLinkRemoved += OnUnLinked;
             }
         }
 
@@ -188,7 +193,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// When obsoleted
         /// </summary>
-        protected virtual void OnObsoleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
+        protected virtual void OnDeleted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
             this.EnqueueObject(evt.Data, PubSubEventType.Delete);
         }
@@ -207,6 +212,24 @@ namespace SanteDB.Core.PubSub.Broker
         protected virtual void OnInserted(object sender, Event.DataPersistedEventArgs<TModel> evt)
         {
             this.EnqueueObject(evt.Data, PubSubEventType.Create);
+        }
+
+        /// <summary>
+        /// When link occurs
+        /// </summary>
+        protected virtual void OnLinked(object sender, Data.DataManagementLinkEventArgs evt)
+        {
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+
+        }
+
+        /// <summary>
+        /// When link occurs
+        /// </summary>
+        protected virtual void OnUnLinked(object sender, Data.DataManagementLinkEventArgs evt)
+        {
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+
         }
 
         /// <summary>
@@ -239,7 +262,7 @@ namespace SanteDB.Core.PubSub.Broker
             if (this.m_repository != null)
             {
                 this.m_repository.Inserted -= this.OnInserted;
-                this.m_repository.Obsoleted -= this.OnObsoleted;
+                this.m_repository.Deleted -= this.OnDeleted;
                 this.m_repository.Saved -= this.OnSaved;
                 this.m_repository = null;
             }
@@ -247,6 +270,11 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 this.m_mergeService.Merged -= this.OnMerged;
                 this.m_mergeService.UnMerged -= this.OnUnmerged;
+            }
+            if (this.m_managedLinkService != null)
+            {
+                this.m_managedLinkService.ManagedLinkEstablished -= this.OnLinked;
+                this.m_managedLinkService.ManagedLinkRemoved -= this.OnUnLinked;
             }
         }
     }

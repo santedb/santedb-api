@@ -16,9 +16,8 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -48,6 +47,11 @@ namespace SanteDB.Core.Services
         IEnumerable<object> GetServices();
 
         /// <summary>
+        /// Creates all instances 
+        /// </summary>
+        IEnumerable<T> CreateAll<T>(params object[] parms);
+
+        /// <summary>
         /// Removes a service provider
         /// </summary>
         void RemoveServiceProvider(Type serviceType);
@@ -72,5 +76,12 @@ namespace SanteDB.Core.Services
         /// Create a new injected instance of <typeparamref name="TObject"/>
         /// </summary>
         TObject CreateInjected<TObject>();
+
+        /// <summary>
+        /// Notify the service manager of startup progress
+        /// </summary>
+        /// <param name="startupChangeText">The text or message for the startup event</param>
+        /// <param name="startupProgress">The progress change</param>
+        void NotifyStartupProgress(float startupProgress, String startupChangeText);
     }
 }

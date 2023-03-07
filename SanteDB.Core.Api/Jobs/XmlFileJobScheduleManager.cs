@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-1-11
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -49,7 +50,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobScheduleManager()
         {
-            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "xcron.xml");
+            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xcron.xml");
             if (File.Exists(this.m_cronTabLocation))
             {
                 try
@@ -89,7 +90,7 @@ namespace SanteDB.Core.Jobs
         }
 
         /// <inheritdoc/>
-        public void Add(IJob job, IJobSchedule jobSchedule)
+        public IJobSchedule Add(IJob job, IJobSchedule jobSchedule)
         {
             lock (this.m_lock)
             {
@@ -99,7 +100,7 @@ namespace SanteDB.Core.Jobs
                     scheduleReg = new JobItemConfiguration() { Type = job.GetType(), Schedule = new List<JobItemSchedule>() };
                     this.m_jobSchedules.Add(scheduleReg);
                 }
-                scheduleReg.Schedule.Add(new JobItemSchedule()
+                var retVal = new JobItemSchedule()
                 {
                     Type = jobSchedule.Type,
                     Interval = (int)jobSchedule.Interval.GetValueOrDefault().TotalSeconds,
@@ -108,9 +109,12 @@ namespace SanteDB.Core.Jobs
                     StartDate = jobSchedule.StartTime,
                     StopDate = jobSchedule.StopTime.GetValueOrDefault(),
                     StopDateSpecified = jobSchedule.StopTime.HasValue
-                });
+                };
+
+                scheduleReg.Schedule.Add(retVal);
 
                 this.SaveCron();
+                return retVal;
             }
         }
 
@@ -135,10 +139,31 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public IEnumerable<IJobSchedule> Get(IJob job)
         {
-            lock(this.m_lock)
+            lock (this.m_lock)
             {
                 return this.m_jobSchedules.Find(o => o.Type == job.GetType())?.Schedule;
             }
         }
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, TimeSpan interval, DateTime? stopDate = null) => this.Add(job, new JobItemSchedule()
+        {
+            Type = JobScheduleType.Interval,
+            Interval = (int)interval.TotalSeconds,
+            IntervalSpecified = true,
+            StartDate = DateTime.Now,
+            StopDate = stopDate.GetValueOrDefault(),
+            StopDateSpecified = stopDate.HasValue
+        });
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, DayOfWeek[] repeatOn, DateTime startDate, DateTime? stopDate = null) => this.Add(job, new JobItemSchedule()
+        {
+            RepeatOn = repeatOn,
+            StartDate = startDate,
+            StopDate = stopDate.GetValueOrDefault(),
+            StopDateSpecified = stopDate.HasValue,
+            Type = JobScheduleType.Scheduled
+        });
     }
 }

@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using System;
@@ -40,7 +40,7 @@ namespace SanteDB.Core.Services.Impl
         public String ServiceName => ".NET Thread Pool Integration";
 
         // Tracer for thread pool
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultThreadPoolService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(NetThreadPoolService));
 
         // Dispatched workers
         private int m_dispatchedWorkers = 0;
@@ -69,7 +69,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     this.m_tracer.TraceError("Unhandled ThreadPool Worker Error:  {0}", e);
                 }
-               
+
             }, parm);
         }
 
@@ -81,7 +81,7 @@ namespace SanteDB.Core.Services.Impl
             ThreadPool.GetMaxThreads(out totalWorkers, out _);
             ThreadPool.GetAvailableThreads(out availableWorkers, out _);
             //availableWorkers = totalWorkers - availableWorkers; // totalWorkers - this.m_activeWorkers;
-            waitingInQueue = this.m_dispatchedWorkers ;
+            waitingInQueue = this.m_dispatchedWorkers;
         }
     }
 }

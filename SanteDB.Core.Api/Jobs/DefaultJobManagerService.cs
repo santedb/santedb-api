@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
@@ -38,10 +37,10 @@ namespace SanteDB.Core.Jobs
     /// 
     /// </remarks>
     [ServiceProvider("Default Job Manager", Configuration = typeof(JobConfigurationSection))]
-    public class DefaultJobManagerService : IJobManagerService, IServiceFactory
+    public class DefaultJobManagerService : IJobManagerService, IServiceFactory, IDaemonService
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultJobManagerService));
 
         // Thread pool
         private IThreadPoolService m_threadPool;
@@ -160,24 +159,40 @@ namespace SanteDB.Core.Jobs
             // Invoke the starting event handler
             this.Starting?.Invoke(this, EventArgs.Empty);
 
-            foreach (var configuration in this.m_configuration.Jobs)
+            ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                var job = configuration.Type.CreateInjected() as IJob;
-                var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
-                this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
-                this.m_jobs.Add(ji);
-
-                if(configuration.Schedule?.Any() == true)
+                if (this.m_configuration != null)
                 {
-                    this.m_jobScheduleManager.Clear(job);
-                    configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
+                    foreach (var configuration in this.m_configuration.Jobs)
+                    {
+                        var job = configuration.Type.CreateInjected() as IJob;
+
+                        var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
+                        this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
+                        this.m_jobs.Add(ji);
+
+                        if (configuration.Schedule?.Any() == true)
+                        {
+                            this.m_jobScheduleManager.Clear(job);
+                            configuration.Schedule.ForEach(s => this.m_jobScheduleManager.Add(job, s));
+                        }
+
+                        if (configuration.StartType == JobStartType.Immediate)
+                        {
+                            this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                        }
+                    }
                 }
 
-                if (configuration.StartType == JobStartType.Immediate)
+                foreach(var job in this.m_jobs)
                 {
-                    this.m_threadPool.QueueUserWorkItem(this.RunJob, ji);
+                    // The job is marked as running - this is a problem if the host shut down improperly
+                    if (this.m_jobStateManager.GetJobState(job.Job).CurrentState == JobStateType.Running)
+                    {
+                        this.m_jobStateManager.SetState(job.Job, JobStateType.NotRun);
+                    }
                 }
-            }
+            };
 
             // Setup timers based on the jobs
             this.m_systemTimer = new System.Timers.Timer(300000); // timer runs every 5 minutes
@@ -222,7 +237,7 @@ namespace SanteDB.Core.Jobs
                     var schedule = this.m_jobScheduleManager.Get(itm.Job);
 
                     // Does the job have a schedule?
-                    if (schedule?.Any()  != true|| itm.StartType == JobStartType.Never)
+                    if (schedule?.Any() != true || itm.StartType == JobStartType.Never)
                     {
                         continue;
                     }
@@ -244,7 +259,7 @@ namespace SanteDB.Core.Jobs
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.m_tracer.TraceWarning("Could not automatically run jobs : {0}", ex);
             }
@@ -259,13 +274,17 @@ namespace SanteDB.Core.Jobs
             Trace.TraceInformation("Stopping timer service...");
             this.Stopping?.Invoke(this, EventArgs.Empty);
 
-            this.m_systemTimer.Dispose();
+            this.m_systemTimer?.Dispose();
             this.m_systemTimer = null;
             foreach (var itm in this.m_jobs)
             {
                 if (itm.Job is IDisposable disp)
                 {
                     disp.Dispose();
+                }
+                if (this.m_jobStateManager.GetJobState(itm.Job).CurrentState == JobStateType.Running) 
+                {
+                    this.m_jobStateManager.SetState(itm.Job, JobStateType.Stopped);
                 }
             }
 
@@ -286,7 +305,9 @@ namespace SanteDB.Core.Jobs
         public void AddJob(IJob jobObject, JobStartType startType = JobStartType.Immediate)
         {
             if (this.IsJobRegistered(jobObject.GetType()))
+            {
                 return; // Job is already added
+            }
 
             var ji = new JobExecutionInfo(jobObject, startType, new object[0]);
             this.m_jobs.Add(ji);
@@ -307,7 +328,8 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Returns true when the service is running
         /// </summary>
-        public bool IsRunning { get { return this.m_systemTimer != null; } }
+        public bool IsRunning
+        { get { return this.m_systemTimer != null; } }
 
         /// <summary>
         /// Get the jobs
@@ -367,7 +389,7 @@ namespace SanteDB.Core.Jobs
         public IJobSchedule SetJobSchedule(IJob job, DayOfWeek[] daysOfWeek, DateTime scheduleTime)
         {
             var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
-            if(jobInfo == null)
+            if (jobInfo == null)
             {
                 throw new KeyNotFoundException($"Job {job.Id} not registered");
             }
@@ -427,12 +449,13 @@ namespace SanteDB.Core.Jobs
         /// <inheritdoc/>
         public bool TryCreateService<TService>(out TService serviceInstance)
         {
-            if(this.TryCreateService(typeof(TService), out object tmpService) && tmpService is TService tService)
+            if (this.TryCreateService(typeof(TService), out object tmpService) && tmpService is TService tService)
             {
                 serviceInstance = tService;
                 return true;
             }
-            else {
+            else
+            {
                 serviceInstance = default(TService);
                 return false;
             }
@@ -441,12 +464,12 @@ namespace SanteDB.Core.Jobs
         /// <inheritdoc/>
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
-            if(typeof(IJobStateManagerService).IsAssignableFrom(serviceType))
+            if (typeof(IJobStateManagerService).IsAssignableFrom(serviceType))
             {
                 serviceInstance = this.m_serviceManager.CreateInjected<XmlFileJobStateManager>();
                 return true;
             }
-            else if(typeof(IJobScheduleManager).IsAssignableFrom(serviceType))
+            else if (typeof(IJobScheduleManager).IsAssignableFrom(serviceType))
             {
                 serviceInstance = this.m_serviceManager.CreateInjected<XmlFileJobScheduleManager>();
                 return true;
@@ -456,6 +479,19 @@ namespace SanteDB.Core.Jobs
                 serviceInstance = null;
                 return false;
             }
+        }
+
+        /// <inheritdoc/>
+        public void ClearJobSchedule(IJob job)
+        {
+            var jobInfo = this.m_jobs.FirstOrDefault(o => o.Job.Id == job.Id);
+            if (jobInfo == null)
+            {
+                throw new KeyNotFoundException($"Job {job.Id} not registered");
+            }
+
+            this.m_tracer.TraceInfo("Clear job {0} schedule.", job);
+            this.m_jobScheduleManager.Clear(job);
         }
 
         #endregion ITimerService Members

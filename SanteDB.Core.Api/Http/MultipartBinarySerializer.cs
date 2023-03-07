@@ -16,30 +16,47 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.i18n;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Mime;
+using System.Text;
 
 namespace SanteDB.Core.Http
 {
     /// <summary>
     /// Represents a multipart attachment
     /// </summary>
-    public class MultipartAttachment
+    public class MultiPartFormData
     {
+
+        /// <summary>
+        /// Create new multipart form data with the specified data
+        /// </summary>
+        public MultiPartFormData(String name, String data) 
+        {
+            this.Data = System.Text.Encoding.UTF8.GetBytes(data);
+            this.Name = name;
+            this.MimeType = "text/plain; encoding=utf-8";
+            this.UseFormEncoding = true;
+            this.IsFile = false;
+        }
 
         /// <summary>
         /// Creates a new multipart attachment
         /// </summary>
-        public MultipartAttachment(byte[] data, string mimeType, String name, bool useFormEncoding = false)
+        public MultiPartFormData(String name, byte[] data, string mimeType, string fileName, bool useFormEncoding = false)
         {
             this.Data = data;
             this.MimeType = mimeType;
             this.Name = name;
             this.UseFormEncoding = useFormEncoding;
+            this.IsFile = true;
+            this.FileName = fileName;
         }
 
         /// <summary>
@@ -61,6 +78,29 @@ namespace SanteDB.Core.Http
         /// When true instructs the serializer to use form data
         /// </summary>
         public bool UseFormEncoding { get; set; }
+
+        /// <summary>
+        /// True if the mime data is a file
+        /// </summary>
+        public bool IsFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the file
+        /// </summary>
+        public string FileName { get; set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            if(this.IsFile)
+            {
+                return this.FileName;
+            }
+            else
+            {
+                return Encoding.UTF8.GetString(this.Data);
+            }
+        }
     }
 
     /// <summary>
@@ -68,26 +108,20 @@ namespace SanteDB.Core.Http
     /// </summary>
     public class MultipartBinarySerializer : IBodySerializer
     {
-        // The content type (used for getting boundary
-        private string m_contentType;
-
         /// <summary>
         /// Gets the underlying serializer
         /// </summary>
-        public object Serializer => null;
+        public object GetSerializer(Type typeHint) => null;
 
         /// <summary>
-        /// Gets the content type
+        /// Content-type
         /// </summary>
-        public MultipartBinarySerializer(string contentType)
-        {
-            this.m_contentType = contentType;
-        }
+        public string ContentType => "multipart/form-data";
 
         /// <summary>
         /// De-serialize
         /// </summary>
-        public object DeSerialize(Stream s)
+        public object DeSerialize(Stream s, ContentType contentType, Type typeHint)
         {
             // TODO: Implement this
             throw new NotImplementedException();
@@ -96,40 +130,54 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Serialize
         /// </summary>
-        public void Serialize(Stream s, object o)
+        public void Serialize(Stream s, object o, out ContentType contentType)
         {
             // Get the boundary
-            var mimeParts = this.m_contentType.Split(';');
-            if (mimeParts.Length < 2) throw new InvalidOperationException("Missing mime-boundary marker");
-            var boundaryParts = mimeParts[1].Split('=');
-            if (boundaryParts.Length < 2 && !boundaryParts[0].Trim().Equals("boundary", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Could not find boundary on content type");
-
+            contentType = new ContentType(this.ContentType);
+            var boundary = Guid.NewGuid().ToString("N");
+            contentType.Parameters.Add("boundary", boundary); 
+            
             // Boundary writer
-            var attachmentList = o as IList;
+            var attachmentList = o as IList<MultiPartFormData>;
             if (attachmentList == null)
-                attachmentList = new List<Object>() { o };
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(IList<MultiPartFormData>), o.GetType()));
+            }
 
             using (StreamWriter sw = new StreamWriter(s))
             {
-                foreach (var att in attachmentList)
+                foreach (var mimeInfo in attachmentList)
                 {
-                    var mimeInfo = att as MultipartAttachment;
-                    if (mimeInfo == null)
-                        mimeInfo = new MultipartAttachment(att as byte[], "application/octet-stream", "attachment", false);
+                    sw.WriteLine("--{0}", boundary);
 
-                    sw.WriteLine("--{0}", boundaryParts[1]);
                     if (mimeInfo.UseFormEncoding)
-                        sw.WriteLine("Content-Disposition: form-data; name=\"file\"; filename=\"{0}\"", mimeInfo.Name);
+                    {
+                        if (mimeInfo.IsFile)
+                        {
+                            sw.WriteLine("Content-Disposition: form-data; name=\"{0}\"; filename=\"{1}\"", mimeInfo.Name, mimeInfo.FileName);
+                        }
+                        else
+                        {
+                            sw.WriteLine("Content-Disposition: form-data; name=\"{0}\"", mimeInfo.Name);
+
+                        }
+                    }
                     else
-                        sw.WriteLine("Content-Disposition: attachment; filename=\"{0}\"", mimeInfo.Name);
+                    {
+                        sw.WriteLine("Content-Disposition: attachment; filename=\"{0}\"", mimeInfo.FileName);
+                    }
+
                     sw.WriteLine("Content-Type: {0}", mimeInfo.MimeType);
                     sw.WriteLine();
                     sw.Flush();
                     using (MemoryStream ms = new MemoryStream(mimeInfo.Data))
+                    {
                         ms.CopyTo(s);
+                    }
+
                     sw.WriteLine();
                 }
-                sw.WriteLine("--{0}--", boundaryParts[1]);
+                sw.WriteLine("--{0}--", boundary);
                 sw.Flush();
             }
 

@@ -16,21 +16,19 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-17
+ * Date: 2022-5-30
  */
+using Newtonsoft.Json;
+using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
+using System.ComponentModel;
+using System.Diagnostics.Tracing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Configuration;
-using System.Diagnostics.Tracing;
-using System.Collections.Concurrent;
-using SanteDB.Core.Diagnostics;
-using System.ComponentModel;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -74,8 +72,10 @@ namespace SanteDB.Core.Diagnostics.Tracing
             // The logfile will actually be created with a yyyymmdd format appended to the filename
             this.m_fileName = fileName;
             if (!Path.IsPathRooted(fileName))
+            {
                 this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
                Path.GetFileName(this.m_fileName));
+            }
             //_stream = File.Open(generateFilename(), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             //_stream.Seek(0, SeekOrigin.End);
             //_traceWriter = new StreamWriter(_stream);
@@ -86,7 +86,14 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_dispatchThread.IsBackground = true;
             this.m_dispatchThread.Start();
 
-            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", Assembly.GetEntryAssembly().GetName().Name, Assembly.GetEntryAssembly().GetName().Version, filter);
+            var managerService = ApplicationServiceContext.Current?.GetService(typeof(ILogManagerService));
+            if (managerService == null)
+            {
+                ApplicationServiceContext.Current.GetService<IServiceManager>()?.AddServiceProvider(typeof(RolloverLogManagerService));
+            }
+
+            var assemblyname = Assembly.GetEntryAssembly()?.GetName();
+            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
         }
 
         /// <summary>
@@ -121,13 +128,20 @@ namespace SanteDB.Core.Diagnostics.Tracing
             {
                 try
                 {
-                    if (this.m_disposing) return; // shutdown dispatch
+                    if (this.m_disposing)
+                    {
+                        return; // shutdown dispatch
+                    }
+
                     while (this.m_logBacklog.IsEmpty && !this.m_disposing)
                     {
                         this.m_resetEvent.Wait();
                         this.m_resetEvent.Reset();
                     }
-                    if (this.m_disposing) return;
+                    if (this.m_disposing)
+                    {
+                        return;
+                    }
 
                     // Use file stream
                     var fileName = this.GenerateFilename();
@@ -182,6 +196,17 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_resetEvent.Set();
                 // this.m_dispatchThread.Join(); // Abort thread
                 this.m_dispatchThread = null;
+            }
+        }
+
+        /// <summary>
+        /// Write out data
+        /// </summary>
+        public override void TraceEventWithData(EventLevel level, string source, string message, object[] data)
+        {
+            foreach (var obj in data)
+            {
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
             }
         }
     }

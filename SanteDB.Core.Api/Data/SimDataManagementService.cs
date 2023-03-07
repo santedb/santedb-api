@@ -16,12 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Matching;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -29,6 +28,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -61,13 +61,19 @@ namespace SanteDB.Core.Data
             where TModel : VersionedEntityData<TModel>, new()
         {
             // Tracer
-            private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
+            private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
             // The configuration
             private IRecordMatchingConfigurationService m_matchingConfigurationService;
 
             // Service for matching
             private IRecordMatchingService m_matchingService;
+
+            // Relationship service
+            private IDataPersistenceService<EntityRelationship> m_entityRelationshipService;
+
+            // Relationship service
+            private IDataPersistenceService<ActRelationship> m_actRelationshipService;
 
             /// <summary>
             /// Fired when data is about to be merged
@@ -94,11 +100,14 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Creates a new resource merger with specified configuration
             /// </summary>
-            public SimResourceMerger()
+            public SimResourceMerger(IRecordMatchingService matchingService, IRecordMatchingConfigurationService configurationService, IDataPersistenceService<EntityRelationship> entityRelationshipService, IDataPersistenceService<ActRelationship> actRelationshipService)
             {
                 // Find the specified matching configuration
-                this.m_matchingService = ApplicationServiceContext.Current.GetService<IRecordMatchingService>();
-                this.m_matchingConfigurationService = ApplicationServiceContext.Current.GetService<IRecordMatchingConfigurationService>();
+                this.m_matchingService = matchingService;
+                this.m_matchingConfigurationService = configurationService;
+
+                this.m_entityRelationshipService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                this.m_actRelationshipService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActRelationship>>();
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Inserting += DataInsertingHandler;
                 ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Updating += DataUpdatingHandler;
             }
@@ -143,9 +152,13 @@ namespace SanteDB.Core.Data
             {
                 // Remove all duplicates
                 if (duplicate is Act)
+                {
                     (duplicate as Act).Relationships.RemoveAll(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate);
+                }
                 else if (duplicate is Entity)
+                {
                     (duplicate as Entity).Relationships.RemoveAll(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate);
+                }
 
                 // Now process any matches
                 foreach (var match in matches)
@@ -154,11 +167,17 @@ namespace SanteDB.Core.Data
 
                     // Mark duplicates
                     if (duplicate is Entity)
+                    {
                         (duplicate as Entity).Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Duplicate, match.Record.Key) { Quantity = (int)match.Score * 100 });
+                    }
                     else if (duplicate is Act)
+                    {
                         (duplicate as Act).Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Duplicate, match.Record.Key));
+                    }
                     else
+                    {
                         throw new InvalidOperationException($"Can't determine how to mark type of {duplicate.GetType().Name} as duplicate");
+                    }
                 }
             }
 
@@ -172,37 +191,46 @@ namespace SanteDB.Core.Data
                 if (mergeEventArgs.Cancel)
                 {
                     this.m_tracer.TraceInfo("Pre-Event trigger indicated cancel merge");
-                    return new RecordMergeResult(RecordMergeStatus.Cancelled, null, null);
+                    return new RecordMergeResult(RecordMergeStatus.Aborted, null, null);
                 }
 
                 // The invoke may have changed the master
                 masterKey = mergeEventArgs.SurvivorKey;
 
-                var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, true, AuthenticationContext.Current.Principal);
+                var master = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(masterKey, null, AuthenticationContext.Current.Principal);
                 // We'll update the parameters from the candidate to create a single master record
                 // TODO: Verify this in edge cases
                 Bundle persistenceBundle = new Bundle();
 
                 foreach (var l in linkedDuplicates)
                 {
-                    var local = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(l, null, true, AuthenticationContext.Current.Principal);
+                    var local = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>().Get(l, null, AuthenticationContext.Current.Principal);
                     master.CopyObjectData(local, false); // Copy data which is different
 
                     // Add replaces and nullify
                     if (l == Guid.Empty)
                     {
                         if (master is Act actMaster)
+                        {
                             actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, l));
+                        }
                         else if (master is Entity entityMaster)
+                        {
                             entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, l));
+                        }
+
                         persistenceBundle.Add(local);
                     }
                     else // Not persisted yet
                     {
                         if (master is Act actMaster)
+                        {
                             actMaster.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, masterKey) { TargetActKey = l });
+                        }
                         else if (master is Entity entityMaster)
+                        {
                             entityMaster.Relationships.Add(new EntityRelationship(EntityRelationshipTypeKeys.Replaces, masterKey) { TargetEntityKey = l });
+                        }
                     }
                     (local as IHasState).StatusConceptKey = StatusKeys.Nullified;
                 }
@@ -245,7 +273,7 @@ namespace SanteDB.Core.Data
             public IEnumerable<Guid> GetMergeCandidateKeys(Guid masterKey)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
-                var candidate = dataService.Get(masterKey, null, true, AuthenticationContext.SystemPrincipal);
+                var candidate = dataService.Get(masterKey, null, AuthenticationContext.SystemPrincipal);
                 return this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.Id, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 
@@ -260,22 +288,30 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get merged candidates
             /// </summary>
-            public IEnumerable<IdentifiedData> GetMergeCandidates(Guid masterKey)
+            public IQueryResultSet<IdentifiedData> GetMergeCandidates(Guid masterKey)
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
                 var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.SourceEntityKey == masterKey && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
-                return candidate.Select(o =>
+
+                return new TransformQueryResultSet<EntityRelationship, IdentifiedData>(candidate, (itm) =>
                 {
-                    var rv = o.LoadProperty(p => p.TargetEntity);
-                    rv.AddTag("$match.score", o.Strength.ToString());
-                    return rv;
+                    if (itm is EntityRelationship er)
+                    {
+                        var rv = er.LoadProperty(p => p.TargetEntity);
+                        rv.AddTag("$match.score", er.Strength.ToString());
+                        return rv;
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 });
             }
 
             /// <summary>
             /// Get ignored list
             /// </summary>
-            public IEnumerable<IdentifiedData> GetIgnored(Guid masterKey)
+            public IQueryResultSet<IdentifiedData> GetIgnored(Guid masterKey)
             {
                 throw new NotImplementedException();
             }
@@ -283,11 +319,11 @@ namespace SanteDB.Core.Data
             /// <summary>
             /// Get global merge candidates
             /// </summary>
-            public IEnumerable<ITargetedAssociation> GetGlobalMergeCandidates(int offset, int count, out int totalCount)
+            public IQueryResultSet<ITargetedAssociation> GetGlobalMergeCandidates()
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, count, out totalCount, AuthenticationContext.SystemPrincipal);
-                return candidate;
+                var candidate = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, AuthenticationContext.SystemPrincipal);
+                return new TransformQueryResultSet<EntityRelationship, ITargetedAssociation>(candidate, (o) => o);
             }
 
             /// <summary>
@@ -305,17 +341,18 @@ namespace SanteDB.Core.Data
             {
                 try
                 {
-                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    // TODO: When the persistence refactor is done - change this to use the bulk method
-                    int offset = 0, totalResults = 1, batchSize = 10;
-                    while (offset < totalResults)
+                    var classKeys = typeof(TModel).GetClassKeys();
+
+                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete).WithName("Clearing Merge Candidiates"))
                     {
-                        var results = dataService.Query(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
-                        foreach (var itm in results)
+                        if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
                         {
-                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                         }
-                        offset += batchSize;
+                        else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                        {
+                            exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -349,17 +386,20 @@ namespace SanteDB.Core.Data
             {
                 try
                 {
-                    var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
-                    // TODO: When the persistence refactor is done - change this to use the bulk method
-                    int offset = 0, totalResults = 1, batchSize = 10;
-                    while (offset < totalResults)
+                    var classKeys = typeof(TModel).GetClassKeys();
+
+                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete).WithName("Clearing Candidiates"))
                     {
-                        var results = dataService.Query(o => o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, offset, batchSize, out totalResults, AuthenticationContext.SystemPrincipal);
-                        foreach (var itm in results)
+                        if (this.m_entityRelationshipService is IDataPersistenceServiceEx<EntityRelationship> exEntityRel)
                         {
-                            dataService.Obsolete(itm, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.TargetEntity.ClassConceptKey.Value) && o.TargetEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exEntityRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                         }
-                        offset += batchSize;
+                        else if (this.m_actRelationshipService is IDataPersistenceServiceEx<ActRelationship> exActRel)
+                        {
+                            exActRel.DeleteAll(o => classKeys.Contains(o.TargetAct.ClassConceptKey.Value) && o.TargetActKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                            exActRel.DeleteAll(o => classKeys.Contains(o.SourceEntity.ClassConceptKey.Value) && o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !o.ObsoleteVersionSequenceId.HasValue, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -387,7 +427,7 @@ namespace SanteDB.Core.Data
         }
 
         // Tracer for SIM
-        private Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
         // Configuration section
         private ResourceManagementConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<ResourceManagementConfigurationSection>();
@@ -433,7 +473,9 @@ namespace SanteDB.Core.Data
             this.Starting?.Invoke(this, EventArgs.Empty);
 
             if (ApplicationServiceContext.Current.GetService<IRecordMatchingService>() == null)
+            {
                 throw new InvalidOperationException("This service requires a record matching service to be registered");
+            }
 
             // Register mergers for all types in configuration
             foreach (var i in this.m_configuration.ResourceTypes)
@@ -465,5 +507,11 @@ namespace SanteDB.Core.Data
 
             return true;
         }
+
+        /// <inheritdoc/>
+        public IDataManagedLinkProvider<T> GetLinkProvider<T>() where T : IdentifiedData => null;
+
+        /// <inheritdoc/>
+        public IDataManagedLinkProvider GetLinkProvider(Type forType) => null;
     }
 }

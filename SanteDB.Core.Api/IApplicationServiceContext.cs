@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 
@@ -53,6 +53,16 @@ namespace SanteDB.Core
         bool IsRunning { get; }
 
         /// <summary>
+        /// Gets the name of the application
+        /// </summary>
+        string ApplicationName { get; }
+
+        /// <summary>
+        /// Gets the activity UUID
+        /// </summary>
+        Guid ActivityUuid { get; }
+
+        /// <summary>
         /// Type of application hosting this SanteDB
         /// </summary>
         SanteDBHostType HostType { get; }
@@ -63,8 +73,14 @@ namespace SanteDB.Core
         DateTime StartTime { get; }
 
         /// <summary>
+        /// Start the application context
+        /// </summary>
+        void Start();
+
+        /// <summary>
         /// Stop the service host context
         /// </summary>
         void Stop();
+
     }
 }

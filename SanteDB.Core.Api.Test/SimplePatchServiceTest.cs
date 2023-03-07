@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2021, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,23 +16,21 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-5
+ * Date: 2022-5-30
  */
-using System;
-using System.Diagnostics.CodeAnalysis;
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Services.Impl;
+using NUnit.Framework;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Patch;
 using SanteDB.Core.Model.Roles;
-using System.IO;
-using System.Xml.Serialization;
-using SanteDB.Core.Model.Constants;
-using Newtonsoft.Json;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Services.Impl;
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Exceptions;
-using NUnit.Framework;
 
 namespace SanteDB.Core.Api.Test
 {
@@ -68,12 +66,12 @@ namespace SanteDB.Core.Api.Test
                 xsz.Serialize(sw, patch);
                 patchXml = sw.ToString();
             }
-            using(StringReader sr = new StringReader(patchXml))
+            using (StringReader sr = new StringReader(patchXml))
             {
                 var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(Patch));
                 retVal = xsz.Deserialize(sr) as Patch;
             }
-            
+
             return retVal;
         }
 
@@ -186,7 +184,7 @@ namespace SanteDB.Core.Api.Test
             Assert.AreEqual(b.Identifiers[1], patch.Operation[6].Value);
             Assert.AreEqual("identifier", patch.Operation[6].Path);
 
-            this.SerializePatch(patch);            
+            this.SerializePatch(patch);
         }
 
         /// <summary>
@@ -253,7 +251,7 @@ namespace SanteDB.Core.Api.Test
 
             var result = patchService.Patch(patch, a, true) as Patient;
             Assert.AreEqual(b.Addresses.Count, result.Addresses.Count);
-            Assert.AreEqual(b.Names .Count, result.Names.Count);
+            Assert.AreEqual(b.Names.Count, result.Names.Count);
             Assert.AreEqual(b.Identifiers.Count, result.Identifiers.Count);
             Assert.AreEqual(b.Tags.Count, result.Tags.Count);
             Assert.AreEqual(b.Tags.First().Value, result.Tags.First().Value);
@@ -348,7 +346,7 @@ namespace SanteDB.Core.Api.Test
             var patchString = patch.ToString();
             Assert.IsNotNull(patch);
             Assert.AreEqual(11, patch.Operation.Count);
-            
+
             // Debug info
             this.SerializePatch(patch);
 
@@ -363,9 +361,9 @@ namespace SanteDB.Core.Api.Test
                 data = patchService.Patch(patch, a);
                 Assert.Fail();
             }
-            catch(PatchAssertionException e)
+            catch (PatchAssertionException)
             {
-                
+
             }
         }
 
@@ -463,7 +461,7 @@ namespace SanteDB.Core.Api.Test
             // Should not update source
             Assert.AreEqual(2, a.Names.Count);
             Assert.AreEqual(2, a.Identifiers.Count);
-            Assert.AreEqual(0, a.Addresses.Count);
+            Assert.IsEmpty(a.Addresses);
             Assert.AreEqual(1, a.Tags.Count);
             Assert.AreEqual("VALUE", a.Tags[0].Value);
             Assert.AreEqual(a.VersionKey, patch.Operation[1].Value);

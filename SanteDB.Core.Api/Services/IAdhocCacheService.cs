@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 
@@ -100,9 +100,23 @@ namespace SanteDB.Core.Services
         T Get<T>(String key);
 
         /// <summary>
+        /// Try to fetch <paramref name="key"/> from the cache
+        /// </summary>
+        /// <param name="key">The key of the object to attempt to fetch</param>
+        /// <param name="value">The fetched value</param>
+        /// <returns>True if the object was fetched</returns>
+        bool TryGet<T>(String key, out T value);
+
+        /// <summary>
         /// Removes the specified object from the adhoc
         /// </summary>
         bool Remove(string key);
+
+        /// <summary>
+        /// Remove all keys matching <paramref name="patternKey"/>
+        /// </summary>
+        /// <param name="patternKey">The pattern to match</param>
+        void RemoveAll(string patternKey);
 
         /// <summary>
         /// Returns true if <paramref name="key"/> exists in the cache

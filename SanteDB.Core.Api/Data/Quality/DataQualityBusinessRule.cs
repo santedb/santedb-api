@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Quality.Configuration;
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Quality
         private IDataQualityConfigurationProviderService m_configurationProvider;
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
 
         /// <summary>
         /// Creates a new data quality business rule
@@ -107,13 +107,18 @@ namespace SanteDB.Core.Data.Quality
 
             // Just in-case the rule was triggered and the caller never bothered to throw
             if (ruleViolations.Any(o => o.Priority == DetectedIssuePriorityType.Error))
+            {
                 throw new DetectedIssueException(ruleViolations);
+            }
             else if (data is IExtendable extendable)
             {
                 //this.m_tracer.TraceWarning("Object {0} contains {1} data quality issues", data, ruleViolations.Count);
 
                 if (extendable.Extensions.Any(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension))
+                {
                     extendable.RemoveExtension(ExtensionTypeKeys.DataQualityExtension);
+                }
+
                 extendable.AddExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), ruleViolations);
             }
         }
@@ -146,10 +151,9 @@ namespace SanteDB.Core.Data.Quality
                 bool result = assert.Evaluation == AssertionEvaluationType.Any ? false : true;
                 try
                 {
-                    foreach (var expression in assert.Expressions)
+                    foreach (var expression in assert.GetDelegates<TModel>())
                     {
-                        var linq = QueryExpressionParser.BuildLinqExpression<TModel>(NameValueCollection.ParseQueryString(expression), null, safeNullable: true, forceLoad: true);
-                        var linqResult = (bool)linq.Compile().DynamicInvoke(data);
+                        var linqResult = expression(data);
                         switch (assert.Evaluation)
                         {
                             case AssertionEvaluationType.All:
@@ -167,7 +171,9 @@ namespace SanteDB.Core.Data.Quality
                     }
 
                     if (!result)
+                    {
                         retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue));
+                    }
                 }
                 catch (Exception e)
                 {

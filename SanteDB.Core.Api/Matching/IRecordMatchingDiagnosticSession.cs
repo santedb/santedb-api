@@ -16,11 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-29
+ * Date: 2022-5-30
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Matching
 {

@@ -16,9 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Auditing;
+using SanteDB.Core.Model.Audit;
 
 namespace SanteDB.Core.Services
 {
@@ -27,15 +27,15 @@ namespace SanteDB.Core.Services
     /// </summary>
     /// <remarks>
     /// <para>The auditing of access to clinical data is of the utmost importance. SanteDB generates 
-    /// and stores audits locally using an <see cref="IRepositoryService"/> for <see cref="AuditData"/>. However, 
+    /// and stores audits locally using an <see cref="IRepositoryService"/> for <see cref="AuditEventData"/>. However, 
     /// many implementations will have centralized audit repositories for collecting audits from various health
     /// systems in a central place. Such collection is useful to establishing overall patterns of access
     /// across systems in an HIE (for example)</para>
-    /// <para>The audit dispatching service is responsible for sending <see cref="AuditData"/> instances to remote
+    /// <para>The audit dispatching service is responsible for sending <see cref="AuditEventData"/> instances to remote
     /// audit repositories. The service's responsibilities are:</para>
     /// <list type="number">
-    ///     <item>Ensure that the <see cref="AuditData"/> instance is complete and contains relevant information for this node</item>
-    ///     <item>Transform the <see cref="AuditData"/> class into the appropriate format (IETF RFC3881, FHIR, etc.)</item>
+    ///     <item>Ensure that the <see cref="AuditEventData"/> instance is complete and contains relevant information for this node</item>
+    ///     <item>Transform the <see cref="AuditEventData"/> class into the appropriate format (IETF RFC3881, FHIR, etc.)</item>
     ///     <item>Ensure the delivery of the audit to the central repository</item>
     /// </list>
     /// </remarks>
@@ -45,6 +45,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Sends the audit to the central authority
         /// </summary>
-        void SendAudit(AuditData audit);
+        void SendAudit(AuditEventData audit);
     }
 }

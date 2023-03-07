@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace SanteDB.Core.Security
 {
@@ -47,6 +48,7 @@ namespace SanteDB.Core.Security
         /// Forwarding information
         /// </summary>
         public string ForwardInformation { get; set; }
+
     }
 
     /// <summary>
@@ -68,7 +70,10 @@ namespace SanteDB.Core.Security
             get
             {
                 if (s_instance == null)
+                {
                     s_instance = new RemoteEndpointUtil();
+                }
+
                 return s_instance;
             }
         }
@@ -86,7 +91,9 @@ namespace SanteDB.Core.Security
         public void AddEndpointProvider(Func<RemoteEndpointInfo> provider)
         {
             if (!this.m_providers.Contains(provider))
+            {
                 this.m_providers.Add(provider);
+            }
         }
 
         /// <summary>
@@ -98,9 +105,12 @@ namespace SanteDB.Core.Security
             {
                 var retVal = itm();
                 if (retVal != null)
+                {
                     return retVal;
+                }
             }
             return null;
         }
+
     }
 }

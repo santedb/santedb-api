@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
@@ -46,12 +46,24 @@ namespace SanteDB.Core.Diagnostics
         }
 
         /// <summary>
+        /// Removes a writer from the trace stack.
+        /// </summary>
+        /// <param name="tw">The writer to remove from the stack.</param>
+        public static void RemoveWriter(TraceWriter tw)
+        {
+            m_writers.RemoveAll(kv => kv.Key == tw);
+        }
+
+        /// <summary>
         /// Dispose trace writers
         /// </summary>
         public static void DisposeWriters()
         {
             foreach (var itm in m_writers)
+            {
                 (itm.Key as IDisposable)?.Dispose();
+            }
+
             return;
         }
 
@@ -79,8 +91,19 @@ namespace SanteDB.Core.Diagnostics
         {
             foreach (var w in m_writers.ToArray())
             {
-                //    if (level <= w.Value || w.Value == EventLevel.LogAlways)
-                w.Key.TraceEvent(level, this.m_source, format, args);
+                if (level <= w.Value || w.Value == EventLevel.LogAlways)
+                    w.Key.TraceEvent(level, this.m_source, format, args);
+            }
+        }
+
+        /// <summary>
+        /// Trace structured data into the log
+        /// </summary>
+        public void TraceData(EventLevel level, String message, params object[] data)
+        {
+            foreach (var w in m_writers.ToArray())
+            {
+                w.Key.TraceEventWithData(level, this.m_source, message, data);
             }
         }
 
@@ -131,6 +154,11 @@ namespace SanteDB.Core.Diagnostics
         {
             this.TraceEvent(EventLevel.Verbose, format, args);
         }
+
+        /// <summary>
+        /// Get all trace writer types
+        /// </summary>
+        public static Type[] GetAvailableWriters() => AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(TraceWriter).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
 
         /// <summary>
         /// Get the specified trace writer

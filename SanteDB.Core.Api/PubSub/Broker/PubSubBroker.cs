@@ -16,10 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
@@ -61,7 +60,7 @@ namespace SanteDB.Core.PubSub.Broker
         private ConcurrentDictionary<Guid, Func<Object, bool>> m_filterCriteria = new ConcurrentDictionary<Guid, Func<Object, bool>>();
 
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
 
         // Lock
         private object m_lock = new object();
@@ -173,6 +172,22 @@ namespace SanteDB.Core.PubSub.Broker
                                             }
                                             break;
                                         }
+                                    case PubSubEventType.Link:
+                                        {
+                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                            {
+                                                dsptchr.NotifyLinked(holder, target);
+                                            }
+                                            break;
+                                        }
+                                    case PubSubEventType.UnLink:
+                                        {
+                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                            {
+                                                dsptchr.NotifyUnlinked(holder, target);
+                                            }
+                                            break;
+                                        }
                                 }
                             }
                         }
@@ -191,11 +206,17 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, Object data)
         {
+            if(data is ParameterCollection pc)
+            {
+                data = pc.Parameters.First().Value;
+            }
+
             using (AuthenticationContext.EnterSystemContext())
             {
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
                         .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
+                        .ToList()
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -207,15 +228,19 @@ namespace SanteDB.Core.PubSub.Broker
 
                                 foreach (var itm in s.Filter)
                                 {
-                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), NameValueCollection.ParseQueryString(itm), "p", forceLoad: true, lazyExpandVariables: true);
+                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), itm.ParseQueryString(), "p", forceLoad: true, lazyExpandVariables: true);
                                     if (dynFn is LambdaExpression le)
+                                    {
                                         dynFn = Expression.Lambda(
                                             Expression.And(
                                                 Expression.Invoke(le, parameter),
                                                 Expression.Invoke(fFn, parameter)
                                                ), parameter);
+                                    }
                                     else
+                                    {
                                         dynFn = fFn;
+                                    }
                                 }
 
                                 if (dynFn == null)
@@ -245,8 +270,13 @@ namespace SanteDB.Core.PubSub.Broker
         public void Dispose()
         {
             if (this.m_repositoryListeners != null)
+            {
                 foreach (var itm in this.m_repositoryListeners)
+                {
                     itm.Dispose();
+                }
+            }
+
             this.m_repositoryListeners = null;
             this.m_queue.UnSubscribe(QueueName, this.NotificationQueued);
         }
@@ -312,7 +342,9 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
                 if (!this.m_repositoryListeners.Any(o => o.GetType().Equals(lt)))
+                {
                     this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected(lt) as IDisposable);
+                }
             }
         }
 

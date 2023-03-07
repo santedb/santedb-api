@@ -16,10 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Model.Query;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Quality.Configuration
@@ -60,6 +64,26 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// </summary>
         [XmlElement("expression")]
         public List<string> Expressions { get; set; }
+
+
+        // Delegates
+        private List<Func<Object, bool>> m_delegates;
+
+        /// <summary>
+        /// Delegates
+        /// </summary>
+        public List<Func<Object, bool>> GetDelegates<TModel>()
+        {
+            if (this.m_delegates == null)
+            {
+                this.m_delegates = this.Expressions.Select(o => {
+                    var expression = QueryExpressionParser.BuildLinqExpression<TModel>(o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
+                    var parm = Expression.Parameter(typeof(Object));
+                    return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, typeof(TModel))), parm).Compile();
+                }).ToList();
+            }
+            return this.m_delegates;
+        }
     }
 
     /// <summary>

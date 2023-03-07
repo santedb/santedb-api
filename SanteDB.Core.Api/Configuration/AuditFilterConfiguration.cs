@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model.Audit;
 using System.ComponentModel;
 using System.Xml.Serialization;
 
@@ -43,7 +44,7 @@ namespace SanteDB.Core.Configuration
         /// <summary>
         /// Creates a new audit filter configuration object
         /// </summary>
-        public AuditFilterConfiguration(Auditing.ActionType? action, Auditing.EventIdentifierType? eventType, Auditing.OutcomeIndicator? outcomeType, bool insertLocal, bool sendRemote)
+        public AuditFilterConfiguration(ActionType? action, EventIdentifierType? eventType, OutcomeIndicator? outcomeType, bool insertLocal, bool sendRemote)
         {
             this.Action = action.GetValueOrDefault();
             this.Event = eventType.GetValueOrDefault();
@@ -59,19 +60,19 @@ namespace SanteDB.Core.Configuration
         /// Filter on action type
         /// </summary>
         [XmlAttribute("action"), JsonProperty("action"), DisplayName("Action Filter"), Description("Filters on action type")]
-        public Auditing.ActionType Action { get; set; }
+        public ActionType Action { get; set; }
 
         /// <summary>
         /// Filter on event
         /// </summary>
         [XmlAttribute("event"), JsonProperty("event"), DisplayName("Event Filter"), Description("Filters on event type")]
-        public Auditing.EventIdentifierType Event { get; set; }
+        public EventIdentifierType Event { get; set; }
 
         /// <summary>
         /// Filter on outcome
         /// </summary>
         [XmlAttribute("outcome"), JsonProperty("outcome"), DisplayName("Outcome Filter"), Description("Filters on outcome type")]
-        public Auditing.OutcomeIndicator Outcome { get; set; }
+        public OutcomeIndicator Outcome { get; set; }
 
         /// <summary>
         /// True if when a filter matches the audit you want to include locally
@@ -105,6 +106,12 @@ namespace SanteDB.Core.Configuration
         [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
         #endregion
+
+
+        /// <summary>
+        /// Get the compbined filter flags
+        /// </summary>
+        public uint FilterFlags => (this.OutcomeSpecified ? (uint)this.Outcome : 0xFF) << 24 | (this.ActionSpecified ? (uint)this.Action : 0xFF) << 16 | (this.EventSpecified ? (uint)this.Event : 0xFFFF);
 
         /// <summary>
         /// Represent the filter as a stirng

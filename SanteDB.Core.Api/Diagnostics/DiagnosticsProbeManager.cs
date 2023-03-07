@@ -16,10 +16,8 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -30,7 +28,7 @@ namespace SanteDB.Core.Diagnostics
     /// <summary>
     /// The performance monitor class
     /// </summary>
-    public class DiagnosticsProbeManager
+    public class DiagnosticsProbeManager : IDisposable
     {
         /// <summary>
         /// Counters
@@ -69,9 +67,16 @@ namespace SanteDB.Core.Diagnostics
             get
             {
                 if (m_current == null)
+                {
                     lock (m_lockObject)
+                    {
                         if (m_current == null)
+                        {
                             m_current = new DiagnosticsProbeManager();
+                        }
+                    }
+                }
+
                 return m_current;
             }
         }
@@ -89,11 +94,10 @@ namespace SanteDB.Core.Diagnostics
         /// <summary>
         /// Find the specified performance counters
         /// </summary>
-        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query, int offset, int? count, out int totalResults)
+        public IEnumerable<IDiagnosticsProbe> Find(Func<IDiagnosticsProbe, bool> query)
         {
             var matches = this.m_probes.Where(query);
-            totalResults = matches.Count();
-            return matches.Skip(offset).Take(count ?? 100);
+            return matches;
         }
 
         /// <summary>
@@ -101,11 +105,25 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public void Add(IDiagnosticsProbe probe)
         {
-            lock(m_lockObject)
+            lock (m_lockObject)
             {
-                if(!this.m_probes.Any(p=>p.Uuid == probe.Uuid))
+                if (!this.m_probes.Any(p => p.Uuid == probe.Uuid))
                 {
                     this.m_probes.Add(probe);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Dispose probes
+        /// </summary>
+        public void Dispose()
+        {
+            foreach(var probe in this.m_probes)
+            {
+                if(probe is IDisposable disp)
+                {
+                    disp.Dispose();
                 }
             }
         }

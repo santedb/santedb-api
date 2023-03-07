@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Http.Description;
 using SanteDB.Core.Model.Attributes;
 using System;
 using System.ComponentModel;
@@ -89,7 +90,17 @@ namespace SanteDB.Core.Interop
         /// The service is som other sort of service
         /// </summary>
         [XmlEnum("other")]
-        Other
+        Other,
+        /// <summary>
+        /// The application control service for interacting with the SanteDB web app framework.
+        /// </summary>
+        [XmlEnum("app")]
+        ApplicationControlService,
+        /// <summary>
+        /// The user interface service
+        /// </summary>
+        [XmlEnum("web")]
+        WebUserInterfaceService
     }
 
     /// <summary>
@@ -178,6 +189,13 @@ namespace SanteDB.Core.Interop
             this.ServiceType = provider.ApiType;
             this.BaseUrl = provider.Url;
             this.Capabilities = provider.Capabilities;
+            this.SecurityScheme = SecurityScheme.None;
+            if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth))
+                this.SecurityScheme |= SecurityScheme.Basic;
+            else if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth))
+                this.SecurityScheme |= SecurityScheme.Bearer;
+            if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.CertificateAuth))
+                this.SecurityScheme |= SecurityScheme.ClientCertificate;
             if (provider.BehaviorType != null)
             {
                 this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);
@@ -201,6 +219,13 @@ namespace SanteDB.Core.Interop
         [XmlAttribute("cap"), JsonProperty("cap")]
         [DisplayName("Capabilities"), Description("The capabilities of this service (compression, bearer authentication, etc.) which is used by clients to negotiate server capacity")]
         public ServiceEndpointCapabilities Capabilities { get; set; }
+
+        /// <summary>
+        /// Security scheme
+        /// </summary>
+        [XmlAttribute("security"), JsonProperty("security")]
+        [DisplayName("Security"), Description("Identifies the security methods on the provider")]
+        public SecurityScheme SecurityScheme { get; set; }
 
         /// <summary>
         /// Base URL type

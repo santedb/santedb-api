@@ -16,12 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-2
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -38,13 +37,17 @@ namespace SanteDB.Core.Security
         /// </summary>
         public String ServiceName => "SHA256 Password Encoding Service";
 
+
         /// <summary>
         /// Encode a password using the SHA256 encoding
         /// </summary>
-        public string ComputeHash(string password)
+        public string ComputeHash(string password) => this.ComputeHash(Encoding.UTF8.GetBytes(password)).HexEncode().ToLower();
+
+        /// <inheritdoc/>
+        public byte[] ComputeHash(byte[] data)
         {
             SHA256 hasher = SHA256.Create();
-            return BitConverter.ToString(hasher.ComputeHash(Encoding.UTF8.GetBytes(password))).Replace("-", "").ToLower();
+            return hasher.ComputeHash(data);
         }
     }
 }

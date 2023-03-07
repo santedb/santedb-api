@@ -16,33 +16,31 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
 using System;
+using System.Linq.Expressions;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
-    /// <summary>
-    /// Extended data persistence service
-    /// </summary>
-    public interface IDataPersistenceServiceEx : IDataPersistenceService
-    {
-
-        /// <summary>
-        /// Touch the specified data
-        /// </summary>
-        void Touch(Guid key, TransactionMode mode, IPrincipal principal);
-
-    }
 
     /// <summary>
     /// Generic interface implementation
     /// </summary>
-    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceServiceEx, IDataPersistenceService<TModel>
+    public interface IDataPersistenceServiceEx<TModel> : IDataPersistenceService<TModel>
        where TModel : IdentifiedData
     {
 
+        /// <summary>
+        /// Obsolete all matching data
+        /// </summary>
+        void DeleteAll(Expression<Func<TModel, bool>> matching, TransactionMode mode, IPrincipal principal);
+
+        /// <summary>
+        /// Touch the specified data
+        /// </summary>
+        TModel Touch(Guid key, TransactionMode mode, IPrincipal principal);
     }
 }

@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Services;
 using System;
@@ -32,6 +32,12 @@ namespace SanteDB.Core.Configuration.Data
     /// should be tied directly to a particular plugin for a new database.</remarks>
     public interface IDataConfigurationProvider : IReportProgressChanged
     {
+
+        /// <summary>
+        /// Discovery information about the configuration in <see cref="Options"/>
+        /// </summary>
+        DataConfigurationCapabilities Capabilities { get; }
+
         /// <summary>
         /// Gets the invariant name of the database solution this configuration provider configures
         /// </summary>
@@ -78,11 +84,16 @@ namespace SanteDB.Core.Configuration.Data
         Type DbProviderType { get; }
 
         /// <summary>
+        /// Gets the ADO.NET factory
+        /// </summary>
+        Type AdoNetFactoryType { get; }
+
+        /// <summary>
         /// Creates the specified connection string with <paramref name="options"/>
         /// </summary>
         /// <param name="options">The options to be set on the connection string</param>
         /// <returns>The constructed <see cref="ConnectionString"/> instance</returns>
-        ConnectionString CreateConnectionString(Dictionary<String, Object> options);
+        ConnectionString CreateConnectionString(IDictionary<String, Object> options);
 
         /// <summary>
         /// Parse the specified connection string into a dictionary of key/value pairs
@@ -141,5 +152,46 @@ namespace SanteDB.Core.Configuration.Data
         /// <param name="connectionString">The connection string which should be verified</param>
         /// <returns>True if the connection string is valid</returns>
         bool TestConnectionString(ConnectionString connectionString);
+    }
+
+    /// <summary>
+    /// Describes the type 
+    /// </summary>
+    public class DataConfigurationCapabilities
+    {
+
+        /// <summary>
+        /// True if the database supports ownership on database
+        /// </summary>
+        public bool SupportsOwnership { get;  }
+        /// <summary>
+        /// Gets the setting for passwords
+        /// </summary>
+        public String PasswordSetting { get; }
+        /// <summary>
+        /// Gets the setting for username (or null if not needed)
+        /// </summary>
+        public String UserNameSetting { get; }
+        /// <summary>
+        /// Gets the setting for the database name
+        /// </summary>
+        public String NameSetting { get; }
+
+        /// <summary>
+        /// Gets the host name setting
+        /// </summary>
+        public String HostSetting { get; }
+
+        /// <summary>
+        /// Creats a new configuration capabilities
+        /// </summary>
+        public DataConfigurationCapabilities(string nameSetting, string userNameSetting, string passwordSetting, string hostSetting, bool supportOwners)
+        {
+            this.SupportsOwnership = supportOwners;
+            this.NameSetting = nameSetting;
+            this.UserNameSetting = userNameSetting;
+            this.PasswordSetting = passwordSetting;
+            this.HostSetting = hostSetting;
+        }
     }
 }

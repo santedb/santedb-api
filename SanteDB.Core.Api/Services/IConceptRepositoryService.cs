@@ -16,9 +16,8 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
 using System;
 using System.Collections.Generic;
@@ -127,9 +126,7 @@ namespace SanteDB.Core.Services
         /// Gets the concept reference term for the <see cref="Concept"/> with <paramref name="conceptMnemonic"/> in <paramref name="codeSystem"/>
         /// only if the <see cref="ReferenceTerm"/> is the same in scope as the <see cref="Concept"/>
         /// </summary>
-        /// <param name="codeSystem">The code system OID, URL or domain for which the <see cref="ReferenceTerm"/> should be retrieved</param>
-        /// <param name="conceptMnemonic">The mnemonic of the <see cref="Concept"/> for which the lookup is being performed</param>
-        /// <returns>The reference term which exactly matches the same scope as <paramref name="conceptMnemonic"/></returns>
+        /// <returns></returns>
         ReferenceTerm GetConceptReferenceTerm(String conceptMnemonic, String codeSystem);
 
         /// <summary>

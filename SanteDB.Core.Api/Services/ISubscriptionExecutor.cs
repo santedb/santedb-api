@@ -16,17 +16,78 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Subscription;
 using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services
 {
+
+    /// <summary>
+    /// Event args for after subscription has been executed
+    /// </summary>
+    public class SubscriptionExecutedEventArgs : SecureAccessEventArgs
+    {
+        /// <summary>
+        /// Creates a new instance of the subscription executed event args
+        /// </summary>
+        /// <param name="subscriptionDefinition">The subscription definition fired</param>
+        /// <param name="parameters">The parameters used to execute</param>
+        /// <param name="results">The results returned from the query</param>
+        /// <param name="principal">The principal which executed the query</param>
+        public SubscriptionExecutedEventArgs(SubscriptionDefinition subscriptionDefinition, NameValueCollection parameters, IQueryResultSet results, IPrincipal principal) : base(principal)
+        {
+            this.SubscriptionDefinition = subscriptionDefinition;
+            this.Parameters = parameters;
+            this.Results = results;
+        }
+
+        /// <summary>
+        /// Gets the subscription definition to be executed
+        /// </summary>
+        public SubscriptionDefinition SubscriptionDefinition { get; }
+
+        /// <summary>
+        /// Gets the parameters passed to the subscription filter
+        /// </summary>
+        public NameValueCollection Parameters { get; }
+
+        /// <summary>
+        /// Gets the results which have been executed
+        /// </summary>
+        public virtual IQueryResultSet Results { get; set; }
+
+
+    }
+    /// <summary>
+    /// Event args for the pre-fire of a subscription being executed
+    /// </summary>
+    public class SubscriptionExecutingEventArgs : SubscriptionExecutedEventArgs
+    {
+
+        /// <summary>
+        /// Creates a new subscription executing event args structure
+        /// </summary>
+        /// <param name="subscriptionDefinition">The definition of the subscription being executed</param>
+        /// <param name="parameters">The parameters to be passed to the query</param>
+        /// <param name="principal">The principal executing the query</param>
+        public SubscriptionExecutingEventArgs(SubscriptionDefinition subscriptionDefinition, NameValueCollection parameters, IPrincipal principal) : base(subscriptionDefinition, parameters, null, principal)
+        {
+        }
+
+        /// <summary>
+        /// Set to true if the handler wishes to cancel the original caller's execution
+        /// </summary>
+        public bool Cancel { get; set; }
+
+
+    }
+
     /// <summary>
     /// Contract which defines a dCDR subscription executor
     /// </summary>
@@ -35,7 +96,7 @@ namespace SanteDB.Core.Services
     /// from the <see cref="ISubscriptionRepository"/> to the appropriate database technology. The subscription executor
     /// gathers any new records requested by the dCDR and prepares them for download by the dCDR.</para>
     /// </remarks>
-    [System.ComponentModel.Description("dCDR Subscription Execution Provider")]
+    [System.ComponentModel.Description("dCDR Server Named Query Provider")]
     public interface ISubscriptionExecutor : IServiceImplementation
     {
 
@@ -43,36 +104,28 @@ namespace SanteDB.Core.Services
         /// Occurs after a subscription has been executed, and allows subscribers to modify the data being
         /// sent back to the dCDR
         /// </summary>
-        event EventHandler<QueryResultEventArgs<IdentifiedData>> Executed;
+        event EventHandler<SubscriptionExecutedEventArgs> Executed;
 
         /// <summary>
         /// Occurs prior to a subscription being executed, and allows subscribers to modify the query being
         /// executed.
         /// </summary>
-        event EventHandler<QueryRequestEventArgs<IdentifiedData>> Executing;
+        event EventHandler<SubscriptionExecutingEventArgs> Executing;
 
         /// <summary>
         /// Executes the identified subscription agianst the persistence layer.
         /// </summary>
-        /// <param name="subscriptionKey">The key of the subscription to run</param>
+        /// <param name="queryDefinitionKey">The key of the query definition to run</param>
         /// <param name="parameters">The parameters from the query</param>
-        /// <param name="offset">The start record</param>
-        /// <param name="count">The number of records</param>
-        /// <param name="totalResults">The total results in the subscription</param>
-        /// <param name="queryId">The query identifier</param>
         /// <returns>The results from the execution</returns>
-        IEnumerable<Object> Execute(Guid subscriptionKey, NameValueCollection parameters, int offset, int? count, out int totalResults, Guid queryId);
+        IQueryResultSet Execute(Guid queryDefinitionKey, NameValueCollection parameters);
 
         /// <summary>
         /// Executes the provided subscription definition
         /// </summary>
         /// <param name="subscription">The loaded subscription definition to be used</param>
         /// <param name="parameters">The parameters to query</param>
-        /// <param name="offset">The offset of the first record</param>
-        /// <param name="count">The number of results</param>
-        /// <param name="totalResults">The total matching results</param>
-        /// <param name="queryId">A stateful query identifier</param>
         /// <returns>The results matching the filter parameters</returns>
-        IEnumerable<Object> Execute(SubscriptionDefinition subscription, NameValueCollection parameters, int offset, int? count, out int totalResults, Guid queryId);
+        IQueryResultSet Execute(SubscriptionDefinition subscription, NameValueCollection parameters);
     }
 }

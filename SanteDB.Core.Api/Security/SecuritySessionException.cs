@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Security;
@@ -52,7 +52,11 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Token is of invalid type
         /// </summary>
-        TokenType
+        TokenType,
+        /// <summary>
+        /// Token signature validation error
+        /// </summary>
+        SignatureFailure
     }
 
     /// <summary>

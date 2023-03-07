@@ -16,14 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
-using SanteDB.Core.Model;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace SanteDB.Core.Notifications
 {
@@ -33,52 +33,49 @@ namespace SanteDB.Core.Notifications
     public class DefaultNotificationService : INotificationService
     {
         // Tracer
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultNotificationService));
+        private readonly Tracer m_tracer;
+
+        private readonly INotificationTemplateRepository m_notificationTemplateRepository;
+        private readonly INotificationTemplateFiller m_notificationTemplateFiller;
 
         // Relay cache
         private IDictionary<String, INotificationRelay> m_relays;
 
-        /// <summary>
-        /// Get all relays
-        /// </summary>
+        /// <inheritdoc />
         public IEnumerable<INotificationRelay> Relays => this.m_relays.Values;
 
-        /// <summary>
-        /// Service name
-        /// </summary>
+        /// <inheritdoc />
         public string ServiceName => "Notification Relay Service";
 
-        /// <summary>
-        /// Default notification service
-        /// </summary>
-        public DefaultNotificationService()
+        /// <inheritdoc />
+        public DefaultNotificationService(IServiceManager serviceManager, INotificationTemplateRepository templateRepository, INotificationTemplateFiller templateFiller)
         {
-            this.m_relays = AppDomain.CurrentDomain
-                .GetAllTypes()
-                .Where(t => typeof(INotificationRelay).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                .Select(t => Activator.CreateInstance(t) as INotificationRelay)
-                .ToDictionary(o => o.Scheme, o => o);
+            this.m_tracer = new Tracer(nameof(DefaultNotificationService));
+            this.m_relays = serviceManager
+                .CreateInjectedOfAll<INotificationRelay>()
+                .SelectMany(r=>r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
+                .ToDictionaryIgnoringDuplicates(o=>o.scheme, o=>o.relay);
+
+            this.m_notificationTemplateRepository = templateRepository;
+            this.m_notificationTemplateFiller = templateFiller;
         }
 
-        /// <summary>
-        /// Get the specified notification relay
-        /// </summary>
+        /// <inheritdoc />
         public INotificationRelay GetNotificationRelay(Uri toAddress)
         {
             if (this.m_relays.TryGetValue(toAddress.Scheme, out INotificationRelay retVal))
+            {
                 return retVal;
+            }
+
             return null;
         }
 
-        /// <summary>
-        /// Get notification relay
-        /// </summary>
+        /// <inheritdoc />
         public INotificationRelay GetNotificationRelay(string toAddress) => this.GetNotificationRelay(new Uri(toAddress));
 
-        /// <summary>
-        /// Send the specified data to the specified addressers
-        /// </summary>
-        public Guid[] Send(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        /// <inheritdoc />
+        public Guid[] SendNotification(string[] to, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
             var sendRelays = to.Select(o => new Uri(o)).GroupBy(o => o.Scheme);
             List<Guid> retVal = new List<Guid>(to.Length);
@@ -89,10 +86,20 @@ namespace SanteDB.Core.Notifications
                     retVal.Add(relay.Send(itm.Select(o => o.ToString()).ToArray(), subject, body, scheduleDelivery, ccAdmins, attachments));
                 }
                 else
-                    this.m_tracer.TraceWarning("Cannot find relay on scheme {0}", itm.Key);
+                {
+                    throw new InvalidOperationException($"Cannot find relay on scheme {itm.Key}");
+                }
             }
 
             return retVal.ToArray();
+        }
+
+        /// <inheritdoc />
+        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        {
+            NotificationTemplate template = m_notificationTemplateFiller.FillTemplate(templateId, templateLanguage, templateModel);
+
+            return SendNotification(to, template.Subject, template.Body, scheduleDelivery, ccAdmins, attachments);
         }
     }
 }

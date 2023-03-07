@@ -16,10 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net.Mime;
 
 namespace SanteDB.Core.Http
 {
@@ -29,6 +33,20 @@ namespace SanteDB.Core.Http
     public class DefaultContentTypeMapper : IContentTypeMapper
     {
 
+        private static readonly IDictionary<String, IBodySerializer> s_serializers;
+
+        /// <summary>
+        /// Content type mapper
+        /// </summary>
+        static DefaultContentTypeMapper ()
+        {
+            s_serializers = AppDomain.CurrentDomain.GetAllTypes()
+                .Where(t => t.Implements(typeof(IBodySerializer)) && !t.IsAbstract && !t.IsInterface)
+                .Select(t => Activator.CreateInstance(t) as IBodySerializer)
+                .ToLookup(o => o.ContentType, o => o)
+                .ToDictionary(o => o.Key, o => o.First());
+        }
+
         /// <summary>
         /// Get the content type of the file
         /// </summary>
@@ -37,6 +55,8 @@ namespace SanteDB.Core.Http
             string extension = Path.GetExtension(filename);
             switch (extension.Substring(1).ToLower())
             {
+                case "csv":
+                    return "text/csv";
                 case "htm":
                 case "html":
                     return "text/html";
@@ -72,36 +92,23 @@ namespace SanteDB.Core.Http
         /// Gets the body serializer based on the content type
         /// </summary>
         /// <param name="contentType">Content type.</param>
-        /// <param name="typeHint">The type hint.</param>
         /// <returns>The serializer.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">contentType - Not supported</exception>
-        public IBodySerializer GetSerializer(string contentType, Type typeHint)
+        public IBodySerializer GetSerializer(ContentType contentType)
         {
-            switch (contentType)
+            if(s_serializers.TryGetValue(contentType.MediaType, out var serializer))
             {
-                case "text/xml":
-                case "application/xml":
-                case "application/xml; charset=utf-8":
-                case "application/xml; charset=UTF-8":
-                    return new XmlBodySerializer(typeHint);
-
-                case "application/json":
-                case "application/json; charset=utf-8":
-                case "application/json; charset=UTF-8":
-                    return new JsonBodySerializer(typeHint);
-
-                case "application/x-www-form-urlencoded":
-                    return new FormBodySerializer();
-
-                case "application/octet-stream":
-                    return new BinaryBodySerializer();
-
-                default:
-                    if (contentType.StartsWith("multipart/form-data"))
-                        return new MultipartBinarySerializer(contentType);
-
-                    throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");
+                return serializer;
             }
+            else if(contentType.MediaType.Contains("+") && s_serializers.TryGetValue(contentType.MediaType.Split('+')[0], out serializer))
+            {
+                return serializer;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");
+            }
+
         }
 
         #endregion IBodySerializerBinder implementation

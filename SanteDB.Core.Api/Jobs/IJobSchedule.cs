@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-1-11
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using System;
@@ -32,7 +32,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Gets the type of schedule
         /// </summary>
-        JobScheduleType Type { get;  }
+        JobScheduleType Type { get; }
 
         /// <summary>
         /// Get the interval on which the job runs

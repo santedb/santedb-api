@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Roles;
@@ -34,7 +34,7 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Load the specified protocol data
         /// </summary>
-        void Load(Core.Model.Acts.Protocol protocolData);
+        IClinicalProtocol Load(Core.Model.Acts.Protocol protocolData);
 
         /// <summary>
         /// Get the protocol data
@@ -52,19 +52,24 @@ namespace SanteDB.Core.Protocol
         String Name { get; }
 
         /// <summary>
+        /// Gets the version of the protocol
+        /// </summary>
+        String Version { get; }
+
+        /// <summary>
         /// Calculate the clinical protocol for the given patient
         /// </summary>
-        List<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
+        IEnumerable<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
 
         /// <summary>
         /// Update the care plan based on new data
         /// </summary>
-        List<Act> Update(Patient p, List<Act> existingPlan);
+        IEnumerable<Act> Update(Patient p, IEnumerable<Act> existingPlan);
 
         /// <summary>
         /// Called prior to performing calculation of the care protocol allowing the object to prepare the object for whatever 
         /// pre-requisite data is needed for the protocol
         /// </summary>
-        void Initialize(Patient p, IDictionary<String, Object> parameters);
+        void Prepare(Patient p, IDictionary<String, Object> parameters);
     }
 }

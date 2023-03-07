@@ -16,12 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -45,7 +46,10 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value, null, true, AuthenticationContext.Current.Principal);
+            {
+                return persistenceService.Get(key.Value, null, AuthenticationContext.Current.Principal);
+            }
+
             return default(TObject);
         }
 
@@ -56,16 +60,21 @@ namespace SanteDB.Core.Data
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null && key.HasValue && versionKey.HasValue)
-                return persistenceService.Get(key.Value, versionKey, false, AuthenticationContext.Current.Principal);
+            {
+                return persistenceService.Get(key.Value, versionKey, AuthenticationContext.Current.Principal);
+            }
             else if (persistenceService != null && key.HasValue)
-                return persistenceService.Get(key.Value, null, false, AuthenticationContext.SystemPrincipal);
+            {
+                return persistenceService.Get(key.Value, null, AuthenticationContext.SystemPrincipal);
+            }
+
             return default(TObject);
         }
 
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
+        public IQueryResultSet<TObject> GetRelations<TObject>(Guid? sourceKey, int? sourceVersionSequence) where TObject : IdentifiedData, IVersionedAssociation, new()
         {
             // Is the collection already loaded?
             return this.Query<TObject>(o => o.SourceEntityKey == sourceKey && o.ObsoleteVersionSequenceId != null);
@@ -74,24 +83,40 @@ namespace SanteDB.Core.Data
         /// <summary>
         /// Get versioned relationships for the object
         /// </summary>
-        public IEnumerable<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
+        public IQueryResultSet<TObject> GetRelations<TObject>(params Guid?[] sourceKey) where TObject : IdentifiedData, ISimpleAssociation, new()
         {
             // Is the collection already loaded?
             return this.Query<TObject>(o => sourceKey.Contains(o.SourceEntityKey));
         }
 
+        /// <inheritdoc/>
+        public IQueryResultSet GetRelations(Type relatedType, params Guid?[] sourceKey)
+        {
+            var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(relatedType);
+            var persistenceService = ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
+            if(persistenceService == null)
+            {
+                return null;
+            }
+            var parm = Expression.Parameter(relatedType);
+            var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
+
+            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey)))), parm);
+            var retVal =  persistenceService.Query(expr);
+            return retVal;
+        }
+
         /// <summary>
         /// Query the specified object
         /// </summary>
-        public IEnumerable<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
+        public IQueryResultSet<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
             if (persistenceService != null)
             {
-                var tr = 0;
-                return persistenceService.Query(query, 0, null, out tr, AuthenticationContext.Current.Principal);
+                return persistenceService.Query(query, AuthenticationContext.Current.Principal);
             }
-            return new List<TObject>();
+            return new MemoryQueryResultSet<TObject>(new TObject[0]);
         }
 
         #endregion IEntitySourceProvider implementation

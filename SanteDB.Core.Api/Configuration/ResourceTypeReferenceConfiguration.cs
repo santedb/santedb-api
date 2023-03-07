@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Serialization;
@@ -51,6 +51,15 @@ namespace SanteDB.Core.Configuration
         {
             s_binder.BindToName(resourceType, out var asm, out var name);
             this.TypeXml = name;
+        }
+
+        /// <summary>
+        /// Constructor accepting the resource type
+        /// </summary>
+        /// <param name="resourceName">The resource type being set on this configuration object</param>
+        public ResourceTypeReferenceConfiguration(String resourceName)
+        {
+            this.TypeXml = resourceName;
         }
 
         /// <summary>

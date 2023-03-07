@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Services;
@@ -53,6 +53,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public TypeReferenceConfiguration(string typeAqn)
         {
+            if (String.IsNullOrEmpty(typeAqn))
+            {
+                throw new ArgumentNullException(nameof(typeAqn));
+            }
             this.TypeXml = typeAqn;
         }
 
@@ -61,6 +65,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         public TypeReferenceConfiguration(Type type)
         {
+            //if(type == null)
+            //{
+            //    throw new ArgumentNullException(nameof(type));
+            //}
             this.Type = type;
         }
 
@@ -74,7 +82,10 @@ namespace SanteDB.Core.Configuration
             set
             {
                 if (String.Equals(this.m_typeXml, value))
+                {
                     this.m_type = null;
+                }
+
                 this.m_typeXml = value;
             }
         }
@@ -100,13 +111,28 @@ namespace SanteDB.Core.Configuration
             set
             {
                 this.m_type = value;
-                this.m_typeXml = value?.AssemblyQualifiedName;
+                if (value != null)
+                {
+                    this.m_typeXml = $"{value?.FullName}, {value?.Assembly.GetName().Name}"; // remove version 
+                }
+                else
+                {
+                    this.m_typeXml = null;
+                }
             }
         }
 
         /// <summary>
         /// Represent as a string
         /// </summary>
-        public override string ToString() => this.Type?.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? this.Type?.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? this.Type.Name;
+        public override string ToString() => this.IsValid() ? this.Type?.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? this.Type?.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? this.Type.Name : this.TypeXml;
+
+        /// <summary>
+        /// Validate the type 
+        /// </summary>
+        public bool IsValid()
+        {
+            return Type.GetType(this.TypeXml) != null;
+        }
     }
 }

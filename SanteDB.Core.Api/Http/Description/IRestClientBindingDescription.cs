@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+
 namespace SanteDB.Core.Http.Description
 {
     /// <summary>
@@ -35,12 +36,18 @@ namespace SanteDB.Core.Http.Description
         /// Gets a value indicating whether this <see cref="IRestClientBindingDescription"/> is optimize.
         /// </summary>
         /// <value><c>true</c> if optimize; otherwise, <c>false</c>.</value>
-        bool Optimize { get; }
+        bool CompressRequests { get; }
 
         /// <summary>
         /// Gets or sets the security configuration
         /// </summary>
         /// <value>The security.</value>
         IRestClientSecurityDescription Security { get; }
+
+        /// <summary>
+        /// Gets the optimization method
+        /// </summary>
+        HttpCompressionAlgorithm OptimizationMethod { get; }
+
     }
 }

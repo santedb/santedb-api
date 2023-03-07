@@ -16,14 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Principal
 {
     /// <summary>
-    /// Represents a device identity
+    /// Represents an application identity
     /// </summary>
     public interface IApplicationIdentity : IIdentity
     {

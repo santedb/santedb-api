@@ -1,0 +1,100 @@
+﻿<ForeignDataMap xmlns="http://santedb.org/santedb" name="A Sample Foreign Data Map">
+  <description>A simple map</description>
+  <!-- CSV file = MRN,Dob,Gender,surname,given,Middle,Insurance,street,City,State,Country,ZIP,Birthplace,Alias,Mother Family,Mother Given,Birth Order -->
+  <maps>
+    <add abortOnError="false" required="true">
+      <source>patients</source>
+      <resource type="Patient" />
+      <maps>
+        <add abortOnError="false" required="true">
+          <source>MRN</source>
+          <target>identifier[MRN].value</target>
+        </add>
+        <add required="true">
+          <source>Dob</source>
+          <target>dateOfBirth</target>
+        </add>
+        <add required="true">
+          <source>Gender</source>
+          <target>administrativeGender</target>
+          <transforms>
+            <add transformer="ConceptLookupTransform">
+              <args>
+                <string>AdministrativeGender</string>
+              </args>
+            </add>
+          </transforms>
+        </add>
+        <add required="true">
+          <source>Surname</source>
+          <target>name[OfficialRecord].component[Family].value</target>
+        </add>
+        <add required="true">
+          <source>Given</source>
+          <target>name[OfficialRecord].component[Given].value</target>
+        </add>
+        <add required="true">
+          <source>Middle</source>
+          <target>name[OfficialRecord].component[Given].value</target>
+          <transforms>
+            <add transformer="NoCase"/>
+            <add transformer="Expression">
+              <args>
+                <string>Middle.Substring(0,1)</string>
+              </args>
+            </add>
+          </transforms>
+        </add>
+        <add required="true">
+          <source>Insurance</source>
+          <target>identifier[INSURANCE].value</target>
+        </add>
+        <add required="false">
+          <source>street</source>
+          <target>address[Home].component[StreetAddressLine].value</target>
+        </add>
+        <add required="false">
+          <source>City</source>
+          <target>address[Home].component[City].value</target>
+        </add>
+        <add required="false">
+          <source>county</source>
+          <target>address[Home].component[County].value</target>
+        </add>
+        <add required="false">
+          <source>zip</source>
+          <target>address[Home].component[PostalCode].value</target>
+        </add>
+        <add required="false">
+          <source>birthplace</source>
+          <target>relationship[Birthplace].target</target>
+          <transforms>
+            <add transformer="NoCase" />
+            <add transformer="EntityLookup">
+              <args>
+                <string>Place</string>
+                <string>name.component.value</string>
+              </args>
+            </add>
+          </transforms>
+        </add>
+        <add required="false">
+          <source>alias</source>
+          <target>name[Anonymous].component.value</target>
+        </add>
+        <add required="false">
+          <source>Mother Family</source>
+          <target>relationship[Mother].target@Person.name[Maiden].component[Family].value</target>
+        </add>
+        <add required="false">
+          <source>Mother Given</source>
+          <target>relationship[Mother].target@Person.name[Maiden].component[Given].value</target>
+        </add>
+        <add required="false">
+          <source>Birth Order</source>
+          <target>multipleBirthOrder</target>
+        </add>
+      </maps>
+    </add>
+  </maps>
+</ForeignDataMap>

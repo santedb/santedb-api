@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System.Security.Principal;
 
@@ -30,17 +30,12 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials which are used to authenticate
         /// </summary>
-        Credentials GetCredentials(IRestClient context);
-
-        /// <summary>
-        /// Authenticate a user in the credential.
-        /// </summary>
-        /// <param name="context">Context.</param>
-        Credentials Authenticate(IRestClient context);
+        RestRequestCredentials GetCredentials(IRestClient context);
 
         /// <summary>
         /// Gets credentials for the specified principal
         /// </summary>
-        Credentials GetCredentials(IPrincipal principal);
+        RestRequestCredentials GetCredentials(IPrincipal principal);
+
     }
 }

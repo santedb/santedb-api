@@ -16,15 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-9-23
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
-using SanteDB.Core.Model;
 using SanteDB.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Security.Principal;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services.Impl
@@ -119,6 +117,25 @@ namespace SanteDB.Core.Services.Impl
             {
                 throw new ObjectLockedException(resourceLock.UserIdentity);
             }
+        }
+
+        /// <summary>
+        /// Returns true if the service is chedked out
+        /// </summary>
+        public bool IsCheckedout<T>(Guid key, out IIdentity currentOwner)
+        {
+            var resourceLock = this.m_adhocCache.Get<ResourceCheckoutLock>(this.CreateCacheKey<T>(key));
+            if(resourceLock != null )
+            {
+                currentOwner = new GenericIdentity(resourceLock.UserIdentity);
+                return true;
+            }
+            else
+            {
+                currentOwner = null;
+                return false;
+            }
+
         }
     }
 }

@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
 
@@ -46,7 +47,26 @@ namespace SanteDB.Core.Security.Configuration
             this.FindType = X509FindType.FindByThumbprint;
             this.StoreLocation = StoreLocation.LocalMachine;
             this.StoreName = StoreName.My;
-            this.FindTypeSpecified = this.StoreLocationSpecified = true;
+            this.StoreNameSpecified = this.FindTypeSpecified = this.StoreLocationSpecified = true;
+        }
+
+        /// <summary>
+        /// Create from X509 certificate
+        /// </summary>
+        public X509ConfigurationElement(X509ConfigurationElement other)
+        {
+            if (string.IsNullOrEmpty(other.FindValue) && null != other.Certificate)
+            {
+                this.FindValue = other.Certificate?.Thumbprint;
+            }
+            else
+            {
+                this.FindValue = other.FindValue;
+            }
+            this.FindType = other.FindType;
+            this.StoreLocation = other.StoreLocation;
+            this.StoreName = other.StoreName;
+            this.StoreLocationSpecified = this.StoreNameSpecified = this.FindTypeSpecified = true;
         }
 
         /// <summary>
@@ -58,6 +78,8 @@ namespace SanteDB.Core.Security.Configuration
             this.StoreLocation = storeLocation;
             this.FindType = findType;
             this.FindValue = findValue;
+            this.FindTypeSpecified = this.StoreLocationSpecified = this.StoreNameSpecified = true;
+
         }
 
         /// <summary>
@@ -68,7 +90,6 @@ namespace SanteDB.Core.Security.Configuration
             this.FindType = X509FindType.FindByThumbprint;
             this.StoreLocation = StoreLocation.LocalMachine;
             this.StoreName = StoreName.My;
-            this.FindTypeSpecified = this.StoreLocationSpecified = true;
         }
 
         /// <summary>
@@ -109,6 +130,7 @@ namespace SanteDB.Core.Security.Configuration
         [Browsable(false)]
         public bool FindTypeSpecified { get; set; }
 
+
         /// <summary>
         /// Whether the store name was provided
         /// </summary>
@@ -145,8 +167,11 @@ namespace SanteDB.Core.Security.Configuration
             set
             {
                 if (value == null)
+                {
                     this.FindValue = null;
+                }
                 else
+                {
                     switch (this.FindType)
                     {
                         case X509FindType.FindBySubjectName:
@@ -164,6 +189,7 @@ namespace SanteDB.Core.Security.Configuration
                             this.FindTypeSpecified = true;
                             break;
                     }
+                }
             }
         }
 
@@ -182,9 +208,13 @@ namespace SanteDB.Core.Security.Configuration
                         store.Open(OpenFlags.ReadOnly);
                         var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
                         if (matches.Count == 0)
-                            throw new InvalidOperationException("Certificate not found");
+                        {
+                            throw new FileNotFoundException($"Certificate {this.FindValue} not found");
+                        }
                         else if (matches.Count > 1)
+                        {
                             throw new InvalidOperationException("Too many matches");
+                        }
                         else
                         {
                             this.m_certificate = matches[0];

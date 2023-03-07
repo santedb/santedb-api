@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
@@ -44,7 +44,7 @@ namespace SanteDB.Core.Security
         private IAdhocCacheService m_adhocCacheService;
 
         private IPasswordHashingService m_hasher;
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         /// <summary>
         /// Policy for the grant
@@ -222,9 +222,13 @@ namespace SanteDB.Core.Security
 
                     // What is the most specific policy in this tree?
                     if (activePolicy == null)
+                    {
                         return new EffectivePolicyInstance(masterPolicy, PolicyGrantType.Deny, principal);
+                    }
                     else
+                    {
                         return new EffectivePolicyInstance(masterPolicy, activePolicy.Rule, principal);
+                    }
                 }).ToArray();
 
                 this.m_adhocCacheService?.Add(cacheKey, result, new TimeSpan(0, 60, 0));
@@ -240,9 +244,13 @@ namespace SanteDB.Core.Security
             if (principal is IClaimsPrincipal cp)
             {
                 if (cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
+                {
                     return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
+                }
                 else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
+                {
                     return $"pdp.{this.m_hasher.ComputeHash(nameId)}";
+                }
             }
             return $"pdp.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
         }
@@ -253,17 +261,25 @@ namespace SanteDB.Core.Security
         public PolicyDecision GetPolicyDecision(IPrincipal principal, object securable)
         {
             if (principal == null)
+            {
                 throw new ArgumentNullException(nameof(principal));
+            }
             else if (securable == null)
+            {
                 throw new ArgumentNullException(nameof(securable));
+            }
             // We need to get the active policies for this
             var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
             IEnumerable<IPolicyInstance> securablePolicies = pip.GetPolicies(securable), principalPolicies = null;
 
             if (principal is IClaimsPrincipal cp)
+            {
                 principalPolicies = cp.GetGrantedPolicies(pip);
-            else
+            }
+            if(principalPolicies?.Any() != true)
+            {
                 principalPolicies = this.GetEffectivePolicySet(principal);
+            }
 
             List<PolicyDecisionDetail> details = new List<PolicyDecisionDetail>();
             var retVal = new PolicyDecision(securable, details);
@@ -277,7 +293,9 @@ namespace SanteDB.Core.Security
                 if (rule == PolicyGrantType.Elevate &&
                     (!pol.Policy.CanOverride ||
                     principalPolicies.Any(o => o.Policy.Oid == PermissionPolicyIdentifiers.ElevateClinicalData && o.Rule == PolicyGrantType.Grant)))
+                {
                     rule = PolicyGrantType.Deny;
+                }
 
                 details.Add(new PolicyDecisionDetail(pol.Policy.Oid, rule));
             }
@@ -291,9 +309,13 @@ namespace SanteDB.Core.Security
         public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
         {
             if (principal == null)
+            {
                 throw new ArgumentNullException(nameof(principal));
+            }
             else if (String.IsNullOrEmpty(policyId))
+            {
                 throw new ArgumentNullException(nameof(policyId));
+            }
 
             // Get the user object from the principal
             var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
@@ -302,14 +324,21 @@ namespace SanteDB.Core.Security
             if (principal is IClaimsPrincipal claimsPrincipal && claimsPrincipal.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim)) // must adhere to the token
             {
                 if (claimsPrincipal.HasClaim(c => c.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim && policyId == c.Value))
+                {
                     return PolicyGrantType.Grant;
+                }
                 else
                 {
                     // Can override?
                     var polInfo = pip?.GetPolicy(policyId);
                     if (polInfo?.CanOverride == true && pip?.GetPolicyInstance(principal, PermissionPolicyIdentifiers.OverridePolicyPermission).Rule != PolicyGrantType.Deny)
+                    {
                         return PolicyGrantType.Elevate;
-                    else return PolicyGrantType.Deny;
+                    }
+                    else
+                    {
+                        return PolicyGrantType.Deny;
+                    }
                 }
             }
             else
@@ -319,19 +348,30 @@ namespace SanteDB.Core.Security
                 var retVal = PolicyGrantType.Deny;
 
                 if (policyInstance == null)
+                {
                     retVal = PolicyGrantType.Deny;
+                }
                 else if (!policyInstance.Policy.CanOverride && policyInstance.Rule == PolicyGrantType.Elevate)
+                {
                     retVal = PolicyGrantType.Deny;
+                }
                 else if (!policyInstance.Policy.IsActive)
+                {
                     retVal = PolicyGrantType.Grant;
+                }
                 else if ((policyInstance.Policy as IHandledPolicy)?.Handler != null)
                 {
                     var policy = policyInstance.Policy as IHandledPolicy;
                     if (policy != null)
+                    {
                         retVal = policy.Handler.GetPolicyDecision(principal, policy, null).Outcome;
+                    }
                 }
                 else
+                {
                     retVal = policyInstance.Rule;
+                }
+
                 return retVal;
             }
         }

@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Interfaces;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
 using System;
@@ -35,7 +34,6 @@ namespace SanteDB.Core.Data.Quality
     /// </summary>
     public class DataQualityService : IDaemonService
     {
-
         // Configuration
         private DataQualityConfigurationSection m_configuration;
 
@@ -62,7 +60,7 @@ namespace SanteDB.Core.Data.Quality
         }
 
         // Data quality service
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityService));
 
         /// <summary>
         /// Ruleset evaluators
@@ -83,14 +81,17 @@ namespace SanteDB.Core.Data.Quality
         /// Daemon is starting
         /// </summary>
         public event EventHandler Starting;
+
         /// <summary>
         /// Daemon has started
         /// </summary>
         public event EventHandler Started;
+
         /// <summary>
         /// Daemon is stopping
         /// </summary>
         public event EventHandler Stopping;
+
         /// <summary>
         /// Daemon has stopped
         /// </summary>
@@ -141,10 +142,12 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public bool Stop()
         {
-            this.Started?.Invoke(this, EventArgs.Empty);
+            this.Stopping?.Invoke(this, EventArgs.Empty);
 
             foreach (var itm in this.m_attachedRules)
+            {
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(itm.GetType());
+            }
 
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;

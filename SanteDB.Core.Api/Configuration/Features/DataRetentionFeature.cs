@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Services;
@@ -115,7 +115,7 @@ namespace SanteDB.Core.Configuration.Features
             else
             {
                 var jobSection = configuration.GetSection<JobConfigurationSection>();
-                var jobConfig = jobSection.Jobs.Find(o => o.Type == typeof(DataRetentionJob));
+                var jobConfig = jobSection?.Jobs.Find(o => o.Type == typeof(DataRetentionJob));
                 var retentionConfig = configuration.GetSection<DataRetentionConfigurationSection>();
 
                 this.m_configuration = this.Configuration as GenericFeatureConfiguration;

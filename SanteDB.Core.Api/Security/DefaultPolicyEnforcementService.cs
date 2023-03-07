@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-2
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -24,9 +24,7 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using System;
-using System.Collections.Generic;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {
@@ -36,7 +34,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyEnforcementService : IPolicyEnforcementService
     {
         // Default policy decision service
-        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;
@@ -64,7 +62,9 @@ namespace SanteDB.Core.Security
             // Non system principals must be authenticated
             if (!principal.Identity.IsAuthenticated &&
                 principal != AuthenticationContext.SystemPrincipal)
+            {
                 return PolicyGrantType.Deny;
+            }
             else
             {
                 action = this.m_pdpService.GetPolicyOutcome(principal, policyId);
@@ -89,7 +89,7 @@ namespace SanteDB.Core.Security
         public void Demand(string policyId, IPrincipal principal)
         {
             var result = this.GetGrant(principal, policyId);
-            AuditUtil.AuditAccessControlDecision(principal, policyId, result);
+            ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
             if (result != PolicyGrantType.Grant)
             {
                 throw new PolicyViolationException(principal, policyId, result);

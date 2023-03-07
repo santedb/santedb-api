@@ -16,9 +16,8 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Model;
 using SanteDB.Core.Protocol;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
@@ -104,7 +103,7 @@ namespace SanteDB.Core.Configuration.Features
                         }
                         else
                         {
-                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.Name;
+                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.FullName;
                             config.Options.Add(optionName, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
                             config.Values.Add(optionName, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
                         }

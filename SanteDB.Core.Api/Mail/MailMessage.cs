@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
@@ -144,5 +144,11 @@ namespace SanteDB.Core.Mail
         /// </summary>
         [JsonProperty("to"), XmlElement("to")]
         public String To { get; set; }
+
+        /// <summary>
+        /// Mailboxes which this mail message appears in
+        /// </summary>
+        [XmlIgnore, JsonIgnore, QueryParameter("mailbox")]
+        public List<MailboxMailMessage> Mailboxes { get; set; }
     }
 }

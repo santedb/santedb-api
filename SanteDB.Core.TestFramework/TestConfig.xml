@@ -1,0 +1,71 @@
+﻿<?xml version="1.0"?>
+<!--
+ - Copyright 2021-2022 SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ - Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ - Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License"); you
+ - may not use this file except in compliance with the License. You may
+ - obtain a copy of the License at
+ -
+ - http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ - WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ - License for the specific language governing permissions and limitations under
+ - the License.
+ -
+ - User: fyfej
+ - Date: 2022-5-30
+ -->
+<SanteDBConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.10.0.23074" xmlns="http://santedb.org/configuration">
+  <sections>
+    <add type="SanteDB.Core.Configuration.ApplicationServiceContextConfigurationSection, SanteDB.Core.Api" />
+    <add type="SanteDB.Core.Configuration.DiagnosticsConfigurationSection, SanteDB.Core.Api" />
+    <add type="SanteDB.Core.Configuration.AuditAccountabilityConfigurationSection, SanteDB.Core.Api, Version=2.0.0.0"/>
+    <add type="SanteDB.Core.Configuration.Data.DataConfigurationSection, SanteDB.Core.Api" />
+    <add type="SanteDB.Core.Security.Configuration.SecurityConfigurationSection, SanteDB.Core.Api" />
+
+  </sections>
+  <section xsi:type="ApplicationServiceContextConfigurationSection" allowUnsignedAssemblies="true" threadPoolSize="4">
+    <serviceProviders>
+      <add type="SanteDB.Core.Security.SHA256PasswordHashingService, SanteDB.Core.Api" />
+      <add type="SanteDB.Core.Security.DefaultPolicyDecisionService, SanteDB.Core.Api" />
+      <add type="SanteDB.Core.Services.Impl.Repository.LocalRepositoryFactory,SanteDB.Core.Api"/>
+      <add type="SanteDB.Core.Services.Impl.DefaultThreadPoolService, SanteDB.Core.Api" />
+      <add type="SanteDB.Core.Services.Impl.LocalTagPersistenceService, SanteDB.Core.Api"/>
+    </serviceProviders>
+  </section>
+  <!-- Represents this server's internal security configuration -->
+  <section xsi:type="SecurityConfigurationSection"
+           passwordRegex="^(?=.*\d){1,}(?=.*[a-z]){1,}(?=.*[A-Z]){1,}(?=.*[^\w\d]){1,}.{6,}$"
+           allowUnsignedApplets="true"
+           pepExemptionPolicy="devices">
+    <!-- Sets policies for the system -->
+    <securityPolicy>
+      <add enabled="true" policy="auth.pwd.maxAge">
+        <int>120</int>
+      </add>
+      <add enabled="true" policy="auth.pwd.history">
+        <bool>true</bool>
+      </add>
+      <add enabled="true" policy="auth.failLogin">
+        <int>5</int>
+      </add>
+      <add enabled="true" policy="auth.session.length">
+        <timespan>PT30M</timespan>
+      </add>
+      <add enabled="true" policy="auth.session.refresh">
+        <timespan>PT35M</timespan>
+      </add>
+    </securityPolicy>
+    <!-- SanteDB signs a lot of data when communicating it, this is used for configuring how this server signs data -->
+    <signingKeys>
+      <add id="jwsdefault" alg="hmac" hmacSecret="@SanteDBDefault$$$409" />
+      <add id="default" alg="hmac" hmacSecret="@SanteDBDefault$$$409"/>
+    </signingKeys>
+    <!-- To Configure X509 Signatures -->
+    <!--<signing alg="rsa" findType="FindByThumbprint" storeName="My" storeLocation="CurrentUser" findValue="value" />-->
+  </section>
+</SanteDBConfiguration>

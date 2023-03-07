@@ -16,18 +16,15 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-11-17
+ * Date: 2022-5-30
  */
-using SanteDB.Core.Diagnostics;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Tracing;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Diagnostics.Tracing
 {
@@ -49,6 +46,9 @@ namespace SanteDB.Core.Diagnostics.Tracing
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
 
+        // Filter
+        private readonly EventLevel m_filter;
+
         /// <summary>
         /// Console trace writer
         /// </summary>
@@ -58,6 +58,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_dispatchThread = new Thread(this.LogDispatcherLoop);
             this.m_dispatchThread.IsBackground = true;
             this.m_dispatchThread.Start();
+            this.m_filter = filter;
         }
 
         /// <summary>
@@ -70,9 +71,14 @@ namespace SanteDB.Core.Diagnostics.Tracing
             {
                 case EventLevel.Verbose:
                     if (format.Contains("PERF"))
+                    {
                         color = ConsoleColor.Green;
+                    }
                     else
+                    {
                         color = ConsoleColor.Magenta;
+                    }
+
                     break;
 
                 case EventLevel.Informational:
@@ -93,8 +99,12 @@ namespace SanteDB.Core.Diagnostics.Tracing
                     break;
             }
 
-            this.m_logBacklog.Enqueue(new KeyValuePair<ConsoleColor, String>(color, String.Format("{0:yyyy/MM/dd HH:mm:ss} [{1}] : {2} {3}: 0 : {4}", DateTime.Now, String.IsNullOrEmpty(Thread.CurrentThread.Name) ? $"@{Thread.CurrentThread.ManagedThreadId}" : Thread.CurrentThread.Name, source, level, String.Format(format, args))));
-            this.m_resetEvent.Set();
+
+            if (this.m_filter >= level || this.m_filter == EventLevel.LogAlways)
+            {
+                this.m_logBacklog.Enqueue(new KeyValuePair<ConsoleColor, String>(color, String.Format("{0:yyyy/MM/dd HH:mm:ss} [{1}] : {2} {3}: 0 : {4}", DateTime.Now, String.IsNullOrEmpty(Thread.CurrentThread.Name) ? $"@{Thread.CurrentThread.ManagedThreadId}" : Thread.CurrentThread.Name, source, level, String.Format(format, args))));
+                this.m_resetEvent.Set();
+            }
         }
 
         private void LogDispatcherLoop()
@@ -106,13 +116,20 @@ namespace SanteDB.Core.Diagnostics.Tracing
                     this.m_resetEvent.Wait();
                     this.m_resetEvent.Reset();
                 }
-                if (this.m_disposing) return;
+                if (this.m_disposing)
+                {
+                    return;
+                }
 
                 while (!this.m_logBacklog.IsEmpty)
                 {
                     if (this.m_logBacklog.TryDequeue(out var dq))
                     {
-                        if (this.m_disposing) return;
+                        if (this.m_disposing)
+                        {
+                            return;
+                        }
+
                         Console.ForegroundColor = dq.Key;
                         Console.WriteLine(dq.Value);
                         Console.ResetColor();
@@ -133,6 +150,17 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_dispatchThread = null;
             }
             Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Trace event
+        /// </summary>
+        public override void TraceEventWithData(EventLevel level, string source, string message, object[] data)
+        {
+            foreach (var obj in data)
+            {
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj).Replace("{", "{{").Replace("}", "}}")));
+            }
         }
     }
 }

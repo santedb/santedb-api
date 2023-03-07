@@ -16,12 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace SanteDB.Core.Http
 {
@@ -33,11 +34,17 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials to be used for this client
         /// </summary>
-        Credentials Credentials
+        RestRequestCredentials Credentials
         {
             get;
             set;
         }
+
+        /// <summary>
+        /// Gets or sets the format to accept data in
+        /// </summary>
+        /// <remarks>The <see cref="Description"/> is used for the default</remarks>
+        String Accept { get; set; }
 
         /// <summary>
         /// Gets the specified item
@@ -45,11 +52,12 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TResult">The type of model item to retrieve</typeparam>
         TResult Get<TResult>(String url);
 
+
         /// <summary>
-        /// Gets a inumerable result set of type T
+        /// Get the specified <typeparamref name="TResult"/> using <paramref name="query"/>
         /// </summary>
-        /// <typeparam name="TResult">The type of model item to retrieve</typeparam>
-        TResult Get<TResult>(String url, params KeyValuePair<String, Object>[] query);
+        /// <typeparam name="TResult">The type of result</typeparam>
+        TResult Get<TResult>(String url, NameValueCollection query);
 
         /// <summary>
         /// Invokes the specified method against the URL provided
@@ -82,7 +90,7 @@ namespace SanteDB.Core.Http
         /// <param name="query">The query parmaeters to pass in the request</param>
         /// <typeparam name="TBody">Indicates the type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">Indicates the expected return type</typeparam>
-        TResult Invoke<TBody, TResult>(String method, String url, String contentType, TBody body, params KeyValuePair<String, Object>[] query);
+        TResult Invoke<TBody, TResult>(String method, String url, String contentType, TBody body, NameValueCollection query);
 
         /// <summary>
         /// Instructs the server to perform a PATCH operation
@@ -159,9 +167,16 @@ namespace SanteDB.Core.Http
         /// Executes a HEAD operation against the URL
         /// </summary>
         /// <param name="resourceName">The name of the resource to perform a HEAD operation on</param>
+        /// <returns>A key/value pair of the HTTP headers sent in response to the HEAD</returns>
+        IDictionary<String, String> Head(String resourceName);
+
+        /// <summary>
+        /// Executes a HEAD operation against the URL
+        /// </summary>
+        /// <param name="resourceName">The name of the resource to perform a HEAD operation on</param>
         /// <param name="query">The queyr parameters to use onte HEAD</param>
         /// <returns>A key/value pair of the HTTP headers sent in response to the HEAD</returns>
-        IDictionary<String, String> Head(String resourceName, params KeyValuePair<String, Object>[] query);
+        IDictionary<String, String> Head(String resourceName, NameValueCollection query);
 
         /// <summary>
         /// Lock the specified resource
@@ -180,10 +195,17 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Perform a raw get
         /// </summary>
+        /// <param name="url">The url to get from</param>
+        /// <returns>The bytes retrieved from the service</returns>
+        byte[] Get(String url);
+
+        /// <summary>
+        /// Perform a raw get
+        /// </summary>
         /// <param name="url">The resource URL to execute the GET against</param>
         /// <param name="query">The query (as key=value) to include on the get</param>
         /// <returns>The raw bytestream response</returns>
-        byte[] Get(String url, params KeyValuePair<string, object>[] query);
+        byte[] Get(String url, NameValueCollection query);
 
         /// <summary>
         /// Gets the service client description

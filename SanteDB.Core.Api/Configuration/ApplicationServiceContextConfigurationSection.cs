@@ -16,14 +16,16 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -32,7 +34,7 @@ namespace SanteDB.Core.Configuration
     /// SanteDB server configuration 
     /// </summary>
     [XmlType(nameof(ApplicationServiceContextConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class ApplicationServiceContextConfigurationSection : IConfigurationSection
+    public class ApplicationServiceContextConfigurationSection : IValidatableConfigurationSection
     {
 
         /// <summary>
@@ -74,13 +76,78 @@ namespace SanteDB.Core.Configuration
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the instance name
+        /// </summary>
+        [XmlAttribute("instanceName"), JsonProperty("instanceName")]
+        [DisplayName("Instance Name"), Description("A human readable identifier for this instance (if running multiples on the same system)")]
+        public string InstanceName { get; set; }
+
+        /// <summary>
+        /// Validate the configuration section
+        /// </summary>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            foreach (var itm in this.ServiceProviders)
+            {
+                if (!itm.IsValid())
+                {
+                    // Is there a new type?
+                    var tName = itm.TypeXml.Split(',')[0].Split('.').Last();
+                    var candidateType = AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(t => t.Name == tName);
+                    if (candidateType != null)
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "movedType", $"Type {itm.TypeXml} has been moved to {candidateType.FullName},{candidateType.Assembly.GetName().Name}", Guid.Empty);
+                        itm.Type = candidateType;
+                    }
+                    else
+                    {
+                        yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingtype", $"Type {itm.TypeXml} is not valid", Guid.Empty);
+                    }
+                }
+            }
+
+            if (this.ThreadPoolSize > Environment.ProcessorCount)
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "resources", $"Max thread pool will have {this.ThreadPoolSize} but machine only has {Environment.ProcessorCount}", Guid.Empty);
+            }
+
+            foreach (var itm in this.AppSettings)
+            {
+                if (String.IsNullOrEmpty(itm.Key) || String.IsNullOrEmpty(itm.Value))
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "appsetting", $"App setting {itm.Key}={itm.Value} is missing key or value", Guid.Empty);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Add an application setting
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        public void AddAppSetting(string vkey, string value)
+        {
+            if(this.AppSettings == null )
+            {
+                this.AppSettings = new List<AppSettingKeyValuePair>();
+            }
+            var existing = this.AppSettings.Find(o => o.Key == vkey);
+            if(existing != null)
+            {
+                existing.Value = value;
+            }
+            else
+            {
+                this.AppSettings.Add(new AppSettingKeyValuePair(vkey, value));
+            }
+        }
     }
 
 
     /// <summary>
     /// Application key/value pair setting
     /// </summary>
-    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/mobile/configuration")]
+    [XmlType(nameof(AppSettingKeyValuePair), Namespace = "http://santedb.org/configuration")]
     public class AppSettingKeyValuePair
     {
 
@@ -111,6 +178,9 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlAttribute("value"), JsonProperty("value")]
         public String Value { get; set; }
+
+        /// <inheritdoc />
+        public override string ToString() => $"{Key}={Value}";
 
     }
 }

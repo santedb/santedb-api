@@ -16,12 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Security.Services;
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -61,11 +63,42 @@ namespace SanteDB.Core.Security.Configuration
         // Algorithm
         private SignatureAlgorithm m_algorithm = SignatureAlgorithm.HS256;
 
+        // When true don't disclose secrets
+        private bool m_forDisclosure = false;
+
         // HMAC key
         private string m_plainTextSecret = null;
 
         private byte[] m_secret = null;
         private byte[] m_decrypedSecret = null;
+
+        /// <summary>
+        /// Security configuration section
+        /// </summary>
+        public SecuritySignatureConfiguration()
+        {
+
+        }
+
+        /// <summary>
+        /// Create configuration with HMAC secret
+        /// </summary>
+        public SecuritySignatureConfiguration(String name, String secret)
+        {
+            this.KeyName = name;
+            this.HmacSecret = secret;
+            this.Algorithm = SignatureAlgorithm.HS256;
+        }
+
+        /// <summary>
+        /// Security signature with certificates
+        /// </summary>
+        public SecuritySignatureConfiguration(String name, StoreLocation storeLocation, StoreName storeName, X509Certificate2 certificate) 
+            : base(storeLocation, storeName, X509FindType.FindByThumbprint, certificate.Thumbprint)
+        {
+            this.KeyName = name;
+            this.Algorithm = SignatureAlgorithm.RS256;
+        }
 
         /// <summary>
         /// Gets or sets the key name
@@ -123,6 +156,11 @@ namespace SanteDB.Core.Security.Configuration
         }
 
         /// <summary>
+        /// Should serialize the secret
+        /// </summary>
+        public bool ShouldSerializeSecret() => !this.m_forDisclosure;
+
+        /// <summary>
         /// Plaintext editor for secret
         /// </summary>
         [XmlAttribute("hmacSecret"), JsonProperty("hmacSecret")]
@@ -136,14 +174,14 @@ namespace SanteDB.Core.Security.Configuration
             {
                 this.m_secret = null;
                 this.m_plainTextSecret = value;
-                
+
             }
         }
 
         /// <summary>
-        /// SHould serialize the secret?
+        /// Should serialize the secret
         /// </summary>
-        public bool ShouldSerializeHmacSecret() => this.m_secret == null;
+        public bool ShouldSerializeHmacSecret() => this.m_secret == null && !this.m_forDisclosure;
 
         /// <summary>
         /// Get the HMAC secret
@@ -151,7 +189,9 @@ namespace SanteDB.Core.Security.Configuration
         public byte[] GetSecret()
         {
             if (this.m_decrypedSecret != null)
+            {
                 return this.m_decrypedSecret;
+            }
 
             if (this.Secret == null)
             {
@@ -161,7 +201,9 @@ namespace SanteDB.Core.Security.Configuration
                     this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
                 }
                 else
+                {
                     return null;
+                }
             }
 
             if (this.m_decrypedSecret == null)
@@ -185,16 +227,20 @@ namespace SanteDB.Core.Security.Configuration
 
             var cryptoService = ApplicationServiceContext.Current?.GetService<ISymmetricCryptographicProvider>();
             if (cryptoService == null)
+            {
                 return false;
+            }
 
             var iv = cryptoService.GenerateIV();
             var key = cryptoService.GetContextKey();
 
             var data = cryptoService.Encrypt(secret, key, iv);
+
             this.m_secret = new byte[data.Length + iv.Length + 1];
             this.m_secret[0] = (byte)iv.Length;
             Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
             Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
+            //this.m_plainTextSecret = String.Empty;
             return true;
         }
 
@@ -202,5 +248,27 @@ namespace SanteDB.Core.Security.Configuration
         /// Represent as a string
         /// </summary>
         public override string ToString() => this.KeyName;
+
+        /// <summary>
+        /// Modify the security signature collection for disclosure to a REST API
+        /// </summary>
+        /// <returns>The created configuration</returns>
+        public SecuritySignatureConfiguration ForDisclosure() => new SecuritySignatureConfiguration()
+        {
+            Algorithm = this.Algorithm,
+            Certificate = this.Certificate,
+            FindType = this.FindType,
+            FindTypeSpecified = this.FindTypeSpecified,
+            FindValue = this.FindValue,
+            HmacSecret = this.HmacSecret,
+            IssuerName = this.IssuerName,
+            KeyName = this.KeyName,
+            StoreLocation = this.StoreLocation,
+            StoreLocationSpecified = this.StoreLocationSpecified,
+            StoreName = this.StoreName,
+            StoreNameSpecified = this.StoreNameSpecified,
+            ValidationOnly = this.ValidationOnly,
+            m_forDisclosure = true
+        };
     }
 }

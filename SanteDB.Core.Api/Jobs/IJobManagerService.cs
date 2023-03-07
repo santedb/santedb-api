@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Services;
 using System;
@@ -70,7 +70,7 @@ namespace SanteDB.Core.Jobs
     /// <seealso cref="IJob"/>
     /// <seealso cref="IJobScheduleManager"/>
     [Description("Job Management Service")]
-    public interface IJobManagerService : IDaemonService
+    public interface IJobManagerService : IServiceImplementation
     {
 
         /// <summary>
@@ -149,6 +149,11 @@ namespace SanteDB.Core.Jobs
         /// <param name="intervalSpan">The repeat interval of the job</param>
         /// <returns>The schedule of the job</returns>
         IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan);
+        /// <summary>
+        /// Clear the schedule of a job.
+        /// </summary>
+        /// <param name="job">The job to clear the schedule for.</param>
+        void ClearJobSchedule(IJob job);
 
     }
 }

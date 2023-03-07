@@ -16,8 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-9-7
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Services;
+using System;
+using System.Collections.Generic;
+
 namespace SanteDB.Core.Data
 {
     /// <summary>
@@ -26,7 +32,19 @@ namespace SanteDB.Core.Data
     /// <remarks>
     /// This interface is a marker interface
     /// </remarks>
-    public interface IDataManagementPattern
+    public interface IDataManagementPattern : IServiceImplementation
     {
+
+        /// <summary>
+        /// Get the data management link provider
+        /// </summary>
+        IDataManagedLinkProvider<T> GetLinkProvider<T>() where T : IdentifiedData;
+
+        /// <summary>
+        /// Get data management link provider for <paramref name="forType"/>
+        /// </summary>
+        /// <param name="forType">The type of object to retrieve the link provider for</param>
+        /// <returns>The link provider</returns>
+        IDataManagedLinkProvider GetLinkProvider(Type forType);
     }
 }

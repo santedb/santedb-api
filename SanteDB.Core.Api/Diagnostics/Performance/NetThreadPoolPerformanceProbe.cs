@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-1-28
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Core.Diagnostics.Performance

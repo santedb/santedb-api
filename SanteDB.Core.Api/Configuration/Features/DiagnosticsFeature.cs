@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -165,7 +164,7 @@ namespace SanteDB.Core.Configuration.Features
                 {
                     WriterName = "main",
                     InitializationData = featureConfig.Values["initializationData"] as string,
-                    TraceWriterClassXml = (featureConfig.Values["writer"] as Type).AssemblyQualifiedName,
+                    TraceWriterClassXml = new TypeReferenceConfiguration(featureConfig.Values["writer"] as Type),
                     Filter = (EventLevel)featureConfig.Values["filter"]
                 });
                 config.Mode = (EventLevel)featureConfig.Values["filter"];

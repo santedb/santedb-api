@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.IO;
+using System.Net.Mime;
 
 namespace SanteDB.Core.Http
 {
@@ -31,12 +32,15 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets the serializer for this body serializer
         /// </summary>
-        public object Serializer => null;
+        public object GetSerializer(Type typeHint) => null;
+
+        /// <inheritdoc/>
+        public string ContentType => "application/octet-stream";
 
         /// <summary>
         /// De-serialize to the desired type
         /// </summary>
-        public object DeSerialize(Stream s)
+        public object DeSerialize(Stream s, ContentType contentType, Type typeHint)
         {
             using (var ms = new MemoryStream())
             {
@@ -49,17 +53,24 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Serialize
         /// </summary>
-        public void Serialize(Stream s, object o)
+        public void Serialize(Stream s, object o, out ContentType contentType)
         {
+            contentType = new ContentType(this.ContentType);
             if (o is byte[])
             {
                 using (var ms = new MemoryStream((byte[])o))
+                {
                     ms.CopyTo(s);
+                }
             }
             else if (o is Stream)
+            {
                 (o as Stream).CopyTo(s);
+            }
             else
+            {
                 throw new NotSupportedException("Object must be byte array");
+            }
         }
     }
 }

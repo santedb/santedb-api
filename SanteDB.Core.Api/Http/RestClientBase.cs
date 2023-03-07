@@ -16,12 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
@@ -30,9 +28,11 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SanteDB.Core.Http
@@ -43,8 +43,6 @@ namespace SanteDB.Core.Http
     /// <remarks>This class represets a base class from which specific implementations of a REST client can be implemented</remarks>
     public abstract class RestClientBase : IRestClient
     {
-        // Configuration
-        private IRestClientDescription m_configuration;
 
         // Get tracer
         private static Tracer s_tracer = Tracer.GetTracer(typeof(RestClientBase));
@@ -69,6 +67,9 @@ namespace SanteDB.Core.Http
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
+        /// <inheritdoc/>
+        public string Accept { get; set; }
+
         /// <summary>
         /// Convert headers
         /// </summary>
@@ -76,14 +77,17 @@ namespace SanteDB.Core.Http
         {
             Dictionary<String, String> retVal = new Dictionary<string, string>();
             foreach (var k in headers.AllKeys)
+            {
                 retVal.Add(k, headers[k]);
+            }
+
             return retVal;
         }
 
         /// <summary>
         /// Fire that progress has changed
         /// </summary>
-        protected void FireProgressChanged(object state, float progress)
+        protected void FireProgressChanged(String state, float progress)
         {
             ProgressChangedEventArgs e = new ProgressChangedEventArgs(progress, state);
             this.ProgressChanged?.Invoke(this, e);
@@ -102,7 +106,8 @@ namespace SanteDB.Core.Http
         /// <param name="config">The configuraiton of this client</param>
         public RestClientBase(IRestClientDescription config)
         {
-            this.m_configuration = config;
+            this.Description = config;
+            this.Accept = config.Accept;
         }
 
         /// <summary>
@@ -110,22 +115,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="query">The query to be sent to the server</param>
         /// <returns>The query string</returns>
-        public static String CreateQueryString(NameValueCollection query)
-        {
-            String queryString = String.Empty;
-            foreach (var kv in query)
-            {
-                foreach (var v in kv.Value)
-                {
-                    if (v == null) continue;
-                    queryString += String.Format("{0}={1}&", kv.Key, Uri.EscapeDataString(v));
-                }
-            }
-            if (queryString.Length > 0)
-                return queryString.Substring(0, queryString.Length - 1);
-            else
-                return queryString;
-        }
+        public static String CreateQueryString(NameValueCollection query) => query.ToHttpString();
 
         /// <summary>
         /// Create the HTTP request
@@ -135,8 +125,10 @@ namespace SanteDB.Core.Http
         protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
-            if (this.Description.Endpoint.Count == 0)
+            if (this.Description.Endpoint.IsNullOrEmpty())
+            {
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
+            }
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
                 || uri.Scheme == "file")
@@ -146,18 +138,24 @@ namespace SanteDB.Core.Http
                 UriBuilder uriBuilder = new UriBuilder(baseUrl);
 
                 if (!String.IsNullOrEmpty(resourceNameOrUrl))
+                {
                     uriBuilder.Path += "/" + resourceNameOrUrl;
+                }
 
                 // HACK:
                 uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
                 // Add query string
-                if (query != null)
+                if (query != null && query.AllKeys.Any())
+                {
                     uriBuilder.Query = CreateQueryString(query);
+                }
 
                 uri = uriBuilder.Uri;
             }
             else
+            {
                 s_tracer.TraceVerbose("Constructed URI : {0}", uri);
+            }
 
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
@@ -168,22 +166,28 @@ namespace SanteDB.Core.Http
             if (this.Credentials == null &&
                 this.Description.Binding.Security?.CredentialProvider != null &&
                 this.Description.Binding.Security?.PreemptiveAuthentication == true)
-                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
-
-            if (this.Credentials != null)
             {
-                foreach (var kv in this.Credentials.GetHttpHeaders())
-                {
-                    s_tracer.TraceVerbose("Adding header {0}:{1}", kv.Key, kv.Value);
-                    retVal.Headers[kv.Key] = kv.Value;
-                }
+                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
             }
 
-            // Compress?
-            if (this.Description.Binding.Optimize)
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = "lzma,bzip2,gzip,deflate";
+            this.Credentials?.SetCredentials(retVal);
 
-            retVal.Accept = this.Description.Accept;
+            // Set appropriate header
+            StringBuilder acceptBuilder = new StringBuilder();
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
+                acceptBuilder.Append(",lzma");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Bzip2))
+                acceptBuilder.Append(",bzip2");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Gzip))
+                acceptBuilder.Append(",gzip");
+            if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
+                acceptBuilder.Append(",deflate");
+
+            if (acceptBuilder.Length > 0)
+            {
+                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
+            }
+            retVal.Accept = this.Accept;
 
             return retVal;
         }
@@ -197,7 +201,7 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TResult">The expected response from the server</typeparam>
         public TResult Get<TResult>(string url)
         {
-            return this.Get<TResult>(url, null);
+            return this.Get<TResult>(url, (NameValueCollection)null);
         }
 
         /// <summary>
@@ -206,23 +210,34 @@ namespace SanteDB.Core.Http
         /// <param name="query">The query to be executed on th eserver</param>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <typeparam name="TResult">The expected result from the server</typeparam>
-        public TResult Get<TResult>(string url, params KeyValuePair<string, object>[] query)
+        public TResult Get<TResult>(string url, params KeyValuePair<string, string>[] query) => this.Get<TResult>(url, query.ToNameValueCollection());
+        
+        /// <summary>
+        /// Get the specified <typeparamref name="TResult"/> 
+        /// </summary>
+        /// <typeparam name="TResult">The type of result</typeparam>
+        /// <param name="url">The URL from which the result should be fetched</param>
+        /// <param name="query">The query </param>
+        /// <returns>The result</returns>
+        public TResult Get<TResult>(string url, NameValueCollection query)
         {
             return this.Invoke<Object, TResult>("GET", url, null, null, query);
         }
+
+        /// <inheritdoc/>
+        public byte[] Get(String url) => this.Get(url, null);
 
         /// <summary>
         /// Retrieves a raw byte array of data from the specified location
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <param name="query">The query (as key=value) to send on the GET request</param>
-        public byte[] Get(String url, params KeyValuePair<string, object>[] query)
+        public byte[] Get(String url, NameValueCollection query) 
         {
-            NameValueCollection parameters = new NameValueCollection();
-
+           
             try
             {
-                var requestEventArgs = new RestRequestEventArgs("GET", url, new NameValueCollection(query), null, null);
+                var requestEventArgs = new RestRequestEventArgs("GET", url, query, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -241,8 +256,11 @@ namespace SanteDB.Core.Http
                 var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
                 {
                     if (o.IsFaulted)
+                    {
                         requestException = o.Exception.InnerExceptions.First();
+                    }
                     else
+                    {
                         try
                         {
                             headers = o.Result.Headers;
@@ -266,7 +284,7 @@ namespace SanteDB.Core.Http
                                 switch (o.Result.Headers["Content-Encoding"])
                                 {
                                     case "deflate":
-                                        using (var dfs = new DeflateStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var dfs = new DeflateStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             dfs.CopyTo(oms);
@@ -275,7 +293,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "gzip":
-                                        using (var gzs = new GZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var gzs = new GZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             gzs.CopyTo(oms);
@@ -284,7 +302,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "bzip2":
-                                        using (var lzmas = new BZip2Stream(new NonDisposingStream(ms), CompressionMode.Decompress, false))
+                                        using (var lzmas = new BZip2Stream(NonDisposingStream.Create(ms), CompressionMode.Decompress, false))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
@@ -293,7 +311,7 @@ namespace SanteDB.Core.Http
                                         break;
 
                                     case "lzma":
-                                        using (var lzmas = new LZipStream(new NonDisposingStream(ms), CompressionMode.Decompress))
+                                        using (var lzmas = new LZipStream(NonDisposingStream.Create(ms), CompressionMode.Decompress))
                                         using (var oms = new MemoryStream())
                                         {
                                             lzmas.CopyTo(oms);
@@ -311,10 +329,13 @@ namespace SanteDB.Core.Http
                         {
                             s_tracer.TraceError("Error downloading {0}: {1}", url, e.Message);
                         }
+                    }
                 }, TaskContinuationOptions.LongRunning);
                 httpTask.Wait();
                 if (requestException != null)
+                {
                     throw requestException;
+                }
 
                 this.Responded?.Invoke(this, new RestResponseEventArgs("GET", url, null, null, null, 200, 0, this.ConvertHeaders(headers)));
 
@@ -348,7 +369,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL on which the invokation should occur</param>
         public TResult Invoke<TBody, TResult>(string method, string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>(method, url, this.Description.Accept, body, null);
+            return this.Invoke<TBody, TResult>(method, url, this.Accept, body, null);
         }
 
         /// <summary>
@@ -376,18 +397,13 @@ namespace SanteDB.Core.Http
         /// <param name="body">The contents of the request to send to the server</param>
         /// <param name="query">The query to append to the URL</param>
         /// <returns>The server response</returns>
-        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, params KeyValuePair<string, object>[] query)
+        public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query)
         {
-            NameValueCollection parameters = new NameValueCollection();
-
             try
             {
-                if (query != null)
-                {
-                    parameters = new NameValueCollection(query);
-                }
 
-                var requestEventArgs = new RestRequestEventArgs(method, url, parameters, contentType, body);
+
+                var requestEventArgs = new RestRequestEventArgs(method, url, query, contentType ?? this.Accept, body);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -404,13 +420,13 @@ namespace SanteDB.Core.Http
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, parameters, contentType, null, 500, 0, null));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, query, contentType, null, 500, 0, null));
                 throw;
             }
         }
 
         /// <summary>
-        /// Implementation specific implementatoin of invoke
+        /// Implementation specific implementation of invoke
         /// </summary>
         /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">The expected response (response hint) from the server</typeparam>
@@ -434,7 +450,7 @@ namespace SanteDB.Core.Http
         /// <returns>The result from the server</returns>
         public TResult Post<TBody, TResult>(string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>("POST", url, this.Description.Accept, body);
+            return this.Invoke<TBody, TResult>("POST", url, this.Accept, body);
         }
 
         /// <summary>
@@ -472,7 +488,7 @@ namespace SanteDB.Core.Http
         /// <returns>The response from th eserver</returns>
         public TResult Put<TBody, TResult>(string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>("PUT", url, this.Description.Accept, body);
+            return this.Invoke<TBody, TResult>("PUT", url, this.Accept, body);
         }
 
         /// <summary>
@@ -503,7 +519,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the credentials to be used for this client
         /// </summary>
-        public Credentials Credentials
+        public RestRequestCredentials Credentials
         {
             get;
             set;
@@ -512,7 +528,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Get the description (configuration) of this service
         /// </summary>
-        public IRestClientDescription Description { get { return this.m_configuration; } set { this.m_configuration = value; } }
+        public IRestClientDescription Description { get; set; }
 
         #endregion IRestClient implementation
 
@@ -532,7 +548,7 @@ namespace SanteDB.Core.Http
         /// <returns>The new ETAG of the patched resource</returns>
         public String Patch<TPatch>(string url, String ifMatch, TPatch patch)
         {
-            return this.Patch<TPatch>(url, ifMatch, this.Description.Accept, patch);
+            return this.Patch<TPatch>(url, this.Accept, ifMatch, patch);
         }
 
         /// <summary>
@@ -573,24 +589,22 @@ namespace SanteDB.Core.Http
             }
         }
 
+        /// <inheritdoc/>
+        public IDictionary<string, string> Head(string resourceName) => this.Head(resourceName, null);
+
         /// <summary>
         /// Perform a head operation against the specified url
         /// </summary>
         /// <param name="query">The query to execute</param>
         /// <param name="resourceName">The name of the resource (url)</param>
         /// <returns>The HTTP headers (result of the HEAD operation)</returns>
-        public IDictionary<string, string> Head(string resourceName, params KeyValuePair<String, Object>[] query)
+        public IDictionary<string, string> Head(string resourceName, NameValueCollection query)
         {
-            NameValueCollection parameters = new NameValueCollection();
 
             try
             {
-                if (query != null)
-                {
-                    parameters = new NameValueCollection(query);
-                }
 
-                var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, parameters, null, null);
+                var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, query, null, null);
                 this.Requesting?.Invoke(this, requestEventArgs);
                 if (requestEventArgs.Cancel)
                 {
@@ -608,25 +622,32 @@ namespace SanteDB.Core.Http
                 var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
                 {
                     if (o.IsFaulted)
+                    {
                         fault = o.Exception.InnerExceptions.First();
+                    }
                     else
                     {
-                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
+                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
                         foreach (var itm in o.Result.Headers.AllKeys)
+                        {
                             retVal.Add(itm, o.Result.Headers[itm]);
+                        }
                     }
                 }, TaskContinuationOptions.LongRunning);
                 httpTask.Wait();
                 if (fault != null)
+                {
                     throw fault;
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 200, 0, retVal));
+                }
+
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, 0, retVal));
 
                 return retVal;
             }
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, parameters, null, null, 500, 0, null));
+                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 500, 0, null));
                 throw;
             }
         }

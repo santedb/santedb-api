@@ -16,14 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using DynamicExpresso;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Xml.Serialization;
-using DynamicExpresso;
 
 namespace SanteDB.Core.Configuration
 {
@@ -91,8 +91,12 @@ namespace SanteDB.Core.Configuration
                     .SetFunction("now", (Func<DateTime>)(() => DateTime.Now));
 
             if (variableFunc != null)
+            {
                 foreach (var fn in variableFunc)
+                {
                     interpretor = interpretor.SetFunction(fn.Key, fn.Value);
+                }
+            }
 
             //exp.TypeRegistry.RegisterSymbol("data", expressionParm);
             //exp.ScopeCompile<TData>();

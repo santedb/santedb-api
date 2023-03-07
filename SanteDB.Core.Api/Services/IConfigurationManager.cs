@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -49,6 +49,11 @@ namespace SanteDB.Core.Services
     [Description("Configuration Manager Service")]
     public interface IConfigurationManager : IServiceImplementation
     {
+
+        /// <summary>
+        /// True if the configuration manager is readonly
+        /// </summary>
+        bool IsReadonly { get; }
 
         /// <summary>
         /// Get the specified configuration section
@@ -94,5 +99,10 @@ namespace SanteDB.Core.Services
         /// Forces the configuration manager to reload the current configuration
         /// </summary>
         void Reload();
+
+        /// <summary>
+        /// Save the configuration
+        /// </summary>
+        void SaveConfiguration();
     }
 }

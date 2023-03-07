@@ -16,14 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Security.Principal;
 
@@ -48,6 +48,20 @@ namespace SanteDB.Core.Services
         /// <param name="identity">The identity to resolve to a provider</param>
         /// <returns>The provider entity if the user has one</returns>
         Provider GetProviderEntity(IIdentity identity);
+
+        /// <summary>
+        /// Get the security identifier for the provided <paramref name="identity"/>
+        /// </summary>
+        /// <param name="identity">The identity to resolve</param>
+        /// <returns>The SID for the identity</returns>
+        Guid GetSid(IIdentity identity);
+
+        /// <summary>
+        /// Resolves the name from a security identifier
+        /// </summary>
+        /// <param name="sid">The security identifier</param>
+        /// <returns>The resolved name</returns>
+        String ResolveName(Guid sid);
 
         /// <summary>
         /// Creates a user with a specified password.
@@ -144,11 +158,11 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the data object for the provided <paramref name="principal"/>
         /// </summary>
-        SecurityEntity GetSecurityEntity(IPrincipal principal);
+        IdentifiedData GetSecurityEntity(IPrincipal principal);
 
         /// <summary>
         /// Find provenance objects matching the specified object
         /// </summary>
-        IEnumerable<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query, int offset, int? count, out int totalResults, Guid queryId, params ModelSort<SecurityProvenance>[] orderBy);
+        IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query);
     }
 }

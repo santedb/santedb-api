@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System.Collections.Generic;
 
@@ -46,5 +46,10 @@ namespace SanteDB.Core.Http.Description
         /// Gets whether a tracing is enabled.
         /// </summary>
         bool Trace { get; }
+
+        /// <summary>
+        /// Gets the proxy address
+        /// </summary>
+        string ProxyAddress { get; }
     }
 }

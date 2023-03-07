@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 namespace SanteDB.Core.Security
 {
@@ -158,9 +158,69 @@ namespace SanteDB.Core.Security
         public const string ActivateMatchConfiguration = UnrestrictedMatchConfiguration + ".2";
 
         /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string UnrestrictedClinicalProtocolConfiguration = AlterSystemConfiguration + ".2";
+
+        /// <summary>
+        /// Unrestricted access to modify clinical protocol definitions
+        /// </summary>
+        public const string AlterClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".1";
+
+        /// <summary>
+        /// Delete clinical protocol configurations
+        /// </summary>
+        public const string DeleteClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".2";
+
+        /// <summary>
         /// Manage all dispatcher / persistent queues
         /// </summary>
         public const string ManageDispatcherQueues = UnrestrictedAdministration + ".16";
+
+        /// <summary>
+        /// Manage mail
+        /// </summary>
+        public const string ManageMail = UnrestrictedAdministration + ".17";
+
+        /// <summary>
+        /// Unrestricted backups
+        /// </summary>
+        public const string ManageBackups = UnrestrictedAdministration + ".18";
+
+        /// <summary>
+        /// Unrestricted backups
+        /// </summary>
+        public const string CreateAnyBackup = ManageBackups + ".1";
+
+        /// <summary>
+        /// Create Public backups
+        /// </summary>
+        public const string CreatePrivateBackup = CreateAnyBackup + ".1";
+
+        /// <summary>
+        /// Unrestricted certificate management
+        /// </summary>
+        public const string UnrestrictedCertificate = UnrestrictedAdministration + ".19";
+
+        /// <summary>
+        /// Permission to sign and issue certificates
+        /// </summary>
+        public const string IssueCertificates = UnrestrictedCertificate + ".1";
+
+        /// <summary>
+        /// Permission to revoke certificates
+        /// </summary>
+        public const string RevokeCertificates = UnrestrictedCertificate + ".2";
+
+        /// <summary>
+        /// Permission to assign a certificate to an entity
+        /// </summary>
+        public const string AssignCertificateToIdentity = UnrestrictedCertificate + ".3";
+
+        /// <summary>
+        /// Manage foreign data
+        /// </summary>
+        public const string ManageForeignData = UnrestrictedAdministration + ".20";
 
         /// <summary>
         /// Policy identifier for allowance of login
@@ -314,7 +374,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Access administrative function on the SanteDB Client
         /// </summary>
-        public const string AccessClientAdministrativeFunction = "1.3.6.1.4.1.33349.3.1.5.9.2.10";
+        public const string AccessClientAdministrativeFunction = UnrestrictedAll + ".10";
 
         #endregion SanteDB Client Functions
     }

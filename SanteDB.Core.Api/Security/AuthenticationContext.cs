@@ -16,10 +16,15 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security
@@ -29,6 +34,158 @@ namespace SanteDB.Core.Security
     /// </summary>
     public sealed class AuthenticationContext
     {
+
+        /// <summary>
+        /// Identity for anonymous
+        /// </summary>
+        private sealed class SanteDBAnonymousIdentity : IIdentity
+        {
+            /// <inheritdoc/>
+            public string AuthenticationType => "NONE";
+
+            /// <inheritdoc/>
+            public bool IsAuthenticated => false;
+
+            /// <inheritdoc/>
+            public string Name => "ANONYMOUS";
+        }
+
+        /// <summary>
+        /// Anonymous principal
+        /// </summary>
+        private sealed class SanteDBAnonymousPrincipal : IPrincipal
+        {
+
+            private readonly SanteDBAnonymousIdentity m_identity = new SanteDBAnonymousIdentity();
+
+            /// <inheritdoc/>
+            public IIdentity Identity => this.m_identity;
+
+            /// <inheritdoc/>
+            public bool IsInRole(string role) => false;
+        }
+
+        /// <summary>
+        /// Identity for anonymous
+        /// </summary>
+        private sealed class SanteDBSystemApplicationIdentity : IClaimsIdentity, IApplicationIdentity
+        {
+            private readonly IClaim[] m_claims = new IClaim[]
+            {
+                new SanteDBClaim(SanteDBClaimTypes.Name, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.Actor, ActorTypeKeys.Application.ToString()),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationInstant, DateTimeOffset.Now.ToString("o")),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationMethod, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationType, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"),
+                new SanteDBClaim(SanteDBClaimTypes.NameIdentifier, AuthenticationContext.SystemApplicationSid),
+                new SanteDBClaim(SanteDBClaimTypes.SecurityId, AuthenticationContext.SystemApplicationSid),
+                new SanteDBClaim(SanteDBClaimTypes.SanteDBApplicationIdentifierClaim, AuthenticationContext.SystemApplicationSid)
+            };
+
+            /// <inheritdoc/>
+            public string AuthenticationType => "SYSTEM";
+
+            /// <inheritdoc/>
+            public bool IsAuthenticated => true;
+
+            /// <inheritdoc/>
+            public string Name => "SYSTEM";
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> Claims => this.m_claims;
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> FindAll(string claimType) => this.m_claims.Where(o => o.Type == claimType);
+
+            /// <inheritdoc/>
+            public IClaim FindFirst(string claimType) => this.m_claims.FirstOrDefault(o => o.Type == claimType);
+
+        }
+
+        /// <summary>
+        /// Identity for system
+        /// </summary>
+        private sealed class SanteDBSystemUserIdentity : IClaimsIdentity
+        {
+            private readonly IClaim[] m_claims = new IClaim[]
+            {
+                new SanteDBClaim(SanteDBClaimTypes.Name, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.Actor, ActorTypeKeys.System.ToString()),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationInstant, DateTimeOffset.Now.ToString("o")),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationMethod, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.AuthenticationType, "SYSTEM"),
+                new SanteDBClaim(SanteDBClaimTypes.LocalOnly, "true"),
+                new SanteDBClaim(SanteDBClaimTypes.NameIdentifier, AuthenticationContext.SystemUserSid),
+                new SanteDBClaim(SanteDBClaimTypes.SecurityId, AuthenticationContext.SystemUserSid)
+            };
+
+            /// <inheritdoc/>
+            public string AuthenticationType => "SYSTEM";
+
+            /// <inheritdoc/>
+            public bool IsAuthenticated => true;
+
+            /// <inheritdoc/>
+            public string Name => "SYSTEM";
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> Claims => this.m_claims;
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> FindAll(string claimType) => this.m_claims.Where(o => o.Type == claimType);
+
+            /// <inheritdoc/>
+            public IClaim FindFirst(string claimType) => this.m_claims.FirstOrDefault(o => o.Type == claimType);
+        
+        }
+
+        /// <summary>
+        /// Anonymous principal
+        /// </summary>
+        private sealed class SanteDBSystemPrincipal : IClaimsPrincipal
+        {
+            private readonly IClaimsIdentity[] m_identities = new IClaimsIdentity[]
+            {
+                new SanteDBSystemUserIdentity(),
+                new SanteDBSystemApplicationIdentity()
+            };
+
+            /// <inheritdoc/>
+            public IIdentity Identity => this.m_identities[0];
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> Claims => this.m_identities.SelectMany(o => o.Claims);
+
+            /// <inheritdoc/>
+            public IClaimsIdentity[] Identities => this.m_identities;
+
+            /// <inheritdoc/>
+            public void AddIdentity(IIdentity identity)
+            {
+                throw new NotSupportedException();
+            }
+
+            /// <inheritdoc/>
+            public IEnumerable<IClaim> FindAll(string claimType) => this.Claims.Where(o => o.Type == claimType);
+
+            /// <inheritdoc/>
+            public IClaim FindFirst(string claimType) => this.Claims.FirstOrDefault(o => o.Type == claimType);
+
+            /// <inheritdoc/>
+            public bool HasClaim(Func<IClaim, bool> predicate) => this.Claims.Any(predicate);
+
+            /// <inheritdoc/>
+            public bool IsInRole(string role) => false;
+
+            /// <inheritdoc/>
+            public bool TryGetClaimValue(string claimType, out string value)
+            {
+                var claim = this.Claims.FirstOrDefault(o => o.Type == claimType);
+                value = claim?.Value;
+                return value != null;
+            }
+        }
 
         /// <summary>
         /// Represents a authentication context that sets the restore context on disposal
@@ -48,7 +205,7 @@ namespace SanteDB.Core.Security
             {
                 this.RestoreContext = restore;
                 AuthenticationContext.Current = new AuthenticationContext(principal);
-                
+
             }
 
             /// <summary>
@@ -78,12 +235,12 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// System identity
         /// </summary>
-        private static readonly IPrincipal s_system = new GenericPrincipal(new GenericIdentity("SYSTEM"), new string[] { "SYSTEM" });
+        private static readonly IPrincipal s_system = new SanteDBSystemPrincipal(); //new GenericPrincipal(new GenericIdentity("SYSTEM"), new string[] { "SYSTEM" });
 
         /// <summary>
         /// Anonymous identity
         /// </summary>
-        private static readonly IPrincipal s_anonymous = new GenericPrincipal(new GenericIdentity("ANONYMOUS"), new string[] { "ANONYMOUS" });
+        private static readonly IPrincipal s_anonymous = new SanteDBAnonymousPrincipal();
 
         /// <summary>
         /// Gets the anonymous principal
@@ -140,7 +297,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Creates a new instance of the authentication context
         /// </summary>
-        public AuthenticationContext(IPrincipal principal)
+        private AuthenticationContext(IPrincipal principal)
         {
             this.m_principal = principal;
         }
@@ -154,8 +311,13 @@ namespace SanteDB.Core.Security
             get
             {
                 if (s_current == null)
+                {
                     lock (s_lockObject)
+                    {
                         s_current = new AuthenticationContext(s_anonymous);
+                    }
+                }
+
                 return s_current;
             }
             internal set { s_current = value; }
@@ -172,6 +334,10 @@ namespace SanteDB.Core.Security
             }
         }
 
+        /// <summary>
+        /// Get the parent context
+        /// </summary>
+        public AuthenticationContext Parent => this.m_previous;
         /// <summary>
         /// Enter the system context
         /// </summary>

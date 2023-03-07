@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Http
@@ -27,16 +28,16 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Represents a series of credentials which are used when accessing the mobile core
     /// </summary>
-    public abstract class Credentials
+    public abstract class RestRequestCredentials
     {
         // Principal
         private IPrincipal m_principal;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Credentials"/> class.
+        /// Initializes a new instance of the <see cref="RestRequestCredentials"/> class.
         /// </summary>
         /// <param name="principal">Principal.</param>
-        protected Credentials(IPrincipal principal)
+        protected RestRequestCredentials(IPrincipal principal)
         {
             this.m_principal = principal;
         }
@@ -48,8 +49,9 @@ namespace SanteDB.Core.Http
         public virtual IPrincipal Principal { get { return this.m_principal; } }
 
         /// <summary>
-        /// Get the http headers which are requried for the credential
+        /// Set the credentials
         /// </summary>
-        public abstract Dictionary<String, String> GetHttpHeaders();
+        /// <param name="webRequest">The web request to set the credentials for</param>
+        public abstract void SetCredentials(HttpWebRequest webRequest);
     }
 }

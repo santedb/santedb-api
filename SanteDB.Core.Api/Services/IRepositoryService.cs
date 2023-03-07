@@ -16,11 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,6 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-
     /// <summary>
     /// Represents event args fired at the repository level
     /// </summary>
@@ -47,7 +47,6 @@ namespace SanteDB.Core.Services
         /// Gets the data elements related to the event
         /// </summary>
         public TModel Data { get; private set; }
-
     }
 
     /// <summary>
@@ -55,7 +54,6 @@ namespace SanteDB.Core.Services
     /// </summary>
     public interface IRepositoryService : IServiceImplementation
     {
-
         /// <summary>
         /// Get the specified object
         /// </summary>
@@ -64,11 +62,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Find the specified object
         /// </summary>
-        IEnumerable<IdentifiedData> Find(Expression query);
+        IQueryResultSet Find(Expression query);
 
         /// <summary>
         /// Find the specified object
         /// </summary>
+        [Obsolete("Use Find(Expression)", true)]
         IEnumerable<IdentifiedData> Find(Expression query, int offset, int? count, out int totalResults);
 
         /// <summary>
@@ -90,7 +89,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns>Returns the model.</returns>
-        IdentifiedData Obsolete(Guid key);
+        IdentifiedData Delete(Guid key);
     }
 
     /// <summary>
@@ -105,9 +104,8 @@ namespace SanteDB.Core.Services
     /// to execute all validation and rules as normal.</para>
     /// </remarks>
     [Description("Repository Service")]
-    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IdentifiedData
+    public interface IRepositoryService<TModel> : IServiceImplementation where TModel : IIdentifiedResource
     {
-
         /// <summary>
         /// Gets the specified model data
         /// </summary>
@@ -128,18 +126,7 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="query">The query to be executed</param>
         /// <returns>Returns a list of <typeparamref name="TModel"/> matching the <paramref name="query"/>.</returns>
-        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query);
-
-        /// <summary>
-        /// Finds the specified data with the specified control parameters
-        /// </summary>
-        /// <param name="query">The query to be executed</param>
-        /// <param name="offset">The offset of the first record</param>
-        /// <param name="count">The count of records to be returned</param>
-        /// <param name="totalResults">The total results matching <paramref name="query"/></param>
-        /// <param name="orderBy">The ordering instructions that are to be appended to the query</param>
-        /// <returns>Returns a list of matching <typeparamref name="TModel"/> instances</returns>
-        IEnumerable<TModel> Find(Expression<Func<TModel, bool>> query, int offset, int? count, out int totalResults, params ModelSort<TModel>[] orderBy);
+        IQueryResultSet<TModel> Find(Expression<Func<TModel, bool>> query);
 
         /// <summary>
         /// Inserts the specified model information
@@ -156,11 +143,12 @@ namespace SanteDB.Core.Services
         TModel Save(TModel data);
 
         /// <summary>
-        /// Obsoletes the specified object
+        /// Delete the object according to the current <see cref="DataPersistenceControlContext.DeleteMode"/> or 
+        /// according to server configuration
         /// </summary>
-        /// <param name="key">The key of the object to be obsoleted</param>
-        /// <returns>The obsoleted data (including obsoletion time and provenance data)</returns>
-        TModel Obsolete(Guid key);
+        /// <param name="key">The key of the object to delete</param>
+        /// <returns>The key to delete</returns>
+        TModel Delete(Guid key);
     }
 
     /// <summary>
@@ -170,7 +158,6 @@ namespace SanteDB.Core.Services
     public interface IRepositoryServiceEx<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Touch the specified object by updating its last modified time (forcing a re-synchronization) however 
         /// not modifying the data in the object
@@ -178,12 +165,6 @@ namespace SanteDB.Core.Services
         /// <param name="key">The key of the <typeparamref name="TModel"/> to be touched</param>
         void Touch(Guid key);
 
-        /// <summary>
-        /// Nullifies the specified object (mark as "Entered in Error")
-        /// </summary>
-        /// <param name="id">The identifier of the <typeparamref name="TModel"/> to be nullified</param>
-        /// <returns>The nullified object</returns>
-        TModel Nullify(Guid id);
     }
 
     /// <summary>
@@ -197,38 +178,47 @@ namespace SanteDB.Core.Services
         /// Data is inserting
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TModel>> Inserting;
+
         /// <summary>
-        /// Fired after data was inserted 
+        /// Fired after data was inserted
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TModel>> Inserted;
+
         /// <summary>
         /// Fired before saving
         /// </summary>
         event EventHandler<DataPersistingEventArgs<TModel>> Saving;
+
         /// <summary>
         /// Fired after data was saved
         /// </summary>
         event EventHandler<DataPersistedEventArgs<TModel>> Saved;
+
         /// <summary>
         /// Fired before obsoleting
         /// </summary>
-        event EventHandler<DataPersistingEventArgs<TModel>> Obsoleting;
+        event EventHandler<DataPersistingEventArgs<TModel>> Deleting;
+
         /// <summary>
         /// Fired after data was obsoleted
         /// </summary>
-        event EventHandler<DataPersistedEventArgs<TModel>> Obsoleted;
+        event EventHandler<DataPersistedEventArgs<TModel>> Deleted;
+
         /// <summary>
         /// Retrieving the data
         /// </summary>
         event EventHandler<DataRetrievingEventArgs<TModel>> Retrieving;
+
         /// <summary>
         /// Fired after data was retrieved
         /// </summary>
         event EventHandler<DataRetrievedEventArgs<TModel>> Retrieved;
+
         /// <summary>
         /// Fired after data was queried
         /// </summary>
         event EventHandler<QueryRequestEventArgs<TModel>> Querying;
+
         /// <summary>
         /// Fired after data was queried
         /// </summary>
@@ -242,7 +232,6 @@ namespace SanteDB.Core.Services
     public interface ICancelRepositoryService<TModel> : IRepositoryService<TModel>
         where TModel : IdentifiedData
     {
-
         /// <summary>
         /// Cancels the specified <see cref="Act"/>
         /// </summary>
@@ -254,7 +243,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a repository service that applies permission
     /// </summary>
-    public interface ISecuredRepositoryService
+    public interface ISecuredRepositoryService : IRepositoryService
     {
         /// <summary>
         /// Demand write permission

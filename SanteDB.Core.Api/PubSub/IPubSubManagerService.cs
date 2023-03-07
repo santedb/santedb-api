@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Event;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -74,21 +75,23 @@ namespace SanteDB.Core.PubSub
         /// <summary>
         /// Find an existing channel
         /// </summary>
-        IEnumerable<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter);
+        IQueryResultSet<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter);
 
         /// <summary>
         /// Find an existing subscription
         /// </summary>
-        IEnumerable<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter);
+        IQueryResultSet<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter);
 
         /// <summary>
         /// Find an existing channel
         /// </summary>
+        [Obsolete("Use FindChannel(filter)", true)]
         IEnumerable<PubSubChannelDefinition> FindChannel(Expression<Func<PubSubChannelDefinition, bool>> filter, int offset, int count, out int totalResults);
 
         /// <summary>
         /// Find an existing subscription
         /// </summary>
+        [Obsolete("Use FindSubscription(filter)", true)]
         IEnumerable<PubSubSubscriptionDefinition> FindSubscription(Expression<Func<PubSubSubscriptionDefinition, bool>> filter, int offset, int count, out int totalResults);
 
         /// <summary>

@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Query;
@@ -30,6 +30,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a data persistence provider that can store and continue queries
     /// </summary>
+    [Obsolete]
     public interface IUnionQueryDataPersistenceService<TEntity> : IDataPersistenceService<TEntity>
         where TEntity : IdentifiedData
     {

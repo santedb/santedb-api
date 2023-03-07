@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2021-8-27
+ * Date: 2022-5-30
  */
 using Newtonsoft.Json;
 using System;
@@ -44,7 +44,7 @@ namespace SanteDB.Core.Configuration.Data
     /// access to change and save the value contained therein (opposed to the much more obtuse ConfigurationSectionHandler pattern).</para>
     /// </remarks>
     [XmlType(nameof(DataConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class DataConfigurationSection : IConfigurationSection
+    public class DataConfigurationSection : IEncryptedConfigurationSection
     {
         /// <summary>
         /// Initializes a new instance of the data configuration section
@@ -52,6 +52,17 @@ namespace SanteDB.Core.Configuration.Data
         public DataConfigurationSection()
         {
             this.ConnectionString = new List<ConnectionString>();
+        }
+
+        /// <summary>
+        /// Get all configuration providers which can be used to configure the database on this system
+        /// </summary>
+        public static IEnumerable<IDataConfigurationProvider> GetDataConfigurationProviders()
+        {
+            return AppDomain.CurrentDomain.GetAllTypes()
+                .Where(t => t != null && typeof(IDataConfigurationProvider).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+                .Select(i => Activator.CreateInstance(i) as IDataConfigurationProvider)
+                .ToArray();
         }
 
         /// <summary>
@@ -65,6 +76,11 @@ namespace SanteDB.Core.Configuration.Data
             get;
             set;
         }
+
+        /// <summary>
+        /// Get the configuration provider by invariant
+        /// </summary>
+        public static IDataConfigurationProvider GetDataConfigurationProvider(string invariantName) => GetDataConfigurationProviders().FirstOrDefault(o => o.Invariant == invariantName);
     }
 
     /// <summary>
@@ -97,12 +113,14 @@ namespace SanteDB.Core.Configuration.Data
         /// </summary>
         /// <param name="providerName">The name of the regisered provider (see: OrmConfigurationSection for defining provider invariant names)</param>
         /// <param name="values">The values for the connection string expressed as a dictionary of key-value pairs rather than a string</param>
-        public ConnectionString(String providerName, Dictionary<String, Object> values)
+        public ConnectionString(String providerName, IDictionary<String, Object> values)
         {
             this.Provider = providerName;
             this.Value = String.Empty;
             foreach (var itm in values)
+            {
                 this.SetComponent(itm.Key, itm.Value?.ToString());
+            }
         }
 
         /// <summary>
@@ -160,11 +178,15 @@ namespace SanteDB.Core.Configuration.Data
         /// </example>
         public String GetComponent(String component)
         {
-            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            if (String.IsNullOrEmpty(component))
+            {
+                return String.Empty;
+            }
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
 
             String retVal = null;
-            values.TryGetValue(component, out retVal);
-            return retVal;
+            values?.TryGetValue(component, out retVal);
+            return retVal ?? String.Empty;
         }
 
         /// <summary>
@@ -181,17 +203,24 @@ namespace SanteDB.Core.Configuration.Data
         /// ]]></code></example>
         public void SetComponent(String component, String value)
         {
-            var values = this.Value.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
-            if (values.ContainsKey(component))
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            if (values?.ContainsKey(component) == true)
             {
                 if (String.IsNullOrEmpty(value))
+                {
                     values.Remove(component);
+                }
                 else
+                {
                     values[component] = value;
+                }
             }
             else if (!String.IsNullOrEmpty(value))
-                values.Add(component, value.ToString());
-            this.Value = String.Join(";", values.Select(o => $"{o.Key}={o.Value}"));
+            {
+                values?.Add(component, value.ToString());
+            }
+
+            this.Value = String.Join(";", values?.Select(o => $"{o.Key}={o.Value}") ?? new String[0]);
         }
 
         /// <summary>
