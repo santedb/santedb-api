@@ -217,7 +217,7 @@
     <Compile Include="Services\ServiceProviderAttribute.cs" />
   </ItemGroup>-->
   <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="SharpCompress" Version="0.32.2" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
