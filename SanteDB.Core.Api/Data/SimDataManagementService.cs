@@ -58,7 +58,7 @@ namespace SanteDB.Core.Data
         /// </summary>
         /// <remarks>This class binds to startup and enables the listening and merging of records based on the record matcher</remarks>
         private class SimResourceMerger<TModel> : IRecordMergingService<TModel>
-            where TModel : VersionedEntityData<TModel>, new()
+            where TModel : BaseEntityData, IVersionedData, new()
         {
             // Tracer
             private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
@@ -477,12 +477,20 @@ namespace SanteDB.Core.Data
                 throw new InvalidOperationException("This service requires a record matching service to be registered");
             }
 
-            // Register mergers for all types in configuration
-            foreach (var i in this.m_configuration.ResourceTypes)
+            if (this.m_configuration.ResourceTypes?.Any() == true)
             {
-                this.m_tracer.TraceInfo("Creating record management service for {0}", i.Type.Name);
-                var idt = typeof(SimResourceMerger<>).MakeGenericType(i.Type);
-                this.m_mergeServices.Add(Activator.CreateInstance(idt, i) as IDisposable);
+                var recmatchsvc = ApplicationServiceContext.Current.GetService<IRecordMatchingService>();
+                var recmatchconfsvc = ApplicationServiceContext.Current.GetService<IRecordMatchingConfigurationService>();
+                var entrelsvc = ApplicationServiceContext.Current.GetService<IDataPersistenceService<EntityRelationship>>();
+                var actrelsvc = ApplicationServiceContext.Current.GetService<IDataPersistenceService<ActRelationship>>();
+
+                // Register mergers for all types in configuration
+                foreach (var i in this.m_configuration.ResourceTypes)
+                {
+                    this.m_tracer.TraceInfo("Creating record management service for {0}", i.Type.Name);
+                    var idt = typeof(SimResourceMerger<>).MakeGenericType(i.Type);
+                    this.m_mergeServices.Add(Activator.CreateInstance(idt, recmatchsvc, recmatchconfsvc, entrelsvc, actrelsvc) as IDisposable);
+                }
             }
 
             this.Started?.Invoke(this, EventArgs.Empty);
