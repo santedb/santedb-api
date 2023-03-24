@@ -45,22 +45,22 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Read policy for entities
         /// </summary>
-        protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadClinicalData;
+        protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
 
         /// <summary>
         /// Write policy for entities
         /// </summary>
-        protected override string WritePolicy => PermissionPolicyIdentifiers.WriteClinicalData;
+        protected override string WritePolicy => PermissionPolicyIdentifiers.UnrestrictedMetadata;
 
         /// <summary>
         /// Delete policy for entities
         /// </summary>
-        protected override string DeletePolicy => PermissionPolicyIdentifiers.DeleteClinicalData;
+        protected override string DeletePolicy => PermissionPolicyIdentifiers.UnrestrictedMetadata;
 
         /// <summary>
         /// Alter policy for entities
         /// </summary>
-        protected override string AlterPolicy => PermissionPolicyIdentifiers.WriteClinicalData;
+        protected override string AlterPolicy => PermissionPolicyIdentifiers.UnrestrictedMetadata;
 
         /// <summary>
         /// Insert the entity relationship

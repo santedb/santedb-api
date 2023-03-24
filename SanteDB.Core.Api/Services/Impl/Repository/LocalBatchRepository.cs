@@ -73,9 +73,9 @@ namespace SanteDB.Core.Services.Impl.Repository
             {
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
-                if (irsi is ISecuredRepositoryService)
+                if (irsi is ISecuredRepositoryService isrs)
                 {
-                    (irsi as ISecuredRepositoryService).DemandWrite(itm);
+                    isrs.DemandWrite(itm);
                 }
             }
             return base.Insert(data);
