@@ -95,6 +95,14 @@ namespace SanteDB.Core.Data.Initialization
         {
             return m_xsz.Deserialize(str) as Dataset;
         }
+
+        /// <summary>
+        /// Save the dataset to the specified stream
+        /// </summary>
+        public void Save(Stream str)
+        {
+            m_xsz.Serialize(str, this);
+        }
     }
 
     /// <summary>

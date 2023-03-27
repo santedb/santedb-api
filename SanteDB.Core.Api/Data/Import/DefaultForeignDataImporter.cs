@@ -21,6 +21,7 @@
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Data.Import.Format;
+using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
@@ -54,16 +55,22 @@ namespace SanteDB.Core.Data.Import
         private readonly IDictionary<String, IForeignDataElementTransform> m_transforms;
         private readonly IThreadPoolService m_threadPool;
         private readonly IRepositoryService<Bundle> m_bundleService;
+        private readonly IDatasetInstallerService m_datasetInstallService;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DefaultForeignDataImporter(ILocalizationService localizationService, IServiceManager serviceManager, IThreadPoolService threadPoolService, IRepositoryService<Bundle> repositoryService)
+        public DefaultForeignDataImporter(ILocalizationService localizationService, IServiceManager serviceManager, IThreadPoolService threadPoolService, IRepositoryService<Bundle> repositoryService, IDatasetInstallerService datasetInstaller)
         {
             this.m_localizationService = localizationService;
             this.m_transforms = serviceManager.CreateInjectedOfAll<IForeignDataElementTransform>().ToDictionary(o => o.Name, o => o);
             this.m_threadPool = threadPoolService;
             this.m_bundleService = repositoryService;
+            this.m_datasetInstallService = datasetInstaller;
+            if(this.m_datasetInstallService is IReportProgressChanged irpc)
+            {
+                irpc.ProgressChanged += (o, e) => this.ProgressChanged?.Invoke(this, e);
+            }
         }
 
         /// <inheritdoc/>
@@ -79,6 +86,35 @@ namespace SanteDB.Core.Data.Import
             else if (sourceReader == null)
             {
                 throw new ArgumentNullException(nameof(sourceReader));
+            }
+            else if (sourceReader is IForeignDataBulkReader ifdbr)
+            {
+                DetectedIssue errorIssue = null;
+                try
+                {
+                    this.m_datasetInstallService.Install(ifdbr.ReadAsDataset());
+                }
+                catch(Exception e)
+                {
+                    var ce = e;
+                    var errorMessage = String.Empty;
+                    while (ce != null)
+                    {
+                        errorMessage += ce.Message;
+                        ce = ce.InnerException;
+                        if (ce != null)
+                        {
+                            errorMessage += " CAUSE: ";
+                        }
+                    }
+                    errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", errorMessage, Guid.Empty);
+                    this.m_tracer.TraceWarning("Could not persist import record - {0}", e.Message);
+                }
+                if(errorIssue != null)
+                {
+                    yield return errorIssue;
+                }
+                yield break;
             }
             else if (rejectWriter == null)
             {
@@ -225,6 +261,7 @@ namespace SanteDB.Core.Data.Import
                     }
                 }
             }
+
         }
 
         /// <summary>
@@ -276,7 +313,7 @@ namespace SanteDB.Core.Data.Import
                 IdentifiedData outputFake = null;
                 duplicateCheckParms.Add("output", () => outputFake);
 
-                foreach (var res in foreignDataObjectMap.Resource)
+                foreach (var res in foreignDataObjectMap.Resource.Where(o=>!o.Type.IsAbstract))
                 {
                     outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
                     foreach (var itm in res.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))

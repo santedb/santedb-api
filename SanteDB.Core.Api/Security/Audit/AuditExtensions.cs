@@ -753,7 +753,7 @@ namespace SanteDB.Core.Security.Audit
             return builder.WithAuditableObjects(objects.SelectMany(o =>
                 {
                     if (o is Bundle bundle)
-                        return bundle.Item.Select(i => i.ToAuditableObject(lifecycle));
+                        return bundle.Item.Select(i => i.ToAuditableObject());
                     else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
                 }
             ).OfType<AuditableObject>());
@@ -923,10 +923,46 @@ namespace SanteDB.Core.Security.Audit
                     retVal.NameData = fds.Name;
                     break;
                 default:
-                    return null;
+                    if (obj is IdentifiedData iid)
+                    {
+                        retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                        retVal.Role = AuditableObjectRole.Report;
+                        retVal.Type = AuditableObjectType.SystemObject;
+                        retVal.CustomIdTypeCode = new AuditCode(iid.Type, "http://santedb.org/model");
+                        retVal.ObjectId = iid.Key.ToString();
+                        //retVal.NameData = iid.Tag;
+                        break;
+                    }
+                    else
+                    {
+                        return null;
+                    }
             }
 
-            retVal.LifecycleType = lifecycle;
+            if (!lifecycle.HasValue && obj is IdentifiedData iir)
+            {
+                switch(iir.BatchOperation)
+                {
+                    case Model.DataTypes.BatchOperationType.Auto:
+                    case Model.DataTypes.BatchOperationType.Ignore:
+                        retVal.LifecycleType = AuditableObjectLifecycle.Disclosure;
+                        break;
+                    case Model.DataTypes.BatchOperationType.Delete:
+                        retVal.LifecycleType = AuditableObjectLifecycle.LogicalDeletion;
+                        break;
+                    case Model.DataTypes.BatchOperationType.Insert:
+                    case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                        retVal.LifecycleType = AuditableObjectLifecycle.Creation;
+                        break;
+                    case Model.DataTypes.BatchOperationType.Update:
+                        retVal.LifecycleType = AuditableObjectLifecycle.Amendment;
+                        break;
+                }
+            }
+            else
+            {
+                retVal.LifecycleType = lifecycle;
+            }
             return retVal;
         }
 

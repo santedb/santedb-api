@@ -353,6 +353,11 @@ namespace SanteDB.Core.Security
         public const string QueryPlacesAndOrgs = ReadMetadata + ".2.3";
 
         /// <summary>
+        /// Export data from the CDR
+        /// </summary>
+        public const string ExportData = UnrestrictedAll + ".500";
+
+        /// <summary>
         /// Override policy permission
         /// </summary>
         public const string OverridePolicyPermission = UnrestrictedAll + ".999";
