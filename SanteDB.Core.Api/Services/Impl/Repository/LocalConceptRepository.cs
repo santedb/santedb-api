@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
@@ -364,6 +365,34 @@ namespace SanteDB.Core.Services.Impl.Repository
             return retVal?.FirstOrDefault(o => o.Language == twoLetterISOLanguageName)?.Name;
 
 
+        }
+
+        /// <inheritdoc/>
+        public IQueryResultSet<Concept> ExpandConceptSet(string conceptSetMnemonic)
+        {
+            return this.Find(o => o.ObsoletionTime == null && o.ConceptSets.Any(s => s.Mnemonic == conceptSetMnemonic))
+                .Union(o => o.ObsoletionTime == null &&
+                    o.ConceptSets
+                        .Any(s =>
+                            s.Composition.Where(c => c.Operation == ConceptSetCompositionOperation.Include).Any(c => c.SourceEntity.Mnemonic == conceptSetMnemonic)))
+                .Except(o => o.ObsoletionTime == null &&
+                    o.ConceptSets
+                        .Any(s =>
+                            s.Composition.Where(c => c.Operation == ConceptSetCompositionOperation.Exclude).Any(c => c.SourceEntity.Mnemonic == conceptSetMnemonic)));
+        }
+
+        /// <inheritdoc/>
+        public IQueryResultSet<Concept> ExpandConceptSet(Guid conceptSetId)
+        {
+            return this.Find(o => o.ObsoletionTime == null && o.ConceptSets.Any(s => s.Key == conceptSetId))
+                .Union(o => o.ObsoletionTime == null &&
+                    o.ConceptSets
+                        .Any(s =>
+                            s.Composition.Where(c => c.Operation == ConceptSetCompositionOperation.Include).Any(c => c.SourceEntityKey == conceptSetId)))
+                .Except(o => o.ObsoletionTime == null &&
+                    o.ConceptSets
+                        .Any(s =>
+                            s.Composition.Where(c => c.Operation == ConceptSetCompositionOperation.Exclude).Any(c => c.SourceEntityKey == conceptSetId)));
         }
     }
 }

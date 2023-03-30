@@ -19,6 +19,7 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
 
@@ -142,5 +143,19 @@ namespace SanteDB.Core.Services
         /// Get the specified concept name
         /// </summary>
         string GetName(Guid conceptId, string twoLetterISOLanguageName);
+
+        /// <summary>
+        /// Expand the concept set to a flat list of values
+        /// </summary>
+        /// <param name="conceptSetId">The concept set identifier</param>
+        /// <returns>The concepts in the concept set</returns>
+        IQueryResultSet<Concept> ExpandConceptSet(Guid conceptSetId);
+
+        /// <summary>
+        /// Expand the concept set by name
+        /// </summary>
+        /// <param name="conceptSetMnemonic">The concept set mnemonic</param>
+        /// <returns>The list of concepts</returns>
+        IQueryResultSet<Concept> ExpandConceptSet(String conceptSetMnemonic);
     }
 }
