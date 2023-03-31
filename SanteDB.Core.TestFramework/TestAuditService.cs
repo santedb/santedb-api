@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
+#pragma warning disable CS1591
 namespace SanteDB.Core.TestFramework
 {
     [ServiceProvider("Test Audit Service")]
@@ -65,3 +66,4 @@ namespace SanteDB.Core.TestFramework
         }
     }
 }
+#pragma warning restore

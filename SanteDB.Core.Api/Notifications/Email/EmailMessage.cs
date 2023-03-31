@@ -25,16 +25,43 @@ using System.Text;
 namespace SanteDB.Core.Notifications.Email
 {
 
+    /// <summary>
+    /// Represents a SanteDB internal mail message between clients and users
+    /// </summary>
     public class EmailMessage
     {
+        /// <summary>
+        /// Addresses which are addressed for this message
+        /// </summary>
         public IEnumerable<string> ToAddresses { get; set; }
+        /// <summary>
+        /// The addresses which are to be CC'd
+        /// </summary>
         public IEnumerable<string> CcAddresses { get; set; }
+        /// <summary>
+        /// The blind carbon copy address
+        /// </summary>
         public IEnumerable<string> BccAddresses { get; set; }
+        /// <summary>
+        /// The address which is sending this message
+        /// </summary>
         public string FromAddress { get; set; }
+        /// <summary>
+        /// Gets or sets the subject of the mail message
+        /// </summary>
         public string Subject { get; set; }
+        /// <summary>
+        /// Gets or sets the body of the message
+        /// </summary>
         public object Body { get; set; }
+        /// <summary>
+        /// Gets or sets whether the message is high priority
+        /// </summary>
         public bool HighPriority { get; set; }
 
+        /// <summary>
+        /// Get the attachmets which are attached to the message
+        /// </summary>
         public IEnumerable<(string name, string contentType, object content)> Attachments { get; set; }
 
 

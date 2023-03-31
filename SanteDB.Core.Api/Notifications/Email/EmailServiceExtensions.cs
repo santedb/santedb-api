@@ -26,6 +26,9 @@ using System.Text;
 
 namespace SanteDB.Core.Notifications.Email
 {
+    /// <summary>
+    /// Extension methods on the email service
+    /// </summary>
     public static class EmailServiceExtensions
     {
         /// <summary>

@@ -41,6 +41,9 @@ namespace SanteDB.Core.Notifications.Email
         readonly EmailNotificationConfigurationSection m_configuration;
         readonly IEmailService m_emailService;
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public EmailNotificationRelay(IConfigurationManager configurationManager, IEmailService emailService)
         {
             m_traceSource = Tracer.GetTracer(typeof(EmailNotificationRelay));
@@ -51,7 +54,7 @@ namespace SanteDB.Core.Notifications.Email
         // Configuration for the object
         
 
-
+        /// <inheritdoc/>
         public IEnumerable<string> SupportedSchemes => new[] { Uri.UriSchemeMailto };
 
         /// <summary>

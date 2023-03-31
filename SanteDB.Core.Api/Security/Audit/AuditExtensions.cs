@@ -749,6 +749,14 @@ namespace SanteDB.Core.Security.Audit
 
         }
 
+        /// <summary>
+        /// Add the specified <paramref name="objects"/> to the <paramref name="builder"/>, converting them to appropriate auditing format
+        /// </summary>
+        /// <typeparam name="TData">The type of objects to be added</typeparam>
+        /// <param name="builder">The <see cref="IAuditBuilder"/> to add <paramref name="objects"/></param>
+        /// <param name="lifecycle">The lifecycle of these objects in the context of the audit</param>
+        /// <param name="objects">The objects to be added</param>
+        /// <returns>The updated objects</returns>
         public static IAuditBuilder WithObjects<TData>(this IAuditBuilder builder, AuditableObjectLifecycle lifecycle, params TData[] objects)
         {
             return builder.WithAuditableObjects(objects.SelectMany(o =>

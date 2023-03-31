@@ -30,18 +30,35 @@ namespace SanteDB.Core.Exceptions
     /// </summary>
     public class MissingTfaSecretException : ApplicationException
     {
+        /// <summary>
+        /// Creates a new missing TFA secret exception
+        /// </summary>
         public MissingTfaSecretException()
         {
         }
 
+        /// <summary>
+        /// Creates a new missing TFA secret exception with the specified <paramref name="message"/>
+        /// </summary>
+        /// <param name="message">The message to include in the exception</param>
         public MissingTfaSecretException(string message) : base(message)
         {
         }
 
+        /// <summary>
+        /// Create the new <see cref="MissingTfaSecretException"/> with the specified <paramref name="message"/> caused by the <paramref name="innerException"/>
+        /// </summary>
+        /// <param name="message">The message to include in the exception</param>
+        /// <param name="innerException">The exception which caused this exception to be thrown</param>
         public MissingTfaSecretException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
+        /// <summary>
+        /// Create a new <see cref="MissingTfaSecretException"/> 
+        /// </summary>
+        /// <param name="info">The serialization information which is included in the message</param>
+        /// <param name="context">The streaming context to include</param>
         protected MissingTfaSecretException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }

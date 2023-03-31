@@ -29,15 +29,20 @@ namespace SanteDB.Core.Diagnostics.Performance
 {
 
     /// <summary>
-    /// Gets or sets the performance tracer
+    /// Gets or sets the performance tracer if a query takes more than 1 second to execute
     /// </summary>
     public static class PerformanceTracer
     {
         private static object syncLock = new object();
         private static long sequence = 0;
-
+        
+        /// <summary>
+        /// Writes a perform tracer to 
+        /// </summary>
+        /// <param name="milliseconds"></param>
         public static void WritePerformanceTrace(long milliseconds)
         {
+#if DEBUG
             if (milliseconds > 1000)
             {
                 var stack = new StackTrace(false).GetFrame(1).GetMethod();
@@ -50,6 +55,7 @@ namespace SanteDB.Core.Diagnostics.Performance
                 }
                 // System.Diagnostics.Debugger.Break();
             }
+#endif
         }
 
     }

@@ -73,6 +73,10 @@ namespace SanteDB.Core.Services
         /// Gets or sets the gateway 
         /// </summary>
         public String Gateway { get; private set; }
+
+        /// <summary>
+        /// Gets the interface type
+        /// </summary>
         public NetworkInterfaceType InterfaceType { get; }
     }
 

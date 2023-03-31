@@ -35,6 +35,9 @@ namespace SanteDB.Core.Data
         private Stream m_stream;
         private String m_fileName;
 
+        /// <summary>
+        /// Create a new temporary file stream
+        /// </summary>
         public TemporaryFileStream()
         {
             this.m_fileName = Path.GetTempFileName();

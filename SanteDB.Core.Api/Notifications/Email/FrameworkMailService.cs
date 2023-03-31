@@ -45,6 +45,9 @@ namespace SanteDB.Core.Notifications.Email
         readonly ICredentialsByHost _Credentials;
         readonly Tracer _Tracer;
 
+        /// <summary>
+        /// DI constructor
+        /// </summary>
         public FrameworkMailService(IConfigurationManager configurationManager)
         {
             _Tracer = new Tracer(nameof(FrameworkMailService));
@@ -120,6 +123,7 @@ namespace SanteDB.Core.Notifications.Email
         }
 
 
+        /// <inheritdoc/>
         public void SendEmail(EmailMessage message)
         {
             if (null == message)

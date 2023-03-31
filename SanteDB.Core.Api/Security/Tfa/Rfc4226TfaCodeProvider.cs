@@ -39,12 +39,16 @@ namespace SanteDB.Core.Security.Tfa
         readonly IApplicationServiceContext _ServiceContext;
         readonly Tracer _Tracer;
 
+        /// <summary>
+        /// Creates a new <see cref="Rfc4226TfaCodeProvider"/>
+        /// </summary>
         public Rfc4226TfaCodeProvider(IApplicationServiceContext serviceContext)
         {
             _Tracer = new Tracer(nameof(Rfc4226TfaCodeProvider));
             _ServiceContext = serviceContext;
         }
 
+        /// <inheritdoc/>
         public string GenerateTfaCode(IIdentity identity)
         {
             var secrets = GetSecretsForIdentity(identity)?.Where(s => s.Initialized);
@@ -67,6 +71,7 @@ namespace SanteDB.Core.Security.Tfa
             return GenerateCode(counter, selectedsecret.Secret, selectedsecret.CodeLength);
         }
 
+        /// <inheritdoc/>
         public bool VerifyTfaCode(IIdentity identity, string code, DateTimeOffset? timeProvided = null)
         {
             var secrets = GetSecretsForIdentity(identity)?.Where(s => s.Initialized);
@@ -264,6 +269,7 @@ namespace SanteDB.Core.Security.Tfa
             }
         }
 
+        /// <inheritdoc/>
         public string StartTfaRegistration(IIdentity identity, int codeLength, Rfc4226Mode rfc4226Mode, IPrincipal principal)
         {
             var secret = new Rfc4226SecretClaim();
@@ -289,6 +295,7 @@ namespace SanteDB.Core.Security.Tfa
 
         }
 
+        /// <inheritdoc/>
         public bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal)
         {
             if (null == identity)

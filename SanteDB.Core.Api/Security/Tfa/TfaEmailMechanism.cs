@@ -30,6 +30,9 @@ using System.Text;
 
 namespace SanteDB.Core.Security.Tfa
 {
+    /// <summary>
+    /// A <see cref="ITfaMechanism"/> which uses EMAIL as the communication 
+    /// </summary>
     public class TfaEmailMechanism : ITfaMechanism
     {
         /// <summary>
@@ -42,6 +45,9 @@ namespace SanteDB.Core.Security.Tfa
         readonly ITfaCodeProvider _TfaCodeProvider;
         private readonly ITfaSecretManager _TfaSecretManager;
 
+        /// <summary>
+        /// DI Constructor
+        /// </summary>
         public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager)
         {
             _NotificationService = notificationService;
@@ -49,10 +55,13 @@ namespace SanteDB.Core.Security.Tfa
             _TfaSecretManager = secretManager;
         }
 
+        /// <inheritdoc/>
         public Guid Id => MechanismId;
 
+        /// <inheritdoc/>
         public string Name => "org.santedb.tfa.email";
 
+        /// <inheritdoc/>
         public string Send(IIdentity user)
         {
             if (null == user)
@@ -109,6 +118,7 @@ namespace SanteDB.Core.Security.Tfa
             }
         }
 
+        /// <inheritdoc/>
         public bool Validate(IIdentity user, string secret)
         {
             if (null == user)

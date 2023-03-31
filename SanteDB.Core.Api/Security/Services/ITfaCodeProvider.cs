@@ -49,9 +49,28 @@ namespace SanteDB.Core.Security.Services
         bool VerifyTfaCode(IIdentity identity, string code, DateTimeOffset? timeProvided = null);
     }
 
+    /// <summary>
+    /// Represents a secret manager which can manage the TFA secret registration with a user
+    /// </summary>
     public interface ITfaSecretManager
     {
+        /// <summary>
+        /// Register an RFC4226 MFA secret setting to <paramref name="identity"/>
+        /// </summary>
+        /// <param name="identity">The identity to which the secret setting should be added</param>
+        /// <param name="codeLength">The code length</param>
+        /// <param name="rfc4226Mode">The secret mode (which dictates the generation and validation of the RFC secret)</param>
+        /// <param name="principal">The principal which is adding the secret configuration</param>
+        /// <returns>The registration data</returns>
         string StartTfaRegistration(IIdentity identity, int codeLength, Rfc4226Mode rfc4226Mode, IPrincipal principal);
+
+        /// <summary>
+        /// Completes an RFC4226 MFA secret registration
+        /// </summary>
+        /// <param name="identity">The identity to which the secret registraiton is to be completed</param>
+        /// <param name="code">The code which was used to confirm the MFA secret setting</param>
+        /// <param name="principal">The prinicpal which is completing the registration process</param>
+        /// <returns>True if the registration was successfully completed</returns>
         bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal);
     }
 

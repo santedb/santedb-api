@@ -47,6 +47,9 @@ namespace SanteDB.Core.Security.Tfa
         /// </summary>
         [EnumMember(Value = "t30")]
         TotpThirtySecondInterval,
+        /// <summary>
+        /// TOTP has a 60 second interval
+        /// </summary>
         [EnumMember(Value = "t60")]
         TotpSixtySecondInterval
     }
@@ -76,9 +79,14 @@ namespace SanteDB.Core.Security.Tfa
         /// </summary>
         [JsonProperty("cl")]
         public int CodeLength { get; set; }
+        /// <summary>
+        /// Gets or sets whether the initialization has been complete
+        /// </summary>
         [JsonProperty("i")]
         public bool Initialized { get; set; }
-
+        /// <summary>
+        /// Gets or sets the mode of MFA registration
+        /// </summary>
         [JsonConverter(typeof(StringEnumConverter)), JsonProperty("m")]
         public Rfc4226Mode Mode { get; set; }
     }
