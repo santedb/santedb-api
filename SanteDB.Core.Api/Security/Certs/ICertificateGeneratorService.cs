@@ -46,6 +46,9 @@ namespace SanteDB.Core.Security.Certs
         /// <param name="dn">The distinguished name of the certificate</param>
         /// <param name="keyPair">The private key to generate the CSR for</param>
         /// <returns>The CMC signing request</returns>
+        /// <param name="alternateNames">The laternate names to use</param>
+        /// <param name="enhancedUsages">The enhanced uses of the key</param>
+        /// <param name="usageFlags">The usage flags</param>
         byte[] CreateSigningRequest(RSAParameters keyPair, X500DistinguishedName dn, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None, String[] enhancedUsages = null, String[] alternateNames = null);
 
         /// <summary>
@@ -56,6 +59,9 @@ namespace SanteDB.Core.Security.Certs
         /// <param name="validityPeriod">The validity period</param>
         /// <param name="keyPair">The private/public key pair</param>
         /// <returns>The generated self-signed certificate</returns>
+        /// <param name="enhancedUsages">The enhanced uses of the key</param>
+        /// <param name="alternateNames">The subject alternate names</param>
+        /// <param name="friendlyName">The friendly name of the certificate</param>
         X509Certificate2 CreateSelfSignedCertificate(RSAParameters keyPair, X500DistinguishedName dn, TimeSpan validityPeriod, X509KeyUsageFlags usageFlags = X509KeyUsageFlags.None, String[] enhancedUsages = null, String[] alternateNames = null, String friendlyName = null);
 
         /// <summary>

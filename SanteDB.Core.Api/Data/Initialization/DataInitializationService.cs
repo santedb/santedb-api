@@ -57,6 +57,7 @@ namespace SanteDB.Core.Data.Initialization
                 return false;
             }
         }
+#pragma warning disable CS0067
 
         /// <summary>
         /// Fired when the service has started
@@ -82,6 +83,7 @@ namespace SanteDB.Core.Data.Initialization
         /// Fired when progress changes
         /// </summary>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <summary>
         /// DI constructor

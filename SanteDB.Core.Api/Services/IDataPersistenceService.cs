@@ -194,6 +194,7 @@ namespace SanteDB.Core.Services
         /// <param name="loadMode">The load strategy</param>
         /// <param name="deleteMode">The deletion strategy</param>
         /// <param name="autoUpdate">True if existing resources on an INSERT should be switched to an UPDATE</param>
+        /// <param name="autoInsert">True if client objects should be inserted</param>
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode? loadMode = null, DeleteMode? deleteMode = null, bool? autoUpdate = null, bool? autoInsert = null)
         {

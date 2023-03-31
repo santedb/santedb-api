@@ -487,6 +487,7 @@ namespace SanteDB.Core.Data.Import
         /// <param name="input">The input value to pass to the transform</param>
         /// <param name="output">The output of th etransform</param>
         /// <returns>True if the transform succeeded</returns>
+        /// <param name="sourceRecord">The source record to apply the transform to</param>
         private bool ApplyTransformer(ForeignDataTransformValueModifier transform, IForeignDataRecord sourceRecord, Object input, out object output)
         {
 

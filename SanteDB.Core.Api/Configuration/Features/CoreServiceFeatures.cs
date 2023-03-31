@@ -192,9 +192,11 @@ namespace SanteDB.Core.Configuration.Features
 
             /// <inheritdoc/>
             public string Name => "Save Service Configuration";
+#pragma warning disable CS0067
 
             /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
@@ -344,9 +346,11 @@ namespace SanteDB.Core.Configuration.Features
 
             /// <inheritdoc/>
             public string Name => "Remove Care Planner";
+#pragma warning disable CS0067
 
             /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
@@ -391,8 +395,10 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public string Name => "Remove Patch Service";
 
+#pragma warning disable CS0067
             /// <inheritdoc/>
             public event EventHandler<Services.ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)

@@ -34,6 +34,7 @@ using SanteDB.Core.Services.Impl.Repository;
 using System;
 using System.Linq;
 
+#pragma warning disable CS0612
 namespace SanteDB.Core.Services.Impl
 {
     /// <summary>
@@ -117,3 +118,4 @@ namespace SanteDB.Core.Services.Impl
         }
     }
 }
+#pragma warning restore

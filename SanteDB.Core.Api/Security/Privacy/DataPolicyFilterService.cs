@@ -40,7 +40,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security;
 using System.Security.Principal;
-
+#pragma warning disable CS0612
 namespace SanteDB.Core.Security.Privacy
 {
     /// <summary>
@@ -619,3 +619,4 @@ namespace SanteDB.Core.Security.Privacy
         }
     }
 }
+#pragma warning restore

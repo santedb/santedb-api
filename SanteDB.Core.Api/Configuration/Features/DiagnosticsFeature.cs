@@ -190,8 +190,10 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public string Name => "Configure Diagnostics";
 
+#pragma warning disable CS0067
             /// <inheritdoc/>
             public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)

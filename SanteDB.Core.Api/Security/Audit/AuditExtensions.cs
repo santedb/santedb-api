@@ -47,6 +47,7 @@ using System.Text;
 using System.Xml.Serialization;
 using System.Security.Cryptography.X509Certificates;
 using SanteDB.Core.Data.Import;
+#pragma warning disable CS0612
 
 namespace SanteDB.Core.Security.Audit
 {
@@ -1538,3 +1539,4 @@ namespace SanteDB.Core.Security.Audit
                 .WithEventType(eventTypeCode);
     }
 }
+#pragma warning restore

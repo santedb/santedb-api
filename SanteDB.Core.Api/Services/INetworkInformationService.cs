@@ -86,7 +86,6 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get interface information 
         /// </summary>
-        /// <param name="interfaceTypes">The types of network interfaces to fetch data for</param>
         IEnumerable<NetworkInterfaceInfo> GetInterfaces();
 
         /// <summary>

@@ -72,6 +72,7 @@ namespace SanteDB.Core.Data.Backup
         /// Load the specified 
         /// </summary>
         /// <param name="backupStream">The stream from which the backup should be loaded</param>
+        /// <param name="password">The password on the backup to use to decrypt it</param>
         public static BackupReader Open(Stream backupStream, String password = null)
         {
 

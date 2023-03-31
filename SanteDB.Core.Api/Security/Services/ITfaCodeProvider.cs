@@ -37,7 +37,6 @@ namespace SanteDB.Core.Security.Services
         /// Generate a code for a specific user.
         /// </summary>
         /// <param name="identity">The identity to generate the code for.</param>
-        /// <param name="address">Optional address to specifically gather a secret for. </param>
         /// <returns>The generated code for the identity.</returns>
         string GenerateTfaCode(IIdentity identity);
         /// <summary>

@@ -125,8 +125,10 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public string Name => "Remove Resource Manager";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
@@ -178,8 +180,10 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public string Name => $"Install Resource Manager";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)

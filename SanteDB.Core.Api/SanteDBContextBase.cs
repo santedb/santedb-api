@@ -28,6 +28,7 @@ using SanteDB.Core.Services.Impl;
 using System;
 using System.Diagnostics;
 using System.Linq;
+#pragma warning disable CS0612
 
 namespace SanteDB.Core
 {
@@ -231,3 +232,4 @@ namespace SanteDB.Core
 
     }
 }
+#pragma warning restore

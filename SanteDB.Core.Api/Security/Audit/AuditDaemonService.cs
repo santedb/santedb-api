@@ -61,6 +61,8 @@ namespace SanteDB.Core.Security.Audit
                 return true;
             }
         }
+#pragma warning disable CS0612
+#pragma warning disable CS0067
 
         /// <summary>
         /// The service has started
@@ -267,4 +269,6 @@ namespace SanteDB.Core.Security.Audit
             return true;
         }
     }
+#pragma warning restore
+
 }

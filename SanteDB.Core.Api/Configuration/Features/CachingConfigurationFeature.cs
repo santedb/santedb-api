@@ -181,8 +181,10 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public string Name => $"Remove {this.m_configurationName}";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
@@ -252,9 +254,11 @@ namespace SanteDB.Core.Configuration.Features
 
         /// <inheritdoc/>
         public string Name => $"Install {this.m_configurationName}";
+#pragma warning disable CS0067
 
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)

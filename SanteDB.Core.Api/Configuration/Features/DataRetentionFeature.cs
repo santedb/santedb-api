@@ -148,8 +148,10 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public string Name => "Disable Retention Job";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
@@ -207,8 +209,10 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public string Name => "Configure Retention Policies";
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+#pragma warning restore
 
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
@@ -251,12 +255,14 @@ namespace SanteDB.Core.Configuration.Features
         /// <inheritdoc/>
         public IFeature Feature { get; }
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public string Name => "Configure Retention Job";
 
+
         /// <inheritdoc/>
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
+#pragma warning restore
         /// <inheritdoc/>
         public bool Execute(SanteDBConfiguration configuration)
         {
