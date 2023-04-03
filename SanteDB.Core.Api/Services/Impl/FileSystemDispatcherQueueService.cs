@@ -25,6 +25,7 @@ using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
+using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -156,8 +157,8 @@ namespace SanteDB.Core.Services.Impl
         // Watchers
         private ConcurrentDictionary<String, List<DispatcherQueueCallback>> m_watchers = new ConcurrentDictionary<string, List<DispatcherQueueCallback>>();
 
-        // Notification queue
-        private ConcurrentQueue<DispatcherMessageEnqueuedInfo> m_notificationQueue = new ConcurrentQueue<DispatcherMessageEnqueuedInfo>();
+        //// Notification queue
+        //private ConcurrentQueue<DispatcherMessageEnqueuedInfo> m_notificationQueue = new ConcurrentQueue<DispatcherMessageEnqueuedInfo>();
 
         // Reset event
         private ManualResetEventSlim m_resetEvent = new ManualResetEventSlim(false);
@@ -219,16 +220,20 @@ namespace SanteDB.Core.Services.Impl
                         break;
                     }
 
-                    while (this.m_notificationQueue.TryDequeue(out var result) && !String.IsNullOrEmpty(this.GetQueueFile(result.QueueName, result.CorrelationId)))
+                    foreach (var q in this.GetQueues().Where(q => !q.Name.Contains(".dead")))
                     {
-                        if (this.m_watchers.TryGetValue(result.QueueName, out var callbacks))
+                        foreach(var f in this.GetQueueEntries(q.Name).ToArray())
                         {
-                            foreach (var cb in callbacks.ToArray())
+                            if (this.m_watchers.TryGetValue(q.Name, out var callbacks))
                             {
-                                cb(result);
+                                foreach (var cb in callbacks.ToArray())
+                                {
+                                    cb(new DispatcherMessageEnqueuedInfo(q.Name, f.CorrelationId));
+                                }
                             }
                         }
                     }
+
 
                     if (token.IsCancellationRequested)
                     {
@@ -428,7 +433,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void NotifyQueuePush(string queueName, string correlationId)
         {
-            this.m_notificationQueue.Enqueue(new DispatcherMessageEnqueuedInfo(queueName, correlationId));
+            //this.m_notificationQueue.Enqueue(new DispatcherMessageEnqueuedInfo(queueName, correlationId));
             this.m_resetEvent.Set();
         }
 
@@ -513,6 +518,10 @@ namespace SanteDB.Core.Services.Impl
                 }
                 catch
                 {
+                    if (!queueName.Contains(".dead"))
+                    {
+                        File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead"));
+                    }
                     continue;
                 }
                 yield return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(f), queueName, entry.CreationTime, entry.Type, entry.XmlData);
