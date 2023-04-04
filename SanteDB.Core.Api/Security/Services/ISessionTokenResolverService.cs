@@ -48,7 +48,7 @@ namespace SanteDB.Core.Security.Services
         /// <param name="encodedToken">The encoded id token for the session.</param>
         /// <returns></returns>
         /// <exception cref="System.Security.SecurityException"></exception>
-        ISession GetSessionFromIdToken(string encodedToken);
+        ISession GetSessionFromBearerToken(string encodedToken);
         /// <summary>
         /// Resolves the session associated with the Refresh token provided in <paramref name="encodedToken"/>.
         /// </summary>

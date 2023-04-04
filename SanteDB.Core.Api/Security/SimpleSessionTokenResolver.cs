@@ -75,9 +75,9 @@ namespace SanteDB.Core.Security.Services
             return m_sessionTokenEncoder.Encode(session.RefreshToken);
         }
 
-        /// <inheritdoc cref="ISessionTokenResolverService.GetSessionFromIdToken(string)"/>
+        /// <inheritdoc cref="ISessionTokenResolverService.GetSessionFromBearerToken(string)"/>
         /// <exception cref="SecurityException"></exception>
-        public ISession GetSessionFromIdToken(string encodedToken)
+        public ISession GetSessionFromBearerToken(string encodedToken)
         {
             if (m_sessionTokenEncoder.TryDecode(encodedToken, out var sessionId))
             {
