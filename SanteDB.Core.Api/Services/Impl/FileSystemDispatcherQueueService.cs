@@ -520,7 +520,14 @@ namespace SanteDB.Core.Services.Impl
                 {
                     if (!queueName.Contains(".dead"))
                     {
-                        File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead"));
+                        try
+                        {
+                            File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead"));
+                        }
+                        catch(IOException)
+                        {
+                            File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead", $"{Path.GetFileName(f)}.2"));
+                        }
                     }
                     continue;
                 }
