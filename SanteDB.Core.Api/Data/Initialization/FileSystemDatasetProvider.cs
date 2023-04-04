@@ -40,7 +40,7 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         public IEnumerable<Dataset> GetDatasets()
         {
-            var dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "data");
+            var dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "Data");
             if (Directory.Exists(dataPath))
             {
                 return Directory.GetFiles(dataPath, "*.dataset").Select(o =>
