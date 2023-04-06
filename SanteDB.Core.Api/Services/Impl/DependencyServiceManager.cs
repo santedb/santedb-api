@@ -343,6 +343,21 @@ namespace SanteDB.Core.Services.Impl
         public IEnumerable<Type> GetAllTypes() => AppDomain.CurrentDomain.GetAllTypes();
 
         /// <summary>
+        /// Get service in a safe manner
+        /// </summary>
+        public object GetServiceSafe(Type serviceType)
+        {
+            try
+            {
+                return this.GetService(serviceType);
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Get the specified service
         /// </summary>
         public object GetService(Type serviceType) => this.GetServiceInternal(serviceType);
@@ -758,8 +773,14 @@ namespace SanteDB.Core.Services.Impl
                             var dependencyInfo = parameterTypes[i];
                             var dependentServiceType = injectedServices[i] = dependencyInfo.Type;
                             // Is the dependent service anything for which we are the preferred service? If so find another instance
-                            object candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
-
+                            object candidateService = null;
+                            try
+                            {
+                                candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
+                            }
+                            catch(InvalidOperationException)
+                            {
+                            }
                             if (candidateService == null && dependencyInfo.Required)
                             {
                                 throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
@@ -771,8 +792,8 @@ namespace SanteDB.Core.Services.Impl
                                     dependentServiceType = candidateService.GetType();
                                 }
                                 var expr = Expression.Convert(Expression.Call(
-                                    Expression.MakeMemberAccess(null, typeof(ApplicationServiceContext).GetProperty(nameof(ApplicationServiceContext.Current))),
-                                    (MethodInfo)typeof(IServiceProvider).GetMethod(nameof(GetService)),
+                                    Expression.Constant(this),
+                                    (MethodInfo)typeof(DependencyServiceManager).GetMethod(nameof(GetServiceSafe)),
                                     Expression.Constant(dependentServiceType)), dependencyInfo.Type);
                                 //Expression<Func<object,dynamic>> expr = (_) => ApplicationServiceContext.Current.GetService<Object>();
                                 parameterValues[i] = expr; // Expression.Convert(Expression.Constant(candidateService), dependentServiceType); //expr;
