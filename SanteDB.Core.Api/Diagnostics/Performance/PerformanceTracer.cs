@@ -53,7 +53,6 @@ namespace SanteDB.Core.Diagnostics.Performance
                         tw.WriteLine("{0},\"{1}\",\"{2}\",{3}", sequence++, stack.DeclaringType, stack, milliseconds);
                     };
                 }
-                // System.Diagnostics.Debugger.Break();
             }
 #endif
         }
