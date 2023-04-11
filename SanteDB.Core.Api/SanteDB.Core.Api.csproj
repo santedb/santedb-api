@@ -260,6 +260,12 @@
     <ProjectReference Include="..\..\restsrvr\RestSrvr\RestSrvr.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="Schema\Configuration.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Schema\Dataset.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Schema\ForeignDataMap.xsd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
