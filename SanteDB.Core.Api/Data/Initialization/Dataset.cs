@@ -183,7 +183,6 @@ namespace SanteDB.Core.Data.Initialization
         [XmlElement("ExtensionType", typeof(ExtensionType), Namespace = "http://santedb.org/model")]
         [XmlElement("CodeSystem", typeof(CodeSystem), Namespace = "http://santedb.org/model")]
         [XmlElement("ReferenceTerm", typeof(ReferenceTerm), Namespace = "http://santedb.org/model")]
-        [XmlElement("IdentifierType", typeof(IdentifierType), Namespace = "http://santedb.org/model")]
         [XmlElement("UserEntity", typeof(UserEntity), Namespace = "http://santedb.org/model")]
         [XmlElement("Entity", typeof(Entity), Namespace = "http://santedb.org/model")]
         [XmlElement("Organization", typeof(Organization), Namespace = "http://santedb.org/model")]

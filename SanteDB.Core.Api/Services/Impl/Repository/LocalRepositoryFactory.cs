@@ -46,7 +46,6 @@ namespace SanteDB.Core.Services.Impl.Repository
         // Repository services
         private readonly Type[] r_repositoryServices = new Type[] {
                 typeof(LocalConceptRepository),
-                typeof(GenericLocalMetadataRepository<IdentifierType>),
                 typeof(GenericLocalConceptRepository<ReferenceTerm>),
                 typeof(GenericLocalConceptRepository<CodeSystem>),
                 typeof(GenericLocalConceptRepository<ConceptSet>),
