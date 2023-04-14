@@ -24,6 +24,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
 
@@ -343,7 +344,10 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IDisposable EnterSystemContext()
         {
-            // TODO: Validate the caller can enter the system context
+
+            // Caller of this method MUST be a signed assembly - there are no exceptions to this
+            var callerFrame = new StackFrame(1);
+            callerFrame.GetMethod().DeclaringType.Assembly.ValidateCodeIsSigned(true);
             return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
 

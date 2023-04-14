@@ -23,10 +23,12 @@ using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Xml;
 
@@ -53,6 +55,7 @@ namespace SanteDB.Core.Services.Impl
         // Configuration file name
         private readonly String m_configurationFileName;
         private readonly FileBackupAsset m_configurationFileBackupAsset;
+        private readonly ConcurrentDictionary<String, ConnectionString> m_transientConnectionStrings = new ConcurrentDictionary<string, ConnectionString>();
 
         /// <inheritdoc/>
         public event EventHandler RestartRequested;
@@ -154,7 +157,21 @@ namespace SanteDB.Core.Services.Impl
             }
             catch { }
 
+            if(retVal == null)
+            {
+                this.m_transientConnectionStrings.TryGetValue(key, out retVal);
+            } 
             return retVal;
+        }
+
+        /// <inheritdoc/>
+        public void SetTransientConnectionString(string key, ConnectionString connectionString)
+        {
+            if(Configuration.GetSection<DataConfigurationSection>()?.ConnectionString.Any(o => o.Name == key) == true)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.DUPLICATE_OBJECT, key));
+            }
+            this.m_transientConnectionStrings.AddOrUpdate(key, connectionString, (k,o)=>o);
         }
 
         /// <summary>

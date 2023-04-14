@@ -564,17 +564,20 @@ namespace SanteDB.Core.Security.Audit
         /// </summary>
         public static IAuditBuilder WithHttpInformation(this IAuditBuilder me, HttpListenerRequest request)
         {
-            me.Audit.AuditableObjects.Add(new AuditableObject()
+            if (request != null)
             {
-                IDTypeCode = AuditableObjectIdType.Custom,
-                CustomIdTypeCode = new AuditCode("HTTP-Headers", "SecurityAuditCodes"),
-                Role = AuditableObjectRole.Query,
-                Type = AuditableObjectType.SystemObject,
-                QueryData = request.Url.ToString(),
-                ObjectData = request.Headers.AllKeys.Where(o => o.Equals("accept", StringComparison.OrdinalIgnoreCase)).Select(
-                    h => new ObjectDataExtension(h, Encoding.UTF8.GetBytes(request.Headers[h]))
-                    ).ToList()
-            });
+                me.Audit.AuditableObjects.Add(new AuditableObject()
+                {
+                    IDTypeCode = AuditableObjectIdType.Custom,
+                    CustomIdTypeCode = new AuditCode("HTTP-Headers", "SecurityAuditCodes"),
+                    Role = AuditableObjectRole.Query,
+                    Type = AuditableObjectType.SystemObject,
+                    QueryData = request.Url.ToString(),
+                    ObjectData = request.Headers.AllKeys.Where(o => o.Equals("accept", StringComparison.OrdinalIgnoreCase)).Select(
+                        h => new ObjectDataExtension(h, Encoding.UTF8.GetBytes(request.Headers[h]))
+                        ).ToList()
+                });
+            }
             return me;
         }
 

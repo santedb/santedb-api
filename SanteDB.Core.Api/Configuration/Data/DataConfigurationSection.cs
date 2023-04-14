@@ -239,5 +239,11 @@ namespace SanteDB.Core.Configuration.Data
         {
             return this.Value;
         }
+
+        /// <summary>
+        /// Represent the connection string as a dictionary of pairs
+        /// </summary>
+        public IDictionary<String, Object> ToDictionary() =>
+            this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => (Object)o.Split('=')[1].Trim());
     }
 }

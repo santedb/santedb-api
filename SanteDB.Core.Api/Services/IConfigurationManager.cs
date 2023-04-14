@@ -104,5 +104,12 @@ namespace SanteDB.Core.Services
         /// Save the configuration
         /// </summary>
         void SaveConfiguration();
+
+        /// <summary>
+        /// Adds a connection string only for the lifetime of the server
+        /// </summary>
+        /// <param name="name">The name of the connection string</param>
+        /// <param name="connectionString">The connection string</param>
+        void SetTransientConnectionString(string name, ConnectionString connectionString);
     }
 }

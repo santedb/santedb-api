@@ -526,7 +526,13 @@ namespace SanteDB.Core.Services.Impl
                         }
                         catch(IOException)
                         {
-                            File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead", $"{Path.GetFileName(f)}.2"));
+                            try
+                            {
+                                File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead", $"{Path.GetFileName(f)}.2"));
+                            }
+                            catch
+                            {
+                            }
                         }
                     }
                     continue;

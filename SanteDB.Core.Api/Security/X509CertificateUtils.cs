@@ -37,7 +37,6 @@ namespace SanteDB.Core.Security
 
         private static Tracer s_tracer = Tracer.GetTracer(typeof(X509CertificateUtils));
 
-
         /// <summary>
         /// Find a certiifcate from string values
         /// </summary>
@@ -73,7 +72,6 @@ namespace SanteDB.Core.Security
 
             return FindCertificate(eFindType, eStoreLocation, eStoreName, findValue);
         }
-
 
         /// <summary>
         /// Install the <paramref name="certificate"/> to the specified <paramref name="storeName"/> in <see cref="StoreLocation.CurrentUser"/>

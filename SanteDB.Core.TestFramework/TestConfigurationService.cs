@@ -20,8 +20,10 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -33,6 +35,8 @@ namespace SanteDB.Core.TestFramework
     [ExcludeFromCodeCoverage]
     public class TestConfigurationService : IConfigurationManager
     {
+        private readonly ConcurrentDictionary<String, ConnectionString> m_transientConnectionStrings = new ConcurrentDictionary<string, ConnectionString>();
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -98,6 +102,10 @@ namespace SanteDB.Core.TestFramework
             }
             catch { }
 
+            if (retVal == null)
+            {
+                this.m_transientConnectionStrings.TryGetValue(key, out retVal);
+            }
             return retVal;
         }
 
@@ -120,6 +128,16 @@ namespace SanteDB.Core.TestFramework
         public void SaveConfiguration()
         {
             throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public void SetTransientConnectionString(string key, ConnectionString connectionString)
+        {
+            if (Configuration.GetSection<DataConfigurationSection>()?.ConnectionString.Any(o => o.Name == key) == true)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.DUPLICATE_OBJECT, key));
+            }
+            this.m_transientConnectionStrings.AddOrUpdate(key, connectionString, (k, o) => o);
         }
     }
 }

@@ -147,6 +147,13 @@ namespace SanteDB.Core.Configuration.Data
         ConnectionString CreateDatabase(ConnectionString connectionString, string databaseName, string databaseOwner);
 
         /// <summary>
+        /// Drop the specified database in the provider
+        /// </summary>
+        /// <param name="connectionString">The connection string on which the database should be dropped(note: this may be a partial connection string)</param>
+        /// <param name="databaseName">The name of the database which should be dropped</param>
+        void DropDatabase(ConnectionString connectionString, string databaseName);
+
+        /// <summary>
         /// Tests the specified connection string to ensure it is valid with the provider and the remote machine exists
         /// </summary>
         /// <param name="connectionString">The connection string which should be verified</param>

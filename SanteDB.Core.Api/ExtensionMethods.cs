@@ -35,7 +35,13 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Security;
 using System.Security.Principal;
+using System.Reflection;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Configuration;
+using System.Collections.Concurrent;
 
 namespace SanteDB.Core
 {
@@ -45,6 +51,8 @@ namespace SanteDB.Core
     public static class ExtensionMethods
     {
 
+        // Verified assemblies
+        private static readonly ConcurrentBag<String> m_verifiedAssemblies = new ConcurrentBag<string>();
 
         /// <summary>
         /// Create injected class
@@ -308,6 +316,68 @@ namespace SanteDB.Core
             }
 
             return dict;
+        }
+
+        /// <summary>
+        /// Validate that the code is signed
+        /// </summary>
+        public static void ValidateCodeIsSigned(this Assembly asm, bool allowUnsignedAssemblies)
+        {
+            var tracer = Tracer.GetTracer(typeof(ExtensionMethods));
+            bool valid = false;
+            var asmFile = asm.Location;
+            if (String.IsNullOrEmpty(asmFile))
+            {
+                tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
+            }
+            else if (allowUnsignedAssemblies != true)
+            {
+                // Verified assembly?
+                if (!m_verifiedAssemblies.Contains(asmFile))
+                {
+                    try
+                    {
+                        var extraCerts = new X509Certificate2Collection();
+                        extraCerts.Import(asmFile);
+
+                        var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
+                        tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
+                        valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
+                        if (!valid)
+                        {
+                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+#if !DEBUG
+                        throw new SecurityException($"Could not load digital signature information for {asmFile}", e);
+#else
+                        tracer.TraceWarning("Could not verify {0} due to error {1}", asmFile, e.Message);
+                        valid = false;
+#endif
+                    }
+                }
+                else
+                {
+                    valid = true;
+                }
+
+                if (!valid)
+                {
+#if !DEBUG
+                    throw new SecurityException($"Service {type} in assembly {asmFile} is not signed - or its signature could not be validated! Plugin may be tampered!");
+#else
+                    m_verifiedAssemblies.Add(asmFile);
+                    tracer.TraceWarning("!!!!!!!!! ALERT !!!!!!! {0} in {1} is not signed - in a release version of SanteDB this will cause the host to not load this service!", asm, asmFile);
+#endif
+                }
+                else
+                {
+                    tracer.TraceVerbose("{0} was validated as trusted code", asmFile);
+                    m_verifiedAssemblies.Add(asmFile);
+                }
+            }
         }
     }
 }

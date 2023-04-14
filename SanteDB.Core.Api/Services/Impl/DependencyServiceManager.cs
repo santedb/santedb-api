@@ -67,9 +67,6 @@ namespace SanteDB.Core.Services.Impl
         // Service factories
         private HashSet<IServiceFactory> m_serviceFactories = new HashSet<IServiceFactory>();
 
-        // Verified assemblies
-        private HashSet<String> m_verifiedAssemblies = new HashSet<string>();
-
         /// <summary>
         /// Gets the service instance information
         /// </summary>
@@ -621,60 +618,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void ValidateServiceSignature(Type type)
         {
-            bool valid = false;
-            var asmFile = type.Assembly.Location;
-            if (String.IsNullOrEmpty(asmFile))
-            {
-                this.m_tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
-            }
-            else if (this.m_configuration?.AllowUnsignedAssemblies != true)
-            {
-                // Verified assembly?
-                if (!this.m_verifiedAssemblies.Contains(asmFile))
-                {
-                    try
-                    {
-                        var extraCerts = new X509Certificate2Collection();
-                        extraCerts.Import(asmFile);
-
-                        var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
-                        this.m_tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
-                        valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
-                        if (!valid)
-                        {
-                            throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-#if !DEBUG
-                        throw new SecurityException($"Could not load digital signature information for {asmFile}", e);
-#else
-                        this.m_tracer.TraceWarning("Could not verify {0} due to error {1}", asmFile, e.Message);
-                        valid = false;
-#endif
-                    }
-                }
-                else
-                {
-                    valid = true;
-                }
-
-                if (!valid)
-                {
-#if !DEBUG
-                    throw new SecurityException($"Service {type} in assembly {asmFile} is not signed - or its signature could not be validated! Plugin may be tampered!");
-#else
-                    this.m_verifiedAssemblies.Add(asmFile);
-                    this.m_tracer.TraceWarning("!!!!!!!!! ALERT !!!!!!! {0} in {1} is not signed - in a release version of SanteDB this will cause the host to not load this service!", type, asmFile);
-#endif
-                }
-                else
-                {
-                    this.m_tracer.TraceVerbose("{0} was validated as trusted code", asmFile);
-                    this.m_verifiedAssemblies.Add(asmFile);
-                }
-            }
+            type.Assembly.ValidateCodeIsSigned(this.m_configuration?.AllowUnsignedAssemblies == true);
         }
 
         /// <summary>
