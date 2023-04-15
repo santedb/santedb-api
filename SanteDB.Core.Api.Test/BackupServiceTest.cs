@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Roles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,7 @@ namespace SanteDB.Core.Api.Test
     /// Backup service tests
     /// </summary>
     [TestFixture]
+    [ExcludeFromCodeCoverage]
     public class BackupServiceTest 
     {
 

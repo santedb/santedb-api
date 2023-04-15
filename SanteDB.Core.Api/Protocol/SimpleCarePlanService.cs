@@ -26,8 +26,11 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -58,12 +61,21 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Represents a parameter dictionary
         /// </summary>
-        public class ParameterDictionary<TKey, TValue> : Dictionary<TKey, TValue> where TValue : class
+        private class ParameterDictionary : Dictionary<String, Object>
         {
+
+
+            /// <summary>
+            /// Create a new parameter dictionary
+            /// </summary>
+            public ParameterDictionary(IDictionary<String, Object> other) : base(other ?? new Dictionary<String, Object>())
+            {
+            }
+
             /// <summary>
             /// Add new item key
             /// </summary>
-            public new void Add(TKey key, TValue value)
+            public new void Add(String key, Object value)
             {
                 if (value == null)
                 {
@@ -77,7 +89,7 @@ namespace SanteDB.Core.Protocol
             /// Remove key
             /// </summary>
             /// <param name="key"></param>
-            public new void Remove(TKey key)
+            public new void Remove(String key)
             {
                 if (!ContainsKey(key))
                 {
@@ -90,11 +102,11 @@ namespace SanteDB.Core.Protocol
             /// <summary>
             /// Indexer
             /// </summary>
-            public new TValue this[TKey key]
+            public new Object this[String key]
             {
                 get
                 {
-                    TValue value;
+                    Object value;
                     return TryGetValue(key, out value) ? value : null;
                 }
                 set
@@ -115,16 +127,15 @@ namespace SanteDB.Core.Protocol
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
         private readonly IClinicalProtocolRepositoryService m_protocolRepository;
-
-        // Care plan loading promise dictionary (prevents double-loading of patients)
-        private Dictionary<Guid, Patient> m_patientPromise = new Dictionary<Guid, Patient>();
+        private readonly IRepositoryService<ActParticipation> m_actParticipationRepository;
 
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
-        public SimpleCarePlanService(IClinicalProtocolRepositoryService protocolRepository)
+        public SimpleCarePlanService(IClinicalProtocolRepositoryService protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
         {
             this.m_protocolRepository = protocolRepository;
+            this.m_actParticipationRepository = actParticipationRepository;
         }
 
         /// <summary>
@@ -132,7 +143,7 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         public CarePlan CreateCarePlan(Patient p)
         {
-            return this.CreateCarePlan(p, false, null);
+            return this.CreateCarePlan(p, false);
         }
 
         /// <summary>
@@ -148,244 +159,167 @@ namespace SanteDB.Core.Protocol
         /// <summary>
         /// Create a care plan
         /// </summary>
-        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters)
+        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupId)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol().ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(groupId : groupId).ToArray());
         }
 
         /// <summary>
         /// Create a care plan with the specified protocols only
         /// </summary>
-        public CarePlan CreateCarePlan(Patient patient, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
+        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
         {
-            if (patient == null)
+            if (target == null)
             {
                 return null;
             }
 
             try
             {
-                var parmDict = new ParameterDictionary<String, Object>();
-                if (parameters != null)
+
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    foreach (var itm in parameters)
+                    // Sometimes the patient will have participations which the protocol requires - however these are 
+                    // not directly loaded from the database - so let's load them
+                    var patientCopy = target.Clone() as Patient; // don't mess up the original
+                    patientCopy.Participations = target.Participations?.ToList();
+
+                    if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
-                        parmDict.Add(itm.Key, itm.Value);
+                        patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key)
+                            .ToList();
                     }
-                }
 
-                // Allow each protocol to initialize itself
-                var execProtocols = protocols.OrderBy(o => o.Name).Distinct().ToList();
-
-                Patient currentProcessing = null;
-                bool isCurrentProcessing = false;
-                if (patient.Key.HasValue)
-                {
-                    isCurrentProcessing = this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing);
-                }
-
-                if (patient.Key.HasValue && !isCurrentProcessing)
-                {
-                    lock (this.m_patientPromise)
-                    {
-                        if (!this.m_patientPromise.TryGetValue(patient.Key.Value, out currentProcessing))
-                        {
-                            currentProcessing = patient.DeepCopy() as Patient;
-
-                            // Are the participations of the patient null?
-                            if (patient.LoadProperty(o => o.Participations).IsNullOrEmpty() && patient.VersionKey.HasValue)
+                    patientCopy.Participations.OfType<ActParticipation>()
+                            .AsParallel()
+                            .ForAll(p =>
                             {
-                                patient.Participations = EntitySource.Current.Provider.Query<Act>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key) &&
-                                    StatusKeys.ActiveStates.Contains(o.StatusConceptKey.Value)).OfType<Act>()
-                                    .Select(a =>
-                                    new ActParticipation()
+                                using (AuthenticationContext.EnterSystemContext())
+                                {
+                                    p.LoadProperty(o => o.ParticipationRole);
+                                    p.LoadProperty(o => o.Act);
+                                    p.Act.LoadProperty(o => o.TypeConcept);
+                                    p.Act.LoadProperty(o => o.MoodConcept);
+                                    p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
                                     {
-                                        Act = a,
-                                        ParticipationRole = new Concept() { Mnemonic = "RecordTarget" },
-                                        PlayerEntity = currentProcessing
-                                    }).ToList();
+                                        t.LoadProperty(o => o.ParticipationRole);
+                                        t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
+                                    });
+                                    p.PlayerEntity = patientCopy;
+                                }
+                            });
 
-                                //EntitySource.Current.Provider.Query<SubstanceAdministration>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key)).OfType<Act>()
-                                //    .Union(EntitySource.Current.Provider.Query<QuantityObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
-                                //    .Union(EntitySource.Current.Provider.Query<CodedObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
-                                //    .Union(EntitySource.Current.Provider.Query<TextObservation>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
-                                //    .Union(EntitySource.Current.Provider.Query<PatientEncounter>(o => o.Participations.Where(g => g.ParticipationRole.Mnemonic == "RecordTarget").Any(g => g.PlayerEntityKey == currentProcessing.Key))).OfType<Act>()
-
-                                (ApplicationServiceContext.Current.GetService(typeof(IDataCachingService)) as IDataCachingService)?.Add(patient);
-                            }
-                            currentProcessing.Participations = new List<ActParticipation>(patient.LoadProperty(o => o.Participations));
-
-                            // The record target here is also a record target for any /relationships
-                            // TODO: I think this can be removed no?
-                            //currentProcessing.Participations = currentProcessing.Participations.Union(currentProcessing.Participations.SelectMany(pt =>
-                            //{
-                            //    if (pt.Act == null)
-                            //        pt.Act = EntitySource.Current.Get<Act>(pt.ActKey);
-                            //    return pt.Act?.Relationships?.Select(r =>
-                            //    {
-                            //        var retVal = new ActParticipation(ActParticipationKey.RecordTarget, currentProcessing)
-                            //        {
-                            //            ActKey = r.TargetActKey,
-                            //            ParticipationRole = new Model.DataTypes.Concept() { Mnemonic = "RecordTarget", Key = ActParticipationKey.RecordTarget }
-                            //        };
-                            //        if (r.TargetAct != null)
-                            //            retVal.Act = r.TargetAct;
-                            //        else
-                            //        {
-                            //            retVal.Act = currentProcessing.Participations.FirstOrDefault(o=>o.ActKey == r.TargetActKey)?.Act ?? EntitySource.Current.Get<Act>(r.TargetActKey);
-                            //        }
-                            //        return retVal;
-                            //    }
-                            //    );
-                            //})).ToList();
-
-                            // Add to the promised patient
-                            this.m_patientPromise.Add(patient.Key.Value, currentProcessing);
-                        }
-                    }
-                }
-                else if (!patient.Key.HasValue) // Not persisted
-                {
-                    currentProcessing = patient.DeepCopy() as Patient;
-                }
-
-                // Initialize for protocol execution
-                parmDict.Add("runProtocols", execProtocols.Distinct());
-                if (!this.IgnoreViewModelInitializer)
-                {
-                    foreach (var o in execProtocols)
+                    // Initialize
+                    var parmDict = new ParameterDictionary(parameters);
+                    parmDict.Add("runProtocols", protocols.Distinct());
+                    if (!this.IgnoreViewModelInitializer)
                     {
-                        o.Prepare(currentProcessing, parmDict);
+                        protocols.ForEach(o => o.Prepare(patientCopy, parmDict));
                     }
-                }
 
-                parmDict.Remove("runProtocols");
-
-                List<Act> protocolActs = new List<Act>();
-                lock (currentProcessing)
-                {
-                    var thdPatient = currentProcessing.DeepCopy() as Patient;
-                    thdPatient.Participations = new List<ActParticipation>(currentProcessing.LoadProperty(o => o.Participations).ToList().Where(o => o.Act?.MoodConceptKey != ActMoodKeys.Propose && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)));
-
-                    // Let's ensure that there are some properties loaded eh?
-                    if (this.IgnoreViewModelInitializer)
-                    {
-                        foreach (var itm in thdPatient.LoadProperty(o => o.Participations))
+                    // Compute the protocols
+                    var protocolActs = protocols
+                        .AsParallel()
+                        .WithDegreeOfParallelism(2)
+                        .SelectMany(proto =>
                         {
-                            var act = itm.LoadProperty(o => o.Act);
-                            act.LoadProperty(o => o.TypeConcept);
-                            act.LoadProperty(o => o.MoodConcept);
-                            foreach (var itmPtcpt in act.LoadProperty(o => o.Participations))
+                            using (AuthenticationContext.EnterSystemContext())
                             {
-                                itmPtcpt.LoadProperty(o => o.ParticipationRole);
-                                itmPtcpt.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
-                            };
-                        }
-                    }
+                                return proto.Calculate(patientCopy, parmDict);
+                            }
+                        })
+                        .OrderBy(o => o.StartTime ?? o.ActTime)
+                        .ToList();
 
-                    protocolActs = execProtocols.AsParallel().WithDegreeOfParallelism(2).SelectMany(o => o.Calculate(thdPatient, parmDict)).OrderBy(o => o.StopTime - o.StartTime).ToList();
-                }
-
-                // Current processing
-                if (asEncounters)
-                {
-                    List<PatientEncounter> encounters = new List<PatientEncounter>();
-                    foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime))
+                    // Group these as appointments 
+                    if (asEncounters)
                     {
-                        act.StopTime = act.StopTime ?? act.ActTime;
-                        // Is there a candidate encounter which is bound by start/end
-                        var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue)
-                            && (act.StopTime ?? DateTimeOffset.MaxValue) >= (e.StartTime ?? DateTimeOffset.MinValue)
-                            && !e.Relationships.Any(r => r.TargetAct?.Protocols.Intersect(act.Protocols, new ProtocolComparer()).Count() == r.TargetAct?.Protocols.Count())
-                        );
+                        List<PatientEncounter> encounters = new List<PatientEncounter>();
+                        foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).OrderBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime))
+                        {
+                            act.StopTime = act.StopTime ?? act.ActTime;
+                            // Is there a candidate encounter which is bound by start/end
+                            var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue)
+                                && (act.StopTime ?? DateTimeOffset.MaxValue) >= (e.StartTime ?? DateTimeOffset.MinValue)
+                                && !e.Relationships.Any(r => r.TargetAct?.Protocols.Intersect(act.Protocols, new ProtocolComparer()).Count() == r.TargetAct?.Protocols.Count())
+                            );
 
-                        // Create candidate
-                        if (candidate == null)
-                        {
-                            candidate = this.CreateEncounter(act, currentProcessing);
-                            encounters.Add(candidate);
-                            protocolActs.Add(candidate);
-                        }
-                        else
-                        {
-                            TimeSpan[] overlap = {
+                            // Create candidate
+                            if (candidate == null)
+                            {
+                                candidate = this.CreateEncounter(act, patientCopy);
+                                encounters.Add(candidate);
+                                protocolActs.Add(candidate);
+                            }
+                            else
+                            {
+                                TimeSpan[] overlap = {
                             (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
                             (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
                             (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
                             (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
                         };
-                            // find the minimum overlap
-                            var minOverlap = overlap.Min();
-                            var overlapMin = Array.IndexOf(overlap, minOverlap);
-                            // Adjust the dates based on the start / stop time
-                            if (overlapMin % 2 == 1)
-                            {
-                                candidate.StartTime = act.StartTime;
+                                // find the minimum overlap
+                                var minOverlap = overlap.Min();
+                                var overlapMin = Array.IndexOf(overlap, minOverlap);
+                                // Adjust the dates based on the start / stop time
+                                if (overlapMin % 2 == 1)
+                                {
+                                    candidate.StartTime = act.StartTime;
+                                }
+
+                                if (overlapMin > 1)
+                                {
+                                    candidate.StopTime = act.StopTime;
+                                }
+
+                                candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
                             }
 
-                            if (overlapMin > 1)
-                            {
-                                candidate.StopTime = act.StopTime;
-                            }
+                            // Add the protocol act
+                            candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
 
-                            candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
+                            // Remove so we don't have duplicates
+                            protocolActs.Remove(act);
                         }
 
-                        // Add the protocol act
-                        candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
-
-                        // Remove so we don't have duplicates
-                        protocolActs.Remove(act);
-                        currentProcessing.Participations.RemoveAll(o => o.Act == act);
-                    }
-
-                    // for those acts which do not have a stop time, schedule them in the first appointment available
-                    foreach (var act in new List<Act>(protocolActs).Where(o => !o.StopTime.HasValue))
-                    {
-                        var candidate = encounters.OrderBy(o => o.StartTime).FirstOrDefault(e => e.StartTime >= act.StartTime);
-                        if (candidate == null)
+                        // for those acts which do not have a stop time, schedule them in the first appointment available
+                        foreach (var act in new List<Act>(protocolActs).Where(o => !o.StopTime.HasValue))
                         {
-                            candidate = this.CreateEncounter(act, currentProcessing);
-                            encounters.Add(candidate);
-                            protocolActs.Add(candidate);
+                            var candidate = encounters.OrderBy(o => o.StartTime).FirstOrDefault(e => e.StartTime >= act.StartTime);
+                            if (candidate == null)
+                            {
+                                candidate = this.CreateEncounter(act, patientCopy);
+                                encounters.Add(candidate);
+                                protocolActs.Add(candidate);
+                            }
+                            // Add the protocol act
+                            candidate.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
+
+                            // Remove so we don't have duplicates
+                            protocolActs.Remove(act);
                         }
-                        // Add the protocol act
-                        candidate.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
-
-                        // Remove so we don't have duplicates
-                        protocolActs.Remove(act);
-                        currentProcessing.Participations.RemoveAll(o => o.Act == act);
                     }
-                }
 
-                // TODO: Configure for days of week
-                foreach (var itm in protocolActs)
-                {
-                    while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
+                    // TODO: Configure for days of week
+                    foreach (var itm in protocolActs)
                     {
-                        itm.ActTime = itm.ActTime?.AddDays(1);
+                        while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
+                        {
+                            itm.ActTime = itm.ActTime?.AddDays(1);
+                        }
                     }
-                }
 
-                return new CarePlan(patient, protocolActs.ToList())
-                {
-                    CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid)
-                };
+                    return new CarePlan(patientCopy, protocolActs.ToList())
+                    {
+                        CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid)
+                    };
+                }
             }
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw new CdssException(protocols, patient, e);
-            }
-            finally
-            {
-                lock (m_patientPromise)
-                {
-                    if (patient.Key.HasValue && this.m_patientPromise.ContainsKey(patient.Key.Value))
-                    {
-                        m_patientPromise.Remove(patient.Key.Value);
-                    }
-                }
+                throw new CdssException(protocols, target, e);
             }
         }
 

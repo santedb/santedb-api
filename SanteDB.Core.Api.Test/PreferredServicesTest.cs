@@ -25,6 +25,7 @@ using SanteDB.Core.Services;
 using SanteDB.Core.TestFramework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,6 +46,7 @@ namespace SanteDB.Core.Api.Test
     }
 
     // Foo Implementation is the second in the configuration file - but it is not preferred
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class FooImplementation : IFooService
     {
         public string ServiceName => "Foo";
@@ -67,6 +69,7 @@ namespace SanteDB.Core.Api.Test
     }
 
     // Baz uses the Foo service - it appears first in the configuration file - it is injected with BarService
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class BazImplementation : IBazService
     {
         private readonly IFooService m_fooService;
@@ -83,6 +86,7 @@ namespace SanteDB.Core.Api.Test
     /// Tests for preferred services
     /// </summary>
     [TestFixture]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class PreferredServicesTest
     {
 

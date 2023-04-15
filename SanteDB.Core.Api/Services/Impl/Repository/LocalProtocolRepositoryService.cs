@@ -80,7 +80,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// Find protocol
         /// </summary>
-        public IQueryResultSet<IClinicalProtocol> FindProtocol(String protocolName = null, String protocolOid = null)
+        public IQueryResultSet<IClinicalProtocol> FindProtocol(String protocolName = null, String protocolOid = null, String groupId = null)
         {
             Expression<Func<Model.Acts.Protocol, bool>> expression = o => o.ObsoletionTime == null;
             var expressionBody = expression.Body;
@@ -100,6 +100,14 @@ namespace SanteDB.Core.Services.Impl.Repository
                     ExpressionType.Equal,
                     Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.Oid))),
                     Expression.Constant(protocolOid)
+                ), expressionBody);
+            }
+            if (!String.IsNullOrEmpty(groupId))
+            {
+                expressionBody = Expression.And(Expression.MakeBinary(
+                    ExpressionType.Equal,
+                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.GroupId))),
+                    Expression.Constant(protocolName)
                 ), expressionBody);
             }
 

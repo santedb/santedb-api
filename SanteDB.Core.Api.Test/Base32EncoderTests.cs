@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Api.Test
 {
     [TestFixture(Category ="Core API")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class Base32EncoderTests
     {
         [Test]

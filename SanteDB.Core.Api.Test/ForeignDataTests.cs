@@ -35,6 +35,7 @@ namespace SanteDB.Core.Api.Test
     /// Foreign data tests
     /// </summary>
     [TestFixture]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class ForeignDataTests
     {
 

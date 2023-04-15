@@ -31,6 +31,7 @@ using System.Text;
 namespace SanteDB.Core.TestFramework
 {
     [ServiceProvider("Test Audit Service")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class TestAuditService : IAuditService
     {
         public string ServiceName => "Test Audit Service";

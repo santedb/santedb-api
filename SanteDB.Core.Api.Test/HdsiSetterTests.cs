@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 namespace SanteDB.Core.Api.Test
 {
     [TestFixture]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class HdsiSetterTests
     {
 

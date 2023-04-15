@@ -62,8 +62,9 @@ namespace SanteDB.Core.Services
         /// <param name="patient">The patient for which the care plan is being generated</param>
         /// <param name="groupAsEncounters">When true, instructs the care plan service to group suggested actions into <see cref="PatientEncounter"/></param>
         /// <param name="parameters">Custom parameters which the caller wishes to pass to the planner</param>
+        /// <param name="groupId">The group to which the clinical protocol should belong</param>
         /// <returns>The generated care plan</returns>
-        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters);
+        CarePlan CreateCarePlan(Patient patient, bool groupAsEncounters, IDictionary<String, Object> parameters, string groupId);
 
         /// <summary>
         /// Creates a care plan for the specified patient, using only the protocols provided

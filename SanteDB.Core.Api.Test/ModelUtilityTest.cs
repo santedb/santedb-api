@@ -27,6 +27,7 @@ using System.Collections.Generic;
 namespace SanteDB.Core.Api.Test
 {
     [TestFixture]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class ModelUtilityTest
     {
 

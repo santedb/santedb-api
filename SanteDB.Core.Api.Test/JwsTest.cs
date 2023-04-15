@@ -34,6 +34,7 @@ namespace SanteDB.Core.Api.Test
     /// Tests for the JWS 
     /// </summary>
     [TestFixture]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class JwsTest
     {
 

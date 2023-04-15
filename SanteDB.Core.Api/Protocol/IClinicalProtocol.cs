@@ -57,6 +57,11 @@ namespace SanteDB.Core.Protocol
         String Version { get; }
 
         /// <summary>
+        /// Gets the group id
+        /// </summary>
+        String GroupId { get; }
+
+        /// <summary>
         /// Calculate the clinical protocol for the given patient
         /// </summary>
         IEnumerable<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
@@ -67,7 +72,7 @@ namespace SanteDB.Core.Protocol
         IEnumerable<Act> Update(Patient p, IEnumerable<Act> existingPlan);
 
         /// <summary>
-        /// Called prior to performing calculation of the care protocol allowing the object to prepare the object for whatever 
+        /// Called prior to performing calculation of the care protocol allowing the protocol to prepare <paramref name="p"/> with
         /// pre-requisite data is needed for the protocol
         /// </summary>
         void Prepare(Patient p, IDictionary<String, Object> parameters);
