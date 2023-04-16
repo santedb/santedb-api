@@ -96,18 +96,7 @@ namespace SanteDB.Core.Data.Import
                 }
                 catch(Exception e)
                 {
-                    var ce = e;
-                    var errorMessage = String.Empty;
-                    while (ce != null)
-                    {
-                        errorMessage += ce.Message;
-                        ce = ce.InnerException;
-                        if (ce != null)
-                        {
-                            errorMessage += " CAUSE: ";
-                        }
-                    }
-                    errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", errorMessage, Guid.Empty);
+                    errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", e.ToHumanReadableString(), Guid.Empty);
                     this.m_tracer.TraceWarning("Could not persist import record - {0}", e.Message);
                 }
                 if(errorIssue != null)
@@ -238,19 +227,8 @@ namespace SanteDB.Core.Data.Import
                     }
                     catch (Exception ex)
                     {
-                        var ce = ex;
-                        var errorMessage = String.Empty;
-                        while (ce != null)
-                        {
-                            errorMessage += ce.Message;
-                            ce = ce.InnerException;
-                            if (ce != null)
-                            {
-                                errorMessage += " CAUSE: ";
-                            }
-                        }
-                        errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", errorMessage, Guid.Empty);
-                        this.m_tracer.TraceWarning("Could not persist import record - {0}", ex.Message);
+                        errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", ex.ToHumanReadableString(), Guid.Empty);
+                        this.m_tracer.TraceWarning("Could not persist import record - {0}", ex);
                     }
                     if (errorIssue != null)
                     {
@@ -341,7 +319,7 @@ namespace SanteDB.Core.Data.Import
                         }
                         catch (Exception e)
                         {
-                            issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {this.CreateMessage(e)}", Guid.Empty);
+                            issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {e.ToHumanReadableString()}", Guid.Empty);
                         }
                         if (issue != null)
                         {
@@ -350,24 +328,6 @@ namespace SanteDB.Core.Data.Import
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Create message from exception
-        /// </summary>
-        private string CreateMessage(Exception exception)
-        {
-            StringBuilder retVal = new StringBuilder();
-            while (exception != null)
-            {
-                retVal.Append(exception.Message);
-                exception = exception.InnerException;
-                if (exception != null)
-                {
-                    retVal.Append(" CAUSE: ");
-                }
-            }
-            return retVal.ToString();
         }
 
         /// <summary>
@@ -474,7 +434,7 @@ namespace SanteDB.Core.Data.Import
             }
             catch (Exception e)
             {
-                issue = new DetectedIssue(DetectedIssuePriorityType.Error, "err", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_GEN_ERR, new { row = sourceReader.RowNumber, ex = this.CreateMessage(e) }), DetectedIssueKeys.OtherIssue);
+                issue = new DetectedIssue(DetectedIssuePriorityType.Error, "err", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_GEN_ERR, new { row = sourceReader.RowNumber, ex = e.ToHumanReadableString() }), DetectedIssueKeys.OtherIssue);
                 mappedObject = null;
                 return false;
             }
