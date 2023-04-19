@@ -42,6 +42,9 @@ using System.Reflection;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Configuration;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using SanteDB.Core.i18n;
+using System.Collections;
 
 namespace SanteDB.Core
 {
@@ -53,6 +56,9 @@ namespace SanteDB.Core
 
         // Verified assemblies
         private static readonly ConcurrentBag<String> m_verifiedAssemblies = new ConcurrentBag<string>();
+
+        // Lambda from the message property
+        private static readonly Regex m_formatRegex = new Regex(@"\{\{(.+?)\}\}", RegexOptions.Compiled);
 
         /// <summary>
         /// Create injected class
@@ -377,6 +383,39 @@ namespace SanteDB.Core
                     tracer.TraceVerbose("{0} was validated as trusted code", asmFile);
                     m_verifiedAssemblies.Add(asmFile);
                 }
+            }
+        }
+
+
+        /// <summary>
+        /// Get a string formatted to the message with the specified input object
+        /// </summary>
+        /// <param name="objectData">The parameter data</param>
+        /// <param name="template">The formatting string</param>
+        public static String FormatString(this String template, object objectData)
+        {
+            if(objectData is IDictionary<String, Object> dict)
+            {
+                if(String.IsNullOrEmpty(template))
+                {
+                    return String.Join(",", dict.Values);
+                }
+                else
+                {
+                    return m_formatRegex.Replace(template.Trim(), o => dict.TryGetValue(o.Groups[1].Value.Trim(), out var v) ? v.ToString() : String.Empty);
+                }
+            }
+            else if (objectData.GetType().GetMember("get_Item") != null)
+            {
+                var getMember = objectData.GetType().GetMethod("get_Item");
+                return m_formatRegex.Replace(template.Trim(), o =>
+                {
+                    return getMember.Invoke(objectData, new object[] { o.Groups[1].Value.Trim() })?.ToString();
+                });
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(IDictionary), objectData.GetType()));
             }
         }
     }
