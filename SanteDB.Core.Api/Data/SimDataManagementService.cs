@@ -121,7 +121,7 @@ namespace SanteDB.Core.Data
             private void DataUpdatingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
                 // Clear out current duplicate markers
                 this.MarkDuplicates(e.Data, matches.Where(o => o.Classification != RecordMatchClassification.NonMatch && o.Record.Key != e.Data.Key));
             }
@@ -133,7 +133,7 @@ namespace SanteDB.Core.Data
             private void DataInsertingHandler(object sender, Event.DataPersistingEventArgs<TModel> e)
             {
                 // Detect any duplicates
-                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
+                var matches = this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(e.Data, o.Id, this.GetIgnoredKeys(e.Data.Key.GetValueOrDefault())));
 
                 // 1. Exactly one match is found and AutoMerge so we merge
                 if (matches.Count(o => o.Classification != RecordMatchClassification.Match && o.Record.Key != e.Data.Key) == 1)
@@ -276,7 +276,7 @@ namespace SanteDB.Core.Data
             {
                 var dataService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TModel>>();
                 var candidate = dataService.Get(masterKey, null, AuthenticationContext.SystemPrincipal);
-                return this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.State == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.Id, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
+                return this.m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => this.m_matchingService.Match<TModel>(candidate, o.Id, this.GetIgnoredKeys(masterKey))).Select(o => o.Record.Key.Value).Distinct();
             }
 
             /// <summary>

@@ -41,7 +41,7 @@ namespace SanteDB.Core.Matching
         /// <summary>
         /// Get or sets the state of the configuration
         /// </summary>
-        MatchConfigurationStatus State { get; }
+        MatchConfigurationStatus Status { get; }
 
         /// <summary>
         /// True if the configuration is read-only

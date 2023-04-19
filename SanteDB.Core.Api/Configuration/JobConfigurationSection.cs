@@ -132,6 +132,35 @@ namespace SanteDB.Core.Configuration
     public class JobItemSchedule : IJobSchedule
     {
 
+        public JobItemSchedule()
+        {
+            
+        }
+
+        /// <summary>
+        /// Create a new job item schedule
+        /// </summary>
+        public JobItemSchedule(TimeSpan interval, DateTime? stopDate)
+        {
+            this.Type = JobScheduleType.Interval;
+            this.StopDate = stopDate.GetValueOrDefault();
+            this.StopDateSpecified = stopDate.HasValue;
+            this.Interval = (int)interval.TotalSeconds;
+            this.IntervalSpecified = true;
+        }
+
+        /// <summary>
+        /// Create a new job state
+        /// </summary>
+        public JobItemSchedule(DayOfWeek[] repeatOn, DateTime startDate, DateTime? stopDate)
+        {
+            this.Type = JobScheduleType.Scheduled;
+            this.RepeatOn = repeatOn;
+            this.StartDate = startDate;
+            this.StopDate = stopDate.GetValueOrDefault();
+            this.StopDateSpecified = stopDate.HasValue;
+        }
+
         /// <summary>
         /// Gets the type of job schedule
         /// </summary>

@@ -37,6 +37,14 @@ namespace SanteDB.Core.Jobs
     [XmlType(nameof(XmlJobState), Namespace = "http://santedb.org/job/state")]
     public class XmlJobState : IJobState
     {
+
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public XmlJobState()
+        {
+        }
+
         /// <summary>
         /// Gets or sets the job
         /// </summary>
