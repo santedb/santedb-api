@@ -96,7 +96,8 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Install certificate utility
         /// </summary>
-        private static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate) {
+        private static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate)
+        {
 
             // Audit that we have installed our certificate
             var audit = ApplicationServiceContext.Current?.GetService<IAuditService>()?.Audit()
@@ -116,9 +117,19 @@ namespace SanteDB.Core.Security
                     // Swap the certificate key store flags as appropriate for this location
                     var password = Guid.NewGuid().ToString();
                     var pfxData = certificate.Export(X509ContentType.Pfx, password);
-                    var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
-                    trustStore.Add(properCert);
+                    try
+                    {
+                        var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                        trustStore.Add(properCert);
+                    }
+                    catch (PlatformNotSupportedException)
+                    {
+                        var propercert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.Exportable);
+                        trustStore.Add(propercert);
+                    }
+
                     audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
+                    trustStore.Close();
                 }
             }
             catch
