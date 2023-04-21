@@ -835,22 +835,24 @@ namespace SanteDB.Core.Services.Impl
             var ttype = typeof(T);
 
             return this.GetAllTypes()
-                .Where(t => try
-            {
-                return ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic && t.GetConstructor(parms.Select(o => o.GetType()).ToArray()) != null;
-            }
-            catch { return false; }
-            ).Select(t =>
+                .Where(t =>
                 {
                     try
                     {
-                        return Activator.CreateInstance(t, parms);
+                        return ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic && t.GetConstructor(parms.Select(o => o.GetType()).ToArray()) != null;
                     }
-                    catch
+                    catch { return false; }
+                    }).Select(t =>
                     {
-                        return Activator.CreateInstance(t);
-                    }
-                })
+                        try
+                        {
+                            return Activator.CreateInstance(t, parms);
+                        }
+                        catch
+                        {
+                            return Activator.CreateInstance(t);
+                        }
+                    })
                 .OfType<T>();
         }
 
