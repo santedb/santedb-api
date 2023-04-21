@@ -827,7 +827,8 @@ namespace SanteDB.Core.Services.Impl
         {
             var ttype = typeof(T);
 
-            return this.GetAllTypes().Where(t => ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
+            return this.GetAllTypes()
+                .Where(t => ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic && t.GetConstructor(parms.Select(o=>o.GetType()).ToArray()) != null)
                 .Select(t =>
                 {
                     try
