@@ -28,6 +28,11 @@ namespace SanteDB.Core.Services.Impl
     public class DefaultOperatingSystemInfoService : IOperatingSystemInfoService
     {
         /// <summary>
+        /// The default name for the manufacturer provided by <see cref="DefaultOperatingSystemInfoService"/>. 
+        /// </summary>
+        public const string MANUFACTURER_GENERIC = "Generic Manufacturer";
+
+        /// <summary>
         /// Gets the version
         /// </summary>
         public string VersionString => Environment.OSVersion.VersionString;
@@ -68,7 +73,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Manufacturer name
         /// </summary>
-        public string ManufacturerName => "Generic Manufacturer";
+        public string ManufacturerName => MANUFACTURER_GENERIC;
 
     }
 }
