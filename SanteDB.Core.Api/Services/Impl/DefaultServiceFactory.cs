@@ -55,6 +55,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultNotificationService),
             typeof(DefaultThreadPoolService),
             typeof(SimplePatchService),
+            typeof(DefaultOperatingSystemInfoService),
             typeof(DataInitializationService),
             typeof(RestClientFactory),
             typeof(LocalMailMessageService),
