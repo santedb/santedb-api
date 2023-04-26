@@ -722,7 +722,7 @@ namespace SanteDB.Core.Services.Impl
                             {
                                 candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
                             }
-                            catch(InvalidOperationException)
+                            catch (InvalidOperationException)
                             {
                             }
                             if (candidateService == null && dependencyInfo.Required)
@@ -782,7 +782,14 @@ namespace SanteDB.Core.Services.Impl
             if (fromAssembly == null)
             {
                 return this.GetAllTypes()
-                    .Where(t => interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
+                    .Where(t =>
+                    {
+                        try
+                        {
+                            return interfacetype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic;
+                        }
+                        catch { return false; }
+                    })
                     .Select(t =>
                     {
                         try
@@ -827,18 +834,25 @@ namespace SanteDB.Core.Services.Impl
         {
             var ttype = typeof(T);
 
-            return this.GetAllTypes().Where(t => ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic)
-                .Select(t =>
+            return this.GetAllTypes()
+                .Where(t =>
                 {
                     try
                     {
-                        return Activator.CreateInstance(t, parms);
+                        return ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic && t.GetConstructor(parms.Select(o => o.GetType()).ToArray()) != null;
                     }
-                    catch
+                    catch { return false; }
+                    }).Select(t =>
                     {
-                        return Activator.CreateInstance(t);
-                    }
-                })
+                        try
+                        {
+                            return Activator.CreateInstance(t, parms);
+                        }
+                        catch
+                        {
+                            return Activator.CreateInstance(t);
+                        }
+                    })
                 .OfType<T>();
         }
 

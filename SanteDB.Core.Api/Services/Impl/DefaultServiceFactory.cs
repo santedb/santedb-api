@@ -66,6 +66,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(DefaultPolicyDecisionService),
             typeof(DefaultPolicyEnforcementService),
             typeof(SHA256PasswordHashingService),
+            typeof(DefaultTfaService),
             typeof(Rfc4226TfaCodeProvider),
             typeof(CachedResourceCheckoutService),
             typeof(SimpleNotificationTemplateFiller),

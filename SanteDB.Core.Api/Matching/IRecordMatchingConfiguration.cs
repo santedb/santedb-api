@@ -19,12 +19,14 @@
  * Date: 2023-3-10
  */
 using System;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.Matching
 {
     /// <summary>
     /// Gets the record matching configuration
     /// </summary>
+    [XmlRoot("MatchConfiguration")]
     public interface IRecordMatchingConfiguration
     {
         /// <summary>

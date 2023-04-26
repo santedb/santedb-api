@@ -155,7 +155,7 @@ namespace SanteDB.Core.Services.Impl
         private FileSystemDispatcherQueueConfigurationSection m_configuration;
 
         // Watchers
-        private ConcurrentDictionary<String, List<DispatcherQueueCallback>> m_watchers = new ConcurrentDictionary<string, List<DispatcherQueueCallback>>();
+        private readonly ConcurrentDictionary<String, List<DispatcherQueueCallback>> m_watchers = new ConcurrentDictionary<string, List<DispatcherQueueCallback>>();
 
         //// Notification queue
         //private ConcurrentQueue<DispatcherMessageEnqueuedInfo> m_notificationQueue = new ConcurrentQueue<DispatcherMessageEnqueuedInfo>();
@@ -464,7 +464,6 @@ namespace SanteDB.Core.Services.Impl
                 this.m_disposed = true;
 
                 this.m_watchers.Clear();
-                this.m_watchers = null;
                 m_ListenThreadCancellationTokenSource.Cancel();
 
                 //try
