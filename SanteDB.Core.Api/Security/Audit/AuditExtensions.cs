@@ -192,7 +192,7 @@ namespace SanteDB.Core.Security.Audit
         }
 
         /// <summary>
-        /// Event identiifer set
+        /// Event identifier set
         /// </summary>
         public static IAuditBuilder WithEventIdentifier(this IAuditBuilder me, EventIdentifierType identifier)
         {

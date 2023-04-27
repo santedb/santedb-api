@@ -100,14 +100,7 @@ namespace SanteDB.Core.Security
         {
 
             // Audit that we have installed our certificate
-            var audit = ApplicationServiceContext.Current?.GetService<IAuditService>()?.Audit()
-                .WithTimestamp()
-                .WithEventType(EventTypeCodes.SecurityAlert)
-                .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
-                .WithAction(Model.Audit.ActionType.Execute)
-                .WithLocalDestination()
-                .WithPrincipal()
-                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.Import, certificate);
+            var audit = AuditCertificateInstallation(certificate);
 
             try
             {
@@ -187,6 +180,36 @@ namespace SanteDB.Core.Security
             }
         }
 
+
+        /// <summary>
+        /// Create an audit builder for certificate installation.
+        /// </summary>
+        /// <param name="certificate">The certificate being installed.</param>
+        /// <returns></returns>
+        public static IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
+            => ApplicationServiceContext.Current?.GetService<IAuditService>()?.Audit()
+                .WithTimestamp()
+                .WithEventType(EventTypeCodes.SecurityAlert)
+                .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
+                .WithAction(Model.Audit.ActionType.Execute)
+                .WithLocalDestination()
+                .WithPrincipal()
+                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.Import, certificate);
+
+        /// <summary>
+        /// Create an audit builder for certificate removal.
+        /// </summary>
+        /// <param name="certificate">The certificate being removed.</param>
+        /// <returns></returns>
+        public static IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
+            => ApplicationServiceContext.Current?.GetAuditService()?.Audit()
+                .WithTimestamp()
+                .WithEventType(EventTypeCodes.SecurityAlert)
+                .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)
+                .WithAction(Model.Audit.ActionType.Delete)
+                .WithLocalDestination()
+                .WithPrincipal()
+                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.PermanentErasure, certificate);
     }
 }
 
