@@ -248,7 +248,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
-                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                    ExtendedAuditCodes.ActorRoleDestination
                 }
             });
             return me;
@@ -270,7 +270,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointId = remoteDestination.Host,
                 NetworkAccessPointType = remoteDestination.HostNameType == UriHostNameType.Dns ? NetworkAccessPointType.MachineName : NetworkAccessPointType.IPAddress,
                 ActorRoleCode = new List<AuditCode>() {
-                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                    ExtendedAuditCodes.ActorRoleDestination
                 }
             });
             return me;
@@ -291,7 +291,8 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointId = remoteDestination.RemoteAddress,
                 NetworkAccessPointType = IPAddress.TryParse(remoteDestination.RemoteAddress, out _) ? NetworkAccessPointType.IPAddress : NetworkAccessPointType.MachineName,
                 ActorRoleCode = new List<AuditCode>() {
-                    new AuditCode("110152", "DCM") { DisplayName = "Destination" }
+                    ExtendedAuditCodes.ActorRoleDestination
+                    
                 }
             });
             return me;
@@ -317,7 +318,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.IPAddress,
                 AlternativeUserId = remoteEndpoint.ForwardInformation,
                 ActorRoleCode = new List<AuditCode>() {
-                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                    ExtendedAuditCodes.ActorRoleSource
                 }
             });
 
@@ -340,7 +341,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = NetworkAccessPointType.MachineName,
                 UserName = ApplicationServiceContext.Current.GetService<INetworkInformationService>()?.GetMachineName(),
                 ActorRoleCode = new List<AuditCode>() {
-                    new  AuditCode("110153", "DCM") { DisplayName = "Source" }
+                    ExtendedAuditCodes.ActorRoleSource
                 }
             });
 
@@ -371,8 +372,8 @@ namespace SanteDB.Core.Security.Audit
                             UserName = did.Name,
                             ActorRoleCode = new List<AuditCode>()
                             {
-                                new AuditCode("DEV", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Device" },
-                                new AuditCode("CST", "http://terminology.hl7.org/CodeSystem/v3-ParticipationType") { DisplayName = "Custodian" },
+                                ExtendedAuditCodes.ActorRoleDevice,
+                                ExtendedAuditCodes.ActorRoleCustodian
                             },
                             AlternativeUserId = did.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
@@ -384,7 +385,7 @@ namespace SanteDB.Core.Security.Audit
                             UserName = aid.Name,
                             ActorRoleCode = new List<AuditCode>()
                             {
-                                new AuditCode("110150", "DCM") { DisplayName = "Application" }
+                                ExtendedAuditCodes.ActorRoleApplication
                             },
                             AlternativeUserId = aid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
@@ -397,7 +398,7 @@ namespace SanteDB.Core.Security.Audit
                             UserIsRequestor = true,
                             ActorRoleCode = new List<AuditCode>()
                             {
-                                new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" }
+                                ExtendedAuditCodes.ActorRoleHuman
                             },
                             AlternativeUserId = uid.FindFirst(SanteDBClaimTypes.SecurityId)?.Value
                         });
@@ -413,17 +414,17 @@ namespace SanteDB.Core.Security.Audit
 
                 if (principal.Identity is IApplicationIdentity)
                 {
-                    actor.ActorRoleCode.Add(new AuditCode("110150", "DCM") { DisplayName = "Application" });
+                    actor.ActorRoleCode.Add(ExtendedAuditCodes.ActorRoleApplication);
                 }
                 else if (principal.Identity is IDeviceIdentity)
                 {
-                    actor.ActorRoleCode.Add(new AuditCode("DEV", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Device" });
+                    actor.ActorRoleCode.Add(ExtendedAuditCodes.ActorRoleDevice);
 
                 }
                 else
                 {
                     actor.UserIsRequestor = true;
-                    actor.ActorRoleCode.Add(new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type"));
+                    actor.ActorRoleCode.Add(ExtendedAuditCodes.ActorRoleHuman);
                 }
                 me.Audit.Actors.Add(actor);
             }
@@ -569,7 +570,7 @@ namespace SanteDB.Core.Security.Audit
                 me.Audit.AuditableObjects.Add(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("HTTP-Headers", "SecurityAuditCodes"),
+                    CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeHttpHeaders,
                     Role = AuditableObjectRole.Query,
                     Type = AuditableObjectType.SystemObject,
                     QueryData = request.Url.ToString(),
@@ -667,7 +668,7 @@ namespace SanteDB.Core.Security.Audit
                     ObjectId = o.ToString(),
                     Role = AuditableObjectRole.SecurityResource,
                     Type = AuditableObjectType.SystemObject,
-                    CustomIdTypeCode = new AuditCode("SecurityAudit", "http://santedb.org/model")
+                    CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeAuditObject
                 }))
                 .WithAuditableObjects(!string.IsNullOrEmpty(query) ? new AuditableObject
                 {
@@ -696,11 +697,11 @@ namespace SanteDB.Core.Security.Audit
             if (lifecycle == AuditableObjectLifecycle.Export)
             {
                 // I am the source
-                me.Audit.Actors.First().ActorRoleCode = new List<AuditCode>() { new AuditCode("110153", "DCM") { DisplayName = "Source" } };
+                me.Audit.Actors.First().ActorRoleCode = new List<AuditCode>() { ExtendedAuditCodes.ActorRoleSource };
                 // Remote is the destination
                 me.Audit.Actors.Add(new AuditActorData()
                 {
-                    ActorRoleCode = new List<AuditCode>() { new AuditCode("110152", "DCM") { DisplayName = "Destination" } },
+                    ActorRoleCode = new List<AuditCode>() { ExtendedAuditCodes.ActorRoleDestination },
                     NetworkAccessPointType = NetworkAccessPointType.MachineName,
                     NetworkAccessPointId = remoteTarget
                 });
@@ -710,7 +711,7 @@ namespace SanteDB.Core.Security.Audit
                 // Remote is the destination
                 me.Audit.Actors.Add(new AuditActorData()
                 {
-                    ActorRoleCode = new List<AuditCode>() { new AuditCode("110153", "DCM") { DisplayName = "Source" } },
+                    ActorRoleCode = new List<AuditCode>() { ExtendedAuditCodes.ActorRoleSource },
                     NetworkAccessPointType = NetworkAccessPointType.MachineName,
                     NetworkAccessPointId = remoteTarget
                 });
@@ -742,7 +743,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("SecurityPolicy", "http://santedb.org/model"),
+                    CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicy,
                     ObjectId = policy,
                     Role = AuditableObjectRole.SecurityGranularityDefinition,
                     Type = AuditableObjectType.SystemObject,
@@ -837,7 +838,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = pvd.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("PVD", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Provider" };
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeProvider;
                     retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Organization org:
@@ -845,7 +846,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Organization;
                     retVal.ObjectId = org.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("ORG", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Organization" };
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeOrganization;
                     retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Place plc:
@@ -853,7 +854,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Organization;
                     retVal.ObjectId = plc.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("PLC", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Place" };
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePlace;
                     retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Entity e:
@@ -861,7 +862,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = e.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("ENT", "http://terminology.hl7.org/CodeSystem/v3-EntityClass") { DisplayName = "Entity" };
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeEntity;
                     retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     break;
                 case Act act:
@@ -895,7 +896,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.SystemObject;
                     retVal.ObjectId = sp.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("SecurityPolicy", "http://santedb.org/model");
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicy;
                     retVal.NameData = sp.Oid;
                     break;
                 case AuditEventData aed:
@@ -903,7 +904,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.SystemObject;
                     retVal.ObjectId = aed.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode("SecurityAudit", "http://santedb.org/model");
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeAuditObject;
                     retVal.NameData = aed.ToString();
                     break;
                 case Guid g:
@@ -917,7 +918,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.Role = AuditableObjectRole.Report;
                     retVal.Type = AuditableObjectType.SystemObject;
-                    retVal.CustomIdTypeCode = new AuditCode("PolicyDecision", "http://santedb.org/model");
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicyDecision;
                     retVal.ObjectId = $"urn:oid:{pde.Details?.First().PolicyId}";
                     retVal.ObjectData = new List<ObjectDataExtension>()
                     {
@@ -930,7 +931,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.Role = AuditableObjectRole.JobStream;
                     retVal.Type = AuditableObjectType.SystemObject;
-                    retVal.CustomIdTypeCode = new AuditCode("Alien", "http://santedb.org/model") { DisplayName = "Foreign Data Import File" };
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeForeignFile;
                     retVal.ObjectId = fds.Key.ToString();
                     retVal.NameData = fds.Name;
                     break;
@@ -1002,7 +1003,7 @@ namespace SanteDB.Core.Security.Audit
                     new AuditableObject
                     {
                         IDTypeCode = AuditableObjectIdType.Custom,
-                        CustomIdTypeCode = new AuditCode("SecurityAudit-MaskedFields", "SecurityAuditCodes"),
+                        CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeMaskedFields,
                         LifecycleType = AuditableObjectLifecycle.Access,
                         NameData = String.Join(";", properties),
                         Type = AuditableObjectType.SystemObject
@@ -1207,7 +1208,7 @@ namespace SanteDB.Core.Security.Audit
                     Role = AuditableObjectRole.SecurityResource,
                     ObjectId = BitConverter.ToString(session.Id).Replace("-", ""),
                     IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("SecuritySession", "http://santedb.org/model"),
+                    CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeSession,
                     LifecycleType = AuditableObjectLifecycle.Creation,
                     ObjectData = new List<ObjectDataExtension>()
                     {
@@ -1270,7 +1271,7 @@ namespace SanteDB.Core.Security.Audit
                     Role = AuditableObjectRole.SecurityResource,
                     ObjectId = BitConverter.ToString(session.Id).Replace("-", ""),
                     IDTypeCode = AuditableObjectIdType.Custom,
-                    CustomIdTypeCode = new AuditCode("SecuritySession", "http://santedb.org/model"),
+                    CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeSession,
                     LifecycleType = AuditableObjectLifecycle.PermanentErasure,
                     ObjectData = new List<ObjectDataExtension>()
                     {
@@ -1328,7 +1329,7 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder ForMasking<TModel>(this IAuditBuilder builder, TModel targetOfMasking, PolicyDecision decision, bool wasRemoved, IdentifiedData maskedObject)
             => ForEventDataAction(
                 builder,
-                new AuditCode("SecurityAuditCode-Masking", "SecurityAuditCode") { DisplayName = "Mask Sensitive Data" },
+                ExtendedAuditCodes.EventTypeMasking,
                 ActionType.Execute,
                 AuditableObjectLifecycle.Deidentification,
                 EventIdentifierType.ApplicationActivity,
@@ -1344,7 +1345,7 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder ForCreate<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
-                new AuditCode("SecurityAuditCode-CreateInstances", "SecurityAuditEventDataEvent") { DisplayName = "Create New Record" },
+                ExtendedAuditCodes.EventTypeCreate,
                 ActionType.Create,
                 AuditableObjectLifecycle.Creation,
                 EventIdentifierType.Import,
@@ -1361,7 +1362,7 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder ForUpdate<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
-                new AuditCode("SecurityAuditCode-UpdateInstances", "SecurityAuditEventDataEvent") { DisplayName = "Update Existing Record" },
+                ExtendedAuditCodes.EventTypeUpdate,
                 ActionType.Update,
                 AuditableObjectLifecycle.Amendment,
                 EventIdentifierType.Import,
@@ -1378,7 +1379,7 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder ForDelete<TData>(this IAuditBuilder builder, OutcomeIndicator outcome, string queryPerformed, params TData[] resourceData)
             => ForEventDataAction(
                 builder,
-                new AuditCode("SecurityAuditCode-DeleteInstances", "SecurityAuditEventDataEvent") { DisplayName = "Delete Existing Record" },
+                ExtendedAuditCodes.EventTypeDelete,
                 ActionType.Delete,
                 AuditableObjectLifecycle.LogicalDeletion,
                 EventIdentifierType.Import,
@@ -1500,7 +1501,7 @@ namespace SanteDB.Core.Security.Audit
                         Role = AuditableObjectRole.SecurityResource,
                         ObjectId = BitConverter.ToString(session.Id).Replace("-", ""),
                         IDTypeCode = AuditableObjectIdType.Custom,
-                        CustomIdTypeCode = new AuditCode("SecuritySession", "http://santedb.org/model"),
+                        CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeSession,
                         LifecycleType = AuditableObjectLifecycle.Creation
                     } : null
                 )
