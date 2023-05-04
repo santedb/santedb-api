@@ -137,6 +137,7 @@ namespace SanteDB.Core.Security.Claims
         /// Facility id claim
         /// </summary>
         public const string XspaFacilityClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
+
         /// <summary>
         /// Organization name claim
         /// </summary>
