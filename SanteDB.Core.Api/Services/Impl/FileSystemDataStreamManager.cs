@@ -43,7 +43,7 @@ namespace SanteDB.Core.Services.Impl
         public FileSystemDataStreamManager(ISymmetricCryptographicProvider symmetricCryptographicProvider)
         {
             this.m_symmetricCryptographicProvider = symmetricCryptographicProvider;
-            this.m_fileLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString() ?? ".", "datastream");
+            this.m_fileLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString() ?? ".", "datastream");
             if(!Directory.Exists(this.m_fileLocation))
             {
                 Directory.CreateDirectory(this.m_fileLocation);
