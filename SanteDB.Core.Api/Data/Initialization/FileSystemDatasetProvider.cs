@@ -41,7 +41,7 @@ namespace SanteDB.Core.Data.Initialization
         public IEnumerable<Dataset> GetDatasets()
         {
             var dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "Data");
-            if (!Directory.Exists(dataPath)) // Might be on linux or have a lower case data file
+            if (!Directory.Exists(dataPath)) // HACK: Might be on linux or have a lower case data file
             {
                 dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "data");
             }
