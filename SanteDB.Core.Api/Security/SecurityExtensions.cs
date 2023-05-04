@@ -225,10 +225,10 @@ namespace SanteDB.Core.Security
             // Check for my own certificates
             if (!retVal)
             {
-                using (var trustedPublisherStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                using (var myUserStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                 {
-                    trustedPublisherStore.Open(OpenFlags.ReadOnly);
-                    retVal = trustedPublisherStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
+                    myUserStore.Open(OpenFlags.ReadOnly);
+                    retVal = myUserStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
                 }
             }
             return retVal || HasTrustedRootCert(chain);

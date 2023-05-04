@@ -2,6 +2,7 @@
 using SanteDB.Core.Security.Audit;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -16,6 +17,11 @@ namespace SanteDB.Core.Security
     /// </remarks>
     public class DefaultPlatformSecurityProvider : IPlatformSecurityProvider
     {
+        public bool IsAssemblyTrusted(Assembly assembly)
+        {
+            throw new NotImplementedException();
+        }
+
         ///<inheritdoc />
         public bool TryGetCertificate(X509FindType findType, string findValue, out X509Certificate2 certificate)
         {
@@ -155,16 +161,5 @@ namespace SanteDB.Core.Security
             }
         }
 
-        ///<inheritdoc />
-        public bool VerifyTrustForAppletCertificate(X509Certificate2 certificate)
-        {
-            throw new NotImplementedException();
-        }
-
-        ///<inheritdoc />
-        public bool VerifyTrustForCodeCertificate(X509Certificate2 certificate)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

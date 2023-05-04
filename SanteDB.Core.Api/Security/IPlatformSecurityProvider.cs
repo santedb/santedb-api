@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
@@ -11,17 +12,11 @@ namespace SanteDB.Core.Security
     public interface IPlatformSecurityProvider
     {
         /// <summary>
-        /// Verifies the trust of a certificate that is used for applet signing.
+        /// 
         /// </summary>
-        /// <param name="certificate"></param>
+        /// <param name="assembly"></param>
         /// <returns></returns>
-        bool VerifyTrustForAppletCertificate(X509Certificate2 certificate);
-        /// <summary>
-        /// Verifies the trust of a certificate that is used for code signing.
-        /// </summary>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
-        bool VerifyTrustForCodeCertificate(X509Certificate2 certificate);
+        bool IsAssemblyTrusted(Assembly assembly);
         /// <summary>
         /// Install a certificate into a platform store.
         /// </summary>
