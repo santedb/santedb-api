@@ -717,14 +717,7 @@ namespace SanteDB.Core.Services.Impl
                             var dependencyInfo = parameterTypes[i];
                             var dependentServiceType = injectedServices[i] = dependencyInfo.Type;
                             // Is the dependent service anything for which we are the preferred service? If so find another instance
-                            object candidateService = null;
-                            try
-                            {
-                                candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
-                            }
-                            catch (InvalidOperationException)
-                            {
-                            }
+                            object candidateService = this.GetServiceInternal(dependentServiceType, preferredForServices);
                             if (candidateService == null && dependencyInfo.Required)
                             {
                                 throw new InvalidOperationException($"Service {type} relies on {dependencyInfo.Type} but no service of type {dependencyInfo.Type.Name} has been registered! Not Instantiated");
