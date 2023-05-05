@@ -54,7 +54,7 @@ namespace SanteDB.Core.Notifications.Email
             _Configuration = configurationManager.GetSection<EmailNotificationConfigurationSection>();
             (_Host, _Port, _UseSsl) = ParseServerString(_Configuration?.Smtp?.Server);
 
-            if (!string.IsNullOrEmpty(_Configuration.Smtp.Username))
+            if (!string.IsNullOrEmpty(_Configuration?.Smtp?.Username))
             {
                 _Credentials = new NetworkCredential(_Configuration.Smtp.Username, _Configuration.Smtp.Password);
             }

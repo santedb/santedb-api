@@ -61,7 +61,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Query options to control data coming back from the server
     /// </summary>
-    public class UpstreamIntegrationOptions
+    public class UpstreamIntegrationQueryControlOptions
     {
         /// <summary>
         /// Gets or sets the If-Modified-Since header
@@ -84,27 +84,19 @@ namespace SanteDB.Core.Services
         public Guid QueryId { get; set; }
 
         /// <summary>
-        /// Generates an event hander for the integration options
+        /// The offset of the request
         /// </summary>
-        public static EventHandler<RestRequestEventArgs> CreateRequestingHandler(UpstreamIntegrationOptions options)
-        {
-            return (o, e) =>
-            {
-                if (options == null)
-                {
-                    return;
-                }
-                else if (options?.IfModifiedSince.HasValue == true)
-                {
-                    e.AdditionalHeaders[HttpRequestHeader.IfModifiedSince] = options?.IfModifiedSince.Value.ToString();
-                }
-                else if (!String.IsNullOrEmpty(options?.IfNoneMatch))
-                {
-                    e.AdditionalHeaders[HttpRequestHeader.IfNoneMatch] = options?.IfNoneMatch;
-                }
+        public int Offset { get; set; }
 
-            };
-        }
+        /// <summary>
+        /// The number of objects to retrieve
+        /// </summary>
+        public int Count { get; set; }
+
+        /// <summary>
+        /// When true, insutrcts the integrator to request all related information from the server - this is slower however, may reduce foreign key issues
+        /// </summary>
+        public bool IncludeRelatedInformation { get; set; }
     }
 
     /// <summary>
@@ -160,22 +152,17 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Find the specified filtered object
         /// </summary>
-        IQueryResultSet<IdentifiedData> Find(Type modelType, NameValueCollection filter, UpstreamIntegrationOptions options = null);
-
-        /// <summary>
-        /// Find the specified filtered object
-        /// </summary>
-        IQueryResultSet<IdentifiedData> Find<TModel>(NameValueCollection filter, int offset, int? count, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData;
+        IResourceCollection Query(Type modelType, Expression filter, UpstreamIntegrationQueryControlOptions options = null);
 
         /// <summary>
         /// Instructs the integration service to locate a specified object(s)
         /// </summary>
-        IQueryResultSet<IdentifiedData> Find<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData;
+        IResourceCollection Query<TModel>(Expression<Func<TModel, bool>> predicate, UpstreamIntegrationQueryControlOptions options = null) where TModel : IdentifiedData, new();
 
         /// <summary>
         /// Instructs the integration service to retrieve the specified object
         /// </summary>
-        IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null);
+        IdentifiedData Get(Type modelType, Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null);
 
         /// <summary>
         /// Harmonizes the template identifier information on <paramref name="iht"/> with the upstream's template definition
@@ -192,7 +179,7 @@ namespace SanteDB.Core.Services
         /// <param name="versionKey">The version key of the model.</param>
         /// <param name="options">The integrations query options.</param>
         /// <returns>Returns a model.</returns>
-        TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationOptions options = null) where TModel : IdentifiedData;
+        TModel Get<TModel>(Guid key, Guid? versionKey, UpstreamIntegrationQueryControlOptions options = null) where TModel : IdentifiedData;
 
         /// <summary>
         /// Inserts specified data.
