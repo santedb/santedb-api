@@ -43,6 +43,11 @@ namespace SanteDB.Core.Services.Impl.Repository
     [ServiceProvider("Local (database) repository service", Dependencies = new Type[] { typeof(IDataPersistenceService) })]
     public class LocalRepositoryFactory : IServiceFactory
     {
+        private readonly Type[] m_excludeServiceTypes = new Type[]
+        {
+            typeof(ISubscriptionRepository)
+        };
+
         // Repository services
         private readonly Type[] r_repositoryServices = new Type[] {
                 typeof(LocalConceptRepository),
@@ -119,6 +124,11 @@ namespace SanteDB.Core.Services.Impl.Repository
             {
                 serviceInstance = this;
                 return true;
+            }
+            else if (this.m_excludeServiceTypes.Contains(serviceType))
+            {
+                serviceInstance = null;
+                return false;
             }
 
             // Is this service type in the services?
