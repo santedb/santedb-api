@@ -86,6 +86,13 @@ namespace SanteDB.Core.Security.Services
         IApplicationIdentity GetIdentity(string applicationName);
 
         /// <summary>
+        /// Gets the specified identity for the application
+        /// </summary>
+        /// <param name="sid">The security identifier </param>
+        /// <returns>The application identity</returns>
+        IApplicationIdentity GetIdentity(Guid sid);
+
+        /// <summary>
         /// Gets the SID for the specified identity
         /// </summary>
         Guid GetSid(string name);

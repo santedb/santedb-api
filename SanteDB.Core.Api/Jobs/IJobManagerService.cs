@@ -33,12 +33,12 @@ namespace SanteDB.Core.Jobs
     public enum JobStartType
     {
         /// <summary>
-        /// Start job as soon as it is added
+        /// Start job as soon as it is added to the job manager
         /// </summary>
         [XmlEnum("immediate")]
         Immediate,
         /// <summary>
-        /// Start job on a delay
+        /// Start the job on the next scheduled check for jobs to run (according to the job manager's schedule)
         /// </summary>
         [XmlEnum("delay")]
         DelayStart,

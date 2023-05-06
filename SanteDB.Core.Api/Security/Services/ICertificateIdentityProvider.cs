@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Security.Principal;
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 
@@ -76,7 +77,7 @@ namespace SanteDB.Core.Security.Services
         /// </summary>
         /// <param name="identityOfCertificte">The identity for which the certificate should be retrieved</param>
         /// <returns>The <see cref="X509Certificate2"/> which was mapped to <paramref name="identityOfCertificte"/> or null if none exists</returns>
-        X509Certificate2 GetIdentityCertificate(IIdentity identityOfCertificte);
+        IEnumerable<X509Certificate2> GetIdentityCertificates(IIdentity identityOfCertificte);
 
         /// <summary>
         /// Gets an un-authenticated identity object for <paramref name="authenticationCertificate"/>

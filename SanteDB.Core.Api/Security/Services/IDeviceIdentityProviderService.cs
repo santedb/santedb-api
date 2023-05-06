@@ -112,6 +112,13 @@ namespace SanteDB.Core.Security.Services
         IDeviceIdentity GetIdentity(string deviceName);
 
         /// <summary>
+        /// Gets the specified identity for an device.
+        /// </summary>
+        /// <param name="sid">The security identifier of the device</param>
+        /// <returns>Returns the identity of the application.</returns>
+        IDeviceIdentity GetIdentity(Guid sid);
+
+        /// <summary>
         /// Set the lockout status 
         /// </summary>
         /// <param name="deviceName">The name of the device</param>

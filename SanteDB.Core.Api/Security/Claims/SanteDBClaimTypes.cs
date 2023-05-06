@@ -108,6 +108,12 @@ namespace SanteDB.Core.Security.Claims
         /// </summary>
         public const string SanteDBUserIdentifierClaim = "urn:santedb:org:claim:usrid";
 
+
+        /// <summary>
+        /// The specific user identifier claim issued by an OAuth implementation in SanteDB.
+        /// </summary>
+        public const string RemoteEndpointClaim = "urn:santedb:org:claim:endpoint";
+
         /// <summary>
         /// Claim for conveying the one time password / access code
         /// </summary>

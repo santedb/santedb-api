@@ -151,8 +151,10 @@ namespace SanteDB.Core.Http
                 this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate);
             }
 
-            var securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
-            return securityConfiguration.TrustedCertificates.Contains(certificate.Subject);
+            var certificateValidator = ApplicationServiceContext.Current.GetService<ICertificateValidator>();
+            var securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
+            return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
+                certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
         }
 
         /// <summary>

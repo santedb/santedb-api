@@ -139,5 +139,11 @@ namespace SanteDB.Core.Security.Services
         /// Abandons the session
         /// </summary>
         void Abandon(ISession session);
+
+        /// <summary>
+        /// Get all active sessions for all users
+        /// </summary>
+        /// <returns>An array of sessions for all users</returns>
+        ISession[] GetActiveSessions();
     }
 }
