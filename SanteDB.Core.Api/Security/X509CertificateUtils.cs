@@ -117,7 +117,7 @@ namespace SanteDB.Core.Security
                     }
                     catch (PlatformNotSupportedException)
                     {
-                        var propercert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                        var propercert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
                         trustStore.Add(propercert);
                     }
 
