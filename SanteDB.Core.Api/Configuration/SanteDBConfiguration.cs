@@ -268,7 +268,7 @@ namespace SanteDB.Core.Configuration
         /// <param name="dataStream">Data stream.</param>
         public void Save(Stream dataStream)
         {
-            this.SectionTypes = this.Sections.OfType<IConfigurationSection>().Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
+            this.SectionTypes = this.Sections?.OfType<IConfigurationSection>().Select(o => new TypeReferenceConfiguration(o.GetType())).ToList();
             this.SectionTypes.Add(new TypeReferenceConfiguration(typeof(SanteDBProtectedConfigurationSectionWrapper)));
 
             var namespaces = this.Sections.OfType<IConfigurationSection>().Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
@@ -281,6 +281,15 @@ namespace SanteDB.Core.Configuration
             {
                 var cryptoConfig = this.MemberwiseClone() as SanteDBConfiguration;
                 
+                if(this.ProtectedSectionKey.Certificate == null)
+                {
+                    throw new InvalidOperationException("Certificate must be specified for encryption");
+                }
+                else if(!this.ProtectedSectionKey.Certificate.HasPrivateKey)
+                {
+                    throw new InvalidOperationException("Certificate must have private key for encryption");
+                }
+
                 using (var crypto = this.ProtectedSectionKey.Certificate.GetRSAPrivateKey())
                 {
                     byte[] aesKey = Guid.NewGuid().ToByteArray();
