@@ -29,16 +29,14 @@ namespace SanteDB.Core.Security
         private readonly String m_monoPrivateKeyStoreLocation;
         // Mono private key store
         private readonly ConcurrentDictionary<String, X509Certificate2> m_monoPrivateKeyStore = new ConcurrentDictionary<String, X509Certificate2>();
-        private readonly IAuditService m_auditService;
 
         /// <summary>
         /// Mono platform security provider
         /// </summary>
-        public MonoPlatformSecurityProvider(IAuditService auditService = null)
+        public MonoPlatformSecurityProvider()
         {
             this.m_monoPrivateKeyStoreLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString(), ".x509");
             this.InitializeMonoKeyStore();
-            this.m_auditService = auditService;
             this.m_tracer.TraceWarning("!!!! WARNING: Using the Mono Certificate Manager Platform Service - there are additional security considerations that must be taken into" +
                 " account when using X509 certificates with private keys in this context");
         }
@@ -239,7 +237,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being installed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
-            => this.m_auditService?.Audit()
+            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit() // HACK: Prevents circular dependency
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
@@ -254,7 +252,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being removed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
-            => this.m_auditService?.Audit()
+            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit()
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)

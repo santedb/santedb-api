@@ -18,14 +18,12 @@ namespace SanteDB.Core.Security
     /// </remarks>
     public class DefaultPlatformSecurityProvider : IPlatformSecurityProvider
     {
-        private readonly IAuditService m_auditService;
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DefaultPlatformSecurityProvider(IAuditService auditService = null)
+        public DefaultPlatformSecurityProvider()
         {
-            this.m_auditService = auditService;
         }
 
         /// <inheritdoc/>
@@ -193,8 +191,8 @@ namespace SanteDB.Core.Security
         /// </summary>
         /// <param name="certificate">The certificate being installed.</param>
         /// <returns></returns>
-        private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
-            => this.m_auditService?.Audit()
+        private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate) 
+            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit() // Prevents circular dependency in dCDR
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
@@ -209,7 +207,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being removed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
-            => this.m_auditService?.Audit()
+            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit()
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)
