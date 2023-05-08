@@ -55,8 +55,11 @@ namespace SanteDB.Core.Security
             if (!Directory.Exists(this.m_monoPrivateKeyStoreLocation))
             {
                 Directory.CreateDirectory(this.m_monoPrivateKeyStoreLocation);
-                var directoryInfo = new DirectoryInfo(this.m_monoPrivateKeyStoreLocation);
-                directoryInfo.Attributes |= FileAttributes.Hidden | FileAttributes.Encrypted;
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    var directoryInfo = new DirectoryInfo(this.m_monoPrivateKeyStoreLocation);
+                    directoryInfo.Attributes |= FileAttributes.Hidden | FileAttributes.Encrypted;
+                }
             }
 
             foreach (var k in Directory.EnumerateFiles(this.m_monoPrivateKeyStoreLocation, "*.pfx"))
@@ -156,6 +159,7 @@ namespace SanteDB.Core.Security
                 if (certificate.HasPrivateKey && storeLocation == StoreLocation.CurrentUser && storeName == StoreName.My && this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate))
                 {
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
+                    this.m_tracer.TraceWarning("!!!! Certificate with private key has been saved in alternate location {0}", path);
                     using (var fs = File.Create(path))
                     {
                         var buffer = certificate.Export(X509ContentType.Pfx, this.ComputePass(path)); // TODO: Add password to configuration
@@ -171,6 +175,7 @@ namespace SanteDB.Core.Security
                     {
                         store.Open(OpenFlags.ReadWrite);
                         store.Add(certificate);
+                        this.m_tracer.TraceWarning("Certificate has been added to system store {0}/{1}", storeLocation, storeName);
                         store.Close();
                     }
                     audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
@@ -205,7 +210,12 @@ namespace SanteDB.Core.Security
                     storeLocation == StoreLocation.CurrentUser && 
                     this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out var oldCert))
                 {
-                    File.Delete(Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx"));
+                    var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
+                    if (File.Exists(path))
+                    {
+                        this.m_tracer.TraceWarning("!!!! Certificate with private key has been removed in alternate location {0}", path);
+                        File.Delete(path);
+                    }
                 }
                 else
                 {
