@@ -1,4 +1,5 @@
-﻿using SanteDB.Core.Model.Audit;
+﻿using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using System;
@@ -19,11 +20,18 @@ namespace SanteDB.Core.Security
     public class DefaultPlatformSecurityProvider : IPlatformSecurityProvider
     {
 
+        private Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPlatformSecurityProvider));
+
         /// <summary>
         /// DI constructor
         /// </summary>
         public DefaultPlatformSecurityProvider()
         {
+            if (Type.GetType("Mono.Runtime") != null)
+            {
+                this.m_tracer.TraceWarning("The DefaultPlatformSecurityProvider has known issues with Mono!");
+            }
+
         }
 
         /// <inheritdoc/>
@@ -113,6 +121,7 @@ namespace SanteDB.Core.Security
 
                     store.Add(importcert);
 
+                    this.m_tracer.TraceWarning("Certificate {0} has been installed to {1}/{2}", certificate.Subject, storeLocation, storeName);
                     audit?.WithOutcome(OutcomeIndicator.Success);
 
                     store.Close();
@@ -161,6 +170,7 @@ namespace SanteDB.Core.Security
                     {
                         store.Certificates.Remove(cert);
                     }
+                    this.m_tracer.TraceWarning("Certificate {0} has been removed from {1}/{2}", certificate.Subject, storeLocation, storeName);
 
                     audit?.WithOutcome(OutcomeIndicator.Success);
 

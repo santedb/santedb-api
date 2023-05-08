@@ -109,6 +109,7 @@ namespace SanteDB.Core.Services.Impl
             if (serviceType == typeof(IPlatformSecurityProvider) && Type.GetType("Mono.Runtime") != null)
             {
                 serviceInstance = this.m_serviceManager.CreateInjected<MonoPlatformSecurityProvider>();
+                return true;
             }
 
             var si = this.m_defaultServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));

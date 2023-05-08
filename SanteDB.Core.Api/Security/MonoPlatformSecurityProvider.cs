@@ -3,6 +3,7 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SharpCompress.Compressors.Xz.Filters;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -156,10 +157,12 @@ namespace SanteDB.Core.Security
             try
             {
                 // Does the certificate being installed have a private key?
-                if (certificate.HasPrivateKey && storeLocation == StoreLocation.CurrentUser && storeName == StoreName.My && this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate))
+                if (certificate.HasPrivateKey && storeLocation == StoreLocation.CurrentUser && storeName == StoreName.My)
                 {
+                    this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
+                    this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate);
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
-                    this.m_tracer.TraceWarning("!!!! Certificate with private key has been saved in alternate location {0}", path);
+                    this.m_tracer.TraceWarning("!!!! Certificate {0} with private key has been saved in alternate location {1}", certificate.Subject, path);
                     using (var fs = File.Create(path))
                     {
                         var buffer = certificate.Export(X509ContentType.Pfx, this.ComputePass(path)); // TODO: Add password to configuration
@@ -175,7 +178,7 @@ namespace SanteDB.Core.Security
                     {
                         store.Open(OpenFlags.ReadWrite);
                         store.Add(certificate);
-                        this.m_tracer.TraceWarning("Certificate has been added to system store {0}/{1}", storeLocation, storeName);
+                        this.m_tracer.TraceWarning("Certificate {0} has been added to system store {1}/{2}", certificate.Subject, storeLocation, storeName);
                         store.Close();
                     }
                     audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
@@ -186,10 +189,11 @@ namespace SanteDB.Core.Security
                     throw new PlatformNotSupportedException($"Installing {certificate.Subject} to {storeName} with a private key is not supported on this platform");
                 }
             }
-            catch
+            catch (Exception e)
             {
                 audit?.WithOutcome(Model.Audit.OutcomeIndicator.SeriousFail);
-                throw;
+                this.m_tracer.TraceError("Error installing security certificate: {0}", e.ToHumanReadableString());
+                throw new SecurityException(ErrorMessages.CERTIFICATE_INSTALL_FAILED, e);
             }
             finally
             {
@@ -213,7 +217,7 @@ namespace SanteDB.Core.Security
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
                     if (File.Exists(path))
                     {
-                        this.m_tracer.TraceWarning("!!!! Certificate with private key has been removed in alternate location {0}", path);
+                        this.m_tracer.TraceWarning("!!!! Certificate {0} with private key has been removed in alternate location {1}", certificate.Subject, path);
                         File.Delete(path);
                     }
                 }

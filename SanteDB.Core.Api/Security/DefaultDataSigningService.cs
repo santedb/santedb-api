@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
@@ -57,7 +58,6 @@ namespace SanteDB.Core.Security
         public DefaultDataSigningService(IConfigurationManager configurationManager)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
-
         }
 
         /// <summary>
