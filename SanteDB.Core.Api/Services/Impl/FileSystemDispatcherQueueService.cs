@@ -449,8 +449,15 @@ namespace SanteDB.Core.Services.Impl
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
             if (!Directory.Exists(queueDirectory))
-            {
-                Directory.CreateDirectory(queueDirectory);
+            { 
+                try
+                {
+                    Directory.CreateDirectory(queueDirectory);
+                }
+                catch
+                {
+
+                }
             }
         }
 

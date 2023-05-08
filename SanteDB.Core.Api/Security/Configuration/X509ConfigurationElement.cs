@@ -203,14 +203,8 @@ namespace SanteDB.Core.Security.Configuration
             if (this.m_certificate == null)
             {
                 // Is there an implementation of the IPlatformSecurity
-                var platService = ApplicationServiceContext.Current.GetService<IPlatformSecurityProvider>();
-                if(platService == null)
-                {
-#pragma warning disable CS0618 
-                    return X509CertificateUtils.FindCertificate(this.FindType, this.StoreLocation, this.StoreName, this.FindValue);
-#pragma warning restore
-                }
-                else if(platService.TryGetCertificate(this.FindType, this.FindValue, this.StoreName, this.StoreLocation, out var retVal))
+                var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
+                if(platService.TryGetCertificate(this.FindType, this.FindValue, this.StoreName, this.StoreLocation, out var retVal))
                 {
                     return retVal;                    
                 }
