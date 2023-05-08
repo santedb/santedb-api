@@ -39,13 +39,15 @@ namespace SanteDB.Core.Security
             this.m_monoPrivateKeyStoreLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString(), ".x509");
             this.InitializeMonoKeyStore();
             this.m_auditService = auditService;
+            this.m_tracer.TraceWarning("!!!! WARNING: Using the Mono Certificate Manager Platform Service - there are additional security considerations that must be taken into" +
+                " account when using X509 certificates with private keys in this context");
         }
 
         /// <summary>
         /// Compute a password for the file
         /// </summary>
         private String ComputePass(String targetFileName) =>
-            SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(targetFileName)).HexEncode().Substring(0,10);
+            SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(targetFileName)).HexEncode();
 
         /// <summary>
         /// Initialize the mono keystore
