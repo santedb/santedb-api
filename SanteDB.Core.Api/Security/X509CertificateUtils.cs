@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json.Converters;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
@@ -39,6 +40,18 @@ namespace SanteDB.Core.Security
         private static Tracer s_tracer = Tracer.GetTracer(typeof(X509CertificateUtils));
 
         /// <summary>
+        /// Throw if the application context has a better solution
+        /// </summary>
+        private static void ThrowIfAppContextStarted()
+        {
+            if(ApplicationServiceContext.Current.IsRunning ||
+                ApplicationServiceContext.Current.GetService<IPlatformSecurityProvider>() != null)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.USE_ALTERNATE_SERVICE, nameof(IPlatformSecurityProvider)));
+            }
+        }
+
+        /// <summary>
         /// Find a certiifcate from string values
         /// </summary>
         /// <returns>The certificate.</returns>
@@ -46,12 +59,15 @@ namespace SanteDB.Core.Security
         /// <param name="storeLocation">Store location.</param>
         /// <param name="storeName">Store name.</param>
         /// <param name="findValue">Find value.</param>
-        public static X509Certificate2 FindCertificate(
+        [Obsolete("Use: IPlatformSecurityProvider.TryFindCertificate")]
+        internal static X509Certificate2 FindCertificate(
             String findType,
             String storeLocation,
             String storeName,
             String findValue)
         {
+            ThrowIfAppContextStarted();
+
             X509FindType eFindType = X509FindType.FindByThumbprint;
             StoreLocation eStoreLocation = StoreLocation.CurrentUser;
             StoreName eStoreName = StoreName.My;
@@ -79,6 +95,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         /// <param name="storeName">The name of the certificate store to install the certificate into</param>
         /// <param name="certificate">The certificate to install</param>
+        [Obsolete("Use: IPlatformSecurityProvider.TryInstallCertificate")]
         public static void InstallCertificate(StoreName storeName, X509Certificate2 certificate)
         {
             var secConfiguration = ApplicationServiceContext.Current?.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
@@ -89,6 +106,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Install a machine certificate for things like HTTP.sys hosting, or other system uses - you may not specify the location only certs go into MY
         /// </summary>
+        [Obsolete("Use: IPlatformSecurityProvider.TryInstallCertificate")]
         public static void InstallMachineCertificate(X509Certificate2 certificate)
         {
             InstallCertificate(StoreLocation.LocalMachine, StoreName.My, certificate);
@@ -97,45 +115,31 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Install certificate utility
         /// </summary>
-        private static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate)
+        [Obsolete("Use: IPlatformSecurityProvider.TryInstallCertificate")]
+        internal static void InstallCertificate(StoreLocation location, StoreName storeName, X509Certificate2 certificate)
         {
+            ThrowIfAppContextStarted();
 
-            // Audit that we have installed our certificate
-            var audit = AuditCertificateInstallation(certificate);
-
-            try
+            using (var trustStore = new X509Store(storeName, location))
             {
-                using (var trustStore = new X509Store(storeName, location))
+                trustStore.Open(OpenFlags.ReadWrite);
+                // Swap the certificate key store flags as appropriate for this location
+                var password = Guid.NewGuid().ToString();
+                try
                 {
-                    trustStore.Open(OpenFlags.ReadWrite);
-                    // Swap the certificate key store flags as appropriate for this location
-                    var password = Guid.NewGuid().ToString();
-                    try
-                    {
-                        var pfxData = certificate.Export(X509ContentType.Pfx, password);
-                        var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
-                        trustStore.Add(properCert);
-                    }
-                    catch (PlatformNotSupportedException e)
-                    {
-                        s_tracer.TraceWarning("Platform not supported for keyset - will retry - {0}", e);
-                        var pfxData = certificate.Export(X509ContentType.Pfx, String.Empty);
-                        var propercert = new X509Certificate2(pfxData, String.Empty, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
-                        trustStore.Add(propercert);
-                    }
-
-                    audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
-                    trustStore.Close();
+                    var pfxData = certificate.Export(X509ContentType.Pfx, password);
+                    var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                    trustStore.Add(properCert);
                 }
-            }
-            catch
-            {
-                audit?.WithOutcome(Model.Audit.OutcomeIndicator.SeriousFail);
-                throw;
-            }
-            finally
-            {
-                audit?.Send();
+                catch (PlatformNotSupportedException e)
+                {
+                    s_tracer.TraceWarning("Platform not supported for keyset - will retry - {0}", e);
+                    var pfxData = certificate.Export(X509ContentType.Pfx, String.Empty);
+                    var propercert = new X509Certificate2(pfxData, String.Empty, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                    trustStore.Add(propercert);
+                }
+
+                trustStore.Close();
             }
         }
 
@@ -147,6 +151,7 @@ namespace SanteDB.Core.Security
         /// <param name="storeLocation">Store location.</param>
         /// <param name="storeName">Store name.</param>
         /// <param name="findValue">Find value.</param>
+        [Obsolete("Use: IPlatformSecurityProvider.TryFindCertificate")]
         public static X509Certificate2 FindCertificate(
             X509FindType findType,
             StoreLocation storeLocation,
@@ -154,6 +159,8 @@ namespace SanteDB.Core.Security
             String findValue
         )
         {
+            ThrowIfAppContextStarted();
+
             X509Store store = new X509Store(storeName, storeLocation);
             try
             {
@@ -184,35 +191,6 @@ namespace SanteDB.Core.Security
         }
 
 
-        /// <summary>
-        /// Create an audit builder for certificate installation.
-        /// </summary>
-        /// <param name="certificate">The certificate being installed.</param>
-        /// <returns></returns>
-        public static IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current?.GetService<IAuditService>()?.Audit()
-                .WithTimestamp()
-                .WithEventType(EventTypeCodes.SecurityAlert)
-                .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
-                .WithAction(Model.Audit.ActionType.Execute)
-                .WithLocalDestination()
-                .WithPrincipal()
-                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.Import, certificate);
-
-        /// <summary>
-        /// Create an audit builder for certificate removal.
-        /// </summary>
-        /// <param name="certificate">The certificate being removed.</param>
-        /// <returns></returns>
-        public static IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current?.GetAuditService()?.Audit()
-                .WithTimestamp()
-                .WithEventType(EventTypeCodes.SecurityAlert)
-                .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)
-                .WithAction(Model.Audit.ActionType.Delete)
-                .WithLocalDestination()
-                .WithPrincipal()
-                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.PermanentErasure, certificate);
     }
 }
 

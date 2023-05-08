@@ -8,9 +8,16 @@
     <VersionNumber>3.0-debug</VersionNumber>
   </PropertyGroup>
 	<ItemGroup>
+	  <None Remove="random.pfx" />
 	  <None Remove="Resources\Patients.csv" />
 	  <None Remove="Resources\SimpleDataMap.xml" />
+	  <None Remove="test.lumon.com.cer" />
 	  <None Remove="TestConfig.xml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="test.lumon.com.cer">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </EmbeddedResource>
 	</ItemGroup>
 
   <ItemGroup>
@@ -32,6 +39,7 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="random.pfx" />
     <EmbeddedResource Include="Resources\NonStandardBundle.xml" />
     <EmbeddedResource Include="Resources\Patients.csv" />
     <EmbeddedResource Include="Resources\SimpleDataMap.xml" />

@@ -287,7 +287,7 @@ namespace SanteDB.Core.Configuration
                 }
                 else if(!this.ProtectedSectionKey.Certificate.HasPrivateKey)
                 {
-                    throw new InvalidOperationException("Certificate must have private key for encryption");
+                    throw new InvalidOperationException($"Certificate {this.ProtectedSectionKey.Certificate.Subject} must have private key for encryption");
                 }
 
                 using (var crypto = this.ProtectedSectionKey.Certificate.GetRSAPrivateKey())

@@ -67,6 +67,7 @@ namespace SanteDB.Core.Services.Impl
         // Service factories
         private HashSet<IServiceFactory> m_serviceFactories = new HashSet<IServiceFactory>();
 
+
         /// <summary>
         /// Gets the service instance information
         /// </summary>

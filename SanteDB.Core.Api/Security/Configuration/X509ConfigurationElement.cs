@@ -19,9 +19,11 @@
  * Date: 2023-3-10
  */
 using Newtonsoft.Json;
+using SanteDB.Core.i18n;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
 
@@ -200,38 +202,21 @@ namespace SanteDB.Core.Security.Configuration
         {
             if (this.m_certificate == null)
             {
-                try
+                // Is there an implementation of the IPlatformSecurity
+                var platService = ApplicationServiceContext.Current.GetService<IPlatformSecurityProvider>();
+                if(platService == null)
                 {
-                    X509Store store = new X509Store(this.StoreName, this.StoreLocation);
-                    try
-                    {
-                        store.Open(OpenFlags.ReadOnly);
-                        var matches = store.Certificates.Find(this.FindType, this.FindValue, false);
-                        if (matches.Count == 0)
-                        {
-                            throw new FileNotFoundException($"Certificate {this.FindValue} not found");
-                        }
-                        else if (matches.Count > 1)
-                        {
-                            throw new InvalidOperationException("Too many matches");
-                        }
-                        else
-                        {
-                            this.m_certificate = matches[0];
-                        }
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                    finally
-                    {
-                        store.Close();
-                    }
+#pragma warning disable CS0618 
+                    return X509CertificateUtils.FindCertificate(this.FindType, this.StoreLocation, this.StoreName, this.FindValue);
+#pragma warning restore
                 }
-                catch
+                else if(platService.TryGetCertificate(this.FindType, this.FindValue, this.StoreName, this.StoreLocation, out var retVal))
                 {
-                    return null;
+                    return retVal;                    
+                }
+                else
+                {
+                    throw new SecurityException(ErrorMessages.CERTIFICATE_NOT_FOUND);
                 }
             }
             return this.m_certificate;

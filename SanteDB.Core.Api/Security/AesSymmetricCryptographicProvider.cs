@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -40,6 +41,8 @@ namespace SanteDB.Core.Security
         // Context key
         private byte[] m_contextKey;
 
+        // Context key file name
+        private readonly string m_contextKeyFile;
         // Configuration
         private SecurityConfigurationSection m_configuration;
 
@@ -49,6 +52,7 @@ namespace SanteDB.Core.Security
         public AesSymmetricCrypographicProvider(IConfigurationManager configurationManager)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_contextKeyFile = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "ctxkey.enc");
         }
 
         /// <summary>
@@ -150,31 +154,57 @@ namespace SanteDB.Core.Security
             return this.m_contextKey;
         }
 
+        /// <inheritdoc/>
+        public bool RotateContextKey()
+        {
+            if (this.m_contextKey == null)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(RotateContextKey)));
+            }
+
+            var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
+
+            if (defaultKey.Algorithm != SignatureAlgorithm.HS256)
+            {
+                this.SaveContextKey(m_contextKey, defaultKey);
+                return true;
+            }
+            return false;
+
+        }
+
         /// <summary>
         /// Read the context key which is stored in the DataDirectory encrypted on disk
         /// </summary>
         private byte[] ReadContextKey(SecuritySignatureConfiguration key)
         {
-            var contextKeyFile = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory").ToString(), "ctxkey.enc");
-            if(!File.Exists(contextKeyFile))
+            if(!File.Exists(this.m_contextKeyFile))
             {
                 var keyData = new byte[32];
                 System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
-                using (var fs = File.Create(contextKeyFile))
-                {
-                    var buffer = key.Certificate.GetRSAPublicKey().Encrypt(keyData, RSAEncryptionPadding.Pkcs1);
-                    fs.Write(buffer, 0, buffer.Length);
-                }
+                this.SaveContextKey(keyData, key);
                 return keyData;
             }
             else
             {
-                using(var fs = File.OpenRead(contextKeyFile))
+                using(var fs = File.OpenRead(this.m_contextKeyFile))
                 {
                     var buffer = new byte[fs.Length];
                     fs.Read(buffer, 0, buffer.Length);
                     return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Save the context key
+        /// </summary>
+        private void SaveContextKey(byte[] keyData, SecuritySignatureConfiguration key)
+        {
+            using (var fs = File.Create(this.m_contextKeyFile))
+            {
+                var buffer = key.Certificate.GetRSAPublicKey().Encrypt(keyData, RSAEncryptionPadding.Pkcs1);
+                fs.Write(buffer, 0, buffer.Length);
             }
         }
 

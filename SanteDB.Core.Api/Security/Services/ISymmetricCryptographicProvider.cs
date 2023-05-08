@@ -38,6 +38,14 @@ namespace SanteDB.Core.Security.Services
         byte[] GetContextKey();
 
         /// <summary>
+        /// Instructs the symmetric provider to rotate the key storage. 
+        /// </summary>
+        /// <remarks>This method is called to notify the encryption provider that a new security certificate configuration has been applied, and that
+        /// the provider should re-persist the context key with the newly configured certificate (typically the <c>default</c> key)</remarks>
+        /// <returns>True if the key was successfully rotated</returns>
+        bool RotateContextKey();
+
+        /// <summary>
         /// Generates an initialization vector
         /// </summary>
         byte[] GenerateIV();

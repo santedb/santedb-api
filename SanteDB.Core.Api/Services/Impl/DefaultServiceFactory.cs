@@ -105,6 +105,12 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public bool TryCreateService(Type serviceType, out object serviceInstance)
         {
+            // HACK: If running on Mono certificates with private keys need to be stored on the file
+            if (serviceType == typeof(IPlatformSecurityProvider) && Type.GetType("Mono.Runtime") != null)
+            {
+                serviceInstance = this.m_serviceManager.CreateInjected<MonoPlatformSecurityProvider>();
+            }
+
             var si = this.m_defaultServices.FirstOrDefault(o => serviceType.IsAssignableFrom(o));
             if (si == null)
             {

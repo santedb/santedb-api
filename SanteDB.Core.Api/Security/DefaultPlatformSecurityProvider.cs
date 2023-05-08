@@ -1,5 +1,6 @@
 ﻿using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Audit;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -17,27 +18,52 @@ namespace SanteDB.Core.Security
     /// </remarks>
     public class DefaultPlatformSecurityProvider : IPlatformSecurityProvider
     {
+        private readonly IAuditService m_auditService;
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public DefaultPlatformSecurityProvider(IAuditService auditService = null)
+        {
+            this.m_auditService = auditService;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
+        {
+            using(var store = new X509Store(storeName, storeLocation))
+            {
+                store.Open(OpenFlags.ReadOnly);
+                foreach(var cert in store.Certificates.Find(findType, findValue, validOnly))
+                {
+                    yield return cert;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
         public bool IsAssemblyTrusted(Assembly assembly)
         {
-            throw new NotImplementedException();
+            assembly.ValidateCodeIsSigned(false); // will throw if not valid
+            return true;
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, string findValue, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate)
         {
             return TryGetCertificate(findType, findValue, StoreName.My, StoreLocation.CurrentUser, out certificate);
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, string findValue, StoreName storeName, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate)
         {
             return TryGetCertificate(findType, findValue, storeName, StoreLocation.CurrentUser, out certificate);
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, string findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate)
         {
-            if (string.IsNullOrEmpty(findValue))
+            if (findValue == null)
             {
                 throw new ArgumentNullException(nameof(findValue));
             }
@@ -48,7 +74,7 @@ namespace SanteDB.Core.Security
                 {
                     store.Open(OpenFlags.ReadOnly);
 
-                    var certs = store.Certificates.Find(findType, findValue, true);
+                    var certs = store.Certificates.Find(findType, findValue, false); // since the user is asking for a specific certificate allow for searching of invalid certificates
 
                     if (certs.Count == 0)
                     {
@@ -73,7 +99,7 @@ namespace SanteDB.Core.Security
         ///<inheritdoc />
         public bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
-            var audit = X509CertificateUtils.AuditCertificateInstallation(certificate);
+            var audit = this.AuditCertificateInstallation(certificate);
 
             try
             {
@@ -115,7 +141,7 @@ namespace SanteDB.Core.Security
         ///<inheritdoc />
         public bool TryUninstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
-            var audit = X509CertificateUtils.AuditCertificateRemoval(certificate);
+            var audit = this.AuditCertificateRemoval(certificate);
 
             try
             {
@@ -160,6 +186,37 @@ namespace SanteDB.Core.Security
                 audit?.Send();
             }
         }
+
+
+        /// <summary>
+        /// Create an audit builder for certificate installation.
+        /// </summary>
+        /// <param name="certificate">The certificate being installed.</param>
+        /// <returns></returns>
+        private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
+            => this.m_auditService?.Audit()
+                .WithTimestamp()
+                .WithEventType(EventTypeCodes.SecurityAlert)
+                .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
+                .WithAction(Model.Audit.ActionType.Execute)
+                .WithLocalDestination()
+                .WithPrincipal()
+                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.Import, certificate);
+
+        /// <summary>
+        /// Create an audit builder for certificate removal.
+        /// </summary>
+        /// <param name="certificate">The certificate being removed.</param>
+        /// <returns></returns>
+        private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
+            => this.m_auditService?.Audit()
+                .WithTimestamp()
+                .WithEventType(EventTypeCodes.SecurityAlert)
+                .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)
+                .WithAction(Model.Audit.ActionType.Delete)
+                .WithLocalDestination()
+                .WithPrincipal()
+                .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.PermanentErasure, certificate);
 
     }
 }

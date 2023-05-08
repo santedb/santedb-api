@@ -40,7 +40,7 @@ namespace SanteDB.Core.Security
         /// <param name="findValue"></param>
         /// <param name="certificate"></param>
         /// <returns></returns>
-        bool TryGetCertificate(X509FindType findType, string findValue, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Security
         /// <param name="storeName"></param>
         /// <param name="certificate"></param>
         /// <returns></returns>
-        bool TryGetCertificate(X509FindType findType, string findValue, StoreName storeName, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
@@ -59,6 +59,15 @@ namespace SanteDB.Core.Security
         /// <param name="storeLocation"></param>
         /// <param name="certificate"></param>
         /// <returns></returns>
-        bool TryGetCertificate(X509FindType findType, string findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate);
+        /// <summary>
+        /// Find all certificates 
+        /// </summary>
+        /// <param name="findType"></param>
+        /// <param name="findValue"></param>
+        /// <param name="storeName"></param>
+        /// <param name="storeLocation"></param>
+        /// <returns></returns>
+        IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true);
     }
 }

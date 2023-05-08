@@ -49,6 +49,7 @@ namespace SanteDB.Core.Security
         public RsaKeyInitializationService(
             IConfigurationManager configurationManager,
             IServiceManager serviceManager,
+            IPlatformSecurityProvider platformSecurityProvider,
             ICertificateGeneratorService certificateGeneratorService = null,
             ICertificateAuthorityService certificateAuthorityService = null)
         {
@@ -62,9 +63,8 @@ namespace SanteDB.Core.Security
                     foreach (var k in securityConfiguration.Signatures.Where(o => o.Algorithm == SignatureAlgorithm.HS256).ToArray())
                     {
                         var keySubject = $"CN=SanteDB {k.KeyName}, OID.2.5.6.11={ApplicationServiceContext.Current.ApplicationName}, DC={k.KeyName}";
-                        X509Certificate2 certificate = X509CertificateUtils.FindCertificate(X509FindType.FindBySubjectDistinguishedName, StoreLocation.CurrentUser, StoreName.My, keySubject);
 
-                        if (certificate != null)
+                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate))
                         {
                         }
                         else if (certificateAuthorityService != null) // generate and sign
@@ -87,7 +87,7 @@ namespace SanteDB.Core.Security
                                 }
                                 certificate = certificateGeneratorService.Combine(signedCertificate, privateKey, friendlyName: $"SanteDB Signing Key {k.KeyName}");
 
-                                X509CertificateUtils.InstallCertificate(StoreName.My, certificate);
+                                _ = platformSecurityProvider.TryInstallCertificate(certificate);
                             }
                         }
                         else // self-signed
@@ -95,7 +95,7 @@ namespace SanteDB.Core.Security
                             this.m_tracer.TraceInfo("Will generate and sign {0}", keySubject);
                             var privateKey = certificateGeneratorService.CreateKeyPair(2048);
                             certificate = certificateGeneratorService.CreateSelfSignedCertificate(privateKey, new X500DistinguishedName(keySubject), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
-                            X509CertificateUtils.InstallCertificate(StoreName.My, certificate);
+                            _ = platformSecurityProvider.TryInstallCertificate(certificate);
                         }
 
                         this.m_tracer.TraceWarning("Replace key {0} with FindByThumbprint={1}", k.KeyName, certificate.Thumbprint);
