@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using Newtonsoft.Json.Converters;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
@@ -109,15 +110,17 @@ namespace SanteDB.Core.Security
                     trustStore.Open(OpenFlags.ReadWrite);
                     // Swap the certificate key store flags as appropriate for this location
                     var password = Guid.NewGuid().ToString();
-                    var pfxData = certificate.Export(X509ContentType.Pfx, password);
                     try
                     {
+                        var pfxData = certificate.Export(X509ContentType.Pfx, password);
                         var properCert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
                         trustStore.Add(properCert);
                     }
-                    catch (PlatformNotSupportedException)
+                    catch (PlatformNotSupportedException e)
                     {
-                        var propercert = new X509Certificate2(pfxData, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
+                        s_tracer.TraceWarning("Platform not supported for keyset - will retry - {0}", e);
+                        var pfxData = certificate.Export(X509ContentType.Pfx, String.Empty);
+                        var propercert = new X509Certificate2(pfxData, String.Empty, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet | (location == StoreLocation.CurrentUser ? X509KeyStorageFlags.UserKeySet : X509KeyStorageFlags.MachineKeySet));
                         trustStore.Add(propercert);
                     }
 
