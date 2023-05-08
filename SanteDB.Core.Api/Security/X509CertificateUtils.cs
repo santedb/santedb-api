@@ -19,6 +19,7 @@
  * Date: 2023-3-10
  */
 using Newtonsoft.Json.Converters;
+using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Audit;
@@ -27,6 +28,7 @@ using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security
@@ -44,7 +46,13 @@ namespace SanteDB.Core.Security
         /// </summary>
         static X509CertificateUtils()
         {
-            if(Type.GetType("Mono.Runtime") != null)
+            // Is the entry assembly tagged with the [DefaultPlatformServiceTypeAttribute]?
+            var annotatedDefault = Assembly.GetEntryAssembly()?.GetCustomAttribute<DefaultPlatformSecurityTypeAttribute>();
+            if (annotatedDefault != null)
+            {
+                s_defaultProvider = Activator.CreateInstance(annotatedDefault.PlatformSecurityProviderType) as IPlatformSecurityProvider;
+            }
+            else if(Type.GetType("Mono.Runtime") != null)
             {
                 s_defaultProvider = new MonoPlatformSecurityProvider();
             }
