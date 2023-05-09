@@ -54,6 +54,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         IClaim[] Claims { get; }
 
+
     }
 
     /// <summary>

@@ -99,6 +99,11 @@ namespace SanteDB.Core.Security.Claims
         public const string SanteDBDeviceIdentifierClaim = "urn:santedb:org:claim:devid";
 
         /// <summary>
+        /// Audience claim
+        /// </summary>
+        public const string AudienceClaim = "urn:santedb:org:claim:aud";
+
+        /// <summary>
         /// Identifier of the application
         /// </summary>
         public const string SanteDBApplicationIdentifierClaim = "urn:santedb:org:claim:appid";
