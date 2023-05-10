@@ -191,7 +191,7 @@ namespace SanteDB.Core
         {
             if (this.Stopping != null)
             {
-                this.Stopping(this, null);
+                this.Stopping(this, EventArgs.Empty);
             }
 
             if (this.IsRunning)
@@ -204,7 +204,7 @@ namespace SanteDB.Core
 
             if (this.Stopped != null)
             {
-                this.Stopped(this, null);
+                this.Stopped(this, EventArgs.Empty);
             }
 
             this.Dispose();

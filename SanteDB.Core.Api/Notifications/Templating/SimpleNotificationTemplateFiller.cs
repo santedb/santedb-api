@@ -21,6 +21,7 @@
 using SanteDB.Core.i18n;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -52,6 +53,7 @@ namespace SanteDB.Core.Notifications.Templating
         /// </summary>
         public NotificationTemplate FillTemplate(string id, string lang, dynamic model)
         {
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(model.GetType());
             var modelDict = model as IDictionary<String, Object>;
             var template = this.m_notificationTemplateRepository.Get(id, lang);
             if(template == null)
@@ -62,22 +64,8 @@ namespace SanteDB.Core.Notifications.Templating
             return new NotificationTemplate()
             {
                 Id = template.Id,
-                Body = m_parmRegex.Replace(template.Body, o =>
-                {
-                    if (modelDict.TryGetValue(o.Groups[1].Value, out var value))
-                    {
-                        return value.ToString();
-                    }
-                    return "";
-                }),
-                Subject = m_parmRegex.Replace(template.Subject ?? String.Empty, o =>
-                {
-                    if (modelDict.TryGetValue(o.Groups[1].Value, out var value))
-                    {
-                        return value.ToString();
-                    }
-                    return "";
-                }),
+                Body = m_parmRegex.Replace(template.Body, o => properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null)),
+                Subject = m_parmRegex.Replace(template.Subject, o => properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null)),
                 Language = template.Language
             };
         }
