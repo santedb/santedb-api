@@ -37,7 +37,7 @@ namespace SanteDB.Core.Services
         /// <param name="endpointType">The type of endpoint</param>
         /// <returns>The latency in milliseconds</returns>
         /// <remarks>This method is used to determine the amount of time the application endpoint responds to a PING request roundtrip</remarks>
-        long GetUpstreamLatency(ServiceEndpointType endpointType);
+        long? GetUpstreamLatency(ServiceEndpointType endpointType);
 
         /// <summary>
         /// Determines whether the upstream service is available.
