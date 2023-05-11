@@ -55,6 +55,11 @@ namespace SanteDB.Core
     public static class ExtensionMethods
     {
 
+        /// <summary>
+        /// Determine if this is running under mono
+        /// </summary>
+        public static bool IsMonoRuntime(this SanteDBConfiguration m) => Type.GetType("Mono.Runtime") != null;
+
         // Verified assemblies
         private static readonly ConcurrentBag<String> m_verifiedAssemblies = new ConcurrentBag<string>();
 

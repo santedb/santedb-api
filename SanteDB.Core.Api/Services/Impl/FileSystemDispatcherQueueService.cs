@@ -90,6 +90,12 @@ namespace SanteDB.Core.Services.Impl
             public byte[] XmlData { get; set; }
 
             /// <summary>
+            /// Gets the queue file path
+            /// </summary>
+            [XmlIgnore]
+            public string QueueFilePath { get; internal set; }
+
+            /// <summary>
             /// Save the data to a stream
             /// </summary>
             public static QueueEntry Create(Object data)
@@ -351,7 +357,9 @@ namespace SanteDB.Core.Services.Impl
                 fs.Read(iv, 0, iv.Length);
                 using (var cs = this.m_symmetricCrypto.CreateDecryptingStream(fs, this.m_symmetricCrypto.GetContextKey(), iv))
                 {
-                    return QueueEntry.Load(cs);
+                    var retVal = QueueEntry.Load(cs);
+                    retVal.QueueFilePath = queueFile;
+                    return retVal;
                 }
             }
         }
@@ -491,6 +499,11 @@ namespace SanteDB.Core.Services.Impl
         {
             var oldEntryPath = Path.Combine(this.m_configuration.QueuePath, entry.SourceQueue, entry.CorrelationId);
             var newEntryPath = Path.Combine(this.m_configuration.QueuePath, toQueue, entry.CorrelationId);
+
+            if (!File.Exists(oldEntryPath))
+            {
+                oldEntryPath += ".2";
+            }
             File.Move(oldEntryPath, newEntryPath);
 
             // Call callbacks
@@ -522,8 +535,9 @@ namespace SanteDB.Core.Services.Impl
                 {
                     entry = this.ReadQueueEntry(f);
                 }
-                catch
+                catch (Exception e)
                 {
+                    this.m_tracer.TraceError("Queue entry : {0} could not be read - {1}", f, e.ToHumanReadableString());
                     if (!queueName.Contains(".dead"))
                     {
                         try

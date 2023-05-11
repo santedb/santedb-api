@@ -146,6 +146,7 @@ namespace SanteDB.Core.Http
 
             using (StreamWriter sw = new StreamWriter(s))
             {
+                sw.NewLine = "\r\n";
                 foreach (var mimeInfo in attachmentList)
                 {
                     sw.WriteLine("--{0}", boundary);
