@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Model.Serialization;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Mime;
 using System.Xml;
@@ -80,7 +79,7 @@ namespace SanteDB.Core.Http
                 }
 
                 var serializer = this.GetSerializerInternal(typeHint);
-                if(serializer.CanDeserialize(xr))
+                if (serializer.CanDeserialize(xr))
                 {
                     return serializer.Deserialize(xr);
                 }
@@ -91,7 +90,7 @@ namespace SanteDB.Core.Http
                 }
                 else
                 {
-                    return XmlModelSerializerFactory.Current.GetSerializer(xr)?.Deserialize(xr) 
+                    return XmlModelSerializerFactory.Current.GetSerializer(xr)?.Deserialize(xr)
                         ?? throw new InvalidOperationException($"{xr.LocalName} has no serializer!");
                 }
             }

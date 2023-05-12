@@ -23,12 +23,8 @@ using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Roles;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Api.Test
@@ -38,7 +34,7 @@ namespace SanteDB.Core.Api.Test
     /// </summary>
     [TestFixture]
     [ExcludeFromCodeCoverage]
-    public class BackupServiceTest 
+    public class BackupServiceTest
     {
 
         /// <summary>
@@ -49,11 +45,11 @@ namespace SanteDB.Core.Api.Test
         {
 
             var assetClassId = Guid.NewGuid();
-            var assets = new IBackupAsset[] { 
+            var assets = new IBackupAsset[] {
                 new StreamBackupAsset(assetClassId, "foo", () => typeof(BackupServiceTest).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.NonStandardBundle.xml")) ,
                 new StreamBackupAsset(assetClassId, "bar", () => typeof(BackupServiceTest).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.NonStandardBundle.xml")) ,
                 new StreamBackupAsset(assetClassId, "baz", () => typeof(BackupServiceTest).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.NonStandardBundle.xml")) ,
-                new StreamBackupAsset(assetClassId, "buzz", () => typeof(BackupServiceTest).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.NonStandardBundle.xml")) 
+                new StreamBackupAsset(assetClassId, "buzz", () => typeof(BackupServiceTest).Assembly.GetManifestResourceStream("SanteDB.Core.Api.Test.Resources.NonStandardBundle.xml"))
             };
 
             using (var backupStream = new MemoryStream())
@@ -84,7 +80,7 @@ namespace SanteDB.Core.Api.Test
                     }
                 }
             }
-            
+
         }
 
         /// <summary>

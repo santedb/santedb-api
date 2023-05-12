@@ -1,7 +1,4 @@
 ﻿using SanteDB.Core.Data.Initialization;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import
 {

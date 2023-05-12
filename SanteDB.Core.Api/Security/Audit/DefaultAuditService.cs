@@ -28,9 +28,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Audit

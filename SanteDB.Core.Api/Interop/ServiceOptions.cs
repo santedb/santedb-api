@@ -23,7 +23,6 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Model;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Interop

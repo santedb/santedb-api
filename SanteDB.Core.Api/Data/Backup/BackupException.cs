@@ -19,12 +19,11 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Runtime.Serialization;
 
 namespace SanteDB.Core.Data.Backup
 {
 
-   
+
     /// <summary>
     /// An exception that is thrown when creating or restoring backups
     /// </summary>

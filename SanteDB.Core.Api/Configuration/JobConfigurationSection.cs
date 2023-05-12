@@ -134,7 +134,7 @@ namespace SanteDB.Core.Configuration
 
         public JobItemSchedule()
         {
-            
+
         }
 
         /// <summary>

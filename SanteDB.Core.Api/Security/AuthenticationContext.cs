@@ -138,7 +138,7 @@ namespace SanteDB.Core.Security
 
             /// <inheritdoc/>
             public IClaim FindFirst(string claimType) => this.m_claims.FirstOrDefault(o => o.Type == claimType);
-        
+
         }
 
         /// <summary>

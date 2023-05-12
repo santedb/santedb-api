@@ -198,7 +198,7 @@ namespace SanteDB.Core.Configuration.Features
             {
                 var retVal = !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(TServiceType)) ||
                     configuration.GetSection(this.Feature.ConfigurationType) == null;
-                if(this.m_shouldInstall != null)
+                if (this.m_shouldInstall != null)
                 {
                     return retVal & this.m_shouldInstall(configuration);
                 }

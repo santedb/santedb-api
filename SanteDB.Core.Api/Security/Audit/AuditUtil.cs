@@ -33,7 +33,6 @@ using SanteDB.Core.Model.Security;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;

@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using System.IO;
 
@@ -27,7 +26,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a provider of barcode formats (QR, GS1, etc) to render data
     /// </summary>
-    public interface IBarcodeGenerator 
+    public interface IBarcodeGenerator
     {
 
         /// <summary>

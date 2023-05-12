@@ -19,14 +19,12 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace SanteDB.Core.Data.Import

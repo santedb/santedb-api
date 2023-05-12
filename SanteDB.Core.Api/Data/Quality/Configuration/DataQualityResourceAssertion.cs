@@ -76,7 +76,8 @@ namespace SanteDB.Core.Data.Quality.Configuration
         {
             if (this.m_delegates == null)
             {
-                this.m_delegates = this.Expressions.Select(o => {
+                this.m_delegates = this.Expressions.Select(o =>
+                {
                     var expression = QueryExpressionParser.BuildLinqExpression<TModel>(o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
                     var parm = Expression.Parameter(typeof(Object));
                     return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, typeof(TModel))), parm).Compile();

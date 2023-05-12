@@ -37,7 +37,6 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -118,7 +117,7 @@ namespace SanteDB.Core.Http
                 if (!String.IsNullOrEmpty(fwdInfo))
                 {
                     fwdInfo = $"{fwdInfo}, {remoteData.RemoteAddress}";
-                } 
+                }
                 else
                 {
                     fwdInfo = remoteData.RemoteAddress;
@@ -418,7 +417,7 @@ namespace SanteDB.Core.Http
                 }
 
                 Exception exception = null;
-                if(errorResult is TResult tr2)
+                if (errorResult is TResult tr2)
                 {
                     exception = new RestClientException<TResult>(tr2, e, e.Status, e.Response);
                 }

@@ -22,11 +22,6 @@ using NUnit.Framework;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using SanteDB.Core.TestFramework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Api.Test
 {
@@ -53,7 +48,7 @@ namespace SanteDB.Core.Api.Test
         /// Test the creation of JWS content
         /// </summary>
         [Test]
-        public void TestJwsCreateParse() 
+        public void TestJwsCreateParse()
         {
             object payload = new
             {

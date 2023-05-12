@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,7 +37,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Content type mapper
         /// </summary>
-        static DefaultContentTypeMapper ()
+        static DefaultContentTypeMapper()
         {
             s_serializers = AppDomain.CurrentDomain.GetAllTypes()
                 .Where(t => t.Implements(typeof(IBodySerializer)) && !t.IsAbstract && !t.IsInterface)
@@ -96,11 +95,11 @@ namespace SanteDB.Core.Http
         /// <exception cref="System.ArgumentOutOfRangeException">contentType - Not supported</exception>
         public IBodySerializer GetSerializer(ContentType contentType)
         {
-            if(s_serializers.TryGetValue(contentType.MediaType, out var serializer))
+            if (s_serializers.TryGetValue(contentType.MediaType, out var serializer))
             {
                 return serializer;
             }
-            else if(contentType.MediaType.Contains("+") && s_serializers.TryGetValue(contentType.MediaType.Split('+')[0], out serializer))
+            else if (contentType.MediaType.Contains("+") && s_serializers.TryGetValue(contentType.MediaType.Split('+')[0], out serializer))
             {
                 return serializer;
             }

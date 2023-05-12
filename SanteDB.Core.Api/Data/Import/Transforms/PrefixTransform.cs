@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.i18n;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import.Transforms
 {
@@ -36,7 +34,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
-            if(args.Length == 1)
+            if (args.Length == 1)
             {
                 return $"{args[0]}{input}";
             }

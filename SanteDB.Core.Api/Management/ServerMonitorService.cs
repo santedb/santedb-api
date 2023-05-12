@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Management
 {
@@ -100,7 +99,7 @@ namespace SanteDB.Core.Management
         /// <summary>
         /// Convert to a dictionary
         /// </summary>
-        private dynamic  ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
+        private dynamic ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
         {
             IDictionary<String, Object> retVal = new ExpandoObject();
             retVal.Add("type", args.GetType().Name);
@@ -109,10 +108,10 @@ namespace SanteDB.Core.Management
             retVal.Add("sourceHost", this.m_networkInformationService.GetHostName());
             retVal.Add("sourceMachine", this.m_networkInformationService.GetMachineName());
             retVal.Add("summary", args.ToString());
-            foreach(var p in args.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            foreach (var p in args.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 var value = p.GetValue(args);
-                if(value != null)
+                if (value != null)
                 {
                     retVal.Add(p.Name, value);
                 }

@@ -20,9 +20,7 @@
  */
 using SanteDB.Core.Security.Tfa;
 using System;
-using System.Collections.Generic;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security.Services
 {
@@ -74,5 +72,5 @@ namespace SanteDB.Core.Security.Services
         bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal);
     }
 
-    
+
 }

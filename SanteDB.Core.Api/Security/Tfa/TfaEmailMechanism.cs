@@ -23,10 +23,8 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security.Tfa
 {
@@ -107,7 +105,7 @@ namespace SanteDB.Core.Security.Tfa
                     var censoredemail = email.Split('@')[1];
                     return $"Code sent to ******@{censoredemail}";
                 }
-                catch(Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
                 {
                     throw new Exception("Error sending notification for tfa email.", ex);
                 }

@@ -20,14 +20,12 @@
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Data.Import.Transforms
@@ -46,7 +44,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <summary>
         /// DI constructor
         /// </summary>
-        public EntityLookup(IAdhocCacheService adhocCache  = null)
+        public EntityLookup(IAdhocCacheService adhocCache = null)
         {
             this.m_adhocCache = adhocCache;
         }
@@ -59,7 +57,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
-            if(args.Length != 2 && args.Length != 3)
+            if (args.Length != 2 && args.Length != 3)
             {
                 throw new ArgumentOutOfRangeException("arg2", "Missing arguments");
             }
@@ -74,9 +72,9 @@ namespace SanteDB.Core.Data.Import.Transforms
             }
             parms.Add("input", () => input);
 
-            var key = this.m_parmExtract.Replace($"lu.{args[0]}.{args[1]}?{input}", o=>
+            var key = this.m_parmExtract.Replace($"lu.{args[0]}.{args[1]}?{input}", o =>
             {
-                if(parms.TryGetValue(o.Groups[1].Value, out var fn))
+                if (parms.TryGetValue(o.Groups[1].Value, out var fn))
                 {
                     return fn().ToString();
                 }
@@ -86,14 +84,14 @@ namespace SanteDB.Core.Data.Import.Transforms
             if (result == null)
             {
 
-                
+
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
                 result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
                 this.m_adhocCache?.Add(key, result ?? Guid.Empty);
 
             }
 
-            if(args.Length == 3 && result.GetValueOrDefault() != Guid.Empty)
+            if (args.Length == 3 && result.GetValueOrDefault() != Guid.Empty)
             {
                 // TODO: Cache these expressions
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), false, typeof(object));
@@ -102,7 +100,7 @@ namespace SanteDB.Core.Data.Import.Transforms
             }
             else
             {
-                if(result.GetValueOrDefault() == Guid.Empty)
+                if (result.GetValueOrDefault() == Guid.Empty)
                 {
                     return null;
                 }

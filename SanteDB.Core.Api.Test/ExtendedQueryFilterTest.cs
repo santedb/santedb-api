@@ -22,8 +22,6 @@ using NUnit.Framework;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Query.FilterExtension;
 using SanteDB.Core.Model.Roles;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace SanteDB.Core.Api.Test

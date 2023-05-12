@@ -24,7 +24,7 @@ using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Backup
 {
-   
+
     /// <summary>
     /// Represents a service that can back-up data to/from another location
     /// </summary>

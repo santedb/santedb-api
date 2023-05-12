@@ -105,8 +105,8 @@ namespace SanteDB.Core.Services.Impl
                 ownerKey = currentUserKey;
             }
 
-            var mailbox = this.m_mailboxPersistence.Query(o=>o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == ownerKey, AuthenticationContext.Current.Principal).First();
-            if(mailbox == null)
+            var mailbox = this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == ownerKey, AuthenticationContext.Current.Principal).First();
+            if (mailbox == null)
             {
                 throw new KeyNotFoundException(mailboxName);
             }
@@ -120,7 +120,7 @@ namespace SanteDB.Core.Services.Impl
         public Mailbox GetMailbox(String mailboxName)
         {
             var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            return this.m_mailboxPersistence.Query(o=>o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
+            return this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
         }
 
         /// <inheritdoc/>
@@ -163,10 +163,10 @@ namespace SanteDB.Core.Services.Impl
             var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.Key == messageKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
             if (sourceMessage == null)
             {
-               
+
                 throw new KeyNotFoundException(messageKey.ToString());
             }
-            var targetMailbox = this.m_mailboxPersistence.Query(o=> o.Name.ToLowerInvariant() == targetMailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
+            var targetMailbox = this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == targetMailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
             if (targetMailbox == null)
             {
                 switch (targetMailboxName)
@@ -290,7 +290,7 @@ namespace SanteDB.Core.Services.Impl
         public MailMessage Get(Guid key)
         {
             // Does the user have permission to read any mail?
-            if(this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
+            if (this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
             {
                 return this.m_mailMessagePersistence.Get(key, null, AuthenticationContext.Current.Principal);
             }
@@ -306,7 +306,7 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public IQueryResultSet<MailMessage> Find(Expression<Func<MailMessage, bool>> query)
         {
-            if(this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
+            if (this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
             {
                 return this.m_mailMessagePersistence.Query(query, AuthenticationContext.Current.Principal);
             }
@@ -337,7 +337,7 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public MailMessage Delete(Guid key)
         {
-            return this.MoveMessage(key, Mailbox.DELTEED_NAME).LoadProperty(o=>o.Target);
+            return this.MoveMessage(key, Mailbox.DELTEED_NAME).LoadProperty(o => o.Target);
         }
     }
 }

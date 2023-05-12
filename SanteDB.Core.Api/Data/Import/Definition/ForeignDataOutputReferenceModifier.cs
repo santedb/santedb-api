@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import.Definition
@@ -34,7 +33,7 @@ namespace SanteDB.Core.Data.Import.Definition
     /// <summary>
     /// Foreign data output reference modifier to lookup on self
     /// </summary>
-    [XmlType(nameof(ForeignDataOutputReferenceModifier), Namespace="http://santedb.org/import")]
+    [XmlType(nameof(ForeignDataOutputReferenceModifier), Namespace = "http://santedb.org/import")]
     public class ForeignDataOutputReferenceModifier : ForeignDataValueModifier
     {
 
@@ -49,7 +48,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// </summary>
         public Guid? FindExtern(IEnumerable<IdentifiedData> inCollection, IForeignDataReader sourceRecord, object inputValue)
         {
-            if(this.m_lookupExpression == null)
+            if (this.m_lookupExpression == null)
             {
                 var parms = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => sourceRecord.GetName(o)).ToDictionary<String, String, Func<Object>>(o => o, o => () => sourceRecord[o]);
                 parms.Add("input", () => this.m_inputValueSingleton);
@@ -70,7 +69,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// </summary>
         public object SelectValue(IdentifiedData currentObject)
         {
-            if(this.ExternalResource != null)
+            if (this.ExternalResource != null)
             {
                 throw new InvalidOperationException();
             }

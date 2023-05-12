@@ -18,14 +18,10 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -44,7 +40,7 @@ namespace SanteDB.Core.Services.Impl
         {
             this.m_symmetricCryptographicProvider = symmetricCryptographicProvider;
             this.m_fileLocation = Path.Combine(AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString() ?? ".", "datastream");
-            if(!Directory.Exists(this.m_fileLocation))
+            if (!Directory.Exists(this.m_fileLocation))
             {
                 Directory.CreateDirectory(this.m_fileLocation);
             }

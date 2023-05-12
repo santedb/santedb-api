@@ -119,9 +119,9 @@ namespace SanteDB.Core.Diagnostics
         /// </summary>
         public void Dispose()
         {
-            foreach(var probe in this.m_probes)
+            foreach (var probe in this.m_probes)
             {
-                if(probe is IDisposable disp)
+                if (probe is IDisposable disp)
                 {
                     disp.Dispose();
                 }

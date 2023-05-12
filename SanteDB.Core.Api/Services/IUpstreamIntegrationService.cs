@@ -19,14 +19,10 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Http;
-using SanteDB.Core.Interop;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Query;
 using System;
-using System.Collections.Specialized;
 using System.Linq.Expressions;
-using System.Net;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Services

@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Event;
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
@@ -27,7 +26,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Security.Principal;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Services
 {
@@ -149,7 +147,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, bool? autoUpdate, bool? autoInsert,  DataPersistenceControlContext wrapped)
+        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, bool? autoUpdate, bool? autoInsert, DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
             this.m_loadMode = loadMode;

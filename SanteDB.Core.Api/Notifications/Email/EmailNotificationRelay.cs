@@ -25,10 +25,7 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Mail;
 
 namespace SanteDB.Core.Notifications.Email
 {
@@ -52,7 +49,7 @@ namespace SanteDB.Core.Notifications.Email
         }
 
         // Configuration for the object
-        
+
 
         /// <inheritdoc/>
         public IEnumerable<string> SupportedSchemes => new[] { Uri.UriSchemeMailto };

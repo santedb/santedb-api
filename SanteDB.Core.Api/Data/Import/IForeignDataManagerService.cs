@@ -18,16 +18,13 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -91,6 +88,6 @@ namespace SanteDB.Core.Data.Import
         /// <param name="foreignDataId">The foreign data to be deleted</param>
         /// <returns>The foreign data information that was deleted</returns>
         IForeignDataSubmission Delete(Guid foreignDataId);
-        
+
     }
 }

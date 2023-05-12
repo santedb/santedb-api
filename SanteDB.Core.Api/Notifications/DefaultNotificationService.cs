@@ -23,7 +23,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace SanteDB.Core.Notifications
 {
@@ -53,8 +52,8 @@ namespace SanteDB.Core.Notifications
             this.m_tracer = new Tracer(nameof(DefaultNotificationService));
             this.m_relays = serviceManager
                 .CreateInjectedOfAll<INotificationRelay>()
-                .SelectMany(r=>r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
-                .ToDictionaryIgnoringDuplicates(o=>o.scheme, o=>o.relay);
+                .SelectMany(r => r.SupportedSchemes.Select(s => (scheme: s, relay: r)))
+                .ToDictionaryIgnoringDuplicates(o => o.scheme, o => o.relay);
 
             this.m_notificationTemplateRepository = templateRepository;
             this.m_notificationTemplateFiller = templateFiller;

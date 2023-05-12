@@ -170,7 +170,7 @@ namespace SanteDB.Core.Configuration.Data
         /// <summary>
         /// True if the database supports ownership on database
         /// </summary>
-        public bool SupportsOwnership { get;  }
+        public bool SupportsOwnership { get; }
         /// <summary>
         /// Gets the setting for passwords
         /// </summary>

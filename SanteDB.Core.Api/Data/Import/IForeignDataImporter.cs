@@ -20,12 +20,8 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
-using SanteDB.Core.Model;
 using SanteDB.Core.Services;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -33,7 +29,7 @@ namespace SanteDB.Core.Data.Import
     /// <summary>
     /// Foreign data transformation service is responsible for executing foreign data transforms
     /// </summary>
-    public interface IForeignDataImporter 
+    public interface IForeignDataImporter
     {
 
         /// <summary>

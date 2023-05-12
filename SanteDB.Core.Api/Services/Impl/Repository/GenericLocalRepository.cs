@@ -269,7 +269,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             // Demand permission
             this.DemandRead(key);
-            
+
 
             var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
 
@@ -296,7 +296,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public virtual TEntity Save(TEntity data)
         {
 
-            if(data == default(TEntity))
+            if (data == default(TEntity))
             {
                 throw new ArgumentNullException(nameof(data));
             }

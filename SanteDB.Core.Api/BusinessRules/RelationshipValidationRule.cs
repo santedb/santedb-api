@@ -20,14 +20,12 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
-using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Attributes;
 
 namespace SanteDB.Core.BusinessRules
 {
@@ -43,7 +41,7 @@ namespace SanteDB.Core.BusinessRules
         /// </summary>
         public RelationshipValidationRule()
         {
-            
+
         }
 
         /// <summary>

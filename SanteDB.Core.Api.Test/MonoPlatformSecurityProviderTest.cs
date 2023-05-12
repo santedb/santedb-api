@@ -1,11 +1,7 @@
 ﻿using NUnit.Framework;
 using SanteDB.Core.Security;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Api.Test
 {
@@ -36,12 +32,13 @@ namespace SanteDB.Core.Api.Test
             }
         }
 
-        private void RemoveTestCert(X509Certificate2 cert) {
+        private void RemoveTestCert(X509Certificate2 cert)
+        {
             using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
             {
                 store.Open(OpenFlags.ReadWrite);
                 var certs = store.Certificates.Find(X509FindType.FindByThumbprint, cert.Thumbprint, false);
-                if(certs.Count == 1)
+                if (certs.Count == 1)
                 {
                     store.Remove(certs[0]);
                 }

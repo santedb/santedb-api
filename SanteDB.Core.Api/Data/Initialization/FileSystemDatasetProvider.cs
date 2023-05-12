@@ -47,7 +47,7 @@ namespace SanteDB.Core.Data.Initialization
             }
             if (Directory.Exists(dataPath))
             {
-                return Directory.GetFiles(dataPath, "*.dataset").OrderBy(o=>o).Select(o =>
+                return Directory.GetFiles(dataPath, "*.dataset").OrderBy(o => o).Select(o =>
                 {
                     this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
                     try

@@ -22,7 +22,6 @@ using Newtonsoft.Json;
 using SanteDB.Core.i18n;
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
@@ -204,9 +203,9 @@ namespace SanteDB.Core.Security.Configuration
             {
                 // Is there an implementation of the IPlatformSecurity
                 var platService = X509CertificateUtils.GetPlatformServiceOrDefault();
-                if(platService.TryGetCertificate(this.FindType, this.FindValue, this.StoreName, this.StoreLocation, out var retVal))
+                if (platService.TryGetCertificate(this.FindType, this.FindValue, this.StoreName, this.StoreLocation, out var retVal))
                 {
-                    return retVal;                    
+                    return retVal;
                 }
                 else
                 {

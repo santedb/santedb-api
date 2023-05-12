@@ -57,7 +57,7 @@ namespace SanteDB.Core.Security
 
         public string Encode(byte[] token)
         {
-            
+
             return $"{token.Base64UrlEncode()}.{this.EncodeSignatureBytes(token).Base64UrlEncode()}";
         }
 
@@ -89,7 +89,7 @@ namespace SanteDB.Core.Security
                 return false;
             }
 
-            if (!_DataSigningService.Verify(tokenparts[0], this.DecodeSignatureBytes( tokenparts[1])))
+            if (!_DataSigningService.Verify(tokenparts[0], this.DecodeSignatureBytes(tokenparts[1])))
             {
                 _TraceSource.TraceVerbose("SimpleSessionTokenEncodingService - Validation failed in TryDecode().");
                 token = null;
@@ -111,7 +111,7 @@ namespace SanteDB.Core.Security
             }
 
             var tokenparts = encodedToken.Split('.').Select(o => o.ParseBase64UrlEncode()).ToArray();
-            
+
             if (tokenparts.Length != 2)
             {
                 throw new ArgumentException("Format of the Token is invalid.", nameof(encodedToken));

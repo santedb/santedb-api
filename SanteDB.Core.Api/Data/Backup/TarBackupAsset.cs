@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SharpCompress.Common;
 using System;
 using System.IO;
 

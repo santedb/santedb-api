@@ -2,8 +2,6 @@
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
-using SanteDB.Core.Services;
-using SharpCompress.Compressors.Xz.Filters;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -68,7 +66,7 @@ namespace SanteDB.Core.Security
                 try
                 {
                     var cert = new X509Certificate2(k, this.ComputePass(k)); // TODO: Allow the configuration of a password from the launcher (docker, app, etc.)
-                    if(cert.Thumbprint != Path.GetFileNameWithoutExtension(k))
+                    if (cert.Thumbprint != Path.GetFileNameWithoutExtension(k))
                     {
                         throw new SecurityException($"{Path.GetFileNameWithoutExtension(k)}!={cert.Thumbprint}");
                     }
@@ -97,7 +95,7 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate)
         {
-            if(findValue == null)
+            if (findValue == null)
             {
                 throw new ArgumentNullException(nameof(findValue));
             }
@@ -114,7 +112,7 @@ namespace SanteDB.Core.Security
                         // Look from PFX on the hard disk
                         if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
                         {
-                            switch(findType)
+                            switch (findType)
                             {
                                 case X509FindType.FindByThumbprint:
                                     return this.m_monoPrivateKeyStore.TryGetValue(findValue.ToString(), out certificate);
@@ -166,7 +164,7 @@ namespace SanteDB.Core.Security
                     using (var fs = File.Create(path))
                     {
                         var buffer = certificate.Export(X509ContentType.Pfx, this.ComputePass(path)); // TODO: Add password to configuration
-                                                                                                        // TODO: Ensure the certificate is exportable
+                                                                                                      // TODO: Ensure the certificate is exportable
                         fs.Write(buffer, 0, buffer.Length);
                     }
                     audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
@@ -209,9 +207,9 @@ namespace SanteDB.Core.Security
             try
             {
                 // Does the certificate being installed have a private key?
-                if (certificate.HasPrivateKey && 
+                if (certificate.HasPrivateKey &&
                     storeName == StoreName.My &&
-                    storeLocation == StoreLocation.CurrentUser && 
+                    storeLocation == StoreLocation.CurrentUser &&
                     this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out var oldCert))
                 {
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
@@ -279,16 +277,16 @@ namespace SanteDB.Core.Security
         public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
         {
             // First return the internal certificate which match if they are applicable
-            if(storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
+            if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
             {
-                foreach(var itm in this.m_monoPrivateKeyStore)
+                foreach (var itm in this.m_monoPrivateKeyStore)
                 {
-                    if(validOnly && !new X509Chain().Build(itm.Value))
+                    if (validOnly && !new X509Chain().Build(itm.Value))
                     {
-                        continue; 
+                        continue;
                     }
 
-                    switch(findType)
+                    switch (findType)
                     {
                         case X509FindType.FindByThumbprint:
                             if (itm.Value.Thumbprint.Equals(findValue))
@@ -297,13 +295,13 @@ namespace SanteDB.Core.Security
                             }
                             break;
                         case X509FindType.FindBySubjectDistinguishedName:
-                            if(itm.Value.Subject.Equals(findValue.ToString(), StringComparison.OrdinalIgnoreCase))
+                            if (itm.Value.Subject.Equals(findValue.ToString(), StringComparison.OrdinalIgnoreCase))
                             {
                                 yield return itm.Value;
                             }
                             break;
                         case X509FindType.FindBySubjectName:
-                            if(itm.Value.Subject.ToLowerInvariant().Contains(findValue.ToString().ToLowerInvariant()))
+                            if (itm.Value.Subject.ToLowerInvariant().Contains(findValue.ToString().ToLowerInvariant()))
                             {
                                 yield return itm.Value;
                             }
@@ -315,7 +313,7 @@ namespace SanteDB.Core.Security
             using (var store = new X509Store(storeName, storeLocation))
             {
                 store.Open(OpenFlags.ReadOnly);
-                foreach(var cert in store.Certificates.Find(findType, findValue, validOnly))
+                foreach (var cert in store.Certificates.Find(findType, findValue, validOnly))
                 {
                     yield return cert;
                 }

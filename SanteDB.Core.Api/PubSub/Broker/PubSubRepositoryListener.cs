@@ -159,7 +159,7 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_repository.Inserted += OnInserted;
             this.m_repository.Saved += OnSaved;
             this.m_repository.Deleted += OnDeleted;
-            
+
             this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
             if (this.m_mergeService != null)
             {
@@ -167,7 +167,7 @@ namespace SanteDB.Core.PubSub.Broker
                 this.m_mergeService.UnMerged += OnUnmerged;
             }
 
-            if(this.m_managedLinkService != null)
+            if (this.m_managedLinkService != null)
             {
                 this.m_managedLinkService.ManagedLinkEstablished += OnLinked;
                 this.m_managedLinkService.ManagedLinkRemoved += OnUnLinked;
@@ -219,7 +219,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnLinked(object sender, Data.DataManagementLinkEventArgs evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity)))));
 
         }
 
@@ -228,7 +228,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnLinked(object sender, Data.DataManagementLinkEventArgs evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o=>o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o=>o.TargetEntity)))));
+            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity)))));
 
         }
 

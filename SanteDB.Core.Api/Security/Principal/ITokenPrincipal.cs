@@ -20,9 +20,6 @@
  */
 using SanteDB.Core.Security.Claims;
 using System;
-using System.Collections.Generic;
-using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security.Principal
 {

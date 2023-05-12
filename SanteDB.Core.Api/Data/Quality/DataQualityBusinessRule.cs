@@ -26,7 +26,6 @@ using SanteDB.Core.Extensions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;

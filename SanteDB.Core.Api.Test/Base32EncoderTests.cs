@@ -19,15 +19,12 @@
  * Date: 2023-3-10
  */
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SanteDB.Core.Api.Test
 {
-    [TestFixture(Category ="Core API")]
+    [TestFixture(Category = "Core API")]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class Base32EncoderTests
     {
@@ -52,7 +49,7 @@ namespace SanteDB.Core.Api.Test
                 {"ABCD", "IFBEGRA=" }
             };
 
-            foreach(var input in inputs)
+            foreach (var input in inputs)
             {
                 var actual = Encoding.UTF8.GetBytes(input.Key).Base32Encode();
 

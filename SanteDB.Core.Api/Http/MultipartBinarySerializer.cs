@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.i18n;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Mime;
@@ -37,7 +36,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create new multipart form data with the specified data
         /// </summary>
-        public MultiPartFormData(String name, String data) 
+        public MultiPartFormData(String name, String data)
         {
             this.Data = System.Text.Encoding.UTF8.GetBytes(data);
             this.Name = name;
@@ -92,7 +91,7 @@ namespace SanteDB.Core.Http
         /// <inheritdoc/>
         public override string ToString()
         {
-            if(this.IsFile)
+            if (this.IsFile)
             {
                 return this.FileName;
             }
@@ -135,8 +134,8 @@ namespace SanteDB.Core.Http
             // Get the boundary
             contentType = new ContentType(this.ContentType);
             var boundary = Guid.NewGuid().ToString("N");
-            contentType.Parameters.Add("boundary", boundary); 
-            
+            contentType.Parameters.Add("boundary", boundary);
+
             // Boundary writer
             var attachmentList = o as IList<MultiPartFormData>;
             if (attachmentList == null)

@@ -18,17 +18,12 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -36,14 +31,9 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -127,7 +117,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public string GeneratePointer(IHasIdentifiers entity)
         {
-            if(!(entity is IAnnotatedResource identifiedEntity))
+            if (!(entity is IAnnotatedResource identifiedEntity))
             {
                 throw new ArgumentException(nameof(entity), String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, entity.GetType(), typeof(IAnnotatedResource)));
             }
@@ -163,9 +153,9 @@ namespace SanteDB.Core.Services.Impl
 
                 var parseResult = JsonWebSignature.TryParse(data, this.m_signingService, out var parsedToken);
 
-                if(validate || parsedToken == null)
+                if (validate || parsedToken == null)
                 {
-                    switch(parseResult)
+                    switch (parseResult)
                     {
                         case JsonWebSignatureParseResult.AlgorithmAndKeyMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(parsedToken.Header.KeyId)})", DetectedIssueKeys.SecurityIssue));
@@ -178,14 +168,14 @@ namespace SanteDB.Core.Services.Impl
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                     }
-                } 
-                else if(!parsedToken.Header.Type.StartsWith("x-santedb+"))
+                }
+                else if (!parsedToken.Header.Type.StartsWith("x-santedb+"))
                 {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Object Type", DetectedIssueKeys.InvalidDataIssue));
                 }
 
                 var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.Type.Substring(10));
-                
+
                 // Attempt to locate the record
                 var domainQuery = new NameValueCollection();
                 foreach (var id in parsedToken.Payload.id)

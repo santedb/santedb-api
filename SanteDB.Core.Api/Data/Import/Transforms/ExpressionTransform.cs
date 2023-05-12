@@ -18,12 +18,9 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using DynamicExpresso;
+using System;
+using System.Linq;
 
 namespace SanteDB.Core.Data.Import.Transforms
 {
@@ -45,7 +42,7 @@ namespace SanteDB.Core.Data.Import.Transforms
                         .Reference(typeof(TimeSpan))
                         .EnableReflection();
             var arguments = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => new Parameter(sourceRecord.GetName(o), sourceRecord[o] ?? String.Empty)).ToArray();
-            return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o=>o.Value).ToArray());
+            return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o => o.Value).ToArray());
         }
     }
 }

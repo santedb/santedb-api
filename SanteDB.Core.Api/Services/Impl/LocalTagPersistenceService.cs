@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
@@ -49,7 +48,7 @@ namespace SanteDB.Core.Services.Impl
         /// Create new local tag persistence service
         /// </summary>
         public LocalTagPersistenceService(IDataPersistenceService<ActTag> actTagPersistenceService,
-            IDataPersistenceService<EntityTag> entityTagSerivce, 
+            IDataPersistenceService<EntityTag> entityTagSerivce,
             IDataPersistenceService<Act> actService,
             IDataPersistenceService<Entity> entityService,
             IDataCachingService cacheService = null)
@@ -81,7 +80,7 @@ namespace SanteDB.Core.Services.Impl
                 }
 
 
-                if (this.m_entityService.Query(o=>o.Key == sourceKey, AuthenticationContext.SystemPrincipal).Any())
+                if (this.m_entityService.Query(o => o.Key == sourceKey, AuthenticationContext.SystemPrincipal).Any())
                 {
                     var existing = this.m_entityTagService.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tagName, AuthenticationContext.Current.Principal).FirstOrDefault();
                     if (existing != null)
@@ -101,7 +100,7 @@ namespace SanteDB.Core.Services.Impl
                         this.m_entityTagService.Insert(new EntityTag(tagName, tagValue), TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     }
                 }
-                else if (this.m_actService.Query(o=>o.Key == sourceKey, AuthenticationContext.SystemPrincipal).Any())
+                else if (this.m_actService.Query(o => o.Key == sourceKey, AuthenticationContext.SystemPrincipal).Any())
                 {
                     var existing = this.m_actTagService.Query(o => o.SourceEntityKey == sourceKey && o.TagKey == tagName, AuthenticationContext.Current.Principal).FirstOrDefault();
                     if (existing != null)

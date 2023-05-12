@@ -20,14 +20,12 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Net.Mail;
 using System.Text;
 

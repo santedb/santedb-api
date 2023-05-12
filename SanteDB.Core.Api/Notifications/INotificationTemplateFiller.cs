@@ -20,7 +20,6 @@
  */
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 
 namespace SanteDB.Core.Notifications
 {

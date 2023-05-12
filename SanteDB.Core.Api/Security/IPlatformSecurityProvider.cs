@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {

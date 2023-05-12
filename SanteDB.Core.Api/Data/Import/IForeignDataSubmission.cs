@@ -19,11 +19,9 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -63,7 +61,7 @@ namespace SanteDB.Core.Data.Import
         /// Get the issues with the imported data
         /// </summary>
         /// <returns>The detected issues for the imported data</returns>
-        IEnumerable<DetectedIssue> Issues { get;  }
+        IEnumerable<DetectedIssue> Issues { get; }
 
         /// <summary>
         /// Get the source stream of the data

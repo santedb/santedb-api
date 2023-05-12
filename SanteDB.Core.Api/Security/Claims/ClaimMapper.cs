@@ -19,10 +19,8 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Security.Claims
 {
@@ -52,7 +50,7 @@ namespace SanteDB.Core.Security.Claims
         {
             this.m_mappers = AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(IClaimMapper).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
                 .Select(t => Activator.CreateInstance(t) as IClaimMapper)
-                .GroupBy(o=> o.ExternalTokenFormat)
+                .GroupBy(o => o.ExternalTokenFormat)
                 .ToDictionary(o => o.Key, o => o.ToArray());
         }
 
@@ -63,9 +61,9 @@ namespace SanteDB.Core.Security.Claims
         {
             get
             {
-                if(m_instance == null)
+                if (m_instance == null)
                 {
-                    lock(m_lock) // Lock to prevent multiple instantiations
+                    lock (m_lock) // Lock to prevent multiple instantiations
                     {
                         if (m_instance == null)
                         {

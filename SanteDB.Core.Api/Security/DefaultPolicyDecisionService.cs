@@ -276,7 +276,7 @@ namespace SanteDB.Core.Security
             {
                 principalPolicies = cp.GetGrantedPolicies(pip);
             }
-            if(principalPolicies?.Any() != true)
+            if (principalPolicies?.Any() != true)
             {
                 principalPolicies = this.GetEffectivePolicySet(principal);
             }

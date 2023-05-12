@@ -211,7 +211,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <typeparam name="TResult">The expected result from the server</typeparam>
         public TResult Get<TResult>(string url, params KeyValuePair<string, string>[] query) => this.Get<TResult>(url, query.ToNameValueCollection());
-        
+
         /// <summary>
         /// Get the specified <typeparamref name="TResult"/> 
         /// </summary>
@@ -232,9 +232,9 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="url">The resource URL to fetch from the server</param>
         /// <param name="query">The query (as key=value) to send on the GET request</param>
-        public byte[] Get(String url, NameValueCollection query) 
+        public byte[] Get(String url, NameValueCollection query)
         {
-           
+
             try
             {
                 var requestEventArgs = new RestRequestEventArgs("GET", url, query, null, null);

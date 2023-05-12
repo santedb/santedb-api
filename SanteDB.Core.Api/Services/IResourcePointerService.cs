@@ -18,11 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Model;
-using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
-using System;
-using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {

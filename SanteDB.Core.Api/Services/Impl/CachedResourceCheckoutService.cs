@@ -125,7 +125,7 @@ namespace SanteDB.Core.Services.Impl
         public bool IsCheckedout<T>(Guid key, out IIdentity currentOwner)
         {
             var resourceLock = this.m_adhocCache.Get<ResourceCheckoutLock>(this.CreateCacheKey<T>(key));
-            if(resourceLock != null )
+            if (resourceLock != null)
             {
                 currentOwner = new GenericIdentity(resourceLock.UserIdentity);
                 return true;

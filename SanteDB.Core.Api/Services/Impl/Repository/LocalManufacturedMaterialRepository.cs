@@ -32,7 +32,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <summary>
         /// DI constructor
         /// </summary>
-        public LocalManufacturedMaterialRepository(IPolicyEnforcementService policyService,  IDataPersistenceService<ManufacturedMaterial> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
+        public LocalManufacturedMaterialRepository(IPolicyEnforcementService policyService, IDataPersistenceService<ManufacturedMaterial> persistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, persistenceService, privacyService)
         {
         }
 

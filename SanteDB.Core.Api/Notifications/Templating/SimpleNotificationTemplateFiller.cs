@@ -18,11 +18,9 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.i18n;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Notifications.Templating
@@ -56,7 +54,7 @@ namespace SanteDB.Core.Notifications.Templating
             PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(model.GetType());
             var modelDict = model as IDictionary<String, Object>;
             var template = this.m_notificationTemplateRepository.Get(id, lang);
-            if(template == null)
+            if (template == null)
             {
                 throw new KeyNotFoundException(id);
             }

@@ -18,14 +18,12 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Model.Audit;
+using SanteDB.Core.Queue;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
-using SanteDB.Core.Queue;
-using SanteDB.Core.Exceptions;
-using System.Diagnostics;
 
 namespace SanteDB.Core.Security.Audit
 {

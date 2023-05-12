@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Privacy;
 using SanteDB.Core.Security.Services;
@@ -124,7 +123,7 @@ namespace SanteDB.Core.Configuration.Features
             config.Values.Add("PasswordHasher", hasher ?? typeof(SanteDB.Core.Security.SHA256PasswordHashingService));
             config.Values.Add("PasswordValidator", validator ?? typeof(RegexPasswordValidator));
             config.Values.Add("PolicyDecisionProvider", pdp ?? typeof(DefaultPolicyDecisionService));
-            config.Values.Add("PolicyInformationProvider", pip );
+            config.Values.Add("PolicyInformationProvider", pip);
 
             if (this.Configuration == null)
             {
@@ -282,10 +281,10 @@ namespace SanteDB.Core.Configuration.Features
                 appServices.Add(new TypeReferenceConfiguration(config.Values["PolicyDecisionProvider"] as Type));
 
                 var pipService = config.Values["PolicyInformationProvider"] as Type;
-                if(pipService == null)
+                if (pipService == null)
                 {
                     pipService = appServices.Find(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type))?.Type;
-                    if(pipService != null)
+                    if (pipService != null)
                     {
                         config.Values["PolicyInformationProvider"] = pipService;
                     }
@@ -296,7 +295,7 @@ namespace SanteDB.Core.Configuration.Features
                 }
                 else
                 {
-                    appServices.RemoveAll(o=>typeof(IPolicyInformationService).IsAssignableFrom(o.Type));
+                    appServices.RemoveAll(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type));
                     appServices.Add(new TypeReferenceConfiguration(pipService));
                 }
 

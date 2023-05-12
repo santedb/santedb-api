@@ -27,7 +27,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Principal;
-using System.Text;
 
 namespace SanteDB.Core.Security.Tfa
 {
@@ -53,7 +52,7 @@ namespace SanteDB.Core.Security.Tfa
         {
             var secrets = GetSecretsForIdentity(identity)?.Where(s => s.Initialized);
 
-            var selectedsecret = secrets?.FirstOrDefault(s=>s.Initialized);
+            var selectedsecret = secrets?.FirstOrDefault(s => s.Initialized);
 
             if (null == selectedsecret)
             {

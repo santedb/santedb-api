@@ -248,7 +248,7 @@ namespace SanteDB.Core.Security
             }
 
             IClaim claim = null;
-            foreach(var claimtype in claimTypes)
+            foreach (var claimtype in claimTypes)
             {
                 claim = identity.FindFirst(claimtype);
 
@@ -275,7 +275,7 @@ namespace SanteDB.Core.Security
             }
 
             IClaim claim = null;
-            foreach(var claimtype in claimTypes)
+            foreach (var claimtype in claimTypes)
             {
                 claim = principal.FindFirst(claimtype);
 

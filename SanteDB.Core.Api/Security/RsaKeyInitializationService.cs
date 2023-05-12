@@ -19,17 +19,12 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {

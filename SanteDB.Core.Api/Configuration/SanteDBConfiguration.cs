@@ -30,7 +30,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -280,12 +279,12 @@ namespace SanteDB.Core.Configuration
             if (this.ProtectedSectionKey != null)
             {
                 var cryptoConfig = this.MemberwiseClone() as SanteDBConfiguration;
-                
-                if(this.ProtectedSectionKey.Certificate == null)
+
+                if (this.ProtectedSectionKey.Certificate == null)
                 {
                     throw new InvalidOperationException("Certificate must be specified for encryption");
                 }
-                else if(!this.ProtectedSectionKey.Certificate.HasPrivateKey)
+                else if (!this.ProtectedSectionKey.Certificate.HasPrivateKey)
                 {
                     throw new InvalidOperationException($"Certificate {this.ProtectedSectionKey.Certificate.Subject} must have private key for encryption");
                 }

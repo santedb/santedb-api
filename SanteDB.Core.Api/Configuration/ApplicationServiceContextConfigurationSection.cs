@@ -127,12 +127,12 @@ namespace SanteDB.Core.Configuration
         /// <exception cref="NotImplementedException"></exception>
         public void AddAppSetting(string vkey, string value)
         {
-            if(this.AppSettings == null )
+            if (this.AppSettings == null)
             {
                 this.AppSettings = new List<AppSettingKeyValuePair>();
             }
             var existing = this.AppSettings.Find(o => o.Key == vkey);
-            if(existing != null)
+            if (existing != null)
             {
                 existing.Value = value;
             }

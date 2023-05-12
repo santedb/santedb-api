@@ -20,10 +20,8 @@
  */
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Core.Security.Certs
 {
@@ -31,7 +29,7 @@ namespace SanteDB.Core.Security.Certs
     /// <summary>
     /// Represents a service which is responsible for creating and enroling certificates
     /// </summary>
-    public interface ICertificateGeneratorService  : IServiceImplementation
+    public interface ICertificateGeneratorService : IServiceImplementation
     {
         /// <summary>
         /// Create a private key

@@ -18,8 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Security.Certs;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -107,9 +105,10 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the public key identifier for the object
         /// </summary>
-        public string GetPublicKeyThumbprint(string keyId = null) {
+        public string GetPublicKeyThumbprint(string keyId = null)
+        {
             var key = this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"));
-            if(key.Algorithm != SignatureAlgorithm.HS256 && key?.Certificate != null)
+            if (key.Algorithm != SignatureAlgorithm.HS256 && key?.Certificate != null)
             {
                 return SHA1.Create().ComputeHash(key.Certificate.GetPublicKey()).Base64UrlEncode();
             }
@@ -168,7 +167,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         private SecuritySignatureConfiguration GetSigningKey(string keyId)
         {
-            if(!this.m_usedForSignature.TryGetValue(keyId, out var keyUsedForSigning))
+            if (!this.m_usedForSignature.TryGetValue(keyId, out var keyUsedForSigning))
             {
                 keyUsedForSigning = this.m_configuration.Signatures.Find(o => o.KeyName == keyId);
                 this.m_usedForSignature.TryAdd(keyId, keyUsedForSigning);

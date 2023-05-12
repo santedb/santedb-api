@@ -20,8 +20,6 @@
  */
 using SanteDB.Core.i18n;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import.Transforms
 {
@@ -40,12 +38,12 @@ namespace SanteDB.Core.Data.Import.Transforms
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
             // Default to full precision
-            if(args.Length == 0)
+            if (args.Length == 0)
             {
                 args = new object[] { "s" };
             }
 
-            if(input is long longInput)
+            if (input is long longInput)
             {
                 if (args[0] is int offset)
                 {

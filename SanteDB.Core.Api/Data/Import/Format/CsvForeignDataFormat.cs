@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -141,7 +140,7 @@ namespace SanteDB.Core.Data.Import.Format
             public string GetName(int index)
             {
                 this.ThrowIfDisposed();
-                    this.ReadSchema();
+                this.ReadSchema();
                 return m_columnNames[index];
             }
 
@@ -149,7 +148,7 @@ namespace SanteDB.Core.Data.Import.Format
             public int IndexOf(string name)
             {
                 this.ThrowIfDisposed();
-                    this.ReadSchema();
+                this.ReadSchema();
                 return Array.IndexOf(m_columnNames, name);
             }
 
@@ -210,7 +209,7 @@ namespace SanteDB.Core.Data.Import.Format
             /// </summary>
             private object UnescapeValue(string csvValue)
             {
-                if(String.IsNullOrEmpty(csvValue))
+                if (String.IsNullOrEmpty(csvValue))
                 {
                     return null;
                 }
@@ -307,7 +306,7 @@ namespace SanteDB.Core.Data.Import.Format
             /// </summary>
             private string FormatValue(object value)
             {
-                if(value == null)
+                if (value == null)
                 {
                     return String.Empty;
                 }

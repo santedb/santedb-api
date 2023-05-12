@@ -253,7 +253,7 @@ namespace SanteDB.Core.Configuration
             get => this.m_policyValue;
             set
             {
-                if(value is TimeSpan ts)
+                if (value is TimeSpan ts)
                 {
                     this.m_policyValue = new PolicyValueTimeSpan(ts);
                 }

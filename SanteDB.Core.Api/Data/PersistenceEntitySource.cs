@@ -18,7 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
@@ -94,7 +93,7 @@ namespace SanteDB.Core.Data
         {
             var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(relatedType);
             var persistenceService = ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
-            if(persistenceService == null)
+            if (persistenceService == null)
             {
                 return null;
             }
@@ -102,7 +101,7 @@ namespace SanteDB.Core.Data
             var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
 
             Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey)))), parm);
-            var retVal =  persistenceService.Query(expr);
+            var retVal = persistenceService.Query(expr);
             return retVal;
         }
 

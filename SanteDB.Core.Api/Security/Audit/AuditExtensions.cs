@@ -18,19 +18,17 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Model.Audit;
-using SanteDB.Core.Configuration;
-using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Data.Import;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
-using SanteDB.Core.Queue;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
@@ -38,15 +36,13 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Serialization;
-using System.Security.Cryptography.X509Certificates;
-using SanteDB.Core.Data.Import;
 #pragma warning disable CS0612
 
 namespace SanteDB.Core.Security.Audit
@@ -146,7 +142,7 @@ namespace SanteDB.Core.Security.Audit
             return me;
         }
 
-       
+
         /// <summary>
         /// With an enum set event type
         /// </summary>
@@ -292,7 +288,7 @@ namespace SanteDB.Core.Security.Audit
                 NetworkAccessPointType = IPAddress.TryParse(remoteDestination.RemoteAddress, out _) ? NetworkAccessPointType.IPAddress : NetworkAccessPointType.MachineName,
                 ActorRoleCode = new List<AuditCode>() {
                     ExtendedAuditCodes.ActorRoleDestination
-                    
+
                 }
             });
             return me;
@@ -954,7 +950,7 @@ namespace SanteDB.Core.Security.Audit
 
             if (!lifecycle.HasValue && obj is IdentifiedData iir)
             {
-                switch(iir.BatchOperation)
+                switch (iir.BatchOperation)
                 {
                     case Model.DataTypes.BatchOperationType.Auto:
                     case Model.DataTypes.BatchOperationType.Ignore:

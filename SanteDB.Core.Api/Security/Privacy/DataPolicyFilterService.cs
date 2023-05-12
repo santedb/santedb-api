@@ -178,7 +178,7 @@ namespace SanteDB.Core.Security.Privacy
                 case ResourceDataPolicyActionType.Hide:
                 case ResourceDataPolicyActionType.Nullify:
                     {
-                        var r = (result as Act)?.LoadProperty(o=>o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
+                        var r = (result as Act)?.LoadProperty(o => o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
                         r += (result as Entity)?.LoadProperty(o => o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
                         if (r > 0)
                         {
@@ -504,7 +504,7 @@ namespace SanteDB.Core.Security.Privacy
                     }
                 case PolicyGrantType.Grant:
                     if (this.m_pipService.GetPolicies(result).Any())
-                    { 
+                    {
                         ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, true).Send();
                     }
 

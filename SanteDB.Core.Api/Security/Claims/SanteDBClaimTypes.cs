@@ -19,7 +19,6 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Data;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Claims
@@ -153,12 +152,12 @@ namespace SanteDB.Core.Security.Claims
         /// Organization name claim
         /// </summary>
         public const string XspaOrganizationIdClaim = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
-        
+
         /// <summary>
         /// Identifies the realm that the identity is located in. Any valid realm identifier can be used. If this claim is missing, it means the identity is local to the calling system.
         /// </summary>
         public const string Realm = "urn:santedb:org:claim:realm";
-        
+
         /// <summary>
         /// Session id claim
         /// </summary>

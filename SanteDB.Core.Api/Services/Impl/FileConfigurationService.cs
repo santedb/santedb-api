@@ -43,7 +43,7 @@ namespace SanteDB.Core.Services.Impl
     /// using the <see href="https://help.santesuite.org/operations/server-administration/configuration-tool">Configuration Tool</see>.
     /// </remarks>
     [ServiceProvider("Local File Configuration Manager")]
-    public class FileConfigurationService : IConfigurationManager, 
+    public class FileConfigurationService : IConfigurationManager,
         IProvideBackupAssets,
         IRestoreBackupAssets,
         IRequestRestarts
@@ -80,7 +80,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public Guid[] AssetClassIdentifiers => new Guid[] { CONFIGURATION_FILE_ASSET_ID };
 
-      
+
         /// <summary>
         /// Create new file confiugration service.
         /// </summary>
@@ -157,21 +157,21 @@ namespace SanteDB.Core.Services.Impl
             }
             catch { }
 
-            if(retVal == null)
+            if (retVal == null)
             {
                 this.m_transientConnectionStrings.TryGetValue(key, out retVal);
-            } 
+            }
             return retVal;
         }
 
         /// <inheritdoc/>
         public void SetTransientConnectionString(string key, ConnectionString connectionString)
         {
-            if(Configuration.GetSection<DataConfigurationSection>()?.ConnectionString.Any(o => o.Name == key) == true)
+            if (Configuration.GetSection<DataConfigurationSection>()?.ConnectionString.Any(o => o.Name == key) == true)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.DUPLICATE_OBJECT, key));
             }
-            this.m_transientConnectionStrings.AddOrUpdate(key, connectionString, (k,o)=>o);
+            this.m_transientConnectionStrings.AddOrUpdate(key, connectionString, (k, o) => o);
         }
 
         /// <summary>
@@ -213,15 +213,15 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
-            catch(XmlException) // attempt a restore
+            catch (XmlException) // attempt a restore
             {
-                if(File.Exists(backupFileName))
+                if (File.Exists(backupFileName))
                 {
-                    using(var backupFile = File.OpenRead(backupFileName))
+                    using (var backupFile = File.OpenRead(backupFileName))
                     {
                         using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
                         {
-                            using(var configFileStream = File.Create(this.m_configurationFileName))
+                            using (var configFileStream = File.Create(this.m_configurationFileName))
                             {
                                 gzStream.CopyTo(configFileStream);
                                 configFileStream.Flush();
@@ -239,12 +239,12 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void SaveConfiguration()
         {
-            if(this.IsReadonly)
+            if (this.IsReadonly)
             {
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }
 
-            using(var s = File.Create(this.m_configurationFileName))
+            using (var s = File.Create(this.m_configurationFileName))
             {
                 this.Configuration.Save(s);
             }
@@ -254,11 +254,11 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc />
         public bool Restore(IBackupAsset backupAsset)
         {
-            if(backupAsset.AssetClassId.Equals(CONFIGURATION_FILE_ASSET_ID))
+            if (backupAsset.AssetClassId.Equals(CONFIGURATION_FILE_ASSET_ID))
             {
-                using(var assetStream = backupAsset.Open())
+                using (var assetStream = backupAsset.Open())
                 {
-                    using(var configStream = File.Create(this.m_configurationFileName))
+                    using (var configStream = File.Create(this.m_configurationFileName))
                     {
                         assetStream.CopyTo(assetStream);
                         return true;

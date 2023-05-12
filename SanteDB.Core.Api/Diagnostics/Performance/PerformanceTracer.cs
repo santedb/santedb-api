@@ -18,11 +18,8 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 #if DEBUG
 
 namespace SanteDB.Core.Diagnostics.Performance
@@ -35,7 +32,7 @@ namespace SanteDB.Core.Diagnostics.Performance
     {
         private static object syncLock = new object();
         private static long sequence = 0;
-        
+
         /// <summary>
         /// Writes a perform tracer to 
         /// </summary>

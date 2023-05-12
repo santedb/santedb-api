@@ -19,14 +19,12 @@
  * Date: 2023-3-10
  */
 using Newtonsoft.Json;
-using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Map;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import.Definition
@@ -94,13 +92,13 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <returns>The list of detected issues</returns>
         public IEnumerable<ValidationResultDetail> Validate()
         {
-            if(this.Maps?.Any() != true)
+            if (this.Maps?.Any() != true)
             {
                 yield return new ValidationResultDetail(ResultDetailType.Error, "No Maps Defined", null, String.Empty);
             }
-            foreach(var m in this.Maps)
+            foreach (var m in this.Maps)
             {
-                foreach(var itm in m.Validate())
+                foreach (var itm in m.Validate())
                 {
                     yield return itm;
                 }

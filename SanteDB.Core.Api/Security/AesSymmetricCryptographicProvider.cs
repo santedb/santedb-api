@@ -142,7 +142,7 @@ namespace SanteDB.Core.Security
             {
                 var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
 
-                if(defaultKey.Algorithm == SignatureAlgorithm.HS256)
+                if (defaultKey.Algorithm == SignatureAlgorithm.HS256)
                 {
                     this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? throw new NotSupportedException("Default key is of type HMAC but does not have a secret set.") /*"DEFAULTKEY"*/));
                 }
@@ -178,7 +178,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         private byte[] ReadContextKey(SecuritySignatureConfiguration key)
         {
-            if(!File.Exists(this.m_contextKeyFile))
+            if (!File.Exists(this.m_contextKeyFile))
             {
                 var keyData = new byte[32];
                 System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
@@ -187,7 +187,7 @@ namespace SanteDB.Core.Security
             }
             else
             {
-                using(var fs = File.OpenRead(this.m_contextKeyFile))
+                using (var fs = File.OpenRead(this.m_contextKeyFile))
                 {
                     var buffer = new byte[fs.Length];
                     fs.Read(buffer, 0, buffer.Length);

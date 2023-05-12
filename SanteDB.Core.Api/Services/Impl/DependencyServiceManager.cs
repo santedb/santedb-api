@@ -22,7 +22,6 @@ using RestSrvr;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Notifications;
 using SanteDB.Core.Security;
 using System;
 using System.Collections.Concurrent;
@@ -31,8 +30,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
 namespace SanteDB.Core.Services.Impl
@@ -836,17 +833,17 @@ namespace SanteDB.Core.Services.Impl
                         return ttype.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && t.IsPublic && t.GetConstructor(parms.Select(o => o.GetType()).ToArray()) != null;
                     }
                     catch { return false; }
-                    }).Select(t =>
+                }).Select(t =>
+                {
+                    try
                     {
-                        try
-                        {
-                            return Activator.CreateInstance(t, parms);
-                        }
-                        catch
-                        {
-                            return Activator.CreateInstance(t);
-                        }
-                    })
+                        return Activator.CreateInstance(t, parms);
+                    }
+                    catch
+                    {
+                        return Activator.CreateInstance(t);
+                    }
+                })
                 .OfType<T>();
         }
 

@@ -18,9 +18,6 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Audit

@@ -22,15 +22,11 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
-using SanteDB.Core.Model.DataTypes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SharpCompress;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -161,7 +157,7 @@ namespace SanteDB.Core.Protocol
         /// </summary>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupId)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(groupId : groupId).ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(groupId: groupId).ToArray());
         }
 
         /// <summary>

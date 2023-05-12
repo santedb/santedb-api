@@ -21,9 +21,7 @@
 using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import.Transforms
 {
@@ -50,11 +48,11 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
         {
-            if(args.Length != 1)
+            if (args.Length != 1)
             {
                 throw new ArgumentException("arg1", ErrorMessages.ARGUMENT_NULL);
             }
-            return this.m_conceptRepositoryService.FindConceptsByReferenceTerm(input.ToString(), args[0].ToString()).Select(o=>o.SourceEntityKey).FirstOrDefault();
+            return this.m_conceptRepositoryService.FindConceptsByReferenceTerm(input.ToString(), args[0].ToString()).Select(o => o.SourceEntityKey).FirstOrDefault();
         }
     }
 }

@@ -19,9 +19,6 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Model.Audit;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Security.Audit
 {

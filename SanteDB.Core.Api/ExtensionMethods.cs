@@ -18,11 +18,13 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
@@ -32,20 +34,16 @@ using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Security;
-using System.Security.Principal;
 using System.Reflection;
-using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Configuration;
-using System.Collections.Concurrent;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
-using SanteDB.Core.i18n;
-using System.Collections;
-using SanteDB.Core.Model.Collection;
 
 namespace SanteDB.Core
 {
@@ -351,9 +349,9 @@ namespace SanteDB.Core
         /// <param name="template">The formatting string</param>
         public static String FormatString(this String template, object objectData)
         {
-            if(objectData is IDictionary<String, Object> dict)
+            if (objectData is IDictionary<String, Object> dict)
             {
-                if(String.IsNullOrEmpty(template))
+                if (String.IsNullOrEmpty(template))
                 {
                     return String.Join(",", dict.Values);
                 }

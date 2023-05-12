@@ -19,8 +19,6 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -35,7 +33,7 @@ namespace SanteDB.Core.Data.Import
         /// </summary>
         /// <param name="name">The name of the field</param>
         /// <returns>The object</returns>
-        object this[String name] { get; set;  }
+        object this[String name] { get; set; }
 
         /// <summary>
         /// Set the value of the current record for field at 

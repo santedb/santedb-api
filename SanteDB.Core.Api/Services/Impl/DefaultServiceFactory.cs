@@ -22,7 +22,6 @@ using SanteDB.Core.Data.Import;
 using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
-using SanteDB.Core.Notifications;
 using SanteDB.Core.Notifications.Email;
 using SanteDB.Core.Notifications.Templating;
 using SanteDB.Core.Protocol;

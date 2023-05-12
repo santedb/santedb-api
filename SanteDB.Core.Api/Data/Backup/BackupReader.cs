@@ -18,21 +18,15 @@
  * User: fyfej
  * Date: 2023-3-10
  */
-using SanteDB.Core.Configuration;
 using SanteDB.Core.i18n;
-using SharpCompress.Archives.Tar;
 using SharpCompress.Compressors.BZip2;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
 using SharpCompress.Readers.Tar;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Backup
 {
@@ -53,7 +47,7 @@ namespace SanteDB.Core.Data.Backup
         private BackupReader(Stream underlyingStream, DateTime backupDate, BackupAssetInfo[] assets)
         {
             this.m_underlyingStream = underlyingStream;
-            this.m_tarReader = TarReader.Open(underlyingStream) ;
+            this.m_tarReader = TarReader.Open(underlyingStream);
             this.BackupAsset = assets;
             this.BackupDate = backupDate;
         }
@@ -61,7 +55,7 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Gets or set sthe backup date
         /// </summary>
-        public DateTime BackupDate { get;  }
+        public DateTime BackupDate { get; }
 
         /// <summary>
         /// The assets in this backup
@@ -77,7 +71,7 @@ namespace SanteDB.Core.Data.Backup
         {
 
             backupStream = new BZip2Stream(NonDisposingStream.Create(backupStream), SharpCompress.Compressors.CompressionMode.Decompress, false);
-            
+
             // Validate format
             byte[] magicHeader = new byte[MAGIC.Length];
             if (backupStream.Read(magicHeader, 0, magicHeader.Length) != magicHeader.Length ||
@@ -134,11 +128,11 @@ namespace SanteDB.Core.Data.Backup
                 desCrypto.Key = passKey;
                 desCrypto.Padding = PaddingMode.PKCS7;
                 backupStream = new CryptoStream(backupStream, desCrypto.CreateDecryptor(), CryptoStreamMode.Read);
-                if(backupStream.Read(magicHeader, 0, MAGIC.Length) != MAGIC.Length)
+                if (backupStream.Read(magicHeader, 0, MAGIC.Length) != MAGIC.Length)
                 {
                     throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
                 }
-                else if(!MAGIC.SequenceEqual(magicHeader))
+                else if (!MAGIC.SequenceEqual(magicHeader))
                 {
                     throw new BackupException(ErrorMessages.FILE_ENCRYPTED_INVALID_PASSPHRASE);
 
@@ -149,18 +143,18 @@ namespace SanteDB.Core.Data.Backup
             return new BackupReader(backupStream, backupDate, backupAsset);
         }
 
-       /// <summary>
-       /// Get the next entry
-       /// </summary>
-       /// <param name="assetInfo">The asset information metadata</param>
-       /// <returns>The next entry stream</returns>
+        /// <summary>
+        /// Get the next entry
+        /// </summary>
+        /// <param name="assetInfo">The asset information metadata</param>
+        /// <returns>The next entry stream</returns>
         public bool GetNextEntry(out IBackupAsset assetInfo)
         {
-            if(this.m_tarReader == null)
+            if (this.m_tarReader == null)
             {
                 throw new ObjectDisposedException(nameof(BackupReader));
             }
-            else if(!this.m_tarReader.MoveToNextEntry())
+            else if (!this.m_tarReader.MoveToNextEntry())
             {
                 assetInfo = null;
                 return false;
@@ -175,7 +169,7 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         public void Dispose()
         {
-            if(this.m_tarReader != null)
+            if (this.m_tarReader != null)
             {
                 while (this.m_tarReader.MoveToNextEntry()) ; // exhaust the readers if the user did not
                 while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0) ;

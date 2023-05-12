@@ -23,7 +23,6 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -44,7 +43,7 @@ namespace SanteDB.Core.Data.Import
         private ForeignDataImportUtil()
         {
             var serviceManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
-            if(serviceManager == null)
+            if (serviceManager == null)
             {
                 throw new InvalidOperationException("Missing service manager");
             }
@@ -61,7 +60,7 @@ namespace SanteDB.Core.Data.Import
         /// <returns>The foreign data format</returns>
         public bool TryGetDataFormat(string fileExtension, out IForeignDataFormat foreignDataFormat)
         {
-            if(!fileExtension.StartsWith("."))
+            if (!fileExtension.StartsWith("."))
             {
                 fileExtension = $".{fileExtension}";
             }

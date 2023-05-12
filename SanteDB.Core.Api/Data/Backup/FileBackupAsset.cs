@@ -19,9 +19,7 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SanteDB.Core.Data.Backup
 {
@@ -35,7 +33,7 @@ namespace SanteDB.Core.Data.Backup
         /// Creates a new backup asset for a file
         /// </summary>
         public FileBackupAsset(Guid assetClassId, String name, String filePath)
-            : base(assetClassId, name, ()=> File.OpenRead(filePath))
+            : base(assetClassId, name, () => File.OpenRead(filePath))
         {
         }
 

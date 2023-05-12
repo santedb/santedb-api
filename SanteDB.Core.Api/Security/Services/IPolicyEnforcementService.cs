@@ -18,10 +18,10 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
-using SanteDB.Core.Exceptions;
 
 namespace SanteDB.Core.Security.Services
 {

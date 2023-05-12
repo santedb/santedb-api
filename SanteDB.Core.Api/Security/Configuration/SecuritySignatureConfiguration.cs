@@ -93,7 +93,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// Security signature with certificates
         /// </summary>
-        public SecuritySignatureConfiguration(String name, StoreLocation storeLocation, StoreName storeName, X509Certificate2 certificate) 
+        public SecuritySignatureConfiguration(String name, StoreLocation storeLocation, StoreName storeName, X509Certificate2 certificate)
             : base(storeLocation, storeName, X509FindType.FindByThumbprint, certificate.Thumbprint)
         {
             this.KeyName = name;

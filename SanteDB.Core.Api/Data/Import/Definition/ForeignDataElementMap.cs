@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Import.Definition
             XmlElement("xref", typeof(ForeignDataOutputReferenceModifier)),
             XmlElement("transform", typeof(ForeignDataTransformValueModifier)), JsonProperty("values")]
         public List<ForeignDataValueModifier> ValueModifiers { get; set; }
-       
+
         /// <summary>
         /// True if the source is required
         /// </summary>
@@ -81,7 +81,7 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("target"), JsonProperty("target")]
         public string TargetHdsiPath { get; set; }
 
-       
+
         /// <summary>
         /// Replace the current value
         /// </summary>
@@ -93,7 +93,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// </summary>
         internal IEnumerable<ValidationResultDetail> Validate(Type context)
         {
-            if(String.IsNullOrEmpty(this.TargetHdsiPath))
+            if (String.IsNullOrEmpty(this.TargetHdsiPath))
             {
                 yield return new ValidationResultDetail(ResultDetailType.Error, $"Need target path", null, this.Source);
             }
@@ -102,18 +102,18 @@ namespace SanteDB.Core.Data.Import.Definition
             {
                 QueryExpressionParser.BuildPropertySelector(context, this.TargetHdsiPath);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 buildError = e;
             }
-            if(buildError != null)
+            if (buildError != null)
             {
                 yield return new ValidationResultDetail(ResultDetailType.Error, $"Target path {this.TargetHdsiPath} is not valid {buildError.Message}", buildError, this.Source);
             }
 
-            foreach(var map in this.ValueModifiers)
+            foreach (var map in this.ValueModifiers)
             {
-                if(map is ForeignDataTransformValueModifier fdx && !fdx.Validate())
+                if (map is ForeignDataTransformValueModifier fdx && !fdx.Validate())
                 {
                     yield return new ValidationResultDetail(ResultDetailType.Warning, $"Validator {fdx.Transformer} failed validation", null, this.Source);
                 }

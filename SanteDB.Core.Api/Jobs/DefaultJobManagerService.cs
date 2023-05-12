@@ -184,7 +184,7 @@ namespace SanteDB.Core.Jobs
                     }
                 }
 
-                foreach(var job in this.m_jobs)
+                foreach (var job in this.m_jobs)
                 {
                     // The job is marked as running - this is a problem if the host shut down improperly
                     if (this.m_jobStateManager.GetJobState(job.Job).CurrentState == JobStateType.Running)
@@ -282,7 +282,7 @@ namespace SanteDB.Core.Jobs
                 {
                     disp.Dispose();
                 }
-                if (this.m_jobStateManager.GetJobState(itm.Job).CurrentState == JobStateType.Running) 
+                if (this.m_jobStateManager.GetJobState(itm.Job).CurrentState == JobStateType.Running)
                 {
                     this.m_jobStateManager.SetState(itm.Job, JobStateType.Stopped);
                 }

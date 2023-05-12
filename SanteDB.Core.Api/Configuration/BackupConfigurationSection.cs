@@ -21,8 +21,6 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Data.Backup;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -66,7 +64,7 @@ namespace SanteDB.Core.Configuration
         /// <returns>True if the backup path is configured</returns>
         internal bool TryGetBackupPath(BackupMedia media, out string backupPath)
         {
-            switch(media)
+            switch (media)
             {
                 case BackupMedia.Private:
                     backupPath = this.PrivateBackupLocation;

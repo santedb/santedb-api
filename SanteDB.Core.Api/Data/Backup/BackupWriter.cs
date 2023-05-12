@@ -20,10 +20,7 @@
  */
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Compressors.LZMA;
 using SharpCompress.IO;
-using SharpCompress.Readers.Tar;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
@@ -63,18 +60,18 @@ namespace SanteDB.Core.Data.Backup
         public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null)
         {
 
-            underlyingStream = new BZip2Stream(NonDisposingStream.Create( underlyingStream), CompressionMode.Compress, false);
+            underlyingStream = new BZip2Stream(NonDisposingStream.Create(underlyingStream), CompressionMode.Compress, false);
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
             underlyingStream.Write(BitConverter.GetBytes(DateTime.UtcNow.Ticks), 0, sizeof(long));
             underlyingStream.Write(BitConverter.GetBytes((long)assetsToWrite.Count), 0, sizeof(long));
-            foreach(var ast in assetsToWrite)
+            foreach (var ast in assetsToWrite)
             {
                 var data = new BackupAssetInfo(ast).ToByteArray();
                 underlyingStream.Write(data, 0, data.Length);
             }
 
             // Are we encrypting?
-            if(String.IsNullOrEmpty(password))
+            if (String.IsNullOrEmpty(password))
             {
                 underlyingStream.Write(Enumerable.Range(0, 16).Select(o => (byte)0).ToArray(), 0, 16);
             }
@@ -101,12 +98,12 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="asset">The backup asset to write</param>
         public void WriteAssetEntry(IBackupAsset asset)
         {
-            if(this.m_tarWriter == null)
+            if (this.m_tarWriter == null)
             {
                 throw new ObjectDisposedException(nameof(BackupWriter));
             }
 
-            using(var assetStream = asset.Open())
+            using (var assetStream = asset.Open())
             {
                 this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now);
             }
@@ -117,7 +114,7 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         public void Dispose()
         {
-            if(this.m_tarWriter != null)
+            if (this.m_tarWriter != null)
             {
                 this.m_underlyingStream.Flush();
                 this.m_tarWriter.Dispose();

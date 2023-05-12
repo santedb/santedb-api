@@ -25,12 +25,10 @@ using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
-using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -228,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
 
                     foreach (var q in this.GetQueues().Where(q => !q.Name.Contains(".dead")))
                     {
-                        foreach(var f in this.GetQueueEntries(q.Name).ToArray())
+                        foreach (var f in this.GetQueueEntries(q.Name).ToArray())
                         {
                             if (this.m_watchers.TryGetValue(q.Name, out var callbacks))
                             {
@@ -457,7 +455,7 @@ namespace SanteDB.Core.Services.Impl
 
             String queueDirectory = Path.Combine(this.m_configuration.QueuePath, queueName);
             if (!Directory.Exists(queueDirectory))
-            { 
+            {
                 try
                 {
                     Directory.CreateDirectory(queueDirectory);
@@ -544,7 +542,7 @@ namespace SanteDB.Core.Services.Impl
                         {
                             File.Move(f, Path.Combine(this.m_configuration.QueuePath, $"{queueName}.dead"));
                         }
-                        catch(IOException)
+                        catch (IOException)
                         {
                             try
                             {

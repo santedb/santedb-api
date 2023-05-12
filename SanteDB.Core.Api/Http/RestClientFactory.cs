@@ -19,15 +19,12 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Configuration.Http;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Xml;
 
 namespace SanteDB.Core.Http
 {
@@ -45,7 +42,7 @@ namespace SanteDB.Core.Http
         public RestClientFactory(IConfigurationManager configurationManager)
         {
             this.m_configuration = configurationManager.GetSection<RestClientConfigurationSection>();
-            if(this.m_configuration == null)
+            if (this.m_configuration == null)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, typeof(RestClientConfigurationSection)));
             }
@@ -60,7 +57,7 @@ namespace SanteDB.Core.Http
         /// <inheritdoc/>
         public IRestClient GetRestClientFor(String clientName)
         {
-            if(!this.TryGetRestClientFor(clientName, out var retVal))
+            if (!this.TryGetRestClientFor(clientName, out var retVal))
             {
                 throw new KeyNotFoundException(clientName);
             }

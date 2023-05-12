@@ -19,9 +19,7 @@
  * Date: 2023-3-10
  */
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SanteDB.Core.Data.Backup
 {
@@ -54,7 +52,7 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public void Dispose()
         {
-            if(this.m_stream != null)
+            if (this.m_stream != null)
             {
                 this.m_stream.Dispose();
                 this.m_stream = null;
@@ -66,7 +64,7 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         public Stream Open()
         {
-            if(this.m_stream == null)
+            if (this.m_stream == null)
             {
                 this.m_stream = this.m_getStreamFunc();
             }

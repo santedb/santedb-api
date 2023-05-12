@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace SanteDB.Core.Security
 {
@@ -37,10 +36,10 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
         {
-            using(var store = new X509Store(storeName, storeLocation))
+            using (var store = new X509Store(storeName, storeLocation))
             {
                 store.Open(OpenFlags.ReadOnly);
-                foreach(var cert in store.Certificates.Find(findType, findValue, validOnly))
+                foreach (var cert in store.Certificates.Find(findType, findValue, validOnly))
                 {
                     yield return cert;
                 }
@@ -201,7 +200,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         /// <param name="certificate">The certificate being installed.</param>
         /// <returns></returns>
-        private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate) 
+        private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
             => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit() // Prevents circular dependency in dCDR
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)

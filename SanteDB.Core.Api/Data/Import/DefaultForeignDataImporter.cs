@@ -20,26 +20,19 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
-using SanteDB.Core.Data.Import.Format;
 using SanteDB.Core.Data.Initialization;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading;
 
 namespace SanteDB.Core.Data.Import
 {
@@ -67,7 +60,7 @@ namespace SanteDB.Core.Data.Import
             this.m_threadPool = threadPoolService;
             this.m_bundleService = repositoryService;
             this.m_datasetInstallService = datasetInstaller;
-            if(this.m_datasetInstallService is IReportProgressChanged irpc)
+            if (this.m_datasetInstallService is IReportProgressChanged irpc)
             {
                 irpc.ProgressChanged += (o, e) => this.ProgressChanged?.Invoke(this, e);
             }
@@ -94,12 +87,12 @@ namespace SanteDB.Core.Data.Import
                 {
                     this.m_datasetInstallService.Install(ifdbr.ReadAsDataset());
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", e.ToHumanReadableString(), Guid.Empty);
                     this.m_tracer.TraceWarning("Could not persist import record - {0}", e.Message);
                 }
-                if(errorIssue != null)
+                if (errorIssue != null)
                 {
                     yield return errorIssue;
                 }
@@ -201,7 +194,7 @@ namespace SanteDB.Core.Data.Import
                             {
                                 existingRecord = duplicateChecks.Select(o => insertBundle.Item.Where(i => resourceMap.Type == i.GetType()).FirstOrDefault(c => o.Compile().DynamicInvoke(c).Equals(true)))?.FirstOrDefault() as IdentifiedData;
                             }
-                            if(existingRecord != null)
+                            if (existingRecord != null)
                             {
                                 mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Ignore;
                                 mappedObject.Key = existingRecord.Key;
@@ -291,7 +284,7 @@ namespace SanteDB.Core.Data.Import
                 IdentifiedData outputFake = null;
                 duplicateCheckParms.Add("output", () => outputFake);
 
-                foreach (var res in foreignDataObjectMap.Resource.Where(o=>!o.Type.IsAbstract))
+                foreach (var res in foreignDataObjectMap.Resource.Where(o => !o.Type.IsAbstract))
                 {
                     outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
                     foreach (var itm in res.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))
