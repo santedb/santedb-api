@@ -19,8 +19,10 @@
  * Date: 2023-3-10
  */
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
@@ -78,6 +80,11 @@ namespace SanteDB.Core.Services
             where TRelationship : ITargetedAssociation;
 
         /// <summary>
+        /// Query for all relationships registered
+        /// </summary>
+        IQueryResultSet<IRelationshipValidationRule> QueryRelationships(Expression<Func<IRelationshipValidationRule, bool>> query);
+
+        /// <summary>
         /// Add a valid relationship between <paramref name="sourceClassKey"/> and <paramref name="targetClassKey"/>
         /// </summary>
         /// <param name="sourceClassKey">The source of the relationship</param>
@@ -100,18 +107,14 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get a relationship directly using the key of the relationship.
         /// </summary>
-        /// <typeparam name="TRelationship"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        IRelationshipValidationRule GetRuleByKey<TRelationship>(Guid key)
-            where TRelationship: ITargetedAssociation;
+        IRelationshipValidationRule GetRuleByKey(Guid key);
 
         /// <summary>
         /// Remove a relationship directly using the key of the relationship.
         /// </summary>
         /// <param name="key"></param>
-        void RemoveRuleByKey<TRelationship>(Guid key)
-            where TRelationship: ITargetedAssociation;
-
+        IRelationshipValidationRule RemoveRuleByKey(Guid key);
     }
 }

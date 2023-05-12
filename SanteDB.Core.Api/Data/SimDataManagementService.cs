@@ -300,7 +300,7 @@ namespace SanteDB.Core.Data
                     if (itm is EntityRelationship er)
                     {
                         var rv = er.LoadProperty(p => p.TargetEntity);
-                        rv.AddTag("$match.score", er.Strength.ToString());
+                        rv.AddTag(SystemTagNames.MatchScoreTag, er.Strength.ToString());
                         return rv;
                     }
                     else

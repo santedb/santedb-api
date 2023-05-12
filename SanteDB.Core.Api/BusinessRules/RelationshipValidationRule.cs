@@ -39,6 +39,26 @@ namespace SanteDB.Core.BusinessRules
     {
 
         /// <summary>
+        /// Serialization ctor
+        /// </summary>
+        public RelationshipValidationRule()
+        {
+            
+        }
+
+        /// <summary>
+        /// Relationship validation rule
+        /// </summary>
+        public RelationshipValidationRule(IRelationshipValidationRule copyFrom)
+        {
+            this.Key = copyFrom.Key;
+            this.SourceClassKey = copyFrom.SourceClassKey;
+            this.TargetClassKey = copyFrom.TargetClassKey;
+            this.RelationshipTypeKey = copyFrom.RelationshipTypeKey;
+            this.Description = copyFrom.Description;
+        }
+
+        /// <summary>
         /// Gets the time that the validation rule was modified on
         /// </summary>
         [JsonIgnore, XmlIgnore]

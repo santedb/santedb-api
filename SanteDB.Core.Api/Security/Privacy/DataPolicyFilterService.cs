@@ -185,8 +185,8 @@ namespace SanteDB.Core.Security.Privacy
                             //AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
                             if (result is ITaggable tag)
                             {
-                                tag.AddTag("$pep.masked", "true");
-                                tag.AddTag("$pep.method", "hide");
+                                tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
+                                tag.AddTag(SystemTagNames.PrivacyProtectionMethodTag, "hide");
                             }
                         }
                         break;
@@ -219,8 +219,8 @@ namespace SanteDB.Core.Security.Privacy
                             ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
                             if (result is ITaggable tag)
                             {
-                                tag.AddTag("$pep.masked", "true");
-                                tag.AddTag("$pep.method", "hash");
+                                tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
+                                tag.AddTag(SystemTagNames.PrivacyProtectionMethodTag, "hash");
                             }
                         }
                         break;
@@ -254,8 +254,8 @@ namespace SanteDB.Core.Security.Privacy
 
                             if (result is ITaggable tag)
                             {
-                                tag.AddTag("$pep.masked", "true");
-                                tag.AddTag("$pep.method", "redact");
+                                tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
+                                tag.AddTag(SystemTagNames.PrivacyProtectionMethodTag, "redact");
                             }
                         }
                         break;
@@ -466,7 +466,7 @@ namespace SanteDB.Core.Security.Privacy
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
                                 {
-                                    tag.AddTag("$pep.masked", "true");
+                                    tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                                 }
 
                                 return result;
@@ -484,7 +484,7 @@ namespace SanteDB.Core.Security.Privacy
                                 (nResult as IHasState).StatusConceptKey = StatusKeys.Nullified;
                                 if (nResult is ITaggable tag)
                                 {
-                                    tag.AddTag("$pep.masked", "true");
+                                    tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                                 }
 
                                 return (TData)nResult;
@@ -553,7 +553,7 @@ namespace SanteDB.Core.Security.Privacy
                                 property.SetValue(result, null);
                                 if (result is ITaggable tag)
                                 {
-                                    tag.AddTag("$pep.masked", "true");
+                                    tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                                 }
 
                                 break;
@@ -572,7 +572,7 @@ namespace SanteDB.Core.Security.Privacy
 
                                 if (result is ITaggable tag)
                                 {
-                                    tag.AddTag("$pep.masked", "true");
+                                    tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                                 }
 
                                 break;
@@ -596,7 +596,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionKey = entity.VersionKey;
                 retVal.VersionSequence = entity.VersionSequence;
                 retVal.StatusConceptKey = entity.StatusConceptKey;
-                retVal.AddTag("$pep.masked", "true");
+                retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                 retVal.Policies = new List<SecurityPolicyInstance>(entity.Policies);
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.Names = entity.Names.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList();
@@ -609,7 +609,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionKey = act.VersionKey;
                 retVal.VersionSequence = act.VersionSequence;
                 retVal.StatusConceptKey = act.StatusConceptKey;
-                retVal.AddTag("$pep.masked", "true");
+                retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
                 retVal.Policies = new List<SecurityPolicyInstance>(act.Policies);
                 retVal.StatusConceptKey = act.StatusConceptKey;
                 retVal.ReasonConceptKey = Guid.Parse("9b16bf12-073e-4ea4-b6c5-e1b93e8fd490");
