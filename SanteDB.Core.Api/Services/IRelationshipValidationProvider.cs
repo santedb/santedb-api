@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-3-10
  */
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
@@ -26,42 +27,6 @@ using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services
 {
-
-    /// <summary>
-    /// Represents a single relationship validation rule
-    /// </summary>
-    public interface IRelationshipValidationRule
-    {
-        /// <summary>
-        /// The key associated with the rule. This key is used to remove the record at a later date.
-        /// </summary>
-        Guid? Key { get; }
-
-        /// <summary>
-        /// The source class key
-        /// </summary>
-        Guid? SourceClassKey { get; }
-
-        /// <summary>
-        /// The target class key
-        /// </summary>
-        Guid? TargetClassKey { get; }
-
-        /// <summary>
-        /// The relationship which can exist between <see cref="SourceClassKey"/> and <see cref="TargetClassKey"/>
-        /// </summary>
-        Guid RelationshipTypeKey { get; }
-
-        /// <summary>
-        /// The relationship description
-        /// </summary>
-        String Description { get; }
-
-        /// <summary>
-        /// Gets the relationship type that this applies to
-        /// </summary>
-        Type AppliesTo { get; }
-    }
 
     /// <summary>
     /// Represents a class which can manage the valid relationship types between two objects
@@ -73,7 +38,7 @@ namespace SanteDB.Core.Services
         /// Get all valid relationships
         /// </summary>
         /// <returns>All valid relationships</returns>
-        IEnumerable<IRelationshipValidationRule> GetValidRelationships<TRelationship>()
+        IEnumerable<RelationshipValidationRule> GetValidRelationships<TRelationship>()
             where TRelationship : ITargetedAssociation;
 
         /// <summary>
@@ -81,13 +46,13 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="sourceClassKey">The classification of the source on the valid relationship</param>
         /// <returns>The list of validation rules for the applicable source class key</returns>
-        IEnumerable<IRelationshipValidationRule> GetValidRelationships<TRelationship>(Guid sourceClassKey)
+        IEnumerable<RelationshipValidationRule> GetValidRelationships<TRelationship>(Guid sourceClassKey)
             where TRelationship : ITargetedAssociation;
 
         /// <summary>
         /// Query for all relationships registered
         /// </summary>
-        IQueryResultSet<IRelationshipValidationRule> QueryRelationships(Expression<Func<IRelationshipValidationRule, bool>> query);
+        IQueryResultSet<RelationshipValidationRule> QueryRelationships(Expression<Func<RelationshipValidationRule, bool>> query);
 
         /// <summary>
         /// Add a valid relationship between <paramref name="sourceClassKey"/> and <paramref name="targetClassKey"/>
@@ -97,7 +62,7 @@ namespace SanteDB.Core.Services
         /// <param name="relationshipTypeKey">The relationship type key</param>
         /// <param name="description">The textual description of the validation rule</param>
         /// <returns>The created / configured relationship type</returns>
-        IRelationshipValidationRule AddValidRelationship<TRelationship>(Guid? sourceClassKey, Guid? targetClassKey, Guid relationshipTypeKey, String description)
+        RelationshipValidationRule AddValidRelationship<TRelationship>(Guid? sourceClassKey, Guid? targetClassKey, Guid relationshipTypeKey, String description)
             where TRelationship : ITargetedAssociation;
 
         /// <summary>
@@ -114,12 +79,12 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        IRelationshipValidationRule GetRuleByKey(Guid key);
+        RelationshipValidationRule GetRuleByKey(Guid key);
 
         /// <summary>
         /// Remove a relationship directly using the key of the relationship.
         /// </summary>
         /// <param name="key"></param>
-        IRelationshipValidationRule RemoveRuleByKey(Guid key);
+        RelationshipValidationRule RemoveRuleByKey(Guid key);
     }
 }
