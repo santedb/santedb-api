@@ -56,6 +56,11 @@ namespace SanteDB.Core.Services
         /// The relationship description
         /// </summary>
         String Description { get; }
+
+        /// <summary>
+        /// Gets the relationship type that this applies to
+        /// </summary>
+        Type AppliesTo { get; }
     }
 
     /// <summary>

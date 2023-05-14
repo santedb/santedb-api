@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Diagnostics.Tracing;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -181,6 +182,16 @@ namespace SanteDB.Core.Configuration.Features
 
                 config.Sources.AddRange(this.m_backup.Sources.Where(s => !featureConfig.Categories["Sources"].Contains(s.SourceName)));
                 configuration.AddSection(config);
+
+                // Add rollover manager
+                if(config.TraceWriter.Any(w=>w.TraceWriter == typeof(RolloverTextWriterTraceWriter)))
+                {
+                    var appSect = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+                    if(!appSect.ServiceProviders.Any(p=>p.Type == typeof(RolloverLogManagerService)))
+                    {
+                        appSect.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RolloverLogManagerService)));
+                    }
+                }
                 return true;
             }
 

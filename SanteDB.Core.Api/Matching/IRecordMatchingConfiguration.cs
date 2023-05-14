@@ -26,7 +26,6 @@ namespace SanteDB.Core.Matching
     /// <summary>
     /// Gets the record matching configuration
     /// </summary>
-    [XmlRoot("MatchConfiguration")]
     public interface IRecordMatchingConfiguration
     {
         /// <summary>

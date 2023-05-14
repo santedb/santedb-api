@@ -54,6 +54,7 @@ namespace SanteDB.Core.BusinessRules
             this.TargetClassKey = copyFrom.TargetClassKey;
             this.RelationshipTypeKey = copyFrom.RelationshipTypeKey;
             this.Description = copyFrom.Description;
+            this.AppliesTo = copyFrom.AppliesTo;
         }
 
         /// <summary>
@@ -93,14 +94,34 @@ namespace SanteDB.Core.BusinessRules
         public Guid RelationshipTypeKey { get; set; }
 
         /// <summary>
-        /// Gets the realtionship type delay load
+        /// Gets the target classification delay load property
         /// </summary>
         [SerializationReference(nameof(RelationshipTypeKey)), XmlIgnore, JsonIgnore]
         public Concept RelationshipType { get; set; }
 
         /// <summary>
+        /// Gets or sets the application class for XML
+        /// </summary>
+        [XmlElement("appliesTo"), JsonProperty("appliesTo")]
+        public String AppliesToXml { get; set; }
+
+        /// <summary>
+        /// Gets or sets the application type xml
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Type AppliesTo
+        {
+            get => new Model.Serialization.ModelSerializationBinder().BindToType("SanteDB.Core.Model", this.AppliesToXml);
+            set {
+                new Model.Serialization.ModelSerializationBinder().BindToName(value, out _, out var type);
+                this.AppliesToXml = type;
+            }
+        }
+
+        /// <summary>
         /// Gets the description for the validation
         /// </summary>
+        [XmlElement("description"), JsonProperty("description")]
         public string Description { get; set; }
 
         /// <summary>
