@@ -99,13 +99,21 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         public bool Start()
         {
-            using (AuthenticationContext.EnterSystemContext())
+            try
             {
-                foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    this.m_datasetInstaller.Install(dataset);
+                    foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
+                    {
+                        this.m_datasetInstaller.Install(dataset);
+                    }
+                    return true;
                 }
-                return true;
+            }
+            catch (Exception e)
+            {
+                this.m_traceSource.TraceError("Error installing datasets: {0}", e);
+                return false;
             }
         }
 
