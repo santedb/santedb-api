@@ -57,7 +57,10 @@ namespace SanteDB.Core.Security
                 if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     var directoryInfo = new DirectoryInfo(this.m_monoPrivateKeyStoreLocation);
-                    directoryInfo.Attributes |= FileAttributes.Hidden | FileAttributes.Encrypted;
+                    directoryInfo.Attributes |= FileAttributes.Hidden | FileAttributes.Encrypted; //TODO: Review. Using EFS has certain challenges and can clash
+                                                                                                  //with domain GPOs which might cause directory creation to fail
+                                                                                                  //or data loss if the EFS encryption key is lost. Also, when
+                                                                                                  //would the mono runtime be used on Windows?
                 }
             }
 
@@ -249,7 +252,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being installed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit() // HACK: Prevents circular dependency
+            => ApplicationServiceContext.Current?.GetAuditService()?.Audit() // HACK: Prevents circular dependency
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
@@ -264,7 +267,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being removed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit()
+            => ApplicationServiceContext.Current?.GetAuditService()?.Audit()
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)

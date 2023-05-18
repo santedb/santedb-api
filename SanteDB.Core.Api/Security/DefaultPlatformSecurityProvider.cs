@@ -49,7 +49,7 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public bool IsAssemblyTrusted(Assembly assembly)
         {
-            assembly.ValidateCodeIsSigned(false); // will throw if not valid
+            assembly?.ValidateCodeIsSigned(false); // will throw if not valid
             return true;
         }
 
@@ -79,7 +79,7 @@ namespace SanteDB.Core.Security
                 {
                     store.Open(OpenFlags.ReadOnly);
 
-                    var certs = store.Certificates.Find(findType, findValue, false); // since the user is asking for a specific certificate allow for searching of invalid certificates
+                    var certs = store.Certificates.Find(findType, findValue, validOnly: false); // since the user is asking for a specific certificate allow for searching of invalid certificates
 
                     if (certs.Count == 0)
                     {
@@ -201,7 +201,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being installed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit() // Prevents circular dependency in dCDR
+            => ApplicationServiceContext.Current?.GetAuditService()?.Audit() // Prevents circular dependency in dCDR
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
@@ -216,7 +216,7 @@ namespace SanteDB.Core.Security
         /// <param name="certificate">The certificate being removed.</param>
         /// <returns></returns>
         private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
-            => ApplicationServiceContext.Current.GetService<IAuditService>()?.Audit()
+            => ApplicationServiceContext.Current?.GetAuditService()?.Audit()
                 .WithTimestamp()
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)

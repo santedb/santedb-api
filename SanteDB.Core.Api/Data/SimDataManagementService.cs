@@ -508,7 +508,12 @@ namespace SanteDB.Core.Data
 
             foreach (var s in this.m_mergeServices)
             {
-                ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(s.GetType());
+                if (null == s)
+                {
+                    continue;
+                }
+
+                ApplicationServiceContext.Current.GetService<IServiceManager>()?.RemoveServiceProvider(s.GetType());
                 s.Dispose();
             }
             this.m_mergeServices.Clear();

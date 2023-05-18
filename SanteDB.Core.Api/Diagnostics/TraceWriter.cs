@@ -74,7 +74,7 @@ namespace SanteDB.Core.Diagnostics
                 var sourceConfig = this.m_filter;
                 if (!this.m_sourceFilters.TryGetValue(source, out sourceConfig))
                 {
-                    var key = this.m_sourceFilters.FirstOrDefault(o => source.StartsWith(o.Key));
+                    var key = this.m_sourceFilters.OrderByDescending(o=>o.Key.Length).FirstOrDefault(o => source.StartsWith(o.Key));
 
                     if (String.IsNullOrEmpty(key.Key))
                     {
