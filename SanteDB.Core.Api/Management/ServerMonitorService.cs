@@ -79,13 +79,13 @@ namespace SanteDB.Core.Management
                     try
                     {
                         // Is there a special template for this notification
-                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId, "en") != null)
+                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId, String.Empty) != null)
                         {
-                            this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), o.TemplateId, "en", this.ToDictionary(eventType, sender, args));
+                            this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), o.TemplateId, String.Empty, this.ToDictionary(eventType, sender, args));
                         }
                         else
                         {
-                            this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), NOTIFICATION_TEMPLATE_ID, "en", this.ToDictionary(eventType, sender, args)); // Send a generic template
+                            this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), NOTIFICATION_TEMPLATE_ID, String.Empty, this.ToDictionary(eventType, sender, args)); // Send a generic template
                         }
                     }
                     catch (Exception e)
