@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2022, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2022-1-11
+ * Date: 2023-5-19
  */
 using SanteDB.Core.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -49,22 +50,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobScheduleManager()
         {
-            var assembly = Assembly.GetEntryAssembly();
-
-            if (null == assembly) //Fixes an issue where EntryAssembly is null when called from NUnit.
-            {
-                assembly = Assembly.GetCallingAssembly();
-            }
-
-            if (null != assembly)
-            {
-                this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xcron.xml");
-            }
-            else
-            {
-                this.m_cronTabLocation = Path.Combine(System.Environment.CurrentDirectory, "xcron.xml");
-            }
-
+            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xcron.xml");
             if (File.Exists(this.m_cronTabLocation))
             {
                 try
@@ -104,7 +90,7 @@ namespace SanteDB.Core.Jobs
         }
 
         /// <inheritdoc/>
-        public void Add(IJob job, IJobSchedule jobSchedule)
+        public IJobSchedule Add(IJob job, IJobSchedule jobSchedule)
         {
             lock (this.m_lock)
             {
@@ -114,7 +100,7 @@ namespace SanteDB.Core.Jobs
                     scheduleReg = new JobItemConfiguration() { Type = job.GetType(), Schedule = new List<JobItemSchedule>() };
                     this.m_jobSchedules.Add(scheduleReg);
                 }
-                scheduleReg.Schedule.Add(new JobItemSchedule()
+                var retVal = new JobItemSchedule()
                 {
                     Type = jobSchedule.Type,
                     Interval = (int)jobSchedule.Interval.GetValueOrDefault().TotalSeconds,
@@ -123,9 +109,12 @@ namespace SanteDB.Core.Jobs
                     StartDate = jobSchedule.StartTime,
                     StopDate = jobSchedule.StopTime.GetValueOrDefault(),
                     StopDateSpecified = jobSchedule.StopTime.HasValue
-                });
+                };
+
+                scheduleReg.Schedule.Add(retVal);
 
                 this.SaveCron();
+                return retVal;
             }
         }
 
@@ -150,10 +139,31 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public IEnumerable<IJobSchedule> Get(IJob job)
         {
-            lock(this.m_lock)
+            lock (this.m_lock)
             {
                 return this.m_jobSchedules.Find(o => o.Type == job.GetType())?.Schedule;
             }
         }
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, TimeSpan interval, DateTime? stopDate = null) => this.Add(job, new JobItemSchedule()
+        {
+            Type = JobScheduleType.Interval,
+            Interval = (int)interval.TotalSeconds,
+            IntervalSpecified = true,
+            StartDate = DateTime.Now,
+            StopDate = stopDate.GetValueOrDefault(),
+            StopDateSpecified = stopDate.HasValue
+        });
+
+        /// <inheritdoc/>
+        public IJobSchedule Add(IJob job, DayOfWeek[] repeatOn, DateTime startDate, DateTime? stopDate = null) => this.Add(job, new JobItemSchedule()
+        {
+            RepeatOn = repeatOn,
+            StartDate = startDate,
+            StopDate = stopDate.GetValueOrDefault(),
+            StopDateSpecified = stopDate.HasValue,
+            Type = JobScheduleType.Scheduled
+        });
     }
 }
