@@ -37,12 +37,15 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// Represents a security repository service that uses the direct local services
     /// </summary>
-    public class LocalSecurityRepositoryService : ISecurityRepositoryService
+    public class LocalSecurityRepositoryService : ISecurityRepositoryService, ILocalServiceProvider<ISecurityRepositoryService>
     {
         /// <summary>
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Local Security Repository Service";
+
+        /// <inheritdoc/>
+        public ISecurityRepositoryService LocalProvider => this;
 
         // Localization Service
         private readonly ILocalizationService m_localizationService;
