@@ -47,11 +47,11 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// </summary>
         public RolloverLogManagerService(IConfigurationManager configurationManager)
         {
-            var logFileTracerConfig = configurationManager.GetSection<DiagnosticsConfigurationSection>().TraceWriter.FirstOrDefault(o => o.TraceWriter == typeof(RolloverTextWriterTraceWriter));
-            if (logFileTracerConfig == null)
-            {
-                throw new InvalidOperationException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, typeof(RolloverTextWriterTraceWriter)));
-            }
+            var logFileTracerConfig = configurationManager.GetSection<DiagnosticsConfigurationSection>().TraceWriter.FirstOrDefault(o => o.TraceWriter == typeof(RolloverTextWriterTraceWriter)) ??
+                new TraceWriterConfiguration()
+                {
+                    InitializationData = "santedb.log"
+                };
             if (!Path.IsPathRooted(logFileTracerConfig.InitializationData))
             {
                 this.m_rootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);

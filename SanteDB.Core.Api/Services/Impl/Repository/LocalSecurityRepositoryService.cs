@@ -142,18 +142,6 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_identityProviderService.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
         }
 
-        /// <summary>
-        /// Creates a user with a specified password.
-        /// </summary>
-        /// <param name="userInfo">The security user.</param>
-        /// <param name="password">The password.</param>
-        /// <returns>Returns the newly created user.</returns>
-        public SecurityUser CreateUser(SecurityUser userInfo, string password)
-        {
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.CreateIdentity);
-            userInfo.Password = password;
-            return this.m_userRepository.Insert(userInfo);
-        }
 
         /// <summary>
         /// Get the policy information in the model format
