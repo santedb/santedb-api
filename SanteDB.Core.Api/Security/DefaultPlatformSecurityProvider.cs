@@ -73,6 +73,12 @@ namespace SanteDB.Core.Security
             return true;
         }
 
+        /// <inheritdoc/>
+        public bool IsCertificateTrusted(X509Certificate2 certificate)
+        {
+            return certificate?.IsTrustedIntern(new X509Certificate2Collection(), out _) == true;
+        }
+
         ///<inheritdoc />
         public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate)
         {

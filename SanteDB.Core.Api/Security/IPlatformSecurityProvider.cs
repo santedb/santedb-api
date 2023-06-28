@@ -30,11 +30,17 @@ namespace SanteDB.Core.Security
     public interface IPlatformSecurityProvider
     {
         /// <summary>
-        /// 
+        /// Checks if an assembly is trusted by the platform.
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
         bool IsAssemblyTrusted(Assembly assembly);
+        /// <summary>
+        /// Checks if a certificate is trusted by the platform.
+        /// </summary>
+        /// <param name="certificate"></param>
+        /// <returns></returns>
+        bool IsCertificateTrusted(X509Certificate2 certificate);
         /// <summary>
         /// Install a certificate into a platform store.
         /// </summary>
