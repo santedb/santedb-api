@@ -150,7 +150,13 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the data object for the provided <paramref name="principal"/>
         /// </summary>
-        IdentifiedData GetSecurityEntity(IPrincipal principal);
+        SecurityEntity GetSecurityEntity(IPrincipal principal);
+
+        /// <summary>
+        /// Get the CDR entity which is assigned to the <paramref name="principal"/>
+        /// </summary>
+        Entity GetCdrEntity(IPrincipal principal);
+
 
         /// <summary>
         /// Find provenance objects matching the specified object

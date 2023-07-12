@@ -44,7 +44,8 @@ namespace SanteDB.Core.Services.Impl.Repository
         IValidatingRepositoryService<TEntity>,
         IRepositoryService<TEntity>,
         INotifyRepositoryService<TEntity>,
-        ISecuredRepositoryService
+        ISecuredRepositoryService,
+        ILocalServiceProvider<IRepositoryService<TEntity>>
         where TEntity : IdentifiedData
     {
         /// <summary>
@@ -131,6 +132,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// Gets the policy for altering
         /// </summary>
         protected virtual String AlterPolicy => PermissionPolicyIdentifiers.LoginAsService;
+
+        /// <inheritdoc/>
+        public IRepositoryService<TEntity> LocalProvider => this;
 
         // Privacy service
         private IPrivacyEnforcementService m_privacyService;
