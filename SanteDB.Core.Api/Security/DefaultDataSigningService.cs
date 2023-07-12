@@ -189,14 +189,14 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get signature settings from a certificate thumbprint
         /// </summary>
-        public SignatureSettings GetSignatureSettings(string certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256)
+        public SignatureSettings GetSignatureSettings(byte[] certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256)
         {
-            if (String.IsNullOrEmpty(certificateThumbprint))
+            if (certificateThumbprint == null)
             {
                 throw new ArgumentNullException(nameof(certificateThumbprint));
             }
             // First - check for system configured
-            var candidate = this.m_configuration.Signatures.Find(o => o.FindType == X509FindType.FindByThumbprint && o.FindValue == certificateThumbprint);
+            var candidate = this.m_configuration.Signatures.Find(o => o.FindType == X509FindType.FindByThumbprint && o.FindValue.Equals(certificateThumbprint.HexEncode(), StringComparison.OrdinalIgnoreCase));
             if (candidate != null)
             {
                 return SignatureSettings.FromConfiguration(candidate);
@@ -205,7 +205,7 @@ namespace SanteDB.Core.Security
             {
                 return SignatureSettings.RSA(signatureAlgorithm, certificate);
             }
-            else if (this.m_certificateManager.TryGetSigningCertificate(certificateThumbprint, out certificate))
+            else if (this.m_certificateManager.TryGetSigningCertificateByHash(certificateThumbprint, out certificate))
             {
                 return SignatureSettings.RSA(signatureAlgorithm, certificate);
             }

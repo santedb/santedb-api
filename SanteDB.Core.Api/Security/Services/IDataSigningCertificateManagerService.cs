@@ -38,6 +38,12 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get any configured signing certificate based on the thumbprint
         /// </summary>
-        bool TryGetSigningCertificate(String x509Thumbprint, out X509Certificate2 certificate);
+        bool TryGetSigningCertificateByThumbprint(String x509Thumbprint, out X509Certificate2 certificate);
+
+        /// <summary>
+        /// Get configured certificate by hash
+        /// </summary>
+        bool TryGetSigningCertificateByHash(byte[] x509hash, out X509Certificate2 certificate);
+
     }
 }

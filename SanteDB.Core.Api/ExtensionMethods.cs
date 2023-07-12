@@ -116,7 +116,7 @@ namespace SanteDB.Core
                 throw new ArgumentOutOfRangeException(nameof(jwsHeader.Algorithm));
             }
             signatureSettings = serviceInstance.GetNamedSignatureSettings(jwsHeader.KeyId) ??
-                serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint, signatureAlgorithm);
+                serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint.ParseBase64UrlEncode(), signatureAlgorithm);
             return signatureSettings != null;
         }
 

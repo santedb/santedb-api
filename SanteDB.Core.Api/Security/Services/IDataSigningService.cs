@@ -70,7 +70,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Create signature settings from configuration
         /// </summary>
-        public static SignatureSettings FromConfiguration(SecuritySignatureConfiguration configuration) => new SignatureSettings(configuration.Algorithm, configuration.Secret, configuration.Certificate);
+        public static SignatureSettings FromConfiguration(SecuritySignatureConfiguration configuration) => new SignatureSettings(configuration.Algorithm, configuration.GetSecret(), configuration.Certificate);
 
         /// <summary>
         /// Get the algorithm
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Get the signature algorithm for the configured thumbprint
         /// </summary>
-        SignatureSettings GetSignatureSettings(string certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256);
+        SignatureSettings GetSignatureSettings(byte[] certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256);
 
         /// <summary>
         /// Sign <paramref name="data"/> with the configured system key <paramref name="systemKeyId"/>

@@ -95,21 +95,11 @@ namespace SanteDB.Core.Services.Impl
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType($"x-santedb+{entity.GetType().GetSerializationName()}");
 
-            // Allow a configured identity 
-            var signingIdentity = (IIdentity)AuthenticationContext.Current.GetDeviceIdentity() ??
-                AuthenticationContext.Current.GetApplicationIdentity();
-            if (signingIdentity != null)
+            // Allow a configured identity for SYSTEM (this system's certificate mapping)
+            var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
+            if(signingCertificate?.Any() == true)
             {
-                // Is there a signing credential linked to this?
-                var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(signingIdentity);
-                if(signingCertificate?.Any() == true)
-                {
-                    signature = signature.WithCertificate(signingCertificate.First());
-                }
-                else
-                {
-                    signature = signature.WithSystemKey("default");
-                }
+                signature = signature.WithCertificate(signingCertificate.First());
             }
             else
             {
