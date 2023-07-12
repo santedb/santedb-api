@@ -19,11 +19,76 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Signing;
 using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SanteDB.Core.Security.Services
 {
+
+    /// <summary>
+    /// Signature settings
+    /// </summary>
+    public class SignatureSettings
+    {
+
+        /// <summary>
+        /// Private ctor
+        /// </summary>
+        private SignatureSettings(SignatureAlgorithm algorithm,
+            byte[] rawKeyData,
+            X509Certificate2 certificate)
+        {
+            this.Algorithm = algorithm;
+            this.RawKeyData = rawKeyData;
+            this.Certificate = certificate;
+        }
+
+        /// <summary>
+        /// Create HS256 settings with the specified <paramref name="key"/>
+        /// </summary>
+        public static SignatureSettings HS256(byte[] key) => new SignatureSettings(SignatureAlgorithm.HS256, key, null);
+
+        /// <summary>
+        /// Create RS256 settings with specified <paramref name="certificate"/>
+        /// </summary>
+        /// <returns></returns>
+        public static SignatureSettings RSA(SignatureAlgorithm algorithm, X509Certificate2 certificate)
+        {
+            switch (algorithm)
+            {
+                case SignatureAlgorithm.RS256:
+                case SignatureAlgorithm.RS512:
+                    return new SignatureSettings(algorithm, null, certificate);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(algorithm));
+            }
+        }
+
+        /// <summary>
+        /// Create signature settings from configuration
+        /// </summary>
+        public static SignatureSettings FromConfiguration(SecuritySignatureConfiguration configuration) => new SignatureSettings(configuration.Algorithm, configuration.Secret, configuration.Certificate);
+
+        /// <summary>
+        /// Get the algorithm
+        /// </summary>
+        public SignatureAlgorithm Algorithm { get; }
+
+        /// <summary>
+        /// Get the raw key data
+        /// </summary>
+        public byte[] RawKeyData { get; }
+
+        /// <summary>
+        /// Get the x509 certificate
+        /// </summary>
+        public X509Certificate2 Certificate { get; }
+
+    }
+
     /// <summary>
     /// Contract for services which can sign data using configured digital signature algorithms
     /// </summary>
@@ -32,48 +97,56 @@ namespace SanteDB.Core.Security.Services
     /// digital signatures against arbitrary data streams. Implementers of this service are responsible for 
     /// maintaining (or acquiring) a master list of keys which can be used for data signing, and validating 
     /// digital signatures.</para>
+    /// <para>Implementers should also use the <see cref="IDataSigningCertificateManagerService"/> to support key identifiers which are indicated as a 
+    /// secure application/device identifier</para>
     /// </remarks>
     [System.ComponentModel.Description("Data Signing Service")]
     public interface IDataSigningService : IServiceImplementation
     {
-        /// <summary>
-        /// Get the keys identifiers registered for the signature service
-        /// </summary>
-        IEnumerable<string> GetKeys();
 
         /// <summary>
-        /// Get the siganture algorithm this service would use to sign w/the specified key
+        /// Get the siganture algorithm for the system configured key
         /// </summary>
-        SignatureAlgorithm? GetSignatureAlgorithm(string keyId = null);
+        SignatureSettings GetNamedSignatureSettings(string systemKeyId);
 
         /// <summary>
-        /// Register a key with the provider
+        /// Get the signature algorithm for the configured thumbprint
         /// </summary>
-        /// <param name="keyId">The key identifier to register</param>
-        /// <param name="keyData">The key data (passphrase, or the signature of the certificate in the certificate store)</param>
-        /// <param name="signatureAlgorithm">The signature algorithm</param>
-        void AddSigningKey(string keyId, byte[] keyData, SignatureAlgorithm signatureAlgorithm);
+        SignatureSettings GetSignatureSettings(string certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256);
+
+        /// <summary>
+        /// Sign <paramref name="data"/> with the configured system key <paramref name="systemKeyId"/>
+        /// </summary>
+        /// <param name="data">The data to be signed</param>
+        /// <param name="systemKeyId">The system key to use</param>
+        /// <returns>The signed data</returns>
+        byte[] SignData(byte[] data, string systemKeyId = null);
 
         /// <summary>
         /// Signs the specified data using the service's configured signing key
         /// </summary>
         /// <param name="data">The data to be signed</param>
-        /// <param name="keyId">The numeric identifier of the key to use</param>
+        /// <param name="settings">The signature configuration to use</param>
         /// <returns>The digital signature</returns>
-        byte[] SignData(byte[] data, string keyId = null);
+        byte[] SignData(byte[] data, SignatureSettings settings);
 
         /// <summary>
         /// Verifies the digital signature of the data
         /// </summary>
         /// <param name="data"></param>
         /// <param name="signature">The digital signature to be verified</param>
-        /// <param name="keyId">The identifier of the key to use for verification</param>
+        /// <param name="systemKeyId">The identifier of the key to use for verification</param>
         /// <returns>True if the signature is valid</returns>
-        bool Verify(byte[] data, byte[] signature, string keyId = null);
+        bool Verify(byte[] data, byte[] signature, string systemKeyId = null);
 
         /// <summary>
-        /// Get the public key identifier
+        /// Verifies the digital signature of the data with a provided configuration
         /// </summary>
-        string GetPublicKeyThumbprint(string keyId = null);
+        /// <param name="data"></param>
+        /// <param name="signature">The digital signature to be verified</param>
+        /// <param name="settings">The configuration to use</param>
+        /// <returns>True if the signature is valid</returns>
+        bool Verify(byte[] data, byte[] signature, SignatureSettings settings);
+
     }
 }

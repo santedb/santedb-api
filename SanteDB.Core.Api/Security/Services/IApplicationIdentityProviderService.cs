@@ -114,16 +114,6 @@ namespace SanteDB.Core.Security.Services
         void ChangeSecret(String applicationName, String secret, IPrincipal principal);
 
         /// <summary>
-        /// Get the secure key for the specified application (can be used for symmetric encryption)
-        /// </summary>
-        byte[] GetPublicSigningKey(String applicationName);
-
-        /// <summary>
-        /// Set the public key for the object
-        /// </summary>
-        void SetPublicKey(string applicationName, byte[] key, IPrincipal principal);
-
-        /// <summary>
         /// Add a <paramref name="claim"/> to <paramref name="applicationName"/> 
         /// </summary>
         /// <param name="applicationName">The name of the device to which the claim should be added</param>

@@ -21,9 +21,11 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Http.Compression;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -57,7 +59,11 @@ namespace SanteDB.Core.Security.Signing
         /// <summary>
         /// Signature doesn't match
         /// </summary>
-        SignatureMismatch
+        SignatureMismatch,
+        /// <summary>
+        /// Algorithm is not supported
+        /// </summary>
+        UnsupportedAlgorithm
     }
 
     /// <summary>
@@ -134,6 +140,34 @@ namespace SanteDB.Core.Security.Signing
         }
 
         /// <summary>
+        /// Parse the specified <paramref name="detachedSignature"/> and return the appropriate <see cref="JsonWebSignature"/>
+        /// </summary>
+        /// <param name="detachedSignature">The detached signature to parse</param>
+        /// <param name="parsedWebSignature">The parsed web signature</param>
+        /// <returns>The result of the parse</returns>
+        public static JsonWebSignatureParseResult TryParseDetached(String detachedSignature, out JsonWebSignature parsedWebSignature)
+        {
+            var jwsMatch = m_jwsFormat.Match(detachedSignature);
+            if (!jwsMatch.Success)
+            {
+                parsedWebSignature = null;
+                return JsonWebSignatureParseResult.InvalidFormat;
+            }
+
+            parsedWebSignature = new JsonWebSignature(null);
+            parsedWebSignature.m_token = detachedSignature;
+
+            // Get the parts of the header
+            byte[] headerBytes = jwsMatch.Groups[2].Value.ParseBase64UrlEncode(),
+                signatureBytes = jwsMatch.Groups[4].Value.ParseBase64UrlEncode();
+
+            // Now lets parse the JSON objects
+            parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
+            parsedWebSignature.Signature = signatureBytes;
+            return JsonWebSignatureParseResult.Success;
+        }
+
+        /// <summary>
         /// Parse the specified <paramref name="webSignature"/> and create the <see cref="JsonWebSignature"/>
         /// </summary>
         /// <param name="webSignature">The web signature to parse</param>
@@ -161,22 +195,26 @@ namespace SanteDB.Core.Security.Signing
             parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
             parsedWebSignature.Signature = signatureBytes;
             // First, validate the signature
-            var keyId = parsedWebSignature.Header.KeyId?.ToString();
+            if(!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
+            {
+                return JsonWebSignatureParseResult.MissingKeyId;
+            }
+
             var alg = parsedWebSignature.Header.Algorithm?.ToString();
             var result = JsonWebSignatureParseResult.Success;
-            if (String.IsNullOrEmpty(keyId))
-            {
-                result = JsonWebSignatureParseResult.MissingKeyId;
-            }
-            else if (String.IsNullOrEmpty(alg))
+            if (String.IsNullOrEmpty(alg))
             {
                 result = JsonWebSignatureParseResult.MissingAlgorithm;
             }
-            else if (!alg.Equals(dataSigningService.GetSignatureAlgorithm(keyId).ToString()))
+            else if (!Enum.TryParse<SignatureAlgorithm>(alg, true, out var signatureAlgorithm))
+            {
+                result = JsonWebSignatureParseResult.UnsupportedAlgorithm;
+            }
+            else if (signatureSettings.Algorithm != signatureAlgorithm)
             {
                 result = JsonWebSignatureParseResult.AlgorithmAndKeyMismatch;
             }
-            else if (!dataSigningService.Verify(Encoding.UTF8.GetBytes(jwsMatch.Groups[1].Value), signatureBytes, keyId))
+            else if (!dataSigningService.Verify(Encoding.UTF8.GetBytes(jwsMatch.Groups[1].Value), signatureBytes, signatureSettings))
             {
                 result = JsonWebSignatureParseResult.SignatureMismatch;
             }
@@ -245,15 +283,27 @@ namespace SanteDB.Core.Security.Signing
         }
 
         /// <summary>
-        /// JSON web signature data with key
+        /// JSON web signature data with thumbprint
+        /// </summary>
+        public JsonWebSignature WithX5T(String thumbprint)
+        {
+            if (String.IsNullOrEmpty(this.Header.KeyThumbprint))
+            {
+                this.Header.Algorithm = "RS256";
+                this.Header.KeyThumbprint = thumbprint;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// JSON web signature data with a named key
         /// </summary>
         public JsonWebSignature WithKey(String keyId)
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {
-                this.Header.Algorithm = this.m_dataSigningService.GetSignatureAlgorithm(keyId).ToString();
                 this.Header.KeyId = keyId;
-                this.Header.KeyThumbprint = this.m_dataSigningService.GetPublicKeyThumbprint(keyId);
+                this.Header.Algorithm = this.m_dataSigningService.GetNamedSignatureSettings(keyId).Algorithm.ToString();
             }
             return this;
         }

@@ -25,13 +25,17 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Security.Signing;
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
@@ -102,6 +106,74 @@ namespace SanteDB.Core
         public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
 
+        /// <summary>
+        /// Try to get signature settings
+        /// </summary>
+        public static bool TryGetSignatureSettings(this IDataSigningService serviceInstance, JsonWebSignatureHeader jwsHeader, out SignatureSettings signatureSettings)
+        {
+            if(!String.IsNullOrEmpty(jwsHeader.KeyId))
+            {
+                signatureSettings = serviceInstance.GetNamedSignatureSettings(jwsHeader.KeyId);
+                return signatureSettings != null;
+            }
+            else if(!String.IsNullOrEmpty(jwsHeader.KeyThumbprint) && Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var algorithm))
+            {
+                signatureSettings = serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint, algorithm);
+                return signatureSettings != null;
+            }
+            else
+            {
+                signatureSettings = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get the device identity from the authentication context
+        /// </summary>
+        /// <param name="authContext">The authentication context</param>
+        /// <returns>The device identity</returns>
+        public static IDeviceIdentity GetDeviceIdentity(this AuthenticationContext authContext)
+        {
+            if(authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.OfType<IDeviceIdentity>().FirstOrDefault() ;
+            }
+            return authContext.Principal.Identity as IDeviceIdentity;
+        }
+
+        /// <summary>
+        /// Get the application identity from the authentication context
+        /// </summary>
+        /// <param name="authContext">The authentication context</param>
+        /// <returns>The application identity</returns>
+        public static IApplicationIdentity GetApplicationIdentity(this AuthenticationContext authContext)
+        {
+            if (authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+            }
+            return authContext.Principal.Identity as IApplicationIdentity;
+        }
+
+        /// <summary>
+        /// Get the user identity
+        /// </summary>
+        /// <param name="authContext">The authentication context from which the user identity should be obtained</param>
+        /// <returns>The user identity from the authentication context</returns>
+        public static IIdentity GetUserIdentity(this AuthenticationContext authContext)
+        {
+            if(authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor)?.Value == ActorTypeKeys.HumanUser.ToString()) ??
+                    icp.Identities.FirstOrDefault(o => !(o is IDeviceIdentity || o is IApplicationIdentity));
+            }
+            else if(!(authContext.Principal.Identity is IApplicationIdentity || authContext.Principal.Identity is IDeviceIdentity))
+            {
+                return authContext.Principal.Identity;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
