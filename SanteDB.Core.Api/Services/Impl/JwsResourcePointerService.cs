@@ -95,7 +95,7 @@ namespace SanteDB.Core.Services.Impl
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType($"x-santedb+{entity.GetType().GetSerializationName()}");
 
-            // Otherwise use the configured secure application HMAC key as the default
+            // Allow a configured identity 
             var signingIdentity = (IIdentity)AuthenticationContext.Current.GetDeviceIdentity() ??
                 AuthenticationContext.Current.GetApplicationIdentity();
             if (signingIdentity != null)
@@ -104,16 +104,16 @@ namespace SanteDB.Core.Services.Impl
                 var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(signingIdentity);
                 if(signingCertificate?.Any() == true)
                 {
-                    signature = signature.WithX5T(signingCertificate.First().Thumbprint);
+                    signature = signature.WithCertificate(signingCertificate.First());
                 }
                 else
                 {
-                    signature = signature.WithKey("default");
+                    signature = signature.WithSystemKey("default");
                 }
             }
             else
             {
-                signature = signature.WithKey("default");
+                signature = signature.WithSystemKey("default");
             }
 
             return signature.AsSigned().Token;

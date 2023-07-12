@@ -60,7 +60,7 @@ namespace SanteDB.Core.Api.Test
             var dataSigningService = ApplicationServiceContext.Current.GetService<IDataSigningService>();
             var jsonPayload = JsonWebSignature.Create(payload, dataSigningService)
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
-                .WithKey("default")
+                .WithSystemKey("default")
                 .WithType("foobar")
                 .AsSigned();
 

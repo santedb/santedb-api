@@ -26,6 +26,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -285,12 +286,13 @@ namespace SanteDB.Core.Security.Signing
         /// <summary>
         /// JSON web signature data with thumbprint
         /// </summary>
-        public JsonWebSignature WithX5T(String thumbprint)
+        public JsonWebSignature WithCertificate(X509Certificate2 certificate)
         {
             if (String.IsNullOrEmpty(this.Header.KeyThumbprint))
             {
                 this.Header.Algorithm = "RS256";
-                this.Header.KeyThumbprint = thumbprint;
+                this.Header.KeyId = certificate.Thumbprint;
+                this.Header.KeyThumbprint = certificate.GetCertHash().Base64UrlEncode();
             }
             return this;
         }
@@ -298,7 +300,7 @@ namespace SanteDB.Core.Security.Signing
         /// <summary>
         /// JSON web signature data with a named key
         /// </summary>
-        public JsonWebSignature WithKey(String keyId)
+        public JsonWebSignature WithSystemKey(String keyId)
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {

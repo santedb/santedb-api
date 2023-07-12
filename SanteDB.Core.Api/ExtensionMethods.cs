@@ -111,21 +111,13 @@ namespace SanteDB.Core
         /// </summary>
         public static bool TryGetSignatureSettings(this IDataSigningService serviceInstance, JsonWebSignatureHeader jwsHeader, out SignatureSettings signatureSettings)
         {
-            if(!String.IsNullOrEmpty(jwsHeader.KeyId))
+            if(!Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var signatureAlgorithm))
             {
-                signatureSettings = serviceInstance.GetNamedSignatureSettings(jwsHeader.KeyId);
-                return signatureSettings != null;
+                throw new ArgumentOutOfRangeException(nameof(jwsHeader.Algorithm));
             }
-            else if(!String.IsNullOrEmpty(jwsHeader.KeyThumbprint) && Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var algorithm))
-            {
-                signatureSettings = serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint, algorithm);
-                return signatureSettings != null;
-            }
-            else
-            {
-                signatureSettings = null;
-                return false;
-            }
+            signatureSettings = serviceInstance.GetNamedSignatureSettings(jwsHeader.KeyId) ??
+                serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint, signatureAlgorithm);
+            return signatureSettings != null;
         }
 
         /// <summary>
