@@ -48,5 +48,7 @@ namespace SanteDB.Core.Services
         /// Get the manufacturer name
         /// </summary>
         String ManufacturerName { get; }
+
+
     }
 }

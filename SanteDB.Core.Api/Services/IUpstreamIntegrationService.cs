@@ -106,6 +106,11 @@ namespace SanteDB.Core.Services
         Uri Realm { get; }
 
         /// <summary>
+        /// Get the local device's security identifier
+        /// </summary>
+        Guid LocalDeviceSid { get; }
+
+        /// <summary>
         /// Gets the local identity (how this node authenticates itself to the upstream)
         /// </summary>
         String LocalDeviceName { get; }

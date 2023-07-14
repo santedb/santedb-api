@@ -21,7 +21,9 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -190,57 +192,59 @@ namespace SanteDB.Core.Security.Tfa
                 throw new ArgumentNullException(nameof(claim));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
-
-            if (null == identityprovider)
-            {
-                throw new InvalidOperationException("No IIdentityProviderService is present.");
-            }
-
+            
             var sdbclaim = new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim));
 
-            identityprovider.AddClaim(identity.Name, sdbclaim, principal);
+            switch(identity)
+            {
+                case IApplicationIdentity aid:
+                    _ServiceContext.GetService<IApplicationIdentityProviderService>()?.AddClaim(identity.Name, sdbclaim, principal);
+                    break;
+                case IDeviceIdentity did:
+                    _ServiceContext.GetService<IDeviceIdentityProviderService>()?.AddClaim(identity.Name, sdbclaim, principal);
+                    break;
+                default:
+                    _ServiceContext.GetService<IIdentityProviderService>()?.AddClaim(identity.Name, sdbclaim, principal);
+                    break;
+
+            }
 
             return claim;
         }
 
 
-        private List<Rfc4226SecretClaim> GetSecretsForIdentity(IIdentity identity)
+        private IEnumerable<Rfc4226SecretClaim> GetSecretsForIdentity(IIdentity identity)
         {
             if (null == identity)
             {
                 throw new ArgumentNullException(nameof(identity));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
+            IEnumerable<IClaim> claims = null;
+            switch(identity)
+            {
+                case IApplicationIdentity aid:
+                        claims = _ServiceContext.GetService<IApplicationIdentityProviderService>()?.GetClaims(aid.Name);
+                        break;
+                case IDeviceIdentity did:
+                    claims = _ServiceContext.GetService<IDeviceIdentityProviderService>()?.GetClaims(did.Name);
+                    break;
+                default:
+                    claims = _ServiceContext.GetService<IIdentityProviderService>()?.GetClaims(identity.Name);
+                    break;
+            }
 
-            if (identityprovider == null)
+            if (claims == null)
             {
                 throw new InvalidOperationException("No IIdentityProviderService is present.");
             }
 
-            var claims = identityprovider.GetClaims(identity.Name)?.Where(c => c.Type == SanteDBClaimTypes.SanteDBRfc4226Secret);
+            claims = claims.Where(c => c.Type == SanteDBClaimTypes.SanteDBRfc4226Secret);
 
-            var secrets = new List<Rfc4226SecretClaim>();
-
-            if (null != claims)
+            foreach(var claim in claims)
             {
-                foreach (var claim in claims)
-                {
-                    try
-                    {
-                        secrets.Add(JsonConvert.DeserializeObject<Rfc4226SecretClaim>(claim.Value));
-                    }
-                    catch
-                    {
-                        //TODO: Log this.
-                    }
-                }
-
-
+                yield return JsonConvert.DeserializeObject<Rfc4226SecretClaim>(claim.Value);
             }
-
-            return secrets;
         }
 
         private void UpdateSecretsForIdentity(IIdentity identity, IEnumerable<Rfc4226SecretClaim> claims, IPrincipal principal)
@@ -250,22 +254,26 @@ namespace SanteDB.Core.Security.Tfa
                 throw new ArgumentNullException(nameof(identity));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
-
-            if (null == identityprovider)
+            var convertedClaims = claims.Select(o => new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(o)));
+            switch(identity)
             {
-                throw new InvalidOperationException("No IIdentityProviderService is present.");
+                case IApplicationIdentity aid:
+                    var aidProvider = _ServiceContext.GetService<IApplicationIdentityProviderService>();
+                    aidProvider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
+                    convertedClaims.ForEach(o => aidProvider.AddClaim(identity.Name, o, principal));
+                    break;
+                case IDeviceIdentity did:
+                    var didProvider = _ServiceContext.GetService<IDeviceIdentityProviderService>();
+                    didProvider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
+                    convertedClaims.ForEach(o => didProvider.AddClaim(identity.Name, o, principal));
+                    break;
+                default:
+                    var idProvider = _ServiceContext.GetService<IIdentityProviderService>();
+                    idProvider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
+                    convertedClaims.ForEach(o => idProvider.AddClaim(identity.Name, o, principal));
+                    break;
             }
 
-            identityprovider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
-
-            if (claims?.Count() > 0)
-            {
-                foreach (var claim in claims)
-                {
-                    identityprovider.AddClaim(identity.Name, new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim)), principal);
-                }
-            }
         }
 
         /// <inheritdoc/>

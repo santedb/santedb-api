@@ -93,7 +93,7 @@ namespace SanteDB.Core.Services.Impl
 
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
-                .WithType($"x-santedb+{entity.GetType().GetSerializationName()}");
+                .WithContentType($"application/x-santedb+{entity.GetType().GetSerializationName()}");
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
             var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
@@ -138,12 +138,12 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.notsupported", "Unsupported Algorithm", DetectedIssueKeys.SecurityIssue));
                     }
                 }
-                else if (!parsedToken.Header.Type.StartsWith("x-santedb+"))
+                else if (!parsedToken.Header.Type.StartsWith("application/x-santedb+"))
                 {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Object Type", DetectedIssueKeys.InvalidDataIssue));
                 }
 
-                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.Type.Substring(10));
+                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.ContentType.Substring(22));
 
                 // Attempt to locate the record
                 var domainQuery = new NameValueCollection();

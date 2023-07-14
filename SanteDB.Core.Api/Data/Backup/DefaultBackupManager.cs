@@ -40,6 +40,7 @@ namespace SanteDB.Core.Data.Backup
         private readonly BackupConfigurationSection m_configuration;
         private readonly IServiceManager m_serviceManager;
         private readonly IPolicyEnforcementService m_pepService;
+        private readonly IOperatingSystemPermissionService m_osPermissionService;
         private ILocalizationService m_localizationService;
 
         private const string BACKUP_EXTENSION = "sdbk.bz2";
@@ -59,11 +60,13 @@ namespace SanteDB.Core.Data.Backup
         public DefaultBackupManager(IConfigurationManager configurationManager,
             IServiceManager serviceManager,
             IPolicyEnforcementService pepService,
+            IOperatingSystemPermissionService permissionService,
             ILocalizationService localizationService)
         {
             this.m_configuration = configurationManager.GetSection<BackupConfigurationSection>();
             this.m_serviceManager = serviceManager;
             this.m_pepService = pepService;
+            this.m_osPermissionService = permissionService;
             this.m_localizationService = localizationService;
         }
 
@@ -78,6 +81,10 @@ namespace SanteDB.Core.Data.Backup
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
 
+            if (media != BackupMedia.Private && !this.m_osPermissionService.HasPermission(OperatingSystemPermissionType.FileSystem))
+            {
+                this.m_osPermissionService.RequestPermission(OperatingSystemPermissionType.FileSystem);
+            }
 
             // Set file and output
             String backupDescriptor = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
@@ -132,6 +139,11 @@ namespace SanteDB.Core.Data.Backup
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
 
+            if (media != BackupMedia.Private && !this.m_osPermissionService.HasPermission(OperatingSystemPermissionType.FileSystem))
+            {
+                this.m_osPermissionService.RequestPermission(OperatingSystemPermissionType.FileSystem);
+            }
+
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
@@ -149,6 +161,11 @@ namespace SanteDB.Core.Data.Backup
             if (String.IsNullOrEmpty(backupDescriptor))
             {
                 throw new ArgumentNullException(nameof(backupDescriptor));
+            }
+
+            if (media != BackupMedia.Private && !this.m_osPermissionService.HasPermission(OperatingSystemPermissionType.FileSystem))
+            {
+                this.m_osPermissionService.RequestPermission(OperatingSystemPermissionType.FileSystem);
             }
 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
@@ -176,6 +193,11 @@ namespace SanteDB.Core.Data.Backup
             if (String.IsNullOrEmpty(backupDescriptor))
             {
                 throw new ArgumentNullException(nameof(backupDescriptor));
+            }
+
+            if (media != BackupMedia.Private && !this.m_osPermissionService.HasPermission(OperatingSystemPermissionType.FileSystem))
+            {
+                this.m_osPermissionService.RequestPermission(OperatingSystemPermissionType.FileSystem);
             }
 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);

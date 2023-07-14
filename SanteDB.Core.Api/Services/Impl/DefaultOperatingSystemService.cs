@@ -25,10 +25,10 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// Default operating system service
     /// </summary>
-    public class DefaultOperatingSystemInfoService : IOperatingSystemInfoService
+    public class DefaultOperatingSystemService : IOperatingSystemInfoService, IOperatingSystemPermissionService
     {
         /// <summary>
-        /// The default name for the manufacturer provided by <see cref="DefaultOperatingSystemInfoService"/>. 
+        /// The default name for the manufacturer provided by <see cref="DefaultOperatingSystemService"/>. 
         /// </summary>
         public const string MANUFACTURER_GENERIC = "Generic Manufacturer";
 
@@ -75,5 +75,10 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public string ManufacturerName => MANUFACTURER_GENERIC;
 
+        /// <inheritdoc/>
+        public bool HasPermission(OperatingSystemPermissionType permission) => true;
+
+        /// <inheritdoc/>
+        public bool RequestPermission(OperatingSystemPermissionType permission) => true;
     }
 }

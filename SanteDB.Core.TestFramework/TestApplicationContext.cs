@@ -68,7 +68,7 @@ namespace SanteDB.Core.TestFramework
             this.AddServiceProvider(typeof(SanteDB.Core.Security.SHA256PasswordHashingService));
             this.AddServiceProvider(typeof(SanteDB.Core.Security.DefaultPolicyDecisionService));
             this.AddServiceProvider(typeof(SanteDB.Core.Security.DefaultPolicyEnforcementService));
-            this.AddServiceProvider(typeof(DefaultOperatingSystemInfoService));
+            this.AddServiceProvider(typeof(DefaultOperatingSystemService));
             this.AddServiceProvider(typeof(TestAuditService));
 #if DEBUG
             if (Tracer.GetWriter<DebugDiagnosticsTraceWriter>() == null)

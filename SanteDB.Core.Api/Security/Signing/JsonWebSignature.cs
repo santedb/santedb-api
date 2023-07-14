@@ -25,7 +25,9 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using System;
 using System.IO;
+using System.Net.Mime;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -101,7 +103,32 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         [JsonProperty("zip")]
         public String Zip { get; set; }
+
+        /// <summary>
+        /// Gets or sets the content type
+        /// </summary>
+        [JsonProperty("cty")]
+        public string ContentType { get; set; }
+
+        /// <summary>
+        /// Gets the encryption algorithm
+        /// </summary>
+        [JsonProperty("enc")]
+        public string Encryption { get; set; }
+
+        /// <summary>
+        /// Gets the issued time
+        /// </summary>
+        [JsonProperty("iat")]
+        public long IssuedTime { get; set; }
+
+        /// <summary>
+        /// Get the id of the payload
+        /// </summary>
+        [JsonProperty("jti")]
+        public String Id { get; set; }
     }
+
     /// <summary>
     /// Web signature data
     /// </summary>
@@ -117,6 +144,7 @@ namespace SanteDB.Core.Security.Signing
 
         // The parsed token
         private string m_token;
+        private SignatureSettings m_signatureSettings;
 
         /// <summary>
         /// Create a new web signature with the specified data
@@ -169,6 +197,37 @@ namespace SanteDB.Core.Security.Signing
         }
 
         /// <summary>
+        /// Parse the specified <paramref name="jwsPayload"/> and return the appropriate <see cref="JsonWebSignature"/>
+        /// without validating and serializing
+        /// </summary>
+        /// <param name="jwsPayload">The signature to parse</param>
+        /// <param name="parsedWebSignature">The parsed web signature</param>
+        /// <returns>The result of the parse</returns>
+        public static JsonWebSignatureParseResult TryParseRaw(String jwsPayload, out JsonWebSignature parsedWebSignature)
+        {
+            var jwsMatch = m_jwsFormat.Match(jwsPayload);
+            if (!jwsMatch.Success)
+            {
+                parsedWebSignature = null;
+                return JsonWebSignatureParseResult.InvalidFormat;
+            }
+
+            parsedWebSignature = new JsonWebSignature(null);
+            parsedWebSignature.m_token = jwsPayload;
+
+            // Get the parts of the header
+            byte[] headerBytes = jwsMatch.Groups[2].Value.ParseBase64UrlEncode(),
+                bodyBytes = jwsMatch.Groups[3].Value.ParseBase64UrlEncode(),
+                signatureBytes = jwsMatch.Groups[4].Value.ParseBase64UrlEncode();
+
+            // Now lets parse the JSON objects
+            parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
+            parsedWebSignature.Signature = signatureBytes;
+            parsedWebSignature.Payload = bodyBytes;
+            return JsonWebSignatureParseResult.Success;
+        }
+
+        /// <summary>
         /// Parse the specified <paramref name="webSignature"/> and create the <see cref="JsonWebSignature"/>
         /// </summary>
         /// <param name="webSignature">The web signature to parse</param>
@@ -196,7 +255,7 @@ namespace SanteDB.Core.Security.Signing
             parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
             parsedWebSignature.Signature = signatureBytes;
             // First, validate the signature
-            if(!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
+            if (!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
             {
                 return JsonWebSignatureParseResult.MissingKeyId;
             }
@@ -221,12 +280,19 @@ namespace SanteDB.Core.Security.Signing
             }
 
             // Continue to parse the data
-            using (var ms = new MemoryStream(bodyBytes))
-            using (var compressionStream = parsedWebSignature.GetJwsCompressor().CreateDecompressionStream(ms))
-            using (var textReader = new StreamReader(compressionStream))
-            using (var jsonReader = new JsonTextReader(textReader))
+            if (parsedWebSignature.Header.ContentType == "application/json")
             {
-                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize(jsonReader);
+                using (var ms = new MemoryStream(bodyBytes))
+                using (var compressionStream = parsedWebSignature.GetJwsCompressor().CreateDecompressionStream(ms))
+                using (var textReader = new StreamReader(compressionStream))
+                using (var jsonReader = new JsonTextReader(textReader))
+                {
+                    parsedWebSignature.Payload = JsonSerializer.Create().Deserialize(jsonReader);
+                }
+            }
+            else
+            {
+                parsedWebSignature.Payload = bodyBytes;
             }
 
             return result;
@@ -293,6 +359,7 @@ namespace SanteDB.Core.Security.Signing
                 this.Header.Algorithm = "RS256";
                 this.Header.KeyId = certificate.Thumbprint;
                 this.Header.KeyThumbprint = certificate.GetCertHash().Base64UrlEncode();
+                this.m_signatureSettings = SignatureSettings.RSA(SignatureAlgorithm.RS256, certificate);
             }
             return this;
         }
@@ -304,8 +371,23 @@ namespace SanteDB.Core.Security.Signing
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {
+                this.m_signatureSettings = this.m_dataSigningService.GetNamedSignatureSettings(keyId);
                 this.Header.KeyId = keyId;
-                this.Header.Algorithm = this.m_dataSigningService.GetNamedSignatureSettings(keyId).Algorithm.ToString();
+                this.Header.Algorithm = this.m_signatureSettings.Algorithm.ToString();
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// JSON web signature with an arbitrary key
+        /// </summary>
+        public JsonWebSignature WithSymmetricKey(byte[] key)
+        {
+            if(string.IsNullOrEmpty(this.Header.KeyId))
+            {
+                this.m_signatureSettings = SignatureSettings.HS256(key);
+                this.Header.Algorithm = this.m_signatureSettings.Algorithm.ToString();
+                this.Header.KeyId = SHA1.Create().ComputeHash(key).HexEncode();
             }
             return this;
         }
@@ -318,6 +400,39 @@ namespace SanteDB.Core.Security.Signing
             if (String.IsNullOrEmpty(this.Header.Type))
             {
                 this.Header.Type = type;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// With specified id
+        /// </summary>
+        public JsonWebSignature WithId(String id)
+        {
+            if (String.IsNullOrEmpty(this.Header.Id))
+            {
+                this.Header.Id = id;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Add an IAT to header
+        /// </summary>
+        public JsonWebSignature WithIssueTime(DateTimeOffset originationTime)
+        {
+            this.Header.IssuedTime = originationTime.ToUniversalTime().ToUnixTimeSeconds();
+            return this;
+        }
+
+        /// <summary>
+        /// With type
+        /// </summary>
+        public JsonWebSignature WithContentType(String contentType)
+        {
+            if (String.IsNullOrEmpty(this.Header.ContentType))
+            {
+                this.Header.ContentType = contentType;
             }
             return this;
         }
@@ -337,16 +452,28 @@ namespace SanteDB.Core.Security.Signing
 
 
                 using (var compressStream = scheme.CreateCompressionStream(ms))
-                using (var textWriter = new StreamWriter(compressStream))
-                using (var jsonWriter = new JsonTextWriter(textWriter))
                 {
-                    JsonSerializer.Create().Serialize(jsonWriter, this.Payload);
+                    if (this.Header.ContentType == "application/json")
+                    {
+                        using (var textWriter = new StreamWriter(compressStream))
+                        using (var jsonWriter = new JsonTextWriter(textWriter))
+                        {
+                            JsonSerializer.Create().Serialize(jsonWriter, this.Payload);
+                        }
+                    }
+                    else if (this.Payload is byte[] b)
+                    {
+                        ms.Write(b, 0, b.Length);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Cannot represent payload");
+                    }
                 }
-
                 retVal.AppendFormat(".{0}", ms.ToArray().Base64UrlEncode());
             }
 
-            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.Header.KeyId?.ToString());
+            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.m_signatureSettings);
             retVal.AppendFormat(".{0}", this.Signature.Base64UrlEncode());
             this.m_token = retVal.ToString();
             return this;
@@ -371,5 +498,7 @@ namespace SanteDB.Core.Security.Signing
                     return CompressionUtil.GetCompressionScheme(HttpCompressionAlgorithm.None);
             }
         }
+
+        
     }
 }
