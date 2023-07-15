@@ -22,6 +22,15 @@ using System;
 
 namespace SanteDB.Core.Services.Impl
 {
+
+    /// <summary>
+    /// For compatibility 
+    /// </summary>
+    [Obsolete(nameof(DefaultOperatingSystemService), true)]
+    public class DefaultOperatingSystemInfoService : DefaultOperatingSystemService
+    {
+    }
+
     /// <summary>
     /// Default operating system service
     /// </summary>

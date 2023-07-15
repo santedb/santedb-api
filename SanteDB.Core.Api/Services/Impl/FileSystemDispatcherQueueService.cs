@@ -312,10 +312,7 @@ namespace SanteDB.Core.Services.Impl
                 }
 
                 bool isEmpty = false;
-                while (this.IsFileLocked(queueFile, out isEmpty))
-                {
-                    Thread.Sleep(100);
-                }
+                SpinWait.SpinUntil(() => !this.IsFileLocked(queueFile, out isEmpty));
                 if (isEmpty)
                 {
                     File.Delete(queueFile);
