@@ -70,6 +70,8 @@ namespace SanteDB.Core.Http
         /// <inheritdoc/>
         public string Accept { get; set; }
 
+        readonly string _TaskIdentifier;
+
         /// <summary>
         /// Convert headers
         /// </summary>
@@ -89,7 +91,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         protected void FireProgressChanged(String state, float progress)
         {
-            ProgressChangedEventArgs e = new ProgressChangedEventArgs(progress, state);
+            ProgressChangedEventArgs e = new ProgressChangedEventArgs(_TaskIdentifier, progress, state);
             this.ProgressChanged?.Invoke(this, e);
         }
 
@@ -98,6 +100,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         public RestClientBase()
         {
+            _TaskIdentifier = this.GetType()?.Name;
         }
 
         /// <summary>
@@ -105,6 +108,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="config">The configuraiton of this client</param>
         public RestClientBase(IRestClientDescription config)
+            : this()
         {
             this.Description = config;
             this.Accept = config.Accept;

@@ -527,7 +527,7 @@ namespace SanteDB.Core.Services.Impl
 
                 try
                 {
-                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, UserMessages.STARTING_CONTEXT));
+                    this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), 0f, UserMessages.STARTING_CONTEXT));
                     if (this.GetService<IConfigurationManager>() == null)
                     {
                         throw new InvalidOperationException("Cannot find configuration manager!");
@@ -546,7 +546,7 @@ namespace SanteDB.Core.Services.Impl
                         .Select(s => s.serviceType))
                     {
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, UserMessages.STARTING_CONTEXT));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, UserMessages.STARTING_CONTEXT));
 
                         if (svc.Type == null)
                         {
@@ -572,7 +572,7 @@ namespace SanteDB.Core.Services.Impl
                         var singletonServices = this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).ToArray();
                         foreach (var svc in singletonServices)
                         {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
                             this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }
@@ -587,7 +587,7 @@ namespace SanteDB.Core.Services.Impl
                                 continue;
                             }
 
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++ / daemonServices.Length) * 0.3f + 0.6f, String.Format(UserMessages.START_DAEMON, dc.ServiceName)));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / daemonServices.Length) * 0.3f + 0.6f, String.Format(UserMessages.START_DAEMON, dc.ServiceName)));
 
                             this.m_tracer.TraceInfo("Starting {0}...", dc.ServiceName);
                             if (dc != this && !dc.Start())
@@ -603,7 +603,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     startWatch.Stop();
                 }
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(1.0f, UserMessages.STARTING_CONTEXT));
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), 1.0f, UserMessages.STARTING_CONTEXT));
 
                 this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
                 this.IsRunning = true;
@@ -635,11 +635,11 @@ namespace SanteDB.Core.Services.Impl
 
             this.IsRunning = false;
 
-            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.0f, UserMessages.STOPPING_CONTEXT));
+            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), 0f, UserMessages.STOPPING_CONTEXT));
             int i = 0;
             foreach (var svc in this.m_serviceRegistrations.Where(o => o.ServiceImplementer != typeof(DependencyServiceManager) && !o.ServiceImplementer.Implements(typeof(IApplicationServiceContext))).ToArray())
             {
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs((float)i++ / this.m_serviceRegistrations.Count, UserMessages.STOPPING_CONTEXT));
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), (float)i++ / this.m_serviceRegistrations.Count, UserMessages.STOPPING_CONTEXT));
 
                 if (svc.InstantiationType == ServiceInstantiationType.Singleton && svc.GetCreatedInstance() is IDaemonService daemon)
                 {
@@ -848,9 +848,9 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <inheritdoc/>
-        public void NotifyStartupProgress(float startupProgress, string startupChangeText)
+        public void NotifyStartupProgress(string taskIdentifier, float startupProgress, string startupChangeText)
         {
-            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(startupProgress, startupChangeText));
+            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(taskIdentifier, startupProgress, startupChangeText));
         }
     }
 }

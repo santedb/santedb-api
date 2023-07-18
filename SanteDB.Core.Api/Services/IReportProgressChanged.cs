@@ -23,35 +23,6 @@ using System;
 namespace SanteDB.Core.Services
 {
     /// <summary>
-    /// Event arguments for process changing event
-    /// </summary>
-    /// <remarks>This class allows the <see cref="IReportProgressChanged"/> class to notify listeners of the current
-    /// status of an operation it is performing.</remarks>
-    public class ProgressChangedEventArgs : EventArgs
-    {
-        /// <summary>
-        /// Gets or sets the progress of the event
-        /// </summary>
-        public float Progress { get; }
-
-        /// <summary>
-        /// Contextual information (such as text) which is appended to the progress on user interfaces or REST messages
-        /// </summary>
-        public String State { get; }
-
-        /// <summary>
-        /// Creates a new progress changed event
-        /// </summary>
-        /// <param name="progress">The progress of the operation which is being reported on</param>
-        /// <param name="state">The state object to report with the progress</param>
-        public ProgressChangedEventArgs(float progress, string state)
-        {
-            this.Progress = progress;
-            this.State = state;
-        }
-    }
-
-    /// <summary>
     /// Defines a class that can report progress has changed over a long running process
     /// </summary>
     public interface IReportProgressChanged

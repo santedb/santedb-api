@@ -144,7 +144,7 @@ namespace SanteDB.Core.Data.Import
                         var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
                         this.m_tracer.TraceInfo("Processing {0} from import...", records);
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultForeignDataImporter), 0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
                         if (duplicateChecks.Any())
                         {
                             mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
