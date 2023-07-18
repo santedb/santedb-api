@@ -27,15 +27,29 @@ namespace SanteDB.Core.Services
         public string State { get; }
 
         /// <summary>
+        /// Creates a new progress changed event args with no task identifier
+        /// </summary>
+        /// <param name="progress">The progress of the state change</param>
+        /// <param name="state">The textual status of the state change</param>
+        /// <remarks>This constructor is for backwards compatibility and will assign a default <see cref="TaskIdentifier"/>.
+        /// Implementers should call <see cref="ProgressChangedEventArgs.ProgressChangedEventArgs(string, float, string)"/></remarks>
+        [Obsolete("Use ProgressChangedEventArgs(string, float, string)")]
+        public ProgressChangedEventArgs(float progress, string state)
+        {
+            this.Progress = progress;
+            this.State = state;
+            this.TaskIdentifier = String.Empty;
+        }
+
+        /// <summary>
         /// Creates a new progress changed event
         /// </summary>
         /// <param name="progress">The progress of the operation which is being reported on</param>
         /// <param name="state">The state object to report with the progress</param>
-        public ProgressChangedEventArgs(string taskIdentifier, float progress, string state)
+        /// <param name="taskIdentifier">The task identifier for the background state</param>
+        public ProgressChangedEventArgs(string taskIdentifier, float progress, string state) : this(progress, state)
         {
             this.TaskIdentifier = taskIdentifier;
-            this.Progress = progress;
-            this.State = state;
         }
     }
 }
