@@ -827,7 +827,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = ue.SecurityUserKey.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
-                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser).UserName;
+                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
                     break;
                 case Provider pvd:
                     retVal.Role = AuditableObjectRole.Doctor;

@@ -34,6 +34,7 @@ using System;
 using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -48,6 +49,7 @@ namespace SanteDB.Core.Services.Impl
 
         // Application identity service
         private readonly IApplicationIdentityProviderService m_applicationIdService;
+        private readonly IDataSigningCertificateManagerService m_dataSigningCertificateManagerService;
 
         // Data signing service
         private readonly IDataSigningService m_signingService;
@@ -55,62 +57,17 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// DI constructor
         /// </summary>
-        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null)
+        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_signingService = signingService;
             this.m_applicationIdService = applicationIdentityProviderService;
+            this.m_dataSigningCertificateManagerService = dataSigningCertificateManagerService;
         }
 
         /// <summary>
         /// Name of the service
         /// </summary>
         public String ServiceName => "JSON Web Signature Resource Pointers";
-
-        /// <summary>
-        /// Get the key identifier for the signature
-        /// </summary>
-        private String GetAppKeyId()
-        {
-            // Is there a key called jwsdefault? If so, use it as the default signature key
-            if (m_signingService.GetKeys().Contains("default"))
-            {
-                return "default";
-            }
-
-            // Otherwise use the configured secure application HMAC key as the default
-            if (AuthenticationContext.Current.Principal is IClaimsPrincipal claimsPrincipal)
-            {
-                // Is there a tag for their application
-                var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
-
-                if (appIdentity == null)
-                {
-                    throw new InvalidOperationException("Can only generate signed pointers when an application identity exists");
-                }
-
-                var keyId = $"SA.{appIdentity.Name}";
-
-                // Does the key provider have the key for this app?
-                if (m_signingService.GetKeys().Any(k => k == keyId))
-                {
-                    return keyId;
-                }
-                else
-                {
-                    // Application identity
-                    var key = this.m_applicationIdService.GetPublicSigningKey(appIdentity.Name);
-
-                    // Get the key
-                    this.m_signingService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
-
-                    return keyId;
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("Cannot generate a personal key without knowing application id");
-            }
-        }
 
         /// <summary>
         /// Generate the structured pointer
@@ -123,7 +80,6 @@ namespace SanteDB.Core.Services.Impl
             }
 
             // Setup signatures
-            var keyId = this.GetAppKeyId();
             var domainList = new
             {
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
@@ -135,11 +91,22 @@ namespace SanteDB.Core.Services.Impl
                 }).ToList()
             };
 
-            return JsonWebSignature.Create(domainList, this.m_signingService)
+            var signature = JsonWebSignature.Create(domainList, this.m_signingService)
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
-                .WithKey(keyId)
-                .WithType($"x-santedb+{entity.GetType().GetSerializationName()}")
-                .AsSigned().Token;
+                .WithType($"x-santedb+{entity.GetType().GetSerializationName()}");
+
+            // Allow a configured identity for SYSTEM (this system's certificate mapping)
+            var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
+            if(signingCertificate?.Any() == true)
+            {
+                signature = signature.WithCertificate(signingCertificate.First());
+            }
+            else
+            {
+                signature = signature.WithSystemKey("default");
+            }
+
+            return signature.AsSigned().Token;
         }
 
         /// <summary>
@@ -158,7 +125,7 @@ namespace SanteDB.Core.Services.Impl
                     switch (parseResult)
                     {
                         case JsonWebSignatureParseResult.AlgorithmAndKeyMismatch:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(parsedToken.Header.KeyId)})", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm mismatch", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.InvalidFormat:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.format", $"Token is not in a valid format", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingAlgorithm:
@@ -167,6 +134,8 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.nokey", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
+                        case JsonWebSignatureParseResult.UnsupportedAlgorithm:
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.notsupported", "Unsupported Algorithm", DetectedIssueKeys.SecurityIssue));
                     }
                 }
                 else if (!parsedToken.Header.Type.StartsWith("x-santedb+"))
