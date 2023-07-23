@@ -452,5 +452,11 @@ namespace SanteDB.Core
                 return tw.ToString();
             }
         }
+
+        /// <summary>
+        /// Returns true if the major revisions are equal and minor revisions are greater
+        /// </summary>
+        public static bool IsCompatible(this Version myVersion, Version otherVersion)
+            => myVersion.Major == otherVersion.Major && myVersion.Minor >= otherVersion.Minor;
     }
 }
