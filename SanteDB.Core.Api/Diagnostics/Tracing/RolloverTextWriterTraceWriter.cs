@@ -73,8 +73,13 @@ namespace SanteDB.Core.Diagnostics.Tracing
             this.m_fileName = fileName;
             if (!Path.IsPathRooted(fileName))
             {
-                this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
-               Path.GetFileName(this.m_fileName));
+                this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.GetFileName(fileName));
+            }
+
+            // Create the directory?
+            if(!Directory.Exists(Path.GetDirectoryName(this.m_fileName)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(this.m_fileName));
             }
             //_stream = File.Open(generateFilename(), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             //_stream.Seek(0, SeekOrigin.End);

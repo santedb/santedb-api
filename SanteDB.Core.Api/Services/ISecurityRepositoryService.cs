@@ -157,7 +157,6 @@ namespace SanteDB.Core.Services
         /// </summary>
         Entity GetCdrEntity(IPrincipal principal);
 
-
         /// <summary>
         /// Find provenance objects matching the specified object
         /// </summary>

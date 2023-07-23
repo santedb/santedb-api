@@ -42,6 +42,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security;
@@ -438,5 +439,18 @@ namespace SanteDB.Core
             }
         }
 
+        /// <summary>
+        /// Get serialized public certificate in base64 format
+        /// </summary>
+        public static String GetAsPemString(this X509Certificate2 certificate)
+        {
+            using (var tw = new StringWriter())
+            {
+                tw.WriteLine("-----BEGIN CERTIFICATE-----");
+                tw.WriteLine(Convert.ToBase64String(certificate.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+                tw.WriteLine("-----END CERTIFICATE-----");
+                return tw.ToString();
+            }
+        }
     }
 }

@@ -201,14 +201,17 @@ namespace SanteDB.Core.Jobs
                     {
                         jobData.LastStartTime = DateTime.Now;
                         jobData.LastStopTime = null;
+                        jobData.Progress = 0.0f;
                     }
                     break;
                 case JobStateType.Starting:
                     jobData.LastStartTime = DateTime.Now;
                     jobData.LastStopTime = null;
+                    jobData.Progress = 0.0f;
                     break;
                 case JobStateType.Completed:
                     jobData.LastStopTime = DateTime.Now;
+                    jobData.Progress = 1.0f;
                     break;
             }
             jobData.CurrentState = state;
