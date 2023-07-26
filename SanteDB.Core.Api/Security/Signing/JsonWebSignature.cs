@@ -101,6 +101,12 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         [JsonProperty("zip")]
         public String Zip { get; set; }
+
+        /// <summary>
+        /// Content type
+        /// </summary>
+        [JsonProperty("cty")]
+        public string ContentType { get; set; }
     }
     /// <summary>
     /// Web signature data
@@ -328,6 +334,18 @@ namespace SanteDB.Core.Security.Signing
             if (String.IsNullOrEmpty(this.Header.Type))
             {
                 this.Header.Type = type;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// With type
+        /// </summary>
+        public JsonWebSignature WithContentType(String type)
+        {
+            if (String.IsNullOrEmpty(this.Header.ContentType))
+            {
+                this.Header.ContentType = type;
             }
             return this;
         }

@@ -22,6 +22,7 @@ using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -31,8 +32,10 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Security.Principal;
 
@@ -80,21 +83,30 @@ namespace SanteDB.Core.Services.Impl
             }
 
             // Setup signatures
+            var entityData = new Dictionary<String, Object>()
+            {
+                { "$type", entity.GetType().GetSerializationName() },
+                { "id", entity.Key.ToString() },
+                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                    {
+                        value = id.Value,
+                        checkDigit = id.CheckDigit
+                    }).ToArray())
+                }
+            };
+
             var domainList = new
             {
+                ver = typeof(JwsResourcePointerService).Assembly.GetName().Version,
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                eid = identifiedEntity.Key.ToString(),
-                id = entity.Identifiers.Select(o => new
-                {
-                    value = o.Value,
-                    ns = o.IdentityDomain.DomainName,
-                    check = o.CheckDigit
-                }).ToList()
+                sub = entity.Key.ToString(),
+                gen_by = AuthenticationContext.Current.Principal.Identity.Name,
+                data = entityData
             };
 
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
-                .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
-                .WithType($"x-santedb+{entity.GetType().GetSerializationName()}");
+                .WithCompression(Http.Description.HttpCompressionAlgorithm.Gzip)
+                .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
             var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
