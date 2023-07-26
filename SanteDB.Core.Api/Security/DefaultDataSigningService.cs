@@ -183,7 +183,7 @@ namespace SanteDB.Core.Security
             {
                 throw new ArgumentNullException(nameof(systemKeyId));
             }
-            return SignatureSettings.FromConfiguration(this.m_configuration.Signatures.Find(o => o.KeyName == systemKeyId));
+            return SignatureSettings.FromConfiguration(this.m_configuration.Signatures.Find(o => o.KeyName == systemKeyId || o.Certificate?.Thumbprint == systemKeyId));
         }
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace SanteDB.Core.Security
                 throw new ArgumentNullException(nameof(certificateThumbprint));
             }
             // First - check for system configured
-            var candidate = this.m_configuration.Signatures.Find(o => o.FindType == X509FindType.FindByThumbprint && o.FindValue.Equals(certificateThumbprint.HexEncode(), StringComparison.OrdinalIgnoreCase));
+            var candidate = this.m_configuration.Signatures.Find(o => o.FindType == X509FindType.FindByThumbprint && o.FindValue?.Equals(certificateThumbprint.HexEncode(), StringComparison.OrdinalIgnoreCase) == true);
             if (candidate != null)
             {
                 return SignatureSettings.FromConfiguration(candidate);

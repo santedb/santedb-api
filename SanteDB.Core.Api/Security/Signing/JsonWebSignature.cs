@@ -24,6 +24,7 @@ using SanteDB.Core.Http.Description;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Dynamic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
@@ -233,7 +234,7 @@ namespace SanteDB.Core.Security.Signing
             using (var textReader = new StreamReader(compressionStream))
             using (var jsonReader = new JsonTextReader(textReader))
             {
-                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize(jsonReader);
+                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize<ExpandoObject>(jsonReader);
             }
 
             return result;

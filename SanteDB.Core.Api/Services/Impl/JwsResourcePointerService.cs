@@ -32,6 +32,7 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
@@ -97,7 +98,7 @@ namespace SanteDB.Core.Services.Impl
 
             var domainList = new
             {
-                ver = typeof(JwsResourcePointerService).Assembly.GetName().Version,
+                ver = typeof(JwsResourcePointerService).Assembly.GetName().Version.ToString(),
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
                 sub = entity.Key.ToString(),
                 gen_by = AuthenticationContext.Current.Principal.Identity.Name,
@@ -151,21 +152,20 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.notsupported", "Unsupported Algorithm", DetectedIssueKeys.SecurityIssue));
                     }
                 }
-                else if (!parsedToken.Header.Type.StartsWith("x-santedb+"))
+                else if (!parsedToken.Header.Type.Equals(SanteDBExtendedMimeTypes.VisualResourcePointer))
                 {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Object Type", DetectedIssueKeys.InvalidDataIssue));
                 }
-
-                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.Type.Substring(10));
-
-                // Attempt to locate the record
-                var domainQuery = new NameValueCollection();
-                foreach (var id in parsedToken.Payload.id)
+                else if (parsedToken.Payload.data == null)
                 {
-                    domainQuery.Add($"identifier[{id.ns.ToString()}].value", id.value.ToString());
+                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.data", "Invalid Payload Data", DetectedIssueKeys.InvalidDataIssue));
+
                 }
 
-                var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
+                var payloadData = parsedToken.Payload.data as IDictionary<String, Object>;
+
+                // Attempt to load the data type
+                var type = new ModelSerializationBinder().BindToType(null, payloadData["$type"].ToString());
 
                 // Get query
                 var repoType = typeof(IRepositoryService<>).MakeGenericType(type);
@@ -175,14 +175,36 @@ namespace SanteDB.Core.Services.Impl
                     throw new InvalidOperationException(String.Format(ErrorMessages.SERVICE_NOT_FOUND, repoType));
                 }
 
-                // HACK: .NET is using late binding and getting confused
-                var results = repoService.Find(filterExpression);
-                if (results.Count() != 1)
+                // Attempt direct load?
+                IHasIdentifiers retVal = null;
+                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId))
                 {
-                    throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    retVal = repoService.Get(uuidId) as IHasIdentifiers;
                 }
+                if (retVal == null) // fallback to query
+                {
+                    // Attempt to locate the record
+                    var domainQuery = new NameValueCollection();
+                    foreach (var kv in payloadData["identifier"] as IDictionary<String, dynamic>)
+                    {
+                        foreach (dynamic bidValue in kv.Value as IEnumerable)
+                        {
+                            domainQuery.Add($"identifier[{kv.Key}].value", bidValue.value);
+                        }
+                    }
 
-                return results.FirstOrDefault() as IHasIdentifiers;
+                    var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
+
+                    // HACK: .NET is using late binding and getting confused
+                    var results = repoService.Find(filterExpression);
+                    if (results.Count() != 1)
+                    {
+                        throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    }
+
+                    retVal = results.FirstOrDefault() as IHasIdentifiers;
+                }
+                return retVal;
             }
             catch (DetectedIssueException) { throw; }
             catch (Exception e)
