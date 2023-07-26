@@ -24,6 +24,7 @@ using SanteDB.Core.Http.Description;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Dynamic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
@@ -101,6 +102,12 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         [JsonProperty("zip")]
         public String Zip { get; set; }
+
+        /// <summary>
+        /// Content type
+        /// </summary>
+        [JsonProperty("cty")]
+        public string ContentType { get; set; }
     }
     /// <summary>
     /// Web signature data
@@ -117,6 +124,7 @@ namespace SanteDB.Core.Security.Signing
 
         // The parsed token
         private string m_token;
+        private SignatureSettings m_signingSettings;
 
         /// <summary>
         /// Create a new web signature with the specified data
@@ -226,7 +234,7 @@ namespace SanteDB.Core.Security.Signing
             using (var textReader = new StreamReader(compressionStream))
             using (var jsonReader = new JsonTextReader(textReader))
             {
-                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize(jsonReader);
+                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize<ExpandoObject>(jsonReader);
             }
 
             return result;
@@ -293,6 +301,7 @@ namespace SanteDB.Core.Security.Signing
                 this.Header.Algorithm = "RS256";
                 this.Header.KeyId = certificate.Thumbprint;
                 this.Header.KeyThumbprint = certificate.GetCertHash().Base64UrlEncode();
+                this.m_signingSettings = SignatureSettings.RSA(SignatureAlgorithm.RS256, certificate);
             }
             return this;
         }
@@ -304,8 +313,16 @@ namespace SanteDB.Core.Security.Signing
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {
-                this.Header.KeyId = keyId;
-                this.Header.Algorithm = this.m_dataSigningService.GetNamedSignatureSettings(keyId).Algorithm.ToString();
+                this.m_signingSettings = this.m_dataSigningService.GetNamedSignatureSettings(keyId);
+                this.Header.Algorithm = this.m_signingSettings.Algorithm.ToString();
+                if (this.m_signingSettings.Algorithm == SignatureAlgorithm.HS256)
+                {
+                    this.Header.KeyId = keyId;
+                }
+                else if(this.m_signingSettings.Certificate != null)
+                {
+                    this.WithCertificate(this.m_signingSettings.Certificate);
+                }
             }
             return this;
         }
@@ -318,6 +335,18 @@ namespace SanteDB.Core.Security.Signing
             if (String.IsNullOrEmpty(this.Header.Type))
             {
                 this.Header.Type = type;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// With type
+        /// </summary>
+        public JsonWebSignature WithContentType(String type)
+        {
+            if (String.IsNullOrEmpty(this.Header.ContentType))
+            {
+                this.Header.ContentType = type;
             }
             return this;
         }
@@ -346,7 +375,7 @@ namespace SanteDB.Core.Security.Signing
                 retVal.AppendFormat(".{0}", ms.ToArray().Base64UrlEncode());
             }
 
-            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.Header.KeyId?.ToString());
+            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.m_signingSettings);
             retVal.AppendFormat(".{0}", this.Signature.Base64UrlEncode());
             this.m_token = retVal.ToString();
             return this;
@@ -357,7 +386,7 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         private ICompressionScheme GetJwsCompressor()
         {
-            switch (this.Header.Zip.ToString())
+            switch (this.Header.Zip?.ToString())
             {
                 case "DEF":
                     return CompressionUtil.GetCompressionScheme(HttpCompressionAlgorithm.Deflate);

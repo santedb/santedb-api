@@ -45,7 +45,7 @@ namespace SanteDB.Core.Data.Initialization
         // Trace source
         private readonly Tracer m_traceSource = Tracer.GetTracer(typeof(DataInitializationService));
         private readonly IDatasetInstallerService m_datasetInstaller;
-        private readonly IEnumerable<IDatasetProvider> m_datasetProviders;
+        private readonly List<IDatasetProvider> m_datasetProviders;
 
         /// <summary>
         /// True when the service is running
@@ -91,7 +91,7 @@ namespace SanteDB.Core.Data.Initialization
         public DataInitializationService(IDatasetInstallerService datasetInstaller, IServiceManager serviceManager)
         {
             this.m_datasetInstaller = datasetInstaller;
-            this.m_datasetProviders = serviceManager.CreateInjectedOfAll<IDatasetProvider>().Distinct();
+            this.m_datasetProviders = serviceManager.CreateInjectedOfAll<IDatasetProvider>().Distinct().ToList();
         }
 
         /// <summary>
@@ -101,8 +101,10 @@ namespace SanteDB.Core.Data.Initialization
         {
             try
             {
+                
                 using (AuthenticationContext.EnterSystemContext())
                 {
+                    m_traceSource.TraceInfo($"Enumerating datasets from {m_datasetProviders.Count} provider(s).");
                     foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
                     {
                         this.m_datasetInstaller.Install(dataset);

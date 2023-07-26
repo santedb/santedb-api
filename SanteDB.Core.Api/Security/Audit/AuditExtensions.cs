@@ -868,7 +868,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = act.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification.GetDisplayName("en") };
+                    retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification?.GetDisplayName("en") };
                     retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                         lifecycle = AuditableObjectLifecycle.Deidentification;
