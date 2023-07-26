@@ -87,7 +87,8 @@ namespace SanteDB.Core.Services.Impl
                 id = entity.Identifiers.Select(o => new
                 {
                     value = o.Value,
-                    ns = o.IdentityDomain.DomainName
+                    ns = o.IdentityDomain.DomainName,
+                    check = o.CheckDigit
                 }).ToList()
             };
 

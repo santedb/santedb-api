@@ -117,6 +117,7 @@ namespace SanteDB.Core.Security.Signing
 
         // The parsed token
         private string m_token;
+        private SignatureSettings m_signingSettings;
 
         /// <summary>
         /// Create a new web signature with the specified data
@@ -293,6 +294,7 @@ namespace SanteDB.Core.Security.Signing
                 this.Header.Algorithm = "RS256";
                 this.Header.KeyId = certificate.Thumbprint;
                 this.Header.KeyThumbprint = certificate.GetCertHash().Base64UrlEncode();
+                this.m_signingSettings = SignatureSettings.RSA(SignatureAlgorithm.RS256, certificate);
             }
             return this;
         }
@@ -304,8 +306,16 @@ namespace SanteDB.Core.Security.Signing
         {
             if (String.IsNullOrEmpty(this.Header.KeyId))
             {
-                this.Header.KeyId = keyId;
-                this.Header.Algorithm = this.m_dataSigningService.GetNamedSignatureSettings(keyId).Algorithm.ToString();
+                this.m_signingSettings = this.m_dataSigningService.GetNamedSignatureSettings(keyId);
+                this.Header.Algorithm = this.m_signingSettings.Algorithm.ToString();
+                if (this.m_signingSettings.Algorithm == SignatureAlgorithm.HS256)
+                {
+                    this.Header.KeyId = keyId;
+                }
+                else if(this.m_signingSettings.Certificate != null)
+                {
+                    this.WithCertificate(this.m_signingSettings.Certificate);
+                }
             }
             return this;
         }
@@ -346,7 +356,7 @@ namespace SanteDB.Core.Security.Signing
                 retVal.AppendFormat(".{0}", ms.ToArray().Base64UrlEncode());
             }
 
-            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.Header.KeyId?.ToString());
+            this.Signature = this.m_dataSigningService.SignData(Encoding.UTF8.GetBytes(retVal.ToString()), this.m_signingSettings);
             retVal.AppendFormat(".{0}", this.Signature.Base64UrlEncode());
             this.m_token = retVal.ToString();
             return this;
@@ -357,7 +367,7 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         private ICompressionScheme GetJwsCompressor()
         {
-            switch (this.Header.Zip.ToString())
+            switch (this.Header.Zip?.ToString())
             {
                 case "DEF":
                     return CompressionUtil.GetCompressionScheme(HttpCompressionAlgorithm.Deflate);
