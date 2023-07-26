@@ -320,9 +320,9 @@ namespace SanteDB.Core.Data.Import.Format
                     case bool bl:
                         return XmlConvert.ToString(bl);
                     case string str:
-                        return $"\"{str.Replace("\"", "\"\"")}\"";
+                        return $"\"{str.Replace("\"", "\"\"").Replace("\r","").Replace("\n", "")}\"";
                     default:
-                        return value.ToString();
+                        return value.ToString().Replace("\r", "").Replace("\n", "");
                 }
             }
 
