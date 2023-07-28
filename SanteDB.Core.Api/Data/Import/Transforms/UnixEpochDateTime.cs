@@ -35,7 +35,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <remarks>
         /// The args passed into the parameter indicate the epoch date trunction (day, hour, minute, etc.)
         /// </remarks>
-        public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
+        public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
         {
             // Default to full precision
             if (args.Length == 0)

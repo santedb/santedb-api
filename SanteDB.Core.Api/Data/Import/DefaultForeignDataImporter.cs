@@ -165,7 +165,7 @@ namespace SanteDB.Core.Data.Import
 
                         if (resourceMap.Transform != null) // Pass it to the transform
                         {
-                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, sourceReader, out var result) && result is IdentifiedData id)
+                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, parameters, sourceReader, out var result) && result is IdentifiedData id)
                             {
                                 mappedObject = id;
                             }
@@ -342,6 +342,7 @@ namespace SanteDB.Core.Data.Import
         /// Apply mapping against the current row
         /// </summary>
         /// <param name="mapping">The mapping to apply</param>
+        /// <param name="parameters">Data Map parameters.</param>
         /// <param name="sourceReader">The source reader</param>
         /// <param name="mappedObject">The mapped object</param>
         /// <param name="issue">The issue which caused the result to fail</param>
@@ -397,7 +398,7 @@ namespace SanteDB.Core.Data.Import
                                 switch (modifier)
                                 {
                                     case ForeignDataTransformValueModifier tx:
-                                        if (!this.ApplyTransformer(tx, sourceReader, targetValue, out targetValue))
+                                        if (!this.ApplyTransformer(tx, sourceReader, parameters, targetValue, out targetValue))
                                         {
                                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
                                         }
@@ -459,16 +460,17 @@ namespace SanteDB.Core.Data.Import
         /// Apply the transformer <paramref name="transform"/> to <paramref name="input"/> returning the result of the map in <paramref name="output"/>
         /// </summary>
         /// <param name="transform">Transform instructions to execute</param>
+        /// <param name="sourceRecord">The source record to apply the transform to</param>
+        /// <param name="dataMapParameters">The data map parameters.</param>
         /// <param name="input">The input value to pass to the transform</param>
         /// <param name="output">The output of th etransform</param>
         /// <returns>True if the transform succeeded</returns>
-        /// <param name="sourceRecord">The source record to apply the transform to</param>
-        private bool ApplyTransformer(ForeignDataTransformValueModifier transform, IForeignDataRecord sourceRecord, Object input, out object output)
+        private bool ApplyTransformer(ForeignDataTransformValueModifier transform, IForeignDataRecord sourceRecord, IDictionary<string, string> dataMapParameters, Object input, out object output)
         {
 
             if (ForeignDataImportUtil.Current.TryGetElementTransformer(transform.Transformer, out var foreignDataElementTransform))
             {
-                output = foreignDataElementTransform.Transform(input, sourceRecord, transform.Arguments.ToArray());
+                output = foreignDataElementTransform.Transform(input, sourceRecord, dataMapParameters, transform.Arguments.ToArray());
                 return true;
             }
             else
