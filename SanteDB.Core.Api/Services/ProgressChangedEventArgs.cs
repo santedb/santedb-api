@@ -47,7 +47,10 @@ namespace SanteDB.Core.Services
         /// <param name="progress">The progress of the operation which is being reported on</param>
         /// <param name="state">The state object to report with the progress</param>
         /// <param name="taskIdentifier">The task identifier for the background state</param>
-        public ProgressChangedEventArgs(string taskIdentifier, float progress, string state) : this(progress, state)
+        public ProgressChangedEventArgs(string taskIdentifier, float progress, string state)
+#pragma warning disable CS0618
+            : this(progress, state)
+#pragma warning restore CS0618
         {
             this.TaskIdentifier = taskIdentifier;
         }

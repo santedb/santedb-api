@@ -76,7 +76,9 @@ namespace SanteDB.Core.Management
         /// <summary>
         /// Service has started
         /// </summary>
+#pragma warning disable CS0067 // The event 'ServerMonitorService.Started' is never used
         public event EventHandler Started;
+#pragma warning restore CS0067 // The event 'ServerMonitorService.Started' is never used
         /// <summary>
         /// Service is stopping
         /// </summary>

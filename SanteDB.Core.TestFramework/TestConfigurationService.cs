@@ -117,14 +117,13 @@ namespace SanteDB.Core.TestFramework
             throw new NotSupportedException();
         }
 
-        /// <summary>
-        /// Reload configuration from disk
-        /// </summary>
+        /// <inheritdoc />
         public void Reload()
         {
             throw new NotSupportedException();
         }
 
+        /// <inheritdoc />
         public void SaveConfiguration()
         {
             throw new NotImplementedException();

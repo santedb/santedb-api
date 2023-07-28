@@ -27,7 +27,7 @@ namespace SanteDB.Core.Security.Audit
     /// </summary>
     public static class ExtendedAuditCodes
     {
-
+#pragma warning disable CS1591
         public static readonly AuditCode ActorRoleDestination = new AuditCode("110152", "DCM") { DisplayName = "Destination" };
         public static readonly AuditCode ActorRoleSource = new AuditCode("110153", "DCM") { DisplayName = "Source" };
         public static readonly AuditCode ActorRoleApplication = new AuditCode("110150", "DCM") { DisplayName = "Application" };
@@ -56,7 +56,7 @@ namespace SanteDB.Core.Security.Audit
         public static readonly AuditCode CustomIdTypeForeignFile = new AuditCode("ForeignDataFile", "http://santedb.org/model") { DisplayName = "External Data File" };
         public static readonly AuditCode CustomIdTypeSession = new AuditCode("SecuritySession", "http://santedb.org/model") { DisplayName = "Security Session" };
         public static readonly AuditCode CustomIdTypeMaskedFields = new AuditCode("SecurityUsitCode-MaskedFields", "SecurityAuditCode") { DisplayName = "Masked Fields" };
-
+#pragma warning restore CS1591
 
     }
 }

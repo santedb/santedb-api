@@ -92,25 +92,6 @@ namespace SanteDB.Core.Security
         }
 
         /// <summary>
-        /// As date time
-        /// </summary>
-        //public static DateTime AsDateTime(this IClaim me)
-        //{
-        //    if (!DateTime.TryParse(me.Value, out var value))
-        //    {
-        //        if (Int32.TryParse(me.Value, out int offset))
-        //        {
-        //            value = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(offset).ToLocalTime();
-        //        }
-        //        else
-        //        {
-        //            throw new ArgumentOutOfRangeException(nameof(IClaim.Value));
-        //        }
-        //    }
-        //    return value;
-        //}
-
-        /// <summary>
         /// Get all internal certificates
         /// </summary>
         private static IEnumerable<X509Certificate2> GetInternalCertificates()

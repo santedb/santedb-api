@@ -34,7 +34,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         public string Name => "CamelCase";
 
         /// <inheritdoc/>
-        public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
+        public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
         {
             return m_wordRegex.Replace(input.ToString(), o => o.Groups[1].Value.ToUpperInvariant());
         }

@@ -33,7 +33,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         public string Name => "Expression";
 
         /// <inheritdoc/>
-        public object Transform(object input, IForeignDataRecord sourceRecord, params object[] args)
+        public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
         {
 
             // create an interpreter and execute
@@ -41,7 +41,9 @@ namespace SanteDB.Core.Data.Import.Transforms
                         .Reference(typeof(Guid))
                         .Reference(typeof(TimeSpan))
                         .EnableReflection();
-            var arguments = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => new Parameter(sourceRecord.GetName(o), sourceRecord[o] ?? String.Empty)).ToArray();
+            var arguments = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => new Parameter(sourceRecord.GetName(o), sourceRecord[o] ?? String.Empty))
+                .Union(dataMapParameters.Select(p=>new Parameter($"parameters_{p.Key}", p.Value)))
+                .ToArray();
             return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o => o.Value).ToArray());
         }
     }
