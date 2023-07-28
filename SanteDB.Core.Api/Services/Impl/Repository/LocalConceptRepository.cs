@@ -136,7 +136,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Authority == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+                retVal = this.m_referenceTermService.Query(o => o.ReferenceTerm.CodeSystem.Domain == codeSystemDomain && o.ReferenceTerm.Mnemonic == code && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
 
             retVal = retVal.ToArray();
@@ -210,7 +210,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                filterExpression = o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
+                filterExpression = o => (o.ReferenceTerm.CodeSystem.Domain == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null;
             }
 
             if (exact)
@@ -258,7 +258,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
+                refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Domain == codeSystem) && o.SourceEntityKey == conceptId && o.ObsoleteVersionSequenceId == null, AuthenticationContext.Current.Principal);
             }
 
             refTermEnt = refTermEnt.ToArray();
@@ -335,7 +335,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
             else
             {
-                refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Authority == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
+                refTermEnt = this.m_referenceTermService.Query(o => (o.ReferenceTerm.CodeSystem.Domain == codeSystem) && o.SourceEntity.Mnemonic == conceptMnemonic && o.ObsoleteVersionSequenceId == null && o.RelationshipTypeKey == ConceptRelationshipTypeKeys.SameAs, AuthenticationContext.Current.Principal).FirstOrDefault();
             }
 
             retVal = refTermEnt.LoadProperty<ReferenceTerm>("ReferenceTerm");

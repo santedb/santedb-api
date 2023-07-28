@@ -70,7 +70,7 @@ namespace SanteDB.Core.Data.Import
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> Import(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader, IForeignDataWriter rejectWriter, TransactionMode transactionMode)
+        public IEnumerable<DetectedIssue> Import(ForeignDataObjectMap foreignDataObjectMap, IDictionary<String, String> parameters, IForeignDataReader sourceReader, IForeignDataWriter rejectWriter, TransactionMode transactionMode)
         {
             if (foreignDataObjectMap == null)
             {
@@ -115,6 +115,14 @@ namespace SanteDB.Core.Data.Import
                 var parmNo = i;
                 duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
             }
+            foreach (var dbck in parameters)
+            {
+                if (!duplicateCheckParms.ContainsKey(dbck.Key))
+                {
+                    duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                }
+            }
+
             IdentifiedData mappedObject = null;
             duplicateCheckParms.Add("output", () => mappedObject);
 
@@ -141,7 +149,7 @@ namespace SanteDB.Core.Data.Import
                         var persistenceService = persistenceServices[resourceMap.TypeXml];
 
                         // Is there a duplicate check? If so map them
-                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
+                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms, lazyExpandVariables: false)).ToList();
                         this.m_tracer.TraceInfo("Processing {0} from import...", records);
 
                         this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultForeignDataImporter), 0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
@@ -172,7 +180,7 @@ namespace SanteDB.Core.Data.Import
                                 break;
                             }
                         }
-                        else if (!this.ApplyMapping(resourceMap, sourceReader, insertBundle, ref mappedObject, out var issue))
+                        else if (!this.ApplyMapping(resourceMap, parameters, sourceReader, insertBundle, ref mappedObject, out var issue))
                         {
                             var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
                             currentRecord["import_error"] = issue.Text;
@@ -251,7 +259,7 @@ namespace SanteDB.Core.Data.Import
         }
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader)
+        public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IDictionary<string, string> parameters, IForeignDataReader sourceReader)
         {
             if (!sourceReader.MoveNext())
             {
@@ -280,6 +288,13 @@ namespace SanteDB.Core.Data.Import
                 {
                     var parmNo = i;
                     duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+                }
+                foreach(var dbck in parameters)
+                {
+                    if(!duplicateCheckParms.ContainsKey(dbck.Key))
+                    {
+                        duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                    }
                 }
                 IdentifiedData outputFake = null;
                 duplicateCheckParms.Add("output", () => outputFake);
@@ -332,7 +347,7 @@ namespace SanteDB.Core.Data.Import
         /// <param name="issue">The issue which caused the result to fail</param>
         /// <param name="insertBundle">The bundle to be inserted</param>
         /// <returns>True if the mapping succeeds</returns>
-        private bool ApplyMapping(ForeignDataElementResourceMap mapping, IForeignDataReader sourceReader, Bundle insertBundle, ref IdentifiedData mappedObject, out DetectedIssue issue)
+        private bool ApplyMapping(ForeignDataElementResourceMap mapping, IDictionary<String, String> parameters, IForeignDataReader sourceReader, Bundle insertBundle, ref IdentifiedData mappedObject, out DetectedIssue issue)
         {
             try
             {
@@ -392,6 +407,13 @@ namespace SanteDB.Core.Data.Import
                                         break;
                                     case ForeignDataLookupValueModifier lx:
                                         targetValue = sourceReader[lx.SourceColumn];
+                                        break;
+                                    case ForeignDataParameterValueModifier px:
+                                        if(!parameters.TryGetValue(px.ParameterName, out var value))
+                                        {
+                                            throw new MissingFieldException(px.ParameterName);
+                                        }
+                                        targetValue = value;
                                         break;
                                     case ForeignDataOutputReferenceModifier or:
                                         if (or.ExternalResource != null)

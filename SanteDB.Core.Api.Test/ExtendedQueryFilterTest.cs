@@ -40,6 +40,16 @@ namespace SanteDB.Core.Api.Test
         }
 
         [Test]
+        public void TestExtensionFilterEx()
+        {
+            QueryFilterExtensions.AddExtendedFilter(new StringToBinaryFilterExtension());
+            var filterQuery = "extension[http://some-extension].value=:(tobytes)Test".ParseQueryString();
+            var expr = QueryExpressionParser.BuildLinqExpression<Patient>(filterQuery);
+            Assert.IsTrue(expr.ToString().Contains("StringToBinary"));
+
+        }
+
+        [Test]
         public void TestAgeFilterEx()
         {
             QueryFilterExtensions.AddExtendedFilter(new AgeQueryFilterExtension());

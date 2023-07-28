@@ -553,6 +553,11 @@ namespace SanteDB.Core.Services.Impl
                             }
                         }
                     }
+                    else
+                    {
+                        this.m_tracer.TraceWarning("Queue file {0} needs to be purged- {1}", f, e.Message);
+                        File.Delete(f);
+                    }
                     continue;
                 }
                 yield return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(f), queueName, entry.CreationTime, entry.Type, entry.XmlData);

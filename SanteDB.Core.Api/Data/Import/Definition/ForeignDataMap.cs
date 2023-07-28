@@ -59,6 +59,12 @@ namespace SanteDB.Core.Data.Import.Definition
         public string Description { get; set; }
 
         /// <summary>
+        /// Gets or sets the list of parameters 
+        /// </summary>
+        [XmlArray("parameters"), XmlArrayItem("add"), JsonProperty("parameters")]
+        public List<ForeignDataMapParameter> Parameters { get; set; }
+
+        /// <summary>
         /// Gets or sets the data maps
         /// </summary>
         [XmlArray("maps"), XmlArrayItem("map"), JsonProperty("maps")]

@@ -70,8 +70,17 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Create signature settings from configuration
         /// </summary>
-        public static SignatureSettings FromConfiguration(SecuritySignatureConfiguration configuration) => new SignatureSettings(configuration.Algorithm, configuration.GetSecret(), configuration.Certificate);
-
+        public static SignatureSettings FromConfiguration(SecuritySignatureConfiguration configuration)
+        {
+            if (configuration == null)
+            {
+                return null;
+            }
+            else
+            {
+                return new SignatureSettings(configuration.Algorithm, configuration.GetSecret(), configuration.Certificate);
+            }
+        }
         /// <summary>
         /// Get the algorithm
         /// </summary>
