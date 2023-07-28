@@ -24,6 +24,13 @@ using System.Net.Mime;
 
 namespace SanteDB.Core.Http
 {
+    /// <summary>
+    /// A body serializer that serializes and deserializes strings into a plaintext body with the content type <c>text/plain</c>.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="DeSerialize(Stream, ContentType, Type)"/> will always return a string. <br />
+    /// <see cref="Serialize(Stream, object, out ContentType)"/> will call <see cref="string.ToString()"/> on the object passed for serialization.
+    /// </remarks>
     public class PlaintextSerializer : IBodySerializer
     {
         /// <inheritdoc/>

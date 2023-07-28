@@ -132,6 +132,7 @@ namespace SanteDB.Core.Security
         {
             var audit = this.AuditCertificateInstallation(certificate);
 
+#pragma warning disable CS0168 // Variable is declared but never used
             try
             {
                 using (var store = new X509Store(storeName, storeLocation))
@@ -168,6 +169,7 @@ namespace SanteDB.Core.Security
             {
                 audit?.Send();
             }
+#pragma warning restore CS0168 // Variable is declared but never used
         }
 
         ///<inheritdoc />
@@ -204,7 +206,7 @@ namespace SanteDB.Core.Security
                     return true;
                 }
             }
-            catch (CryptographicException cex)
+            catch (CryptographicException)
             {
                 audit?.WithOutcome(OutcomeIndicator.SeriousFail);
                 return false;

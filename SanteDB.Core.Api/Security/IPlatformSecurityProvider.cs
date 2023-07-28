@@ -38,60 +38,79 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Checks if a certificate is trusted by the platform.
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
+        /// <param name="certificate">The certificate to validate trust for.</param>
+        /// <returns>True if the platform considers the certificate trusted. False otherwise.</returns>
+        /// <remarks>
+        ///     This method does not attempt to define what trusted is simply by the method signature. The exact definition of trust is outside the scope of the api. 
+        /// </remarks>
         bool IsCertificateTrusted(X509Certificate2 certificate);
         /// <summary>
         /// Install a certificate into a platform store.
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <param name="storeName"></param>
-        /// <param name="storeLocation"></param>
-        /// <returns></returns>
+        /// <param name="certificate">The certificate to install in the store.</param>
+        /// <param name="storeName">The store name to install the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
+        /// <param name="storeLocation">The store location to install the certificate in. Defaults to <see cref="StoreLocation.CurrentUser"/></param>
+        /// <returns>True if the certificate was installed in the store successfully. False otherwise.</returns>
+        /// <remarks>
+        ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
+        /// </remarks>
         bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser);
         /// <summary>
         /// Remove a certificate from a platform store.
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <param name="storeName"></param>
-        /// <param name="storeLocation"></param>
-        /// <returns></returns>
+        /// <param name="certificate">The certificate to try to remove from the platform.</param>
+        /// <param name="storeName">The store name to remove the certificate from. Defaults to <see cref="StoreName.My"/>.</param>
+        /// <param name="storeLocation">The store location to remove the certificate from. Defaults to <see cref="StoreLocation.CurrentUser"/>.</param>
+        /// <returns>True if the certificate was removed from the location, False otherwise.</returns>
+        /// <remarks>
+        ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
+        /// </remarks>
         bool TryUninstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
-        /// <param name="findType"></param>
-        /// <param name="findValue"></param>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
+        /// <param name="findType">The search type to perform.</param>
+        /// <param name="findValue">The search term to use to find the certificate.</param>
+        /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <returns>True if a certificate was found, False otherwise.</returns>
         bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
-        /// <param name="findType"></param>
-        /// <param name="findValue"></param>
-        /// <param name="storeName"></param>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
+        /// <param name="findType">The search type to perform.</param>
+        /// <param name="findValue">The search term to use to find the certificate.</param>
+        /// <param name="storeName">The store name to search for the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
+        /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <returns>True if a certificate was found, False otherwise.</returns>
+        /// <remarks>
+        ///     <paramref name="storeName"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
+        /// </remarks>
         bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
-        /// <param name="findType"></param>
-        /// <param name="findValue"></param>
-        /// <param name="storeName"></param>
-        /// <param name="storeLocation"></param>
-        /// <param name="certificate"></param>
-        /// <returns></returns>
+        /// <param name="findType">The search type to perform.</param>
+        /// <param name="findValue">The search term to use to find the certificate.</param>
+        /// <param name="storeName">The store name to search for the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
+        /// <param name="storeLocation">The store location to search for the certificate in. Defaults to <see cref="StoreLocation.CurrentUser"/>.</param>
+        /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <returns>True if a certificate was found, False otherwise.</returns>
+        /// <remarks>
+        ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
+        /// </remarks>
         bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate);
         /// <summary>
-        /// Find all certificates 
+        /// Find all certificates using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
-        /// <param name="findType"></param>
-        /// <param name="findValue"></param>
-        /// <param name="storeName"></param>
-        /// <param name="storeLocation"></param>
-        /// <returns></returns>
+        /// <param name="findType">The search type to perform.</param>
+        /// <param name="findValue">The search term to use to find the certificate.</param>
+        /// <param name="storeName">The store name to search for the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
+        /// <param name="storeLocation">The store location to search for the certificate in. Defaults to <see cref="StoreLocation.CurrentUser"/>.</param>
+        /// <param name="validOnly"><c>True</c> to only return certificates that are considered valid. Invalid certificates are ones that do not have a verifiable chain of trust, are expired, or contain invalid extensions.</param>
+        /// <returns>An enumerable collection of any certificates found, or an empty result set.</returns>
+        /// <remarks>
+        ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
+        /// </remarks>
         IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true);
     }
 }
