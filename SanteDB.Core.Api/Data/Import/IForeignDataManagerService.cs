@@ -23,6 +23,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
 
@@ -52,7 +53,8 @@ namespace SanteDB.Core.Data.Import
         /// <param name="name">The original name of the source data</param>
         /// <param name="description">A human description of the file</param>
         /// <returns>The created foreign data information pointer</returns>
-        IForeignDataSubmission Stage(Stream inputStream, String name, String description, Guid foreignDataMapKey);
+        /// <param name="parameterValues">Parameters to pass to the foreign data staging</param>
+        IForeignDataSubmission Stage(Stream inputStream, String name, String description, Guid foreignDataMapKey, IDictionary<String, String> parameterValues);
 
         /// <summary>
         /// Updates the status of the foreign data information record to indicate it is ready for staging
