@@ -110,7 +110,7 @@ namespace SanteDB.Core.Data.Import
                 var progressPerFile = 1.0f / (float)scheduledJobs.Length;
                 int fileIndex = 0;
                 Guid? submissionId = null;
-                if (parameters.Length > 0)
+                if (parameters.Length > 0 && parameters[0] != null)
                 {
                     submissionId = Guid.Parse(parameters[0].ToString());
                 }
