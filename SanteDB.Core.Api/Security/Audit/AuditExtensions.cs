@@ -761,7 +761,7 @@ namespace SanteDB.Core.Security.Audit
         {
             return builder.WithAuditableObjects(objects.SelectMany(o =>
                 {
-                    if (o is Bundle bundle)
+                    if (o is IResourceCollection bundle)
                         return bundle.Item.Select(i => i.ToAuditableObject());
                     else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
                 }
@@ -904,7 +904,6 @@ namespace SanteDB.Core.Security.Audit
                     retVal.NameData = aed.ToString();
                     break;
                 case Guid g:
-
                     retVal.Role = AuditableObjectRole.MasterFile;
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = $"urn:uuid:{g}";

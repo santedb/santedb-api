@@ -322,7 +322,7 @@ namespace SanteDB.Core.Services.Impl
                     return this.Dequeue(queueName);
                 }
 
-                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
                 try
                 {
