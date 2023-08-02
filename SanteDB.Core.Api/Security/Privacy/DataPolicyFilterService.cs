@@ -21,6 +21,7 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
@@ -38,6 +39,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Security;
 using System.Security.Principal;
 #pragma warning disable CS0612
@@ -126,7 +128,8 @@ namespace SanteDB.Core.Security.Privacy
         /// </summary>
         public virtual IQueryResultSet<TData> Apply<TData>(IQueryResultSet<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
-            if (principal != AuthenticationContext.SystemPrincipal) // System principal does not get filtered
+            // Only apply to sensitive data
+            if (principal != AuthenticationContext.SystemPrincipal && typeof(TData).GetCustomAttribute<ResourceSensitivityAttribute>()?.Classification == ResourceSensitivityClassification.PersonalHealthInformation) // System principal does not get filtered
             {
                 return new NestedQueryResultSet<TData>(results, (o) => this.Apply(o, principal));
             }
