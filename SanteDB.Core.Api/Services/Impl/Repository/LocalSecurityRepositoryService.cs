@@ -37,12 +37,15 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// Represents a security repository service that uses the direct local services
     /// </summary>
-    public class LocalSecurityRepositoryService : ISecurityRepositoryService
+    public class LocalSecurityRepositoryService : ISecurityRepositoryService, ILocalServiceProvider<ISecurityRepositoryService>
     {
         /// <summary>
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Local Security Repository Service";
+
+        /// <inheritdoc/>
+        public ISecurityRepositoryService LocalProvider => this;
 
         // Localization Service
         private readonly ILocalizationService m_localizationService;
@@ -50,6 +53,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
         // User repo
         private IRepositoryService<SecurityUser> m_userRepository;
+        private readonly IRepositoryService<DeviceEntity> m_deviceEntityRepository;
 
         // App repo
         private IRepositoryService<SecurityApplication> m_applicationRepository;
@@ -74,6 +78,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
         // App IdP
         private IApplicationIdentityProviderService m_applicationIdentityProvider;
+        private readonly IRepositoryService<ApplicationEntity> m_applicationEntityRepository;
 
         // Dev IdP
         private IDeviceIdentityProviderService m_deviceIdentityProvider;
@@ -91,6 +96,8 @@ namespace SanteDB.Core.Services.Impl.Repository
             IRepositoryService<SecurityDevice> deviceRepository,
             IRepositoryService<SecurityPolicy> policyRepository,
             IRepositoryService<UserEntity> userEntityRepository,
+            IRepositoryService<ApplicationEntity> applicationEntityRepository,
+            IRepositoryService<DeviceEntity> deviceEntityRepository,
             IDataPersistenceService<SecurityProvenance> provenanceRepository,
             IRoleProviderService roleProviderService,
             IIdentityProviderService identityProviderService,
@@ -102,6 +109,8 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_pepService = pepService;
             this.m_userRepository = userRepository;
             this.m_applicationIdentityProvider = applicationIdentityProvider;
+            this.m_applicationEntityRepository = applicationEntityRepository;
+            this.m_deviceEntityRepository = deviceEntityRepository;
             this.m_applicationRepository = applicationRepository;
             this.m_identityProviderService = identityProviderService;
             this.m_provenancePersistence = provenanceRepository;
@@ -139,18 +148,6 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_identityProviderService.ChangePassword(userName, password, AuthenticationContext.Current.Principal);
         }
 
-        /// <summary>
-        /// Creates a user with a specified password.
-        /// </summary>
-        /// <param name="userInfo">The security user.</param>
-        /// <param name="password">The password.</param>
-        /// <returns>Returns the newly created user.</returns>
-        public SecurityUser CreateUser(SecurityUser userInfo, string password)
-        {
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.CreateIdentity);
-            userInfo.Password = password;
-            return this.m_userRepository.Insert(userInfo);
-        }
 
         /// <summary>
         /// Get the policy information in the model format
@@ -334,22 +331,34 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// Get the security entity from the specified principal
         /// </summary>
         /// <param name="principal">The principal to be fetched</param>
-        public IdentifiedData GetSecurityEntity(IPrincipal principal)
+        public SecurityEntity GetSecurityEntity(IPrincipal principal)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
+            switch (principal.Identity)// Device credential
+            {
+                case IDeviceIdentity deviceIdentity:
+                    return this.GetDevice(deviceIdentity);
+                case IApplicationIdentity applicationIdentity:
+                    return this.GetApplication(applicationIdentity);
+                default:
+                    return this.GetUser(principal.Identity);
+            }
+        }
 
-            if (principal.Identity is IDeviceIdentity deviceIdentity) // Device credential
+        /// <inheritdoc/>
+        public Entity GetCdrEntity(IPrincipal principal)
+        {
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
+            switch (principal.Identity)// Device credential
             {
-                return this.GetDevice(deviceIdentity);
+                case IDeviceIdentity deviceIdentity:
+                    return this.m_deviceEntityRepository.Find(o => o.SecurityDevice.Name.ToLowerInvariant() == principal.Identity.Name.ToLowerInvariant()).FirstOrDefault();
+                case IApplicationIdentity applicationIdentity:
+                    return this.m_applicationEntityRepository.Find(o => o.SecurityApplication.Name.ToLowerInvariant() == principal.Identity.Name.ToLowerInvariant()).FirstOrDefault();
+                default:
+                    return (Entity)this.GetProviderEntity(principal.Identity) ?? this.GetUserEntity(principal.Identity);
             }
-            else if (principal.Identity is IApplicationIdentity applicationIdentity) //
-            {
-                return this.GetApplication(applicationIdentity);
-            }
-            else
-            {
-                return this.GetUser(principal.Identity);
-            }
+
         }
 
         /// <summary>

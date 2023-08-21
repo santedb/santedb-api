@@ -22,6 +22,7 @@ using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -31,9 +32,13 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -48,6 +53,7 @@ namespace SanteDB.Core.Services.Impl
 
         // Application identity service
         private readonly IApplicationIdentityProviderService m_applicationIdService;
+        private readonly IDataSigningCertificateManagerService m_dataSigningCertificateManagerService;
 
         // Data signing service
         private readonly IDataSigningService m_signingService;
@@ -55,62 +61,17 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// DI constructor
         /// </summary>
-        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null)
+        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_signingService = signingService;
             this.m_applicationIdService = applicationIdentityProviderService;
+            this.m_dataSigningCertificateManagerService = dataSigningCertificateManagerService;
         }
 
         /// <summary>
         /// Name of the service
         /// </summary>
         public String ServiceName => "JSON Web Signature Resource Pointers";
-
-        /// <summary>
-        /// Get the key identifier for the signature
-        /// </summary>
-        private String GetAppKeyId()
-        {
-            // Is there a key called jwsdefault? If so, use it as the default signature key
-            if (m_signingService.GetKeys().Contains("default"))
-            {
-                return "default";
-            }
-
-            // Otherwise use the configured secure application HMAC key as the default
-            if (AuthenticationContext.Current.Principal is IClaimsPrincipal claimsPrincipal)
-            {
-                // Is there a tag for their application
-                var appIdentity = claimsPrincipal.Identities.OfType<IApplicationIdentity>().First();
-
-                if (appIdentity == null)
-                {
-                    throw new InvalidOperationException("Can only generate signed pointers when an application identity exists");
-                }
-
-                var keyId = $"SA.{appIdentity.Name}";
-
-                // Does the key provider have the key for this app?
-                if (m_signingService.GetKeys().Any(k => k == keyId))
-                {
-                    return keyId;
-                }
-                else
-                {
-                    // Application identity
-                    var key = this.m_applicationIdService.GetPublicSigningKey(appIdentity.Name);
-
-                    // Get the key
-                    this.m_signingService.AddSigningKey(keyId, key, Security.Configuration.SignatureAlgorithm.HS256);
-
-                    return keyId;
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("Cannot generate a personal key without knowing application id");
-            }
-        }
 
         /// <summary>
         /// Generate the structured pointer
@@ -123,23 +84,43 @@ namespace SanteDB.Core.Services.Impl
             }
 
             // Setup signatures
-            var keyId = this.GetAppKeyId();
-            var domainList = new
+            var entityData = new Dictionary<String, Object>()
             {
-                iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                eid = identifiedEntity.Key.ToString(),
-                id = entity.Identifiers.Select(o => new
-                {
-                    value = o.Value,
-                    ns = o.IdentityDomain.DomainName
-                }).ToList()
+                { "$type", entity.GetType().GetSerializationName() },
+                { "id", entity.Key.ToString() },
+                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                    {
+                        value = id.Value,
+                        checkDigit = id.CheckDigit
+                    }).ToArray())
+                }
             };
 
-            return JsonWebSignature.Create(domainList, this.m_signingService)
-                .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
-                .WithKey(keyId)
-                .WithType($"x-santedb+{entity.GetType().GetSerializationName()}")
-                .AsSigned().Token;
+            var domainList = new
+            {
+                ver = typeof(JwsResourcePointerService).Assembly.GetName().Version.ToString(),
+                iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
+                sub = entity.Key.ToString(),
+                gen_by = AuthenticationContext.Current.Principal.Identity.Name,
+                data = entityData
+            };
+
+            var signature = JsonWebSignature.Create(domainList, this.m_signingService)
+                .WithCompression(Http.Description.HttpCompressionAlgorithm.Gzip)
+                .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
+
+            // Allow a configured identity for SYSTEM (this system's certificate mapping)
+            var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
+            if(signingCertificate?.Any() == true)
+            {
+                signature = signature.WithCertificate(signingCertificate.First());
+            }
+            else
+            {
+                signature = signature.WithSystemKey("default");
+            }
+
+            return signature.AsSigned().Token;
         }
 
         /// <summary>
@@ -158,7 +139,7 @@ namespace SanteDB.Core.Services.Impl
                     switch (parseResult)
                     {
                         case JsonWebSignatureParseResult.AlgorithmAndKeyMismatch:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm Not Supported (expected {this.m_signingService.GetSignatureAlgorithm(parsedToken.Header.KeyId)})", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Algorithm mismatch", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.InvalidFormat:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.format", $"Token is not in a valid format", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingAlgorithm:
@@ -167,23 +148,24 @@ namespace SanteDB.Core.Services.Impl
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.nokey", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
+                        case JsonWebSignatureParseResult.UnsupportedAlgorithm:
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.notsupported", "Unsupported Algorithm", DetectedIssueKeys.SecurityIssue));
                     }
                 }
-                else if (!parsedToken.Header.Type.StartsWith("x-santedb+"))
+                else if (!parsedToken.Header.Type.Equals(SanteDBExtendedMimeTypes.VisualResourcePointer))
                 {
                     throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.type", "Invalid Object Type", DetectedIssueKeys.InvalidDataIssue));
                 }
-
-                var type = new ModelSerializationBinder().BindToType(null, parsedToken.Header.Type.Substring(10));
-
-                // Attempt to locate the record
-                var domainQuery = new NameValueCollection();
-                foreach (var id in parsedToken.Payload.id)
+                else if (parsedToken.Payload.data == null)
                 {
-                    domainQuery.Add($"identifier[{id.ns.ToString()}].value", id.value.ToString());
+                    throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.invalid.data", "Invalid Payload Data", DetectedIssueKeys.InvalidDataIssue));
+
                 }
 
-                var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
+                var payloadData = parsedToken.Payload.data as IDictionary<String, Object>;
+
+                // Attempt to load the data type
+                var type = new ModelSerializationBinder().BindToType(null, payloadData["$type"].ToString());
 
                 // Get query
                 var repoType = typeof(IRepositoryService<>).MakeGenericType(type);
@@ -193,14 +175,36 @@ namespace SanteDB.Core.Services.Impl
                     throw new InvalidOperationException(String.Format(ErrorMessages.SERVICE_NOT_FOUND, repoType));
                 }
 
-                // HACK: .NET is using late binding and getting confused
-                var results = repoService.Find(filterExpression);
-                if (results.Count() != 1)
+                // Attempt direct load?
+                IHasIdentifiers retVal = null;
+                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId))
                 {
-                    throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    retVal = repoService.Get(uuidId) as IHasIdentifiers;
                 }
+                if (retVal == null) // fallback to query
+                {
+                    // Attempt to locate the record
+                    var domainQuery = new NameValueCollection();
+                    foreach (var kv in payloadData["identifier"] as IDictionary<String, dynamic>)
+                    {
+                        foreach (dynamic bidValue in kv.Value as IEnumerable)
+                        {
+                            domainQuery.Add($"identifier[{kv.Key}].value", bidValue.value);
+                        }
+                    }
 
-                return results.FirstOrDefault() as IHasIdentifiers;
+                    var filterExpression = QueryExpressionParser.BuildLinqExpression(type, domainQuery);
+
+                    // HACK: .NET is using late binding and getting confused
+                    var results = repoService.Find(filterExpression);
+                    if (results.Count() != 1)
+                    {
+                        throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    }
+
+                    retVal = results.FirstOrDefault() as IHasIdentifiers;
+                }
+                return retVal;
             }
             catch (DetectedIssueException) { throw; }
             catch (Exception e)

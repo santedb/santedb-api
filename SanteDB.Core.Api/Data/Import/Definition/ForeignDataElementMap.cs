@@ -47,6 +47,7 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("fixed", typeof(ForeignDataFixedValueModifier)),
             XmlElement("lookup", typeof(ForeignDataLookupValueModifier)),
             XmlElement("xref", typeof(ForeignDataOutputReferenceModifier)),
+            XmlElement("parameter", typeof(ForeignDataParameterValueModifier)),
             XmlElement("transform", typeof(ForeignDataTransformValueModifier)), JsonProperty("values")]
         public List<ForeignDataValueModifier> ValueModifiers { get; set; }
 

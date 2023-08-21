@@ -80,8 +80,9 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Notify the service manager of startup progress
         /// </summary>
+        /// <param name="taskIdentifier">The identifier for the task being performed</param>
         /// <param name="startupChangeText">The text or message for the startup event</param>
-        /// <param name="startupProgress">The progress change</param>
-        void NotifyStartupProgress(float startupProgress, String startupChangeText);
+        /// <param name="startupProgress">The progress of the task normalized between 0 and 1. A value of less than zero indicates an indeterminate progress value.</param>
+        void NotifyStartupProgress(string taskIdentifier, float startupProgress, String startupChangeText);
     }
 }

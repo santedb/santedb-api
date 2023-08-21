@@ -24,10 +24,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
+#pragma warning disable CS1587
 /// <summary>
 /// The SanteDB.Core.Configuration.Data namespace contains the configuration sections which control the SanteDB database
 /// providers, ORM functions and connectivity to services.
 /// </summary>
+#pragma warning restore CS1587
 namespace SanteDB.Core.Configuration.Data
 {
     /// <summary>
@@ -64,7 +66,7 @@ namespace SanteDB.Core.Configuration.Data
                     {
                         return Activator.CreateInstance(i) as IDataConfigurationProvider;
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         // TODO: Log this
                         return null;

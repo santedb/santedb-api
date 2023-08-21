@@ -58,6 +58,11 @@ namespace SanteDB.Core.Data.Import
         Guid ForeignDataMapKey { get; }
 
         /// <summary>
+        /// Gets the parameter values
+        /// </summary>
+        IDictionary<String, String> ParameterValues { get; }
+
+        /// <summary>
         /// Get the issues with the imported data
         /// </summary>
         /// <returns>The detected issues for the imported data</returns>

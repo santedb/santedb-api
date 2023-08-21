@@ -237,7 +237,7 @@ namespace SanteDB.Core.Configuration.Features
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService)))
                 {
-                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, "Registering SimpleCarePlanService..."));
+                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallCarePlannerServiceTask), 0.0f, "Registering SimpleCarePlanService..."));
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
                     return true;
                 }
@@ -288,8 +288,9 @@ namespace SanteDB.Core.Configuration.Features
             {
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService)))
                 {
-                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, "Registering SimplePatchService..."));
+                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallPatchServiceTask), 0.0f, "Registering SimplePatchService..."));
                     configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimplePatchService)));
+                    this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallPatchServiceTask), 1.0f, null));
                     return true;
                 }
                 return false;

@@ -25,19 +25,24 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Configuration;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Security.Signing;
 using SanteDB.Core.Services;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security;
@@ -102,6 +107,66 @@ namespace SanteDB.Core
         public static ITargetedAssociation AddManagedReferenceLink<T>(this T sourceObject, T targetObject) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.AddManagedReferenceLink(sourceObject, targetObject) ?? null;
 
+        /// <summary>
+        /// Try to get signature settings
+        /// </summary>
+        public static bool TryGetSignatureSettings(this IDataSigningService serviceInstance, JsonWebSignatureHeader jwsHeader, out SignatureSettings signatureSettings)
+        {
+            if(!Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var signatureAlgorithm))
+            {
+                throw new ArgumentOutOfRangeException(nameof(jwsHeader.Algorithm));
+            }
+            signatureSettings = serviceInstance.GetNamedSignatureSettings(jwsHeader.KeyId) ??
+                serviceInstance.GetSignatureSettings(jwsHeader.KeyThumbprint.ParseBase64UrlEncode(), signatureAlgorithm);
+            return signatureSettings != null;
+        }
+
+        /// <summary>
+        /// Get the device identity from the authentication context
+        /// </summary>
+        /// <param name="authContext">The authentication context</param>
+        /// <returns>The device identity</returns>
+        public static IDeviceIdentity GetDeviceIdentity(this AuthenticationContext authContext)
+        {
+            if(authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.OfType<IDeviceIdentity>().FirstOrDefault() ;
+            }
+            return authContext.Principal.Identity as IDeviceIdentity;
+        }
+
+        /// <summary>
+        /// Get the application identity from the authentication context
+        /// </summary>
+        /// <param name="authContext">The authentication context</param>
+        /// <returns>The application identity</returns>
+        public static IApplicationIdentity GetApplicationIdentity(this AuthenticationContext authContext)
+        {
+            if (authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.OfType<IApplicationIdentity>().FirstOrDefault();
+            }
+            return authContext.Principal.Identity as IApplicationIdentity;
+        }
+
+        /// <summary>
+        /// Get the user identity
+        /// </summary>
+        /// <param name="authContext">The authentication context from which the user identity should be obtained</param>
+        /// <returns>The user identity from the authentication context</returns>
+        public static IIdentity GetUserIdentity(this AuthenticationContext authContext)
+        {
+            if(authContext.Principal is IClaimsPrincipal icp)
+            {
+                return icp.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor)?.Value == ActorTypeKeys.HumanUser.ToString()) ??
+                    icp.Identities.FirstOrDefault(o => !(o is IDeviceIdentity || o is IApplicationIdentity));
+            }
+            else if(!(authContext.Principal.Identity is IApplicationIdentity || authContext.Principal.Identity is IDeviceIdentity))
+            {
+                return authContext.Principal.Identity;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Returns true if the job schedule applies at <paramref name="refDate"/> given the <paramref name="lastRun"/>
@@ -374,5 +439,24 @@ namespace SanteDB.Core
             }
         }
 
+        /// <summary>
+        /// Get serialized public certificate in base64 format
+        /// </summary>
+        public static String GetAsPemString(this X509Certificate2 certificate)
+        {
+            using (var tw = new StringWriter())
+            {
+                tw.WriteLine("-----BEGIN CERTIFICATE-----");
+                tw.WriteLine(Convert.ToBase64String(certificate.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks));
+                tw.WriteLine("-----END CERTIFICATE-----");
+                return tw.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the major revisions are equal and minor revisions are greater
+        /// </summary>
+        public static bool IsCompatible(this Version myVersion, Version otherVersion)
+            => myVersion.Major == otherVersion.Major && myVersion.Minor >= otherVersion.Minor;
     }
 }

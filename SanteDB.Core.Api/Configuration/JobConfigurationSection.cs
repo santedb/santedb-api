@@ -131,7 +131,9 @@ namespace SanteDB.Core.Configuration
     [XmlType(nameof(JobItemSchedule), Namespace = "http://santedb.org/configuration")]
     public class JobItemSchedule : IJobSchedule
     {
-
+        /// <summary>
+        /// Instantiates a new instance of the <see cref="JobItemSchedule"/> class.
+        /// </summary>
         public JobItemSchedule()
         {
 

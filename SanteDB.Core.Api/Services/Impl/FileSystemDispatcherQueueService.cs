@@ -322,7 +322,7 @@ namespace SanteDB.Core.Services.Impl
                     return this.Dequeue(queueName);
                 }
 
-                this.m_tracer.TraceInfo("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
+                this.m_tracer.TraceVerbose("Will dequeue {0}", Path.GetFileNameWithoutExtension(queueFile));
                 QueueEntry retVal = null;
                 try
                 {
@@ -552,6 +552,11 @@ namespace SanteDB.Core.Services.Impl
                             {
                             }
                         }
+                    }
+                    else
+                    {
+                        this.m_tracer.TraceWarning("Queue file {0} needs to be purged- {1}", f, e.Message);
+                        File.Delete(f);
                     }
                     continue;
                 }

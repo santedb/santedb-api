@@ -64,14 +64,6 @@ namespace SanteDB.Core.Services
         String ResolveName(Guid sid);
 
         /// <summary>
-        /// Creates a user with a specified password.
-        /// </summary>
-        /// <param name="userInfo">The security user.</param>
-        /// <param name="password">The password.</param>
-        /// <returns>Returns the newly created user.</returns>
-        SecurityUser CreateUser(SecurityUser userInfo, String password);
-
-        /// <summary>
         /// Get a user by user name
         /// </summary>
         SecurityUser GetUser(String userName);
@@ -158,7 +150,12 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the data object for the provided <paramref name="principal"/>
         /// </summary>
-        IdentifiedData GetSecurityEntity(IPrincipal principal);
+        SecurityEntity GetSecurityEntity(IPrincipal principal);
+
+        /// <summary>
+        /// Get the CDR entity which is assigned to the <paramref name="principal"/>
+        /// </summary>
+        Entity GetCdrEntity(IPrincipal principal);
 
         /// <summary>
         /// Find provenance objects matching the specified object

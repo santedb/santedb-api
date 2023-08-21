@@ -20,6 +20,7 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.Attributes;
 using System;
 using System.Xml.Serialization;
 
@@ -123,7 +124,7 @@ namespace SanteDB.Core.BusinessRules
         /// The type of detected issue (a concept key) which can be used to classify the detected issue
         /// </summary>
         /// <seealso cref="DetectedIssueKeys"/>
-        [XmlAttribute("type"), JsonProperty("type")]
+        [XmlAttribute("type"), JsonProperty("type"), Binding(typeof(DetectedIssueKeys))]
         public Guid TypeKey { get; set; }
 
         /// <inheritdoc/>

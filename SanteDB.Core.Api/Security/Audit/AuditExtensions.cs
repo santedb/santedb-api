@@ -761,7 +761,7 @@ namespace SanteDB.Core.Security.Audit
         {
             return builder.WithAuditableObjects(objects.SelectMany(o =>
                 {
-                    if (o is Bundle bundle)
+                    if (o is IResourceCollection bundle)
                         return bundle.Item.Select(i => i.ToAuditableObject());
                     else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
                 }
@@ -827,7 +827,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = ue.SecurityUserKey.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
-                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser).UserName;
+                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
                     break;
                 case Provider pvd:
                     retVal.Role = AuditableObjectRole.Doctor;
@@ -868,7 +868,7 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = act.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
-                    retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification.GetDisplayName("en") };
+                    retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification?.GetDisplayName("en") };
                     retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                         lifecycle = AuditableObjectLifecycle.Deidentification;
@@ -904,7 +904,6 @@ namespace SanteDB.Core.Security.Audit
                     retVal.NameData = aed.ToString();
                     break;
                 case Guid g:
-
                     retVal.Role = AuditableObjectRole.MasterFile;
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = $"urn:uuid:{g}";

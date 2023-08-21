@@ -18,19 +18,35 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using System;
+using Newtonsoft.Json;
+using System.Xml.Serialization;
 
-namespace SanteDB.Core.Services
+namespace SanteDB.Core.Data.Import.Definition
 {
     /// <summary>
-    /// Defines a class that can report progress has changed over a long running process
+    /// Foreign data parameter
     /// </summary>
-    public interface IReportProgressChanged
+    [XmlType(nameof(ForeignDataMapParameter), Namespace = "http://santedb.org/import")]
+    public class ForeignDataMapParameter
     {
         /// <summary>
-        /// Fired when the progress of this instance has changed
+        /// Gets or sets the name
         /// </summary>
-        event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-    }
+        [XmlAttribute("name"), JsonProperty("name")]
+        public string Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the expected pattern regex
+        /// </summary>
+        [XmlAttribute("pattern"), JsonProperty("pattern")]
+        public string Pattern { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the parameter is required
+        /// </summary>
+        [XmlAttribute("required"), JsonProperty("required")]
+        public bool IsRequired { get; set; }
+
+
+    }
 }

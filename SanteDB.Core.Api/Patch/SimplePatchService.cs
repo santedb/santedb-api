@@ -21,6 +21,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
@@ -368,12 +369,34 @@ namespace SanteDB.Core.Services.Impl
 
                     case PatchOperationType.Remove:
                         // We add the value!!! Yay!
-                        if (applyTo is IList)
+                        if (applyTo is IList apList)
                         {
-                            var instance = this.ExecuteLambda("FirstOrDefault", applyTo, property, pathName, op);
+                            // Is this a simple instance or a complex instance that we have to look up?
+                            object instance = null;
+                            if (pathName.Replace(op.Path, "") == ".") // no path so just convert and get
+                            {
+                                var valueOp = op.Value;
+                                if(!MapUtil.TryConvert(op.Value, property.PropertyType.StripGeneric(), out var converted)) {
+                                    throw new PatchAssertionException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, op.Value.GetType(), property.PropertyType.StripGeneric()));
+                                }
+                                
+                                if(converted is IdentifiedData identifiedData)
+                                {
+                                    instance = apList.OfType<IdentifiedData>().FirstOrDefault(o => o.Key == identifiedData.Key);
+                                }
+                                else if(apList.Contains(converted))
+                                {
+                                    instance = apList[apList.IndexOf(converted)];
+                                }
+                            }
+                            else // need to execute lambda
+                            {
+                                instance = this.ExecuteLambda("FirstOrDefault", applyTo, property, pathName, op);
+                            }
+
                             if (instance != null)
                             {
-                                (applyTo as IList).Remove(instance);
+                                apList.Remove(instance);
                             }
                             else
                             {

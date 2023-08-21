@@ -37,6 +37,13 @@ namespace SanteDB.Core.Security.Certs
         /// Code signing certificates
         /// </summary>
         public const string CodeSigning = "1.3.6.1.5.5.7.3.3";
+        /// <summary>
+        /// All issuance policies. Applies primarily to CAs and controls the allowed usages for end-entity certs issued.
+        /// </summary>
+        /// <remarks>
+        /// This will be opened up in a future release of .NET, see https://github.com/dotnet/runtime/issues/87270
+        /// </remarks>
+        public const string AllIssuancePolicy = "2.5.29.32.0";
 
     }
 }

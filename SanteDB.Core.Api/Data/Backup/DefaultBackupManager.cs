@@ -106,6 +106,8 @@ namespace SanteDB.Core.Data.Backup
                     .SelectMany(o => o.GetBackupAssets())
                     .ToArray();
 
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), 0f, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
+
                 using (var fs = File.Create(backupPath))
                 {
                     using (var bw = BackupWriter.Create(fs, assets, password))
@@ -113,11 +115,13 @@ namespace SanteDB.Core.Data.Backup
                         for (var i = 0; i < assets.Length; i++)
                         {
                             this.m_tracer.TraceInfo("Adding {0} to {1}", assets[i].Name, backupDescriptor);
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs((float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
                             bw.WriteAssetEntry(assets[i]);
                         }
                     }
                 }
+
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), 1f, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
 
                 return backupDescriptor;
             }
@@ -207,7 +211,7 @@ namespace SanteDB.Core.Data.Backup
                     {
                         while (br.GetNextEntry(out var backupAsset))
                         {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), ((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
                             using (backupAsset)
                             {
                                 if (restoreProviderReference.TryGetValue(backupAsset.AssetClassId, out var restoreProvider))

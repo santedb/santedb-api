@@ -157,13 +157,16 @@ namespace SanteDB.Core.Configuration.Features
             {
                 if (this.m_shouldInstall != null && !this.m_shouldInstall(configuration)) return true;
 
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, $"Installing Service {this.Feature.Name}..."));
                 var serviceType = typeof(TServiceType);
+                var taskidentifier = $"installtask-{serviceType.Name}";
+
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.0f, $"Installing Service {this.Feature.Name}..."));
+                
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
 
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.5f, $"Configuring Service {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.5f, $"Configuring Service {this.Feature.Name}..."));
                 // Now configure the object
                 configuration.Sections.RemoveAll(o => o.GetType() == this.Feature.ConfigurationType);
                 if (this.Feature.Configuration != null)
@@ -171,7 +174,7 @@ namespace SanteDB.Core.Configuration.Features
                     configuration.AddSection(this.Feature.Configuration);
                 }
 
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(1.0f, null));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 1.0f, null));
                 return true;
             }
 
@@ -233,15 +236,16 @@ namespace SanteDB.Core.Configuration.Features
             public bool Execute(SanteDBConfiguration configuration)
             {
                 var serviceType = typeof(TServiceType);
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.0f, $"Removing Service {this.Feature.Name}..."));
+                var taskidentifier = $"uninstalltask-{serviceType.Name}";
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.0f, $"Removing Service {this.Feature.Name}..."));
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
 
                 // Now configure the object
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(0.5f, $"Removing configuration for  {this.Feature.Name}..."));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.5f, $"Removing configuration for  {this.Feature.Name}..."));
                 configuration.Sections.RemoveAll(o => o.GetType() == this.Feature.ConfigurationType);
 
-                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(1.0f, null));
+                this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 1.0f, null));
 
                 return true;
             }

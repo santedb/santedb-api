@@ -347,7 +347,7 @@ namespace SanteDB.Core.Security
 
             // Caller of this method MUST be a signed assembly - there are no exceptions to this
             var callerFrame = new StackFrame(1);
-            callerFrame.GetMethod().DeclaringType.Assembly.ValidateCodeIsSigned(true);
+            callerFrame.GetMethod().DeclaringType.Assembly.ValidateCodeIsSigned(allowUnsignedAssemblies: false);
             return new WrappedContext(AuthenticationContext.SystemPrincipal, AuthenticationContext.Current);
         }
 

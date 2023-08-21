@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
+using SanteDB.Core.PubSub;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -85,7 +86,10 @@ namespace SanteDB.Core.Data.Import
         public bool CanCancel => true;
 
         /// <inheritdoc/>
-        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>();
+        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
+        {
+            { "submissionId", typeof(String) }
+        };
 
         /// <inheritdoc/>
         public void Cancel()
@@ -105,6 +109,11 @@ namespace SanteDB.Core.Data.Import
                 var scheduledJobs = this.m_fdManager.Find(o => o.Status == ForeignDataStatus.Scheduled).ToArray();
                 var progressPerFile = 1.0f / (float)scheduledJobs.Length;
                 int fileIndex = 0;
+                Guid? submissionId = null;
+                if (parameters.Length > 0 && parameters[0] != null)
+                {
+                    submissionId = Guid.Parse(parameters[0].ToString());
+                }
 
                 using (new Timer((o) => this.m_jobStateManager.SetProgress(this, this.m_fdManagerState, this.m_fdManagerProgress * progressPerFile + fileIndex * progressPerFile), null, 100, 1000))
                 {
@@ -113,7 +122,10 @@ namespace SanteDB.Core.Data.Import
                         this.m_cancelRequested = false;
                         for (fileIndex = 0; fileIndex < scheduledJobs.Length && !this.m_cancelRequested; fileIndex++)
                         {
-                            this.m_fdManager.Execute(scheduledJobs[fileIndex].Key.Value);
+                            if (!submissionId.HasValue || submissionId.Equals(scheduledJobs[fileIndex].Key))
+                            {
+                                this.m_fdManager.Execute(scheduledJobs[fileIndex].Key.Value);
+                            }
                         }
 
                     }

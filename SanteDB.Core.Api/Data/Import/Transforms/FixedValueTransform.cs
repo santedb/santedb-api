@@ -32,7 +32,7 @@ namespace SanteDB.Core.Data.Import.Transforms
         public string Name => "FixedValue";
 
         /// <inheritdoc/>
-        public object Transform(object input, IForeignDataRecord dataRecord, params object[] args)
+        public object Transform(object input, IForeignDataRecord dataRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
         {
             if (args.Length == 0)
             {

@@ -78,9 +78,7 @@ namespace SanteDB.Core.Security
                 {
                     var directoryInfo = new DirectoryInfo(this.m_monoPrivateKeyStoreLocation);
                     directoryInfo.Attributes |= FileAttributes.Hidden | FileAttributes.Encrypted; //TODO: Review. Using EFS has certain challenges and can clash
-                                                                                                  //with domain GPOs which might cause directory creation to fail
-                                                                                                  //or data loss if the EFS encryption key is lost. Also, when
-                                                                                                  //would the mono runtime be used on Windows?
+                                                                                                       //would the mono runtime be used on Windows?
                 }
             }
 
@@ -107,6 +105,12 @@ namespace SanteDB.Core.Security
         {
             assembly.ValidateCodeIsSigned(false); // will throw
             return true;
+        }
+
+        /// <inheritdoc/>
+        public bool IsCertificateTrusted(X509Certificate2 certificate)
+        {
+            return certificate?.IsTrustedIntern(new X509Certificate2Collection(), out _) == true;
         }
 
         /// <inheritdoc/>

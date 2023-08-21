@@ -199,7 +199,7 @@ namespace SanteDB.Core.Security.Configuration
         /// </summary>
         private X509Certificate2 GetCertificate()
         {
-            if (this.m_certificate == null)
+            if (this.m_certificate == null && !String.IsNullOrEmpty(this.FindValue))
             {
                 // Is there an implementation of the IPlatformSecurity
                 var platService = X509CertificateUtils.GetPlatformServiceOrDefault();

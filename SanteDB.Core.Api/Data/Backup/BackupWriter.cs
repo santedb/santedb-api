@@ -37,7 +37,7 @@ namespace SanteDB.Core.Data.Backup
     public class BackupWriter : IDisposable
     {
         // Magic bytes - how we know a file is a backup
-        private static readonly byte[] MAGIC = { (byte)'S', (byte)'D', (byte)'B', (byte)3 };
+        private static readonly byte[] MAGIC = BackupReader.MAGIC;
         private readonly Stream m_underlyingStream;
         private TarWriter m_tarWriter;
 

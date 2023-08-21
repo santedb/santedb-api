@@ -18,6 +18,9 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using System.Collections;
+using System.Collections.Generic;
+
 namespace SanteDB.Core.Data.Import
 {
     /// <summary>
@@ -39,9 +42,10 @@ namespace SanteDB.Core.Data.Import
         /// Transform data from the source foreign data object to an appropriate type
         /// </summary>
         /// <param name="input">The input object</param>
-        /// <param name="args">The arguments to the transformer (context specific)</param>
         /// <param name="sourceRecord">The source reader</param>
+        /// <param name="dataMapParameters">The parameters provided in the data map.</param>
+        /// <param name="args">The arguments to the transformer (context specific)</param>
         /// <returns>The transformed object</returns>
-        object Transform(object input, IForeignDataRecord sourceRecord, params object[] args);
+        object Transform(object input, IForeignDataRecord sourceRecord, IDictionary<string, string> dataMapParameters, params object[] args);
     }
 }

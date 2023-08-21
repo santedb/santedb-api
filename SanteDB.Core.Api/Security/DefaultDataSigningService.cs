@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -48,72 +49,22 @@ namespace SanteDB.Core.Security
 
         // Security configuration
         private readonly SecurityConfigurationSection m_configuration;
+        private readonly IDataSigningCertificateManagerService m_certificateManager;
         private readonly ConcurrentDictionary<String, SecuritySignatureConfiguration> m_usedForSignature = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
 
         /// <summary>
         /// Default data signing service DI constructor
         /// </summary>
-        public DefaultDataSigningService(IConfigurationManager configurationManager)
+        public DefaultDataSigningService(IConfigurationManager configurationManager, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
+            this.m_certificateManager = dataSigningCertificateManagerService;
         }
 
         /// <summary>
         /// Get the service name
         /// </summary>
         public string ServiceName => "Default Data Signing Service";
-
-        /// <summary>
-        /// Add a signing key to the global configuration for signing
-        /// </summary>
-        public void AddSigningKey(string keyId, byte[] keyData, SignatureAlgorithm signatureAlgorithm)
-        {
-            var current = this.m_configuration.Signatures.Find(o => o.KeyName == keyId);
-            if (current == null) // No current key - add it
-            {
-                current = new SecuritySignatureConfiguration()
-                {
-                    KeyName = keyId,
-                };
-                this.m_configuration.Signatures.Add(current);
-            }
-            current.Algorithm = signatureAlgorithm;
-            current.FindType = System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint;
-            current.FindTypeSpecified = signatureAlgorithm != SignatureAlgorithm.HS256;
-            current.FindValue = signatureAlgorithm != SignatureAlgorithm.HS256 ? BitConverter.ToString(keyData).Replace("-", "") : null;
-            current.Secret = signatureAlgorithm == SignatureAlgorithm.HS256 ? keyData : null;
-            current.StoreLocation = System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine;
-            current.StoreLocationSpecified = signatureAlgorithm != SignatureAlgorithm.HS256;
-            current.StoreName = System.Security.Cryptography.X509Certificates.StoreName.My;
-            current.StoreNameSpecified = signatureAlgorithm != SignatureAlgorithm.HS256;
-        }
-
-        /// <summary>
-        /// Get all keys
-        /// </summary>
-        public IEnumerable<string> GetKeys()
-        {
-            return this.m_configuration.Signatures.Select(o => o.KeyName);
-        }
-
-        /// <summary>
-        /// Get the signature algorithm for the specified key
-        /// </summary>
-        /// <param name="keyId">The key identifier</param>
-        public SignatureAlgorithm? GetSignatureAlgorithm(string keyId = null) => this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"))?.Algorithm;
-
-        /// <summary>
-        /// Get the public key identifier for the object
-        /// </summary>
-        public string GetPublicKeyThumbprint(string keyId = null)
-        {
-            var key = this.m_configuration.Signatures.Find(o => o.KeyName == (keyId ?? "default"));
-            if (key.Algorithm != SignatureAlgorithm.HS256 && key?.Certificate != null)
-            {
-                return SHA1.Create().ComputeHash(key.Certificate.GetPublicKey()).Base64UrlEncode();
-            }
-            return null;
-        }
 
         /// <summary>
         /// Sign data with the specified key data
@@ -125,13 +76,18 @@ namespace SanteDB.Core.Security
             {
                 throw new KeyNotFoundException($"Signing credentials {keyId} not found");
             }
+            return this.SignData(data, SignatureSettings.FromConfiguration(configuration));
+        }
 
+        /// <inheritdoc/>
+        public byte[] SignData(byte[] data, SignatureSettings configuration)
+        {
             // Sign the data
             switch (configuration.Algorithm)
             {
                 case SignatureAlgorithm.HS256:
                     {
-                        var key = configuration.GetSecret();
+                        var key = configuration.RawKeyData;
                         // Ensure 128 bit
                         while (key.Length < 16)
                         {
@@ -175,13 +131,7 @@ namespace SanteDB.Core.Security
             return keyUsedForSigning;
         }
 
-        /// <summary>
-        /// Verify data
-        /// </summary>
-        /// <param name="data">The data to verify</param>
-        /// <param name="signature">The signature to validate</param>
-        /// <param name="keyId">The key to use</param>
-        /// <returns>True if the signature matches</returns>
+        /// <inheritdoc/>
         public bool Verify(byte[] data, byte[] signature, string keyId = null)
         {
             var configuration = this.GetSigningKey(keyId ?? "default");
@@ -189,13 +139,18 @@ namespace SanteDB.Core.Security
             {
                 throw new KeyNotFoundException($"Could not find signing credentials {keyId}");
             }
+            return this.Verify(data, signature, SignatureSettings.FromConfiguration(configuration));
+        }
 
+        /// <inheritdoc/>
+        public bool Verify(byte[] data, byte[] signature, SignatureSettings configuration)
+        {
             // Configuration algorithm
             switch (configuration.Algorithm)
             {
                 case SignatureAlgorithm.HS256:
                     {
-                        var key = configuration.GetSecret();
+                        var key = configuration.RawKeyData;
                         // Ensure 128 bit
                         while (key.Length < 16)
                         {
@@ -216,6 +171,47 @@ namespace SanteDB.Core.Security
                     }
                 default:
                     throw new InvalidOperationException("Cannot validate digital signature");
+            }
+        }
+
+        /// <summary>
+        /// Get siganture settings from the named system key
+        /// </summary>
+        public SignatureSettings GetNamedSignatureSettings(string systemKeyId)
+        {
+            if (String.IsNullOrEmpty(systemKeyId))
+            {
+                throw new ArgumentNullException(nameof(systemKeyId));
+            }
+            return SignatureSettings.FromConfiguration(this.m_configuration.Signatures.Find(o => o.KeyName == systemKeyId || o.Certificate?.Thumbprint == systemKeyId));
+        }
+
+        /// <summary>
+        /// Get signature settings from a certificate thumbprint
+        /// </summary>
+        public SignatureSettings GetSignatureSettings(byte[] certificateThumbprint, SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256)
+        {
+            if (certificateThumbprint == null)
+            {
+                throw new ArgumentNullException(nameof(certificateThumbprint));
+            }
+            // First - check for system configured
+            var candidate = this.m_configuration.Signatures.Find(o => o.FindType == X509FindType.FindByThumbprint && o.FindValue?.Equals(certificateThumbprint.HexEncode(), StringComparison.OrdinalIgnoreCase) == true);
+            if (candidate != null)
+            {
+                return SignatureSettings.FromConfiguration(candidate);
+            }
+            else if (X509CertificateUtils.GetPlatformServiceOrDefault().TryGetCertificate(X509FindType.FindByThumbprint, certificateThumbprint, out var certificate))
+            {
+                return SignatureSettings.RSA(signatureAlgorithm, certificate);
+            }
+            else if (this.m_certificateManager.TryGetSigningCertificateByHash(certificateThumbprint, out certificate))
+            {
+                return SignatureSettings.RSA(signatureAlgorithm, certificate);
+            }
+            else
+            {
+                throw new KeyNotFoundException(ErrorMessages.CERTIFICATE_NOT_FOUND);
             }
         }
     }

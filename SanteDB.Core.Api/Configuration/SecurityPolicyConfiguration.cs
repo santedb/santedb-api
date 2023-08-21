@@ -126,7 +126,18 @@ namespace SanteDB.Core.Configuration
         /// Abandon session on PWD change
         /// </summary>
         [XmlEnum("session.abandon.pwd")]
-        AbandonSessionAfterPasswordReset
+        AbandonSessionAfterPasswordReset,
+        /// <summary>
+        /// Users must have MFA to their registered e-mail address
+        /// </summary>
+        [XmlEnum("auth.mfa.required")]
+        ForceMfa,
+        /// <summary>
+        /// Default MFA method for the system if the user has selected none
+        /// </summary>
+        [XmlEnum("auth.mfa.default")]
+        DefaultMfaMethod
+
     }
 
     /// <summary>

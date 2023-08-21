@@ -70,7 +70,7 @@ namespace SanteDB.Core.Data.Import
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> Import(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader, IForeignDataWriter rejectWriter, TransactionMode transactionMode)
+        public IEnumerable<DetectedIssue> Import(ForeignDataObjectMap foreignDataObjectMap, IDictionary<String, String> parameters, IForeignDataReader sourceReader, IForeignDataWriter rejectWriter, TransactionMode transactionMode)
         {
             if (foreignDataObjectMap == null)
             {
@@ -115,6 +115,14 @@ namespace SanteDB.Core.Data.Import
                 var parmNo = i;
                 duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
             }
+            foreach (var dbck in parameters)
+            {
+                if (!duplicateCheckParms.ContainsKey(dbck.Key))
+                {
+                    duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                }
+            }
+
             IdentifiedData mappedObject = null;
             duplicateCheckParms.Add("output", () => mappedObject);
 
@@ -141,10 +149,9 @@ namespace SanteDB.Core.Data.Import
                         var persistenceService = persistenceServices[resourceMap.TypeXml];
 
                         // Is there a duplicate check? If so map them
-                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
-                        this.m_tracer.TraceInfo("Processing {0} from import...", records);
+                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms, lazyExpandVariables: false)).ToList();
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultForeignDataImporter), 0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
                         if (duplicateChecks.Any())
                         {
                             mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
@@ -157,7 +164,7 @@ namespace SanteDB.Core.Data.Import
 
                         if (resourceMap.Transform != null) // Pass it to the transform
                         {
-                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, sourceReader, out var result) && result is IdentifiedData id)
+                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, parameters, sourceReader, out var result) && result is IdentifiedData id)
                             {
                                 mappedObject = id;
                             }
@@ -172,7 +179,7 @@ namespace SanteDB.Core.Data.Import
                                 break;
                             }
                         }
-                        else if (!this.ApplyMapping(resourceMap, sourceReader, insertBundle, ref mappedObject, out var issue))
+                        else if (!this.ApplyMapping(resourceMap, parameters, sourceReader, insertBundle, ref mappedObject, out var issue))
                         {
                             var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
                             currentRecord["import_error"] = issue.Text;
@@ -251,7 +258,7 @@ namespace SanteDB.Core.Data.Import
         }
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IForeignDataReader sourceReader)
+        public IEnumerable<DetectedIssue> Validate(ForeignDataObjectMap foreignDataObjectMap, IDictionary<string, string> parameters, IForeignDataReader sourceReader)
         {
             if (!sourceReader.MoveNext())
             {
@@ -280,6 +287,13 @@ namespace SanteDB.Core.Data.Import
                 {
                     var parmNo = i;
                     duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+                }
+                foreach(var dbck in parameters)
+                {
+                    if(!duplicateCheckParms.ContainsKey(dbck.Key))
+                    {
+                        duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                    }
                 }
                 IdentifiedData outputFake = null;
                 duplicateCheckParms.Add("output", () => outputFake);
@@ -327,12 +341,13 @@ namespace SanteDB.Core.Data.Import
         /// Apply mapping against the current row
         /// </summary>
         /// <param name="mapping">The mapping to apply</param>
+        /// <param name="parameters">Data Map parameters.</param>
         /// <param name="sourceReader">The source reader</param>
         /// <param name="mappedObject">The mapped object</param>
         /// <param name="issue">The issue which caused the result to fail</param>
         /// <param name="insertBundle">The bundle to be inserted</param>
         /// <returns>True if the mapping succeeds</returns>
-        private bool ApplyMapping(ForeignDataElementResourceMap mapping, IForeignDataReader sourceReader, Bundle insertBundle, ref IdentifiedData mappedObject, out DetectedIssue issue)
+        private bool ApplyMapping(ForeignDataElementResourceMap mapping, IDictionary<String, String> parameters, IForeignDataReader sourceReader, Bundle insertBundle, ref IdentifiedData mappedObject, out DetectedIssue issue)
         {
             try
             {
@@ -382,7 +397,7 @@ namespace SanteDB.Core.Data.Import
                                 switch (modifier)
                                 {
                                     case ForeignDataTransformValueModifier tx:
-                                        if (!this.ApplyTransformer(tx, sourceReader, targetValue, out targetValue))
+                                        if (!this.ApplyTransformer(tx, sourceReader, parameters, targetValue, out targetValue))
                                         {
                                             throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
                                         }
@@ -392,6 +407,13 @@ namespace SanteDB.Core.Data.Import
                                         break;
                                     case ForeignDataLookupValueModifier lx:
                                         targetValue = sourceReader[lx.SourceColumn];
+                                        break;
+                                    case ForeignDataParameterValueModifier px:
+                                        if(!parameters.TryGetValue(px.ParameterName, out var value))
+                                        {
+                                            throw new MissingFieldException(px.ParameterName);
+                                        }
+                                        targetValue = value;
                                         break;
                                     case ForeignDataOutputReferenceModifier or:
                                         if (or.ExternalResource != null)
@@ -437,16 +459,17 @@ namespace SanteDB.Core.Data.Import
         /// Apply the transformer <paramref name="transform"/> to <paramref name="input"/> returning the result of the map in <paramref name="output"/>
         /// </summary>
         /// <param name="transform">Transform instructions to execute</param>
+        /// <param name="sourceRecord">The source record to apply the transform to</param>
+        /// <param name="dataMapParameters">The data map parameters.</param>
         /// <param name="input">The input value to pass to the transform</param>
         /// <param name="output">The output of th etransform</param>
         /// <returns>True if the transform succeeded</returns>
-        /// <param name="sourceRecord">The source record to apply the transform to</param>
-        private bool ApplyTransformer(ForeignDataTransformValueModifier transform, IForeignDataRecord sourceRecord, Object input, out object output)
+        private bool ApplyTransformer(ForeignDataTransformValueModifier transform, IForeignDataRecord sourceRecord, IDictionary<string, string> dataMapParameters, Object input, out object output)
         {
 
             if (ForeignDataImportUtil.Current.TryGetElementTransformer(transform.Transformer, out var foreignDataElementTransform))
             {
-                output = foreignDataElementTransform.Transform(input, sourceRecord, transform.Arguments.ToArray());
+                output = foreignDataElementTransform.Transform(input, sourceRecord, dataMapParameters, transform.Arguments.ToArray());
                 return true;
             }
             else

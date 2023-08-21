@@ -212,8 +212,8 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the user to update</param>
         /// <param name="newPassword">The new password for the user.</param>
         /// <param name="principal">The principal responsible for the password change. This principal is checked for permission to change passwords.</param>
-        /// <param name="force">True to bypass password validation. False to perform validation.</param>
-        void ChangePassword(String userName, String newPassword, IPrincipal principal, bool force = false);
+        /// <param name="isSynchronizationOperation">True to bypass password validation and set the last login time from this operation. False to perform validation.</param>
+        void ChangePassword(String userName, String newPassword, IPrincipal principal, bool isSynchronizationOperation = false);
 
         /// <summary>
         /// Delete an identity
