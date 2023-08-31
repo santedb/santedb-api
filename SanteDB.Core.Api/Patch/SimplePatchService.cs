@@ -358,7 +358,13 @@ namespace SanteDB.Core.Services.Impl
                         // We add the value!!! Yay!
                         if (applyTo is IList ile)
                         {
-                            ile.Add(op.Value);
+                            var valueOp = op.Value;
+                            if (!MapUtil.TryConvert(op.Value, property.PropertyType.StripGeneric(), out var converted))
+                            {
+                                throw new PatchAssertionException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, op.Value.GetType(), property.PropertyType.StripGeneric()));
+                            }
+
+                            ile.Add(converted);
                         }
                         else
                         {
