@@ -212,7 +212,7 @@ namespace SanteDB.Core.Security
                     retVal = myUserStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
                 }
             }
-            return retVal || HasTrustedRootCert(chain);
+            return retVal || HasTrustedRootCert(chain) || chainStatus.All(o=>o.Status == X509ChainStatusFlags.NotTimeValid); //If the cert is expired we still want to trust it
         }
 
         /// <summary>

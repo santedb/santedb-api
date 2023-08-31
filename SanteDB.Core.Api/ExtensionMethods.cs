@@ -357,7 +357,7 @@ namespace SanteDB.Core
             {
                 tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
             }
-            else if (allowUnsignedAssemblies != true)
+            else if (!allowUnsignedAssemblies)
             {
                 // Verified assembly?
                 if (!m_verifiedAssemblies.Contains(asmFile))

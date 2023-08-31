@@ -129,7 +129,7 @@ namespace SanteDB.Core.Security.Privacy
         public virtual IQueryResultSet<TData> Apply<TData>(IQueryResultSet<TData> results, IPrincipal principal) where TData : IdentifiedData
         {
             // Only apply to sensitive data
-            if (principal != AuthenticationContext.SystemPrincipal && typeof(TData).GetCustomAttribute<ResourceSensitivityAttribute>()?.Classification == ResourceSensitivityClassification.PersonalHealthInformation) // System principal does not get filtered
+            if (principal != AuthenticationContext.SystemPrincipal && typeof(TData).GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation) // System principal does not get filtered
             {
                 return new NestedQueryResultSet<TData>(results, (o) => this.Apply(o, principal));
             }
@@ -236,7 +236,7 @@ namespace SanteDB.Core.Security.Privacy
                         {
                             foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
+                                act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, id.Value.Mask()));
                                 act.Identifiers.Remove(id);
                                 r++;
                             }
@@ -245,7 +245,7 @@ namespace SanteDB.Core.Security.Privacy
                         {
                             foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
-                                entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, new string('X', id.Value.Length)));
+                                entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, id.Value.Mask()));
                                 entity.Identifiers.Remove(id);
                                 r++;
                             }
