@@ -15,8 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-5-19
+ * User: trevor
+ * Date: 2023-08-31
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Description;
@@ -126,57 +126,81 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="query">The query which should be executed on the server</param>
         /// <param name="resourceNameOrUrl">The name of the resource at the base URL to be executed</param>
+        /// <exception cref="InvalidOperationException">Thrown when the description (configuration) does not contain any endpoints.</exception>
         protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
-            if (this.Description.Endpoint.IsNullOrEmpty())
+            if (this.Description?.Endpoint?.IsNullOrEmpty() ?? true)
             {
+                //TODO: Translate this error message string.
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
             }
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
-                || uri.Scheme == "file")
+                || uri.Scheme == "file") //TODO: fyfej: Should this be || (uri.Scheme != "http" && uri.Scheme != "https") instead?
             {
+                //TODO: Translate this tracer message.
                 s_tracer.TraceVerbose("Original resource {0} is not absolute or is wrong scheme - building service", resourceNameOrUrl);
-                var baseUrl = new Uri(this.Description.Endpoint[0].Address);
-                UriBuilder uriBuilder = new UriBuilder(baseUrl);
-
-                if (!String.IsNullOrEmpty(resourceNameOrUrl))
-                {
-                    uriBuilder.Path += "/" + resourceNameOrUrl;
-                }
-
-                // HACK:
-                uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
-                // Add query string
-                if (query != null && query.AllKeys.Any())
-                {
-                    uriBuilder.Query = CreateQueryString(query);
-                }
-
-                uri = uriBuilder.Uri;
+                uri = CreateCorrectRequestUri(resourceNameOrUrl, query);
             }
             else
             {
-                s_tracer.TraceVerbose("Constructed URI : {0}", uri);
+                //TODO: Translate this tracer message.
+                //s_tracer.TraceVerbose("Constructed URI : {0}", uri);
             }
 
+            //TODO: Translate this tracer message.
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
 
-            // Add headers
-            HttpWebRequest retVal = (HttpWebRequest)HttpWebRequest.Create(uri.ToString());
+            //Create request object.
+            var webrequest = (HttpWebRequest)HttpWebRequest.Create(uri.ToString());
 
-            if (this.Credentials == null &&
-                this.Description.Binding.Security?.CredentialProvider != null &&
-                this.Description.Binding.Security?.PreemptiveAuthentication == true)
-            {
-                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
-            }
-
-            this.Credentials?.SetCredentials(retVal);
+            GetRequestCredentials()?.SetCredentials(webrequest);
 
             // Set appropriate header
+            SetRequestAcceptEncoding(webrequest);
+
+            webrequest.Accept = this.Accept;
+
+            return webrequest;
+        }
+
+        /// <summary>
+        /// Create a uri for a request when the request uri is not valid.
+        /// </summary>
+        /// <param name="resourceNameOrUrl">The type of resource object to fetch.</param>
+        /// <param name="query">The query parameters of the request.</param>
+        /// <returns>A uri that is valid for the request and can be passed to a <see cref="HttpWebRequest"/>.</returns>
+        private Uri CreateCorrectRequestUri(string resourceNameOrUrl, NameValueCollection query)
+        {
+            Uri uri;
+            var baseUrl = new Uri(this.Description.Endpoint.First().Address);
+            UriBuilder uriBuilder = new UriBuilder(baseUrl);
+
+            if (!String.IsNullOrEmpty(resourceNameOrUrl))
+            {
+                uriBuilder.Path += "/" + resourceNameOrUrl;
+            }
+
+            // HACK:
+            uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
+            // Add query string
+            if (query != null && query.AllKeys.Any())
+            {
+                uriBuilder.Query = CreateQueryString(query);
+            }
+
+            uri = uriBuilder.Uri;
+            return uri;
+        }
+
+        /// <summary>
+        /// Sets the request Accept-Encoding header based on the <see cref="Description"/> for the client.
+        /// </summary>
+        /// <param name="webrequest">The request to set the header for.</param>
+        protected virtual void SetRequestAcceptEncoding(HttpWebRequest webrequest)
+        {
             StringBuilder acceptBuilder = new StringBuilder();
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
                 acceptBuilder.Append(",lzma");
@@ -187,13 +211,27 @@ namespace SanteDB.Core.Http
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
                 acceptBuilder.Append(",deflate");
 
-            if (acceptBuilder.Length > 0)
+            if (acceptBuilder.Length > 1)
             {
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
+                acceptBuilder.Remove(0, 1);
+                webrequest.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString();
             }
-            retVal.Accept = this.Accept;
+        }
 
-            return retVal;
+        /// <summary>
+        /// Tries to retrieve the credentials that should be used for a <see cref="HttpWebRequest"/> request. Override this method to provide credentials to requests.
+        /// </summary>
+        /// <returns>An instance of <see cref="RestRequestCredentials"/> or <c>null</c> if no credentials are available.</returns>
+        protected virtual RestRequestCredentials GetRequestCredentials()
+        {
+            if (this.Credentials == null &&
+                            this.Description.Binding.Security?.CredentialProvider != null &&
+                            this.Description.Binding.Security?.PreemptiveAuthentication == true)
+            {
+                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
+            }
+
+            return this.Credentials;
         }
 
         #region IRestClient implementation
@@ -430,7 +468,7 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Implementation specific implementation of invoke
+        /// Invokes the request. Implementations of <see cref="RestClientBase"/> must provide the implementation of <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/>.
         /// </summary>
         /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">The expected response (response hint) from the server</typeparam>

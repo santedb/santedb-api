@@ -341,7 +341,8 @@ namespace SanteDB.Core
         /// <param name="millisecondTimeout">The timeout to set</param>
         public static void SetTimeout(this IRestClient me, int millisecondTimeout)
         {
-            me.Description.Endpoint.ForEach(o => { o.Timeout = new TimeSpan(0, 0, 0, 0, millisecondTimeout); });
+            var timeout = TimeSpan.FromMilliseconds(millisecondTimeout);
+            me.Description.Endpoint.ForEach(o => { o.Timeout = timeout; });
         }
 
         /// <summary>
