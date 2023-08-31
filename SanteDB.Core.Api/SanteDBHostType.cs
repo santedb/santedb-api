@@ -52,6 +52,10 @@ namespace SanteDB.Core
         /// <summary>
         /// Environment is configuration tooling (allows some validation to be skipped)
         /// </summary>
-        Configuration = 6
+        Configuration = 6,
+        /// <summary>
+        /// Debugger
+        /// </summary>
+        Debugger = 7
     }
 }
