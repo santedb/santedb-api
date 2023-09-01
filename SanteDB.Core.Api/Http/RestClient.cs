@@ -37,6 +37,7 @@ using System.Net.Mime;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -112,7 +113,6 @@ namespace SanteDB.Core.Http
 
             SetRequestCertificateValidationCallback(webrequest);
 
-
             // Set user agent
             webrequest.UserAgent = s_UserAgent;
 
@@ -131,21 +131,28 @@ namespace SanteDB.Core.Http
         /// <param name="webrequest">The request to append headers to if they are available from <see cref="RemoteEndpointUtil"/>.</param>
         protected virtual void SetRequestRemoteData(HttpWebRequest webrequest)
         {
-            var remoteData = _RemoteEndpointUtil?.GetRemoteClient();
-            if (remoteData != null)
+            try
             {
-                var fwdInfo = remoteData.ForwardInformation;
-                if (!String.IsNullOrEmpty(fwdInfo))
+                var remoteData = _RemoteEndpointUtil?.GetRemoteClient();
+                if (null != remoteData)
                 {
-                    fwdInfo = $"{fwdInfo}, {remoteData.RemoteAddress}";
-                }
-                else
-                {
-                    fwdInfo = remoteData.RemoteAddress;
-                }
+                    var fwdInfo = remoteData.ForwardInformation;
+                    if (!string.IsNullOrEmpty(fwdInfo))
+                    {
+                        fwdInfo = $"{fwdInfo}, {remoteData.RemoteAddress}";
+                    }
+                    else
+                    {
+                        fwdInfo = remoteData.RemoteAddress;
+                    }
 
-                webrequest.Headers.Add("X-Real-IP", remoteData.RemoteAddress);
-                webrequest.Headers.Add("X-Forwarded-For", fwdInfo);
+                    webrequest?.Headers?.Add("X-Real-IP", remoteData.RemoteAddress);
+                    webrequest?.Headers?.Add("X-Forwarded-For", fwdInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                m_tracer.TraceError("Exception setting remote data for web request: {0}", ex.Message);
             }
         }
 
@@ -164,7 +171,7 @@ namespace SanteDB.Core.Http
             {
                 //TODO: Obsolete.
 #if DEBUG
-                throw new PlatformNotSupportedException(".NET Framework 4.5 and above required.");
+                throw new PlatformNotSupportedException(ErrorMessages.PLATFORM_NOT_SUPPORTED);
 #endif
                 this.m_tracer.TraceWarning("Cannot assign certificate validtion callback, will set servicepointmanager. This will be removed in the next release of SanteDB.");
                 ServicePointManager.ServerCertificateValidationCallback = this.RemoteCertificateValidation;
@@ -177,9 +184,16 @@ namespace SanteDB.Core.Http
         /// <param name="webrequest">The reuqest to set the proxy information for.</param>
         protected virtual void SetRequestProxy(HttpWebRequest webrequest)
         {
-            if (!String.IsNullOrEmpty(this.Description.ProxyAddress))
+            if (!string.IsNullOrEmpty(this.Description?.ProxyAddress))
             {
-                webrequest.Proxy = new WebProxy(this.Description.ProxyAddress);
+                try
+                {
+                    webrequest.Proxy = new WebProxy(this.Description.ProxyAddress);
+                }
+                catch (UriFormatException)
+                {
+                    this.m_tracer.TraceError("The proxy configuration for \"{0}\" contains an invalid proxy address: \"{1}\".", webrequest?.Address?.ToString(), this.Description.ProxyAddress);
+                }
             }
         }
 
@@ -237,7 +251,6 @@ namespace SanteDB.Core.Http
 
             var webrequest = this.CreateHttpRequest(url, query) as HttpWebRequest;
 
-
             if (null == webrequest)
             {
                 throw new InvalidOperationException($"{nameof(CreateHttpRequest)} returned null.");
@@ -271,13 +284,16 @@ namespace SanteDB.Core.Http
                         }
                         else if (IsRedirectWithKeepVerb(response))
                         {
+
                             //TODO: Optimize this when we have our InvokeInternalAsync() in place.
+                            cancellationtoken.ThrowIfCancellationRequested();
                             var redirectresult = this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, requestHeaders, out responseheaders, body, query);
                             return (redirectresult, responseheaders);
                         }
                         else if (IsRedirectMethod(response))
                         {
                             //TODO: Optimize this when we have our InvokeInternalAsync() in place.
+                            cancellationtoken.ThrowIfCancellationRequested();
                             var redirectresult = this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, requestHeaders, out responseheaders, default, query);
                             return (redirectresult, responseheaders);
                         }
@@ -294,7 +310,7 @@ namespace SanteDB.Core.Http
                             else
                             {
 
-                                return (result: (TResult)ReadResponseResult<TResult>(response), responseheaders);
+                                return (result: (TResult)ReadResponseBody<TResult>(response), responseheaders);
                             }
                         }
                     }
@@ -318,7 +334,7 @@ namespace SanteDB.Core.Http
 
                             try
                             {
-                                errorResult = ReadResponseResult<TResult>(errorresponse);
+                                errorResult = ReadResponseBody<TResult>(errorresponse);
                             }
                             catch (Exception e2)
                             {
@@ -436,9 +452,105 @@ namespace SanteDB.Core.Http
             }
         }
 
-        private object ReadResponseResult<TResult>(HttpWebResponse response)
+        private long? TryGetContentLength(HttpWebResponse response)
         {
-            if (!string.IsNullOrEmpty(response.ContentType))
+            try
+            {
+                var length = response?.ContentLength;
+                return length > 0 ? length : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Read the response body from the from <see cref="HttpWebResponse"/>.
+        /// </summary>
+        /// <typeparam name="TResult">The desired type of the result.</typeparam>
+        /// <param name="response">The web response to read the body from.</param>
+        /// <returns>An object that is derived from the response of the request. If <typeparamref name="TResult"/> is <see cref="T:byte[]"/>, The response will be a byte-array. If <typeparamref name="TResult"/> is <see cref="Stream"/>, then the response will be a stream. Otherwise, the type is determined by the <see cref="IContentTypeMapper"/> as part of the configuration.</returns>
+        /// <remarks>
+        ///     <para>Special handling is provided for some types.</para>
+        ///     <para>If <typeparamref name="TResult"/> is <see cref="T:byte[]"/>, then the body will be read through a buffer into a byte array and returned, regardless of the <see cref="IContentTypeMapper"/> configured for the client.</para>
+        ///     <para>If <typeparamref name="TResult"/> is <see cref="Stream"/>, then the body will be read into a <see cref="MemoryStream"/> which will be returned. <b>Callers are responsible for disposing this stream.</b></para>
+        /// </remarks>
+        protected virtual object ReadResponseBody<TResult>(HttpWebResponse response)
+        {
+            if (null == response)
+            {
+                return null;
+            }
+
+            var tresult = typeof(TResult);
+
+            var compressionscheme = CompressionUtil.GetCompressionScheme(response.Headers[HttpResponseHeader.ContentEncoding]);
+
+            if (null != compressionscheme && compressionscheme.ImplementedMethod == HttpCompressionAlgorithm.None)
+            {
+                compressionscheme = null;
+            }
+
+            if (tresult == typeof(byte[])) //Fast path for byte array
+            {
+                //TODO: Handle large payloads that shouldn't buffer in memory.
+                using (var responsestream = response.GetResponseStream())
+                {
+                    using (var memorystream = new MemoryStream())
+                    {
+                        if (null != compressionscheme)
+                        {
+                            using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(responsestream)))
+                            {
+                                compressionstream.CopyTo(memorystream);
+                            }
+                        }
+                        else
+                        {
+                            responsestream.CopyTo(memorystream);
+                        }
+
+                        var responsebytes = memorystream.ToArray();
+
+                        if (this.Description.Trace)
+                        {
+                            this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(responsebytes));
+                        }
+
+                        return responsebytes;
+                    }
+                }
+            }
+            else if (tresult == typeof(Stream)) //Fast path for stream
+            {
+                //TODO: Handle large payloads that shouldn't buffer in memory.
+                using (var responsestream = response.GetResponseStream())
+                {
+                    var memorystream = new MemoryStream(); //Not in a using because we're going to be returning it. It will be the caller's responsibility to dispose of it.
+
+                    if (null != compressionscheme)
+                    {
+                        using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(responsestream)))
+                        {
+                            compressionstream.CopyTo(memorystream);
+                        }
+                    }
+                    else
+                    {
+                        responsestream.CopyTo(memorystream);
+                    }
+
+                    if (this.Description.Trace)
+                    {
+                        this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(memorystream.ToArray()));
+                    }
+
+                    memorystream.Seek(0, SeekOrigin.Begin); //Reset the stream's position so that callers are ready to read the buffered response.
+                    return memorystream;
+                }
+            }
+            else if (!string.IsNullOrEmpty(response.ContentType))
             {
                 var responsemimetype = new ContentType(response.ContentType);
 
@@ -451,9 +563,10 @@ namespace SanteDB.Core.Http
                         this.m_tracer.TraceVerbose("Received response {0} : {1} bytes", response.ContentType, response.ContentLength);
                     }
 
-                    var responsestream = response.GetResponseStream();
-
-                    responsestream.CopyTo(memorystream);
+                    using (var responsestream = response.GetResponseStream())
+                    {
+                        responsestream.CopyTo(memorystream);
+                    }
 
                     memorystream.Seek(0, SeekOrigin.Begin);
 
@@ -462,11 +575,11 @@ namespace SanteDB.Core.Http
                         this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(memorystream.ToArray()));
                     }
 
-                    if (!string.IsNullOrEmpty(response.Headers[HttpResponseHeader.ContentEncoding]))
+                    if (null != compressionscheme)
                     {
-                        using (var str = CompressionUtil.GetCompressionScheme(response.Headers[HttpResponseHeader.ContentEncoding]).CreateDecompressionStream(memorystream))
+                        using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(memorystream)))
                         {
-                            return responseserializer.DeSerialize(str, responsemimetype, typeof(TResult));
+                            return responseserializer.DeSerialize(compressionstream, responsemimetype, typeof(TResult));
                         }
                     }
                     else
@@ -511,65 +624,140 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
-        /// Processes the request body of the <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/> including serialization and copying to the request stream.
+        /// Write the body of the request if provided to the <see cref="HttpWebRequest"/>.
         /// </summary>
-        /// <typeparam name="TBody"></typeparam>
-        /// <param name="contentType"></param>
-        /// <param name="body"></param>
-        /// <param name="webrequest"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <typeparam name="TBody">The type of body that is provided.</typeparam>
+        /// <param name="contentType">The content type header that will be the type of content to send in the request.</param>
+        /// <param name="body">The object representing the body of the request.</param>
+        /// <param name="webrequest">The request object to write the body to.</param>
+        /// <returns>A task that can be awaited while the operation completes.</returns>
+        /// <exception cref="InvalidOperationException">Can be thrown when no serializer is available for the <typeparamref name="TBody"/> type.</exception>
+        /// <remarks>
+        ///   <para>Special handling is provided for some types of <typeparamref name="TBody"/>:</para>
+        ///   <para>If <typeparamref name="TBody"/> is <see cref="T:byte[]"/>, the body will be copied directly from the array to the request stream.</para>
+        ///   <para>If <typeparamref name="TBody"/> is <see cref="Stream"/>, the body will be copied directly from the stream to the request stream.</para>
+        /// </remarks>
         protected virtual async Task WriteRequestBodyAsync<TBody>(string contentType, TBody body, HttpWebRequest webrequest)
         {
             if (!string.IsNullOrEmpty(contentType) && !EqualityComparer<TBody>.Default.Equals(default(TBody), body))
             {
                 var mimetype = new ContentType(contentType);
 
-                IBodySerializer serializer = this.Description?.Binding?.ContentTypeMapper?.GetSerializer(mimetype);
+                var compressionscheme = this.Description?.Binding?.CompressRequests == true ? CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod) : null;
 
-                if (null == serializer)
+                if (null != compressionscheme && compressionscheme.ImplementedMethod == HttpCompressionAlgorithm.None) //We don't do anything for the no compression option.
                 {
-                    throw new InvalidOperationException($"Serializer is missing for content type: {contentType}.");
+                    compressionscheme = null;
                 }
 
-                using (var memorystream = new MemoryStream())
+                if (body is byte[] bytes) //Fast path for byte arrays when transfering blobs.
                 {
-                    if (this.Description.Binding.CompressRequests)
-                    {
-                        var compressionscheme = CompressionUtil.GetCompressionScheme(this.Description.Binding.OptimizationMethod);
-                        if (compressionscheme.ImplementedMethod != HttpCompressionAlgorithm.None)
-                        {
-                            webrequest.Headers.Add(HttpRequestHeader.ContentEncoding, compressionscheme.AcceptHeaderName);
-                            webrequest.Headers.Add("X-CompressRequestStream", compressionscheme.AcceptHeaderName);
-                        }
-
-                        using (var compressionstream = compressionscheme.CreateCompressionStream(NonDisposingStream.Create(memorystream)))
-                        {
-                            serializer.Serialize(compressionstream, body, out mimetype); //TODO: Question; Why do we provide mime this in both places
-                        }
-                    }
-                    else
-                    {
-                        serializer.Serialize(memorystream, body, out mimetype);
-                    }
-
-                    if (this.Description.Trace)
-                    {
-                        this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(memorystream.ToArray()));
-                    }
-
-                    memorystream.Seek(0, SeekOrigin.Begin);
-
-                    webrequest.ContentType = mimetype.ToString();
-
                     using (var requeststream = await webrequest.GetRequestStreamAsync())
                     {
-                        await memorystream.CopyToAsync(requeststream);
+                        using (var memorystream = new MemoryStream(bytes))
+                        {
+                            memorystream.Seek(0, SeekOrigin.Begin);
+
+                            if (null != compressionscheme)
+                            {
+                                AddRequestCompressionHeaders(webrequest, compressionscheme);
+
+                                using (var compressionstream = compressionscheme.CreateCompressionStream(NonDisposingStream.Create(requeststream)))
+                                {
+                                    memorystream.CopyTo(compressionstream);
+                                }
+                            }
+                            else
+                            {
+                                memorystream.CopyTo(requeststream);
+                            }
+
+                            if (this.Description.Trace)
+                            {
+                                this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(memorystream.ToArray()));
+                            }
+                        }
+                    }
+                }
+                else if (body is Stream bodystream && bodystream.CanRead && bodystream.CanSeek) //Fast path for streams.
+                {
+                    using (bodystream) //TODO: Remove this if we need to reuse the body stream after copy.
+                    {
+                        using (var requeststream = await webrequest.GetRequestStreamAsync())
+                        {
+                            bodystream.Seek(0, SeekOrigin.Begin);
+
+                            if (null != compressionscheme)
+                            {
+                                AddRequestCompressionHeaders(webrequest, compressionscheme);
+
+                                using (var compressionstream = compressionscheme.CreateCompressionStream(NonDisposingStream.Create(requeststream)))
+                                {
+                                    bodystream.CopyTo(compressionstream);
+                                }
+                            }
+                            else
+                            {
+                                bodystream.CopyTo(requeststream);
+                            }
+                        }
+
+                        if (this.Description.Trace)
+                        {
+                            this.m_tracer.TraceVerbose("HTTP >> [Stream]");
+                        }
+                    }
+                }
+                else
+                {
+                    var serializer = this.Description?.Binding?.ContentTypeMapper?.GetSerializer(mimetype);
+
+                    if (null == serializer)
+                    {
+                        throw new InvalidOperationException($"Serializer is missing for content type: {contentType}.");
+                    }
+
+                    using (var memorystream = new MemoryStream())
+                    {
+                        if (null != compressionscheme)
+                        {
+                            AddRequestCompressionHeaders(webrequest, compressionscheme);
+
+                            using (var compressionstream = compressionscheme.CreateCompressionStream(NonDisposingStream.Create(memorystream)))
+                            {
+                                serializer.Serialize(compressionstream, body, out mimetype); //TODO: Question; Why do we provide mime this in both places
+                            }
+                        }
+                        else
+                        {
+                            serializer.Serialize(memorystream, body, out mimetype);
+                        }
+
+                        if (this.Description.Trace)
+                        {
+                            this.m_tracer.TraceVerbose("HTTP >> {0}", Convert.ToBase64String(memorystream.ToArray()));
+                        }
+
+                        memorystream.Seek(0, SeekOrigin.Begin);
+
+                        webrequest.ContentType = mimetype.ToString();
+
+                        using (var requeststream = await webrequest.GetRequestStreamAsync())
+                        {
+                            await memorystream.CopyToAsync(requeststream);
+                        }
                     }
                 }
             }
         }
 
+        private static void AddRequestCompressionHeaders(HttpWebRequest webrequest, ICompressionScheme compressionscheme)
+        {
+            webrequest.Headers.Add(HttpRequestHeader.ContentEncoding, compressionscheme.AcceptHeaderName);
+            webrequest.Headers.Add("X-CompressRequestStream", compressionscheme.AcceptHeaderName);
+        }
+
+#if DEBUG
         /// <inheritdoc />
         protected TResult InvokeInternalOld<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection additionalHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
         {
@@ -864,6 +1052,7 @@ namespace SanteDB.Core.Http
             }
 
         }
+#endif
 
         /// <summary>
         /// Sets the request headers on the <paramref name="webRequest"/> using <paramref name="requestHeaders"/>. Special headers that require parsing are handled.

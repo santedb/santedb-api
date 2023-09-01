@@ -166,17 +166,17 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Executes a HEAD operation against the URL
         /// </summary>
-        /// <param name="resourceName">The name of the resource to perform a HEAD operation on</param>
+        /// <param name="url">The name of the resource to perform a HEAD operation on</param>
         /// <returns>A key/value pair of the HTTP headers sent in response to the HEAD</returns>
-        IDictionary<String, String> Head(String resourceName);
+        IDictionary<String, String> Head(String url);
 
         /// <summary>
         /// Executes a HEAD operation against the URL
         /// </summary>
-        /// <param name="resourceName">The name of the resource to perform a HEAD operation on</param>
+        /// <param name="url">The name of the resource to perform a HEAD operation on</param>
         /// <param name="query">The queyr parameters to use onte HEAD</param>
         /// <returns>A key/value pair of the HTTP headers sent in response to the HEAD</returns>
-        IDictionary<String, String> Head(String resourceName, NameValueCollection query);
+        IDictionary<String, String> Head(String url, NameValueCollection query);
 
         /// <summary>
         /// Lock the specified resource
