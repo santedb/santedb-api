@@ -70,6 +70,12 @@ namespace SanteDB.Core.Api.Test.RestClient
         private async Task HandleRequestAsync(HttpListenerContext context, CancellationToken token = default)
         {
             var routepath = context.Request.Url.AbsolutePath;
+
+            if (routepath.StartsWith("//")) //Remove a double slash from the test server?
+            {
+                routepath = routepath.Substring(1);
+            }
+
             if (!routepath.StartsWith("/"))
             {
                 await HandleBadRequestAsync(context.Request, context.Response, token);
