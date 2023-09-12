@@ -24,6 +24,12 @@ namespace SanteDB.Core.Api.Test.RestClient
         public RequestResponse(HttpListenerRequest request)
         {
             Path = request.Url.AbsolutePath;
+
+            if (Path.StartsWith("//"))
+            {
+                Path = Path.Substring(1);
+            }
+            
             Method = request.HttpMethod;
             Host = request.Headers["Host"];
             RequestContentType = request.Headers["Content-Type"];
