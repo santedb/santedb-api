@@ -42,6 +42,17 @@ namespace SanteDB.Core.Configuration.Http
         }
 
         /// <summary>
+        /// Copy constructor
+        /// </summary>
+        public RestClientBindingConfiguration(RestClientBindingConfiguration copyFrom)
+        {
+            this.CompressRequests = copyFrom.CompressRequests;
+            this.ContentTypeMapper = copyFrom.ContentTypeMapper;
+            this.OptimizationMethod = copyFrom.OptimizationMethod;
+            this.Security = new RestClientSecurityConfiguration(copyFrom.Security);
+        }
+
+        /// <summary>
         /// Gets or sets the type which dictates how a body maps to a
         /// </summary>
         /// <value>The serialization binder type xml.</value>
