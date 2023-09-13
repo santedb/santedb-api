@@ -87,8 +87,11 @@ namespace SanteDB.Core.Api.Test.RestClient
 
             switch (routepath)
             {
+                case "/streamdelay":
+                    await HandleStreamDelayRequestAsync(context.Request, context.Response, token);
+                    break;
                 case "/delay":
-
+                    await HandleResponseDelayRequestAsync(context.Request, context.Response, token);
                     break;
                 case "/badrequest":
                     await HandleBadRequestAsync(context.Request, context.Response, token);
@@ -102,20 +105,79 @@ namespace SanteDB.Core.Api.Test.RestClient
             }
         }
 
-        private async Task HandleDelayRequestAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken token = default)
+        private async Task HandleStreamDelayRequestAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken token = default)
+        {
+            var delay = TimeSpan.FromMilliseconds(10);
+            try
+            {
+                var delayamountstring = request.Url.AbsolutePath.Substring(request.Url.AbsolutePath.IndexOf('/', 1) + 1);
+
+                if (int.TryParse(delayamountstring, out var s))
+                {
+                    delay = TimeSpan.FromMilliseconds(s);
+                }
+                
+                else if (TimeSpan.TryParse(delayamountstring, out var d))
+                {
+                    delay = d;
+                }
+            }
+            catch { }
+
+            response.StatusCode = 200;
+            response.StatusDescription = "OK";
+            response.ContentType = "application/json";
+            response.ContentEncoding = Encoding.UTF8;
+            response.AddHeader("Server", $"{nameof(RestClientTestServer)} 1.0");
+            response.AddHeader("Date", DateTimeOffset.UtcNow.ToString("u"));
+            var responsebody = new RequestResponse(request);
+
+            if (null != request.InputStream)
+            {
+                using (var sr = new StreamReader(request.InputStream, Encoding.UTF8, false, 1024, true))
+                {
+                    responsebody.RequestContent = await sr.ReadToEndAsync();
+                }
+            }
+
+            var responsebodystr = JsonConvert.SerializeObject(responsebody);
+
+            var ms = new MemoryStream();
+
+            using (var sw = new StreamWriter(ms, Encoding.UTF8, 1024, true))
+            {
+                await sw.WriteLineAsync(responsebodystr);
+            }
+
+            ms.Seek(0, SeekOrigin.Begin);
+
+            response.ContentLength64 = ms.Length;
+
+            int b = -1;
+            while(!token.IsCancellationRequested && (b = ms.ReadByte()) >= 0){
+                await Task.Delay(delay, token);
+                token.ThrowIfCancellationRequested();
+                response.OutputStream.WriteByte((byte)b);
+                await response.OutputStream.FlushAsync();
+            }
+
+            response.Close();
+        }
+
+        private async Task HandleResponseDelayRequestAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken token = default)
         {
             var delay = TimeSpan.FromSeconds(5);
             try
             {
-                var delayamountstring = request.Url.AbsolutePath.Substring(request.Url.AbsolutePath.IndexOf('/', 1));
+                var delayamountstring = request.Url.AbsolutePath.Substring(request.Url.AbsolutePath.IndexOf('/', 1) + 1);
 
-                if (TimeSpan.TryParse(delayamountstring, out var d))
-                {
-                    delay = d;
-                }
-                else if (int.TryParse(delayamountstring, out var s))
+                if (int.TryParse(delayamountstring, out var s))
                 {
                     delay = TimeSpan.FromSeconds(s);
+                }
+                else if (TimeSpan.TryParse(delayamountstring, out var d))
+                {
+                    delay = d;
                 }
             }
             catch { }

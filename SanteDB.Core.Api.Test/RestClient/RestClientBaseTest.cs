@@ -33,7 +33,7 @@ namespace SanteDB.Core.Api.Test.RestClient
             config.Endpoint.Add(new RestClientEndpointConfiguration
             {
                 Address = address,
-                Timeout = timeout
+                ConnectTimeout = timeout
             });
 
             config.Binding = new RestClientBindingConfiguration

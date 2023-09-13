@@ -118,10 +118,10 @@ namespace SanteDB.Core.Api.Test.RestClient
         }
 
         [Test]
-        public void RestClient_HttpTimeout()
+        public void RestClient_HttpConnectTimeout()
         {
             var config = GetBasicConfig();
-            config.Endpoint[0].Timeout = TimeSpan.FromSeconds(2);
+            config.Endpoint[0].ConnectTimeout = TimeSpan.FromSeconds(2);
 
             var fixture = new Core.Http.RestClient(config);
 
@@ -140,6 +140,54 @@ namespace SanteDB.Core.Api.Test.RestClient
             }
 
             Assert.Fail();
+
+        }
+
+        [Test]
+        public void RestClient_HttpReceiveTimeout()
+        {
+            var config = GetBasicConfig();
+            config.Endpoint[0].ConnectTimeout = TimeSpan.FromSeconds(2);
+            config.Endpoint[0].ReceiveTimeout = TimeSpan.FromSeconds(5);
+
+            var fixture = new Core.Http.RestClient(config);
+
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                var response = fixture.Get<RequestResponse>("/streamdelay/50");
+            }
+            catch (TimeoutException)
+            {
+                sw.Stop();
+                var elapsed = sw.Elapsed.TotalSeconds;
+                Assert.GreaterOrEqual(elapsed, 5d);
+                Assert.Less(elapsed, 5.5d);
+                return;
+            }
+
+            Assert.Fail();
+
+        }
+
+        [Test]
+        public void RestClient_HttpReceiveInfiniteTimeout()
+        {
+            var config = GetBasicConfig();
+            config.Endpoint[0].ConnectTimeout = TimeSpan.FromSeconds(2);
+            config.Endpoint[0].ReceiveTimeout = null;
+
+            var fixture = new Core.Http.RestClient(config);
+
+            try
+            {
+                var response = fixture.Get<RequestResponse>("/streamdelay/7");
+            }
+            catch (TimeoutException)
+            {
+                Assert.Fail();
+                return;
+            }
 
         }
     }

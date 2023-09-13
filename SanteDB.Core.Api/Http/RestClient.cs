@@ -22,6 +22,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Compression;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
@@ -51,6 +52,7 @@ namespace SanteDB.Core.Http
     {
         static readonly string s_UserAgent;
         static readonly TimeSpan s_DefaultTimeout;
+        static readonly TimeSpan s_InfiniteTimeout;
         /// <summary>
         /// Sets static objects in the <see cref="RestClient"/>.
         /// </summary>
@@ -66,8 +68,9 @@ namespace SanteDB.Core.Http
                 s_UserAgent = "SanteDB 0.0 (0.0.0.0)";
             }
 
+            
+            s_InfiniteTimeout = TimeSpan.FromMilliseconds(-1);
             //Set this to -1 for infinite timeout.
-            //s_DefaultTimeout = TimeSpan.FromMilliseconds(-1);
             s_DefaultTimeout = TimeSpan.FromMinutes(2); //Matches the built in functionality.
         }
 
@@ -234,7 +237,16 @@ namespace SanteDB.Core.Http
         /// Gets the <see cref="TimeSpan"/> that represents the timeout for an <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/> operation.
         /// </summary>
         /// <returns>A valid TimeSpan for the operation, or a timespan that represents -1 for infinite.</returns>
-        protected virtual TimeSpan GetInvokeTimeout() => this.Description?.Endpoint?.First()?.Timeout ?? s_DefaultTimeout;
+        protected virtual TimeSpan GetConnectTimeout() => this.Description?.Endpoint?.First()?.ConnectTimeout ?? s_DefaultTimeout;
+
+        /// <summary>
+        /// Gets the <see cref="TimeSpan"/> that represents the timeout for entire <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/> operation including receive and deserialization.
+        /// </summary>
+        /// <returns>A valid TimeSpan for the operation, or a timespan that represents -1 for infinite.</returns>
+        protected virtual TimeSpan GetReceiveTimeout() => this.Description?.Endpoint?.First()?.ReceiveTimeout ?? s_InfiniteTimeout;
+
+
+        
 
         /// <inheritdoc />
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
@@ -266,6 +278,8 @@ namespace SanteDB.Core.Http
 
                     try
                     {
+                        var connecttimeouttask = Task.Delay(GetConnectTimeout());
+
                         webrequest.Method = method;
 
                         SetRequestHeaders(webrequest, requestHeaders);
@@ -274,7 +288,16 @@ namespace SanteDB.Core.Http
 
                         cancellationtoken.ThrowIfCancellationRequested();
 
-                        response = await webrequest.GetResponseAsync() as HttpWebResponse;
+                        var responsetask = webrequest.GetResponseAsync();
+
+                        var resulttask = await Task.WhenAny(connecttimeouttask, responsetask);
+
+                        if (resulttask == connecttimeouttask)
+                        {
+                            throw new TimeoutException(string.Format(ErrorMessageStrings.TIMEOUT, "rest operation"));
+                        }
+
+                        response = await responsetask as HttpWebResponse;
 
                         var responseheaders = CopyResponseHeaders(response);
 
@@ -316,6 +339,17 @@ namespace SanteDB.Core.Http
                     }
                     catch (TimeoutException e)
                     {
+                        try
+                        {
+                            webrequest.Abort();
+                        }
+                        catch
+#if DEBUG
+                        (Exception ex)
+#endif 
+                        {
+                            
+                        }
                         this.m_tracer.TraceError("Request timed out: {0}", e.Message);
                         throw;
                     }
@@ -412,18 +446,17 @@ namespace SanteDB.Core.Http
                     }
                 });
 
-                var timeouttask = Task.Delay(GetInvokeTimeout(), cancellationtoken);
-
-                var whenanytask = Task.WhenAny(processtask, timeouttask);
+                var receivetimeouttask = Task.Delay(GetReceiveTimeout(), cancellationtoken);
+                var whenanytask = Task.WhenAny(processtask, receivetimeouttask);
 
                 whenanytask.Wait();
 
-                if (whenanytask.Result == timeouttask)
+                if (whenanytask.Result == receivetimeouttask)
                 {
                     cts.Cancel();
-
-                    this.m_tracer.TraceError("Request timed out.");
-                    throw new TimeoutException("Request timed out.");
+                    var errormessage = string.Format(ErrorMessageStrings.TIMEOUT, "rest operation");
+                    this.m_tracer.TraceError(errormessage);
+                    throw new TimeoutException(errormessage);
                 }
                 else
                 {
@@ -855,7 +888,7 @@ namespace SanteDB.Core.Http
                 try
                 {
                     var cancellationTokenSource = new CancellationTokenSource();
-                    cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].Timeout);
+                    cancellationTokenSource.CancelAfter(this.Description.Endpoint[0].ConnectTimeout);
                     using (var responseTask = Task.Run(async () => { return await requestObj.GetResponseAsync(); }, cancellationTokenSource.Token))
                     {
                         try

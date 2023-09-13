@@ -33,8 +33,13 @@ namespace SanteDB.Core.Http.Description
         string Address { get; }
 
         /// <summary>
-        /// Gets or sets the timeouts
+        /// Gets or sets the timeout that a client will wait for a response from the server. Reading the response body stream can take longer than this value without throwing a <see cref="TimeoutException"/>.
         /// </summary>
-        TimeSpan Timeout { get; set; }
+        TimeSpan ConnectTimeout { get; set; }
+
+        /// <summary>
+        /// Gets or sets the timeout that a client will wait for the entire operation, including reading and processing the response body, before timing out and throwing a <see cref="TimeoutException"/>.
+        /// </summary>
+        TimeSpan? ReceiveTimeout { get; set; }
     }
 }

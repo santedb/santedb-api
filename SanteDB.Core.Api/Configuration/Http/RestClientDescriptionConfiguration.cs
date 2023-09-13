@@ -112,7 +112,7 @@ namespace SanteDB.Core.Configuration.Http
             retVal.Endpoint = new List<RestClientEndpointConfiguration>(this.Endpoint.Select(o => new RestClientEndpointConfiguration
             {
                 Address = o.Address,
-                Timeout = o.Timeout
+                ConnectTimeout = o.ConnectTimeout
             }));
             return retVal;
         }

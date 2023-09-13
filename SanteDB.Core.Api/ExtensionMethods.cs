@@ -342,7 +342,7 @@ namespace SanteDB.Core
         public static void SetTimeout(this IRestClient me, int millisecondTimeout)
         {
             var timeout = TimeSpan.FromMilliseconds(millisecondTimeout);
-            me.Description.Endpoint.ForEach(o => { o.Timeout = timeout; });
+            me.Description.Endpoint.ForEach(o => { o.ConnectTimeout = timeout; });
         }
 
         /// <summary>
