@@ -34,11 +34,20 @@ namespace SanteDB.Core.Configuration.Http
     public class RestClientEndpointConfiguration : IRestClientEndpointDescription
     {
         /// <summary>
-        /// Timeout of 4 sec
+        /// Default ctor
         /// </summary>
         public RestClientEndpointConfiguration()
         {
             this.ConnectTimeout = new TimeSpan(0, 1, 0);
+        }
+
+        /// <summary>
+        /// Copy constructor
+        /// </summary>
+        public RestClientEndpointConfiguration(RestClientEndpointConfiguration copyFrom)
+        {
+            this.Address = copyFrom.Address;
+            this.TimeoutXml = copyFrom.TimeoutXml;
         }
 
         /// <summary>
