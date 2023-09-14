@@ -68,14 +68,14 @@ namespace SanteDB.Core.Http
 
             //Set this to -1 for infinite timeout.
             //s_DefaultTimeout = TimeSpan.FromMilliseconds(-1);
-            s_DefaultTimeout = TimeSpan.FromMinutes(2); //Matches the built in functionality.
+            s_DefaultTimeout = TimeSpan.FromSeconds(120); //Matches the built in functionality.
         }
 
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(RestClient));
 
         readonly RemoteEndpointUtil _RemoteEndpointUtil;
-
+        readonly IServiceProvider _Services;
 
 
         /// <summary>
@@ -84,6 +84,7 @@ namespace SanteDB.Core.Http
         public RestClient() : base()
         {
             _RemoteEndpointUtil = RemoteEndpointUtil.Current;
+            _Services = ApplicationServiceContext.Current;
         }
 
         /// <summary>
@@ -100,6 +101,7 @@ namespace SanteDB.Core.Http
             }
 
             _RemoteEndpointUtil = RemoteEndpointUtil.Current;
+            _Services = ApplicationServiceContext.Current;
         }
 
         /// <inheritdoc />
@@ -224,8 +226,8 @@ namespace SanteDB.Core.Http
                 this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate);
             }
 
-            var certificateValidator = ApplicationServiceContext.Current.GetService<ICertificateValidator>();
-            var securityConfiguration = ApplicationServiceContext.Current.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
+            var certificateValidator = _Services.GetService<ICertificateValidator>();
+            var securityConfiguration = _Services.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
             return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
                 certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
         }

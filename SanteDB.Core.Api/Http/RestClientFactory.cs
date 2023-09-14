@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Configuration.Http;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Interop;
@@ -36,11 +37,14 @@ namespace SanteDB.Core.Http
         // Get the rest client configuration section
         private readonly RestClientConfigurationSection m_configuration;
 
+        readonly Tracer _Tracer;
+
         /// <summary>
         /// DI constructor
         /// </summary>
         public RestClientFactory(IConfigurationManager configurationManager)
         {
+            _Tracer = new Tracer(nameof(RestClientFactory));
             this.m_configuration = configurationManager.GetSection<RestClientConfigurationSection>();
             if (this.m_configuration == null)
             {
