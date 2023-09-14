@@ -39,6 +39,7 @@ namespace SanteDB.Core.Configuration.Http
         public RestClientEndpointConfiguration()
         {
             this.ConnectTimeout = new TimeSpan(0, 1, 0);
+            this.ReceiveTimeout = null;
         }
 
         /// <summary>
@@ -47,7 +48,8 @@ namespace SanteDB.Core.Configuration.Http
         public RestClientEndpointConfiguration(RestClientEndpointConfiguration copyFrom)
         {
             this.Address = copyFrom.Address;
-            this.TimeoutXml = copyFrom.TimeoutXml;
+            this.ConnectTimeoutXml = copyFrom.ConnectTimeoutXml;
+            this.ReceiveTimeoutXml = copyFrom.ReceiveTimeoutXml;
         }
 
         /// <summary>
