@@ -449,7 +449,19 @@ namespace SanteDB.Core.Http
             return this.Invoke<TBody, TResult>(method, url, contentType, body, query, out _);
         }
 
-        private TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query, out WebHeaderCollection responseHeaders)
+        /// <summary>
+        /// Invoke the specified method against the server
+        /// </summary>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="method">The HTTP method to be executed</param>
+        /// <param name="url">The resource URL to be executed against</param>
+        /// <param name="contentType">The content/type of <paramref name="body"/></param>
+        /// <param name="body">The contents of the request to send to the server</param>
+        /// <param name="query">The query to append to the URL</param>
+        /// <param name="responseHeaders"></param>
+        /// <returns>The server response</returns>
+        protected virtual TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query, out WebHeaderCollection responseHeaders)
         {
             responseHeaders = null;
             try

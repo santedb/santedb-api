@@ -33,12 +33,26 @@ namespace SanteDB.Core.Configuration.Http
     [XmlType(nameof(RestClientDescriptionConfiguration), Namespace = "http://santedb.org/configuration")]
     public class RestClientDescriptionConfiguration : IRestClientDescription
     {
+
         /// <summary>
         /// Initializes a new instance of the class.
         /// </summary>
         public RestClientDescriptionConfiguration()
         {
             this.Endpoint = new List<RestClientEndpointConfiguration>();
+        }
+
+        /// <summary>
+        /// Copy configuration
+        /// </summary>
+        public RestClientDescriptionConfiguration(RestClientDescriptionConfiguration copyFrom)
+        {
+            this.Accept = copyFrom.Accept;
+            this.Binding = new RestClientBindingConfiguration(copyFrom.Binding);
+            this.Endpoint = copyFrom.Endpoint.Select(o => new RestClientEndpointConfiguration(o)).ToList();
+            this.Name = copyFrom.Name;
+            this.ProxyAddress = copyFrom.ProxyAddress;
+            this.Trace = copyFrom.Trace;
         }
 
         /// <summary>
@@ -112,7 +126,7 @@ namespace SanteDB.Core.Configuration.Http
             retVal.Endpoint = new List<RestClientEndpointConfiguration>(this.Endpoint.Select(o => new RestClientEndpointConfiguration
             {
                 Address = o.Address,
-                Timeout = o.Timeout
+                ConnectTimeout = o.ConnectTimeout
             }));
             return retVal;
         }
