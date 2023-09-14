@@ -40,6 +40,27 @@ namespace SanteDB.Core.Configuration.Http
     public class RestClientSecurityConfiguration : IRestClientSecurityDescription
     {
         /// <summary>
+        /// Default ctor
+        /// </summary>
+        public RestClientSecurityConfiguration()
+        {
+                
+        }
+        /// <summary>
+        /// Copy constructor
+        /// </summary>
+        public RestClientSecurityConfiguration(RestClientSecurityConfiguration copyFrom)
+        {
+            this.AuthRealm = copyFrom.AuthRealm;
+            this.CertificateValidatorXml = copyFrom.CertificateValidatorXml;
+            this.ClientCertificate = copyFrom.ClientCertificate;
+            this.CredentialProvider = copyFrom.CredentialProvider;
+            this.CredentialProviderConfiguration = copyFrom.CredentialProviderConfiguration;
+            this.Mode = copyFrom.Mode;
+            this.PreemptiveAuthentication = copyFrom.PreemptiveAuthentication;
+        }
+
+        /// <summary>
         /// Gets or sets the ICertificateValidator interface which should be called to validate
         /// certificates
         /// </summary>

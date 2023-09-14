@@ -34,6 +34,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="serviceEndpointType">The service endpoint to resolve</param>
         /// <returns>The resolved rest client</returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">No configuration is avaiable for the type of client requested with <paramref name="serviceEndpointType"/>.</exception>
         IRestClient GetRestClientFor(ServiceEndpointType serviceEndpointType);
 
         /// <summary>
