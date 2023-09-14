@@ -19,7 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Protocol;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
@@ -31,7 +31,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <summary>
     /// Default protocol repository services
     /// </summary>
-    public class LocalProtocolRepositoryService : GenericLocalRepository<Model.Acts.Protocol>, IClinicalProtocolRepositoryService
+    public class LocalProtocolRepositoryService : GenericLocalRepository<Model.Acts.Protocol>
     {
         /// <inheritdoc/>
         public LocalProtocolRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<Model.Acts.Protocol> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
@@ -50,102 +50,5 @@ namespace SanteDB.Core.Services.Impl.Repository
         protected override string ReadPolicy => PermissionPolicyIdentifiers.ReadMetadata;
 
 
-        /// <summary>
-        /// Find a clinical protocol
-        /// </summary>
-        [Obsolete("Use FindProtocol(Expression)", true)]
-        public IEnumerable<Model.Acts.Protocol> FindProtocol(Expression<Func<Model.Acts.Protocol, bool>> predicate, int offset, int? count, out int totalResults)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Insert a protocol
-        /// </summary>
-        public IClinicalProtocol InsertProtocol(IClinicalProtocol protocol)
-        {
-            this.m_policyService.Demand(PermissionPolicyIdentifiers.AlterClinicalProtocolConfigurationDefinition);
-            var data = protocol.GetProtocolData();
-            if (this.Find(o => o.Oid == data.Oid).Any())
-            {
-                return protocol.Load(this.Save(data));
-            }
-            else
-            {
-                return protocol.Load(base.Insert(data));
-            }
-        }
-
-        /// <summary>
-        /// Find protocol
-        /// </summary>
-        public IQueryResultSet<IClinicalProtocol> FindProtocol(String protocolName = null, String protocolOid = null, String groupId = null)
-        {
-            Expression<Func<Model.Acts.Protocol, bool>> expression = o => o.ObsoletionTime == null;
-            var expressionBody = expression.Body;
-            var expressionParameter = expression.Parameters[0];
-
-            if (!String.IsNullOrEmpty(protocolName))
-            {
-                expressionBody = Expression.And(Expression.MakeBinary(
-                    ExpressionType.Equal,
-                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.Name))),
-                    Expression.Constant(protocolName)
-                ), expressionBody);
-            }
-            if (!String.IsNullOrEmpty(protocolOid))
-            {
-                expressionBody = Expression.And(Expression.MakeBinary(
-                    ExpressionType.Equal,
-                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.Oid))),
-                    Expression.Constant(protocolOid)
-                ), expressionBody);
-            }
-            if (!String.IsNullOrEmpty(groupId))
-            {
-                expressionBody = Expression.And(Expression.MakeBinary(
-                    ExpressionType.Equal,
-                    Expression.MakeMemberAccess(expressionParameter, typeof(Model.Acts.Protocol).GetProperty(nameof(Model.Acts.Protocol.GroupId))),
-                    Expression.Constant(protocolName)
-                ), expressionBody);
-            }
-
-            expression = Expression.Lambda<Func<Model.Acts.Protocol, bool>>(expressionBody, expressionParameter);
-
-            return new TransformQueryResultSet<Model.Acts.Protocol, IClinicalProtocol>(this.Find(expression), (a) => this.CreatePublicProtocol(a));
-        }
-
-        /// <summary>
-        /// Get clinical protocol by identifier
-        /// </summary>
-        public IClinicalProtocol GetProtocol(Guid protocolUuid)
-        {
-            var protocolData = this.Get(protocolUuid);
-            if (protocolData != null)
-            {
-                return this.CreatePublicProtocol(protocolData);
-            }
-            else
-            {
-                throw new KeyNotFoundException($"ClinicalProtocol/{protocolUuid}");
-            }
-        }
-
-        /// <summary>
-        /// Creates a public protocol
-        /// </summary>
-        private IClinicalProtocol CreatePublicProtocol(Model.Acts.Protocol protocolData)
-        {
-            var retVal = Activator.CreateInstance(protocolData.HandlerClass) as IClinicalProtocol;
-            retVal.Load(protocolData);
-            return retVal;
-        }
-
-        /// <inheritdoc/>
-        public IClinicalProtocol RemoveProtocol(Guid protocolUuid)
-        {
-            var retVal = this.Delete(protocolUuid);
-            return this.CreatePublicProtocol(retVal);
-        }
     }
 }

@@ -19,7 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Model;
-using SanteDB.Core.Protocol;
+using SanteDB.Core.Cdss;
 using System;
 using System.Collections.Generic;
 
@@ -43,7 +43,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Gets the protocols which caused the exception
         /// </summary>
-        public IEnumerable<IClinicalProtocol> Protocols => this.Data[ProtocolDataName] as IEnumerable<IClinicalProtocol>;
+        public IEnumerable<ICdssProtocolAsset> Protocols => this.Data[ProtocolDataName] as IEnumerable<ICdssProtocolAsset>;
 
         /// <summary>
         /// Gets the target which caused the exception
@@ -56,7 +56,7 @@ namespace SanteDB.Core.Exceptions
         /// <param name="protocols">The protocols which were applied</param>
         /// <param name="target">The target of the CDSS call</param>
         /// <param name="cause">The cause of the exception</param>
-        public CdssException(IEnumerable<IClinicalProtocol> protocols, IdentifiedData target, Exception cause) : base($"Error executing CDSS rules against {target}", cause)
+        public CdssException(IEnumerable<ICdssProtocolAsset> protocols, IdentifiedData target, Exception cause) : base($"Error executing CDSS rules against {target}", cause)
         {
             this.Data.Add(ProtocolDataName, protocols);
             this.Data.Add(TargetDataName, target.ToString());
@@ -67,7 +67,7 @@ namespace SanteDB.Core.Exceptions
         /// </summary>
         /// <param name="protocols">The clinical protocols that were attempted to be applied</param>
         /// <param name="target">The target of the CDSS operation</param>
-        public CdssException(IEnumerable<IClinicalProtocol> protocols, IdentifiedData target) : this(protocols, target, null)
+        public CdssException(IEnumerable<ICdssProtocolAsset> protocols, IdentifiedData target) : this(protocols, target, null)
         {
 
         }

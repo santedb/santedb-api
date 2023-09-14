@@ -18,8 +18,10 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Extensions;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
@@ -27,16 +29,17 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SharpCompress;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SanteDB.Core.Protocol
+namespace SanteDB.Core.Cdss
 {
     /// <summary>
     /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
     /// </summary>
     /// <remarks>
-    /// <para>This implementation of the care plan service is capable of calling <see cref="IClinicalProtocol"/> instances
+    /// <para>This implementation of the care plan service is capable of calling <see cref="ICdssProtocolAsset"/> instances
     /// registered from the clinical protocol manager to construct <see cref="Act"/> instances representing the proposed
     /// actions to take for the patient. The care planner is also capable of simple interval hull functions to group 
     /// these acts together into <see cref="PatientEncounter"/> instances based on safe time for grouping.</para>
@@ -122,13 +125,13 @@ namespace SanteDB.Core.Protocol
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
-        private readonly IClinicalProtocolRepositoryService m_protocolRepository;
+        private readonly ICdssAssetRepository m_protocolRepository;
         private readonly IRepositoryService<ActParticipation> m_actParticipationRepository;
 
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
-        public SimpleCarePlanService(IClinicalProtocolRepositoryService protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
+        public SimpleCarePlanService(ICdssAssetRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
         {
             this.m_protocolRepository = protocolRepository;
             this.m_actParticipationRepository = actParticipationRepository;
@@ -142,28 +145,20 @@ namespace SanteDB.Core.Protocol
             return this.CreateCarePlan(p, false);
         }
 
-        /// <summary>
-        /// Create a care plan
-        /// </summary>
-        /// <param name="p">The patient to calculate the care plan for</param>
-        /// <param name="asEncounters">True if the data should be grouped as an encounter</param>
+        /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.FindProtocol().ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.Find(o=>true).OfType<ICdssProtocolAsset>().ToArray());
         }
 
-        /// <summary>
-        /// Create a care plan
-        /// </summary>
-        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupId)
+       /// <inheritdoc/>
+        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupOid)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.FindProtocol(groupId: groupId).ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.Find(g=>g.Groups.Any(a=>a.Oid == groupOid)).OfType<ICdssProtocolAsset>().ToArray());
         }
 
-        /// <summary>
-        /// Create a care plan with the specified protocols only
-        /// </summary>
-        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params IClinicalProtocol[] protocols)
+        /// <inheritdoc/>
+        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params ICdssProtocolAsset[] protocols)
         {
             if (target == null)
             {
@@ -213,15 +208,25 @@ namespace SanteDB.Core.Protocol
                         protocols.ForEach(o => o.Prepare(patientCopy, parmDict));
                     }
 
+                    var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     // Compute the protocols
                     var protocolActs = protocols
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
                         .SelectMany(proto =>
                         {
-                            using (AuthenticationContext.EnterSystemContext())
+                            try
                             {
-                                return proto.Calculate(patientCopy, parmDict);
+                                using (AuthenticationContext.EnterSystemContext())
+                                {
+                                    var retVal = proto.ComputeProposals(patientCopy, parmDict);
+                                    return retVal;
+                                }
+                            }
+                            catch(Exception e)
+                            {
+                                detectedIssueList.Add(new DetectedIssue(DetectedIssuePriorityType.Error, e.HResult.ToString(), e.Message, DetectedIssueKeys.OtherIssue));
+                                return new Act[0];
                             }
                         })
                         .OrderBy(o => o.StartTime ?? o.ActTime)
@@ -306,10 +311,16 @@ namespace SanteDB.Core.Protocol
                         }
                     }
 
+                    
                     return new CarePlan(patientCopy, protocolActs.ToList())
                     {
-                        CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid)
+                        CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid), 
+                        Extensions = new List<Model.DataTypes.ActExtension>()
+                        {
+                            new Model.DataTypes.ActExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), detectedIssueList.ToList())
+                        }
                     };
+
                 }
             }
             catch (Exception e)
@@ -319,9 +330,7 @@ namespace SanteDB.Core.Protocol
             }
         }
 
-        /// <summary>
-        /// Create an encounter
-        /// </summary>
+        /// <inheritdoc/>
         private PatientEncounter CreateEncounter(Act act, Patient recordTarget)
         {
             var retVal = new PatientEncounter()
@@ -342,6 +351,17 @@ namespace SanteDB.Core.Protocol
                 Act = retVal
             });
             return retVal;
+        }
+
+
+        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssProtocolAsset[] protocols)
+        {
+            throw new NotImplementedException(); // TODO: Implement
+        }
+
+        public IEnumerable<DetectedIssue> AnalyzeGlobal(Act collectedData)
+        {
+            throw new NotImplementedException(); // TODO: Implement
         }
     }
 }

@@ -18,7 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Protocol;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;

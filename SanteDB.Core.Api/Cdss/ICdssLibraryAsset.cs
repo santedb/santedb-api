@@ -18,27 +18,24 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Model.Acts;
-using System.Collections.Generic;
 
-namespace SanteDB.Core.Protocol
+using System;
+
+namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// Protocol comparer
+    /// Represents an implementation of a clinical protocol library
     /// </summary>
-    internal class ProtocolComparer : IEqualityComparer<ActProtocol>
+    /// <remarks>
+    /// A clinical protocol library represents a collection of common elements such as when, then definitions, or variables which can be referenced by other
+    /// objects.
+    /// </remarks>
+    public interface ICdssLibraryAsset : ICdssAsset
     {
-        /// <summary>
-        /// Two protocols equal each other
-        /// </summary>
-        public bool Equals(ActProtocol x, ActProtocol y)
-        {
-            return x.ProtocolKey == y.ProtocolKey;
-        }
 
-        public int GetHashCode(ActProtocol obj)
-        {
-            return obj.ProtocolKey.GetHashCode();
-        }
+        /// <summary>
+        /// Resolves the specified <paramref name="elementName"/> from the library
+        /// </summary>
+        TResolved ResolveElement<TResolved>(String elementName);
     }
 }

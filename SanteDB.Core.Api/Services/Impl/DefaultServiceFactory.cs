@@ -24,7 +24,7 @@ using SanteDB.Core.Http;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Notifications.Email;
 using SanteDB.Core.Notifications.Templating;
-using SanteDB.Core.Protocol;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;

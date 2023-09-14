@@ -29,6 +29,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -459,5 +460,23 @@ namespace SanteDB.Core
         /// </summary>
         public static bool IsCompatible(this Version myVersion, Version otherVersion)
             => myVersion.Major == otherVersion.Major && myVersion.Minor >= otherVersion.Minor;
+
+        /// <summary>
+        /// Convert an <see cref="ICdssProtocolAsset"/> to a <see cref="Core.Model.Acts.Protocol"/>
+        /// </summary>
+        public static Core.Model.Acts.Protocol ToProtocol(this ICdssProtocolAsset me) => new Model.Acts.Protocol()
+        {
+            Key = me.Uuid,
+            Name = me.Name,
+            Oid = me.Oid
+        };
+
+        /// <summary>
+        /// Gets an assembly qualified name without version information
+        /// </summary>
+        /// <param name="me"></param>
+        /// <returns></returns>
+        public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
+
     }
 }
