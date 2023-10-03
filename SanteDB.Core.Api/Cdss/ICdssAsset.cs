@@ -28,45 +28,6 @@ namespace SanteDB.Core.Cdss
 {
 
     /// <summary>
-    /// Asset classification
-    /// </summary>
-    public enum CdssAssetClassification
-    {
-        /// <summary>
-        /// The protocol asset is a clinical protocol which generates a care plan
-        /// </summary>
-        DecisionSupportProtocol = 1,
-        /// <summary>
-        /// The protocol asset is a library which is referenced by others
-        /// </summary>
-        DecisionSupportLibrary = 2
-    }
-
-    /// <summary>
-    /// Represents an asset grouping
-    /// </summary>
-    public interface ICdssAssetGroup
-    {
-        /// <summary>
-        /// Gets the ID of the asset group
-        /// </summary>
-        [QueryParameter("uuid")]
-        Guid Uuid { get; }
-
-        /// <summary>
-        /// Gets the name of the asset group
-        /// </summary>
-        [QueryParameter("name")]
-        String Name { get; }
-
-        /// <summary>
-        /// Gets the OID of the asset group
-        /// </summary>
-        [QueryParameter("oid")]
-        String Oid { get; }
-
-    }
-    /// <summary>
     /// An interface which defines a generic asset
     /// </summary>
     public interface ICdssAsset 
@@ -107,18 +68,6 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         [QueryParameter("annotation")]
         String Documentation { get; }
-
-        /// <summary>
-        /// Gets the classification of the object for querying
-        /// </summary>
-        [QueryParameter("class")]
-        CdssAssetClassification Classification { get; }
-
-        /// <summary>
-        /// Groups in which the asset belongs
-        /// </summary>
-        [QueryParameter("group")]
-        IEnumerable<ICdssAssetGroup> Groups { get; }
 
         /// <summary>
         /// Load the protocl definition to <paramref name="definitionStream"/>

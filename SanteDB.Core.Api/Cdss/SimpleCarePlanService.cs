@@ -39,7 +39,7 @@ namespace SanteDB.Core.Cdss
     /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
     /// </summary>
     /// <remarks>
-    /// <para>This implementation of the care plan service is capable of calling <see cref="ICdssProtocolAsset"/> instances
+    /// <para>This implementation of the care plan service is capable of calling <see cref="ICdssProtocol"/> instances
     /// registered from the clinical protocol manager to construct <see cref="Act"/> instances representing the proposed
     /// actions to take for the patient. The care planner is also capable of simple interval hull functions to group 
     /// these acts together into <see cref="PatientEncounter"/> instances based on safe time for grouping.</para>
@@ -125,13 +125,13 @@ namespace SanteDB.Core.Cdss
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
-        private readonly ICdssAssetRepository m_protocolRepository;
+        private readonly ICdssLibraryRepository m_protocolRepository;
         private readonly IRepositoryService<ActParticipation> m_actParticipationRepository;
 
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
-        public SimpleCarePlanService(ICdssAssetRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
+        public SimpleCarePlanService(ICdssLibraryRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
         {
             this.m_protocolRepository = protocolRepository;
             this.m_actParticipationRepository = actParticipationRepository;
@@ -148,17 +148,17 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.Find(o=>true).OfType<ICdssProtocolAsset>().ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.Find(o=>true).OfType<ICdssProtocol>().ToArray());
         }
 
        /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupOid)
         {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.Find(g=>g.Groups.Any(a=>a.Oid == groupOid)).OfType<ICdssProtocolAsset>().ToArray());
+            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.Find(g=>g.Groups.Any(a=>a.Oid == groupOid)).OfType<ICdssProtocol>().ToArray());
         }
 
         /// <inheritdoc/>
-        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params ICdssProtocolAsset[] protocols)
+        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params ICdssProtocol[] protocols)
         {
             if (target == null)
             {
@@ -354,7 +354,7 @@ namespace SanteDB.Core.Cdss
         }
 
 
-        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssProtocolAsset[] protocols)
+        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssProtocol[] protocols)
         {
             throw new NotImplementedException(); // TODO: Implement
         }

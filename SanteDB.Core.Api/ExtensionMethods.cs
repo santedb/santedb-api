@@ -462,9 +462,9 @@ namespace SanteDB.Core
             => myVersion.Major == otherVersion.Major && myVersion.Minor >= otherVersion.Minor;
 
         /// <summary>
-        /// Convert an <see cref="ICdssProtocolAsset"/> to a <see cref="Core.Model.Acts.Protocol"/>
+        /// Convert an <see cref="ICdssProtocol"/> to a <see cref="Core.Model.Acts.Protocol"/>
         /// </summary>
-        public static Core.Model.Acts.Protocol ToProtocol(this ICdssProtocolAsset me) => new Model.Acts.Protocol()
+        public static Core.Model.Acts.Protocol ToProtocol(this ICdssProtocol me) => new Model.Acts.Protocol()
         {
             Key = me.Uuid,
             Name = me.Name,

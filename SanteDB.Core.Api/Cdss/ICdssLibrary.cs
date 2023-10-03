@@ -18,26 +18,30 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Attributes;
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// Represents a clinical protocol
+    /// Represents an implementation of a clinical protocol library
     /// </summary>
-    public interface ICdssProtocolAsset : ICdssAsset
+    /// <remarks>
+    /// A clinical protocol library represents a collection of common elements such as when, then definitions, or variables which can be referenced by other
+    /// objects.
+    /// </remarks>
+    public interface ICdssLibrary : ICdssAsset
     {
 
         /// <summary>
-        /// Calculate the clinical protocol for the given target data
+        /// Gets the protocols registered in the CDSS library
         /// </summary>
-        IEnumerable<Act> ComputeProposals(IdentifiedData target, IDictionary<String, Object> parameters);
+        [QueryParameter("protocol")]
+        IEnumerable<ICdssProtocol> Protocols { get; }
 
         /// <summary>
         /// Analyze the collected samples and determine if there are any detected issues
@@ -45,10 +49,5 @@ namespace SanteDB.Core.Cdss
         /// <remarks>This method allows callers to invoke the CDSS to analyse data which was provided in the user interface</remarks>
         IEnumerable<DetectedIssue> Analyze(IdentifiedData analysisTarget);
 
-        /// <summary>
-        /// Called prior to performing calculation of the care protocol allowing the protocol to prepare <paramref name="target"/> with
-        /// pre-requisite data is needed for the protocol
-        /// </summary>
-        void Prepare(Patient target, IDictionary<String, Object> parameters);
     }
 }

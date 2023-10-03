@@ -18,24 +18,33 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-
+using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
 using System;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// Represents an implementation of a clinical protocol library
+    /// Represents a clinical protocol
     /// </summary>
-    /// <remarks>
-    /// A clinical protocol library represents a collection of common elements such as when, then definitions, or variables which can be referenced by other
-    /// objects.
-    /// </remarks>
-    public interface ICdssLibraryAsset : ICdssAsset
+    public interface ICdssProtocol
     {
 
         /// <summary>
-        /// Resolves the specified <paramref name="elementName"/> from the library
+        /// Groups in which the asset belongs
         /// </summary>
-        TResolved ResolveElement<TResolved>(String elementName);
+        [QueryParameter("group")]
+        IEnumerable<ICdssProtocolGroup> Groups { get; }
+
+        /// <summary>
+        /// Calculate the clinical protocol for the given target data
+        /// </summary>
+        IEnumerable<Act> ComputeProposals(IdentifiedData target, IDictionary<String, Object> parameters);
+
     }
 }

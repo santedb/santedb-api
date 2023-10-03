@@ -11,9 +11,9 @@ namespace SanteDB.Core.Cdss
     /// Represents a generic repository which is used for the management of <see cref="ICdssAsset"/>
     /// </summary>
     /// <remarks>The clinical protocol asset repository is responsible for the storage and creation of relevant 
-    /// <see cref="ICdssProtocolAsset"/> and <see cref="ICdssLibraryAsset"/> instances which are used by the CDSS 
+    /// <see cref="ICdssProtocol"/> and <see cref="ICdssLibrary"/> instances which are used by the CDSS 
     /// engine to actually perform their duties</remarks>
-    public interface ICdssAssetRepository : IServiceImplementation
+    public interface ICdssLibraryRepository : IServiceImplementation
     {
 
         /// <summary>
@@ -21,35 +21,35 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         /// <param name="filter">The filter to be applied</param>
         /// <returns>The query result set containing the objects</returns>
-        IQueryResultSet<ICdssAsset> Find(Expression<Func<ICdssAsset, bool>> filter);
+        IQueryResultSet<ICdssLibrary> Find(Expression<Func<ICdssLibrary, bool>> filter);
 
         /// <summary>
         /// Get the protocol asset by identifier
         /// </summary>
-        /// <param name="protocolAssetId">The protocol asset identifier</param>
+        /// <param name="libraryUuid">The protocol asset identifier</param>
         /// <returns>The protocol asset with the matching asset id</returns>
-        ICdssAsset Get(Guid protocolAssetId);
+        ICdssLibrary Get(Guid libraryUuid);
 
         /// <summary>
         /// Get the protocol asset by OID
         /// </summary>
-        /// <param name="protocolAssetOid">The protocol asset OID to fetch</param>
+        /// <param name="libraryOid">The protocol asset OID to fetch</param>
         /// <returns>The protocol asset with matching oid</returns>
-        ICdssAsset GetByOid(String protocolAssetOid);
+        ICdssLibrary GetByOid(String libraryOid);
 
         /// <summary>
         /// Insert a protocol asset into the store
         /// </summary>
-        /// <param name="protocolAsset">The protocol asset to insert</param>
+        /// <param name="libraryToInsert">The protocol asset to insert</param>
         /// <returns>The inserted protocol asset</returns>
-        ICdssAsset InsertOrUpdate(ICdssAsset protocolAsset);
+        ICdssLibrary InsertOrUpdate(ICdssLibrary libraryToInsert);
 
         /// <summary>
         /// Remove a protocol asset from the repository by identifier
         /// </summary>
-        /// <param name="protocolAssetId">The protocol asset to be removed</param>
+        /// <param name="libraryUuid">The protocol asset to be removed</param>
         /// <returns>The removed protocol asset definition</returns>
-        ICdssAsset Remove(Guid protocolAssetId);
+        ICdssLibrary Remove(Guid libraryUuid);
 
     }
 }
