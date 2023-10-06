@@ -26,9 +26,11 @@ namespace SanteDB.Core.Api.Test.RestClient
             _Cts = new CancellationTokenSource();
             _Listener = new HttpListener();
             PortNumber = GetRandomOpenPort();
+            Console.WriteLine($"{nameof(RestClientTestServer)}::PortNumber={PortNumber}");
             _Listener.Prefixes.Add($"http://localhost:{PortNumber}/");
             _Listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
             _Listener.Start();
+            Console.WriteLine($"{nameof(RestClientTestServer)}::_Listener.Start() - Success");
             _ListenLoop = Task.Run(ListenerMainLoop, _Cts.Token);
         }
 
@@ -57,7 +59,8 @@ namespace SanteDB.Core.Api.Test.RestClient
                     {
                         await HandleRequestAsync(ctx, ct);
                     }
-                    catch {
+                    catch(Exception ex) {
+                        Console.WriteLine($"{nameof(RestClientTestServer)}::ListenerMainLoop - Unhandled Exception (Returning 500)\n{ex.ToString()}");
                         ctx.Response.StatusCode = 500;
                         ctx.Response.StatusDescription = "Internal Server Error";
                         ctx.Response.Close();
@@ -78,12 +81,15 @@ namespace SanteDB.Core.Api.Test.RestClient
 
             if (!routepath.StartsWith("/"))
             {
+                Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleRequestAsync)} - received bad request, executing handler.");
                 await HandleBadRequestAsync(context.Request, context.Response, token);
             }
             else if (routepath.IndexOf('/', 1) > 0)
             {
                 routepath = routepath.Substring(0, routepath.IndexOf('/', 1));
             }
+
+            Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleRequestAsync)}:routepath=\"{routepath}\".");
 
             switch (routepath)
             {
@@ -123,6 +129,8 @@ namespace SanteDB.Core.Api.Test.RestClient
                 }
             }
             catch { }
+
+            Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleStreamDelayRequestAsync)}:delay={delay}");
 
             response.StatusCode = 200;
             response.StatusDescription = "OK";
@@ -182,12 +190,16 @@ namespace SanteDB.Core.Api.Test.RestClient
             }
             catch { }
 
+            Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleResponseDelayRequestAsync)}:delay={delay}");
+
             await Task.Delay(delay, token);
             await HandleOtherRequestAsync(request, response, token);
         }
 
         private async Task HandleOtherRequestAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken token = default)
         {
+            Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleOtherRequestAsync)}");
+
             response.StatusCode = 200;
             response.StatusDescription = "OK";
             response.ContentType = "application/json";
@@ -216,6 +228,8 @@ namespace SanteDB.Core.Api.Test.RestClient
 
         private async Task HandleEchoRequestAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken token = default)
         {
+            Console.WriteLine($"{nameof(RestClientTestServer)}::{nameof(HandleEchoRequestAsync)}");
+
             response.StatusCode = 200;
             response.StatusDescription = "OK";
             response.ContentType = "application/json";
