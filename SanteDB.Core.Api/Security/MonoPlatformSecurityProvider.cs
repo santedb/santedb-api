@@ -108,10 +108,21 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
-        public bool IsCertificateTrusted(X509Certificate2 certificate)
+        public bool IsCertificateTrusted(X509Certificate2 certificate, DateTimeOffset? asOfDate = null)
         {
-            return certificate?.IsTrustedIntern(new X509Certificate2Collection(), out _) == true;
+            if (!(certificate?.IsTrustedIntern(new X509Certificate2Collection(), out _) == true))
+            {
+                return false;
+            }
+
+            if (null == asOfDate)
+            {
+                return true;
+            }
+
+            return certificate.NotBefore <= asOfDate && certificate.NotAfter >= asOfDate;
         }
+
 
         /// <inheritdoc/>
         public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate) => this.TryGetCertificate(findType, findValue, StoreName.My, out certificate);
