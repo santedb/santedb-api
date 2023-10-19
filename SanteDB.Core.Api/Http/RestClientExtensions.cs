@@ -27,7 +27,14 @@ namespace SanteDB.Core.Http
 
                 void handler(object sender, RestResponseEventArgs args)
                 {
-                    _ = DateTime.TryParse(args.Headers["X-GeneratedOn"], out servertime) || DateTime.TryParse(args.Headers["Date"], out servertime);
+                    if(args.Headers != null && 
+                        (
+                        args.Headers.TryGetValue("X-GeneratedOn", out var headerValue) || args.Headers.TryGetValue("Date", out headerValue)
+                        )
+                    )
+                    {
+                        _ = DateTime.TryParse(headerValue, out servertime);
+                    }
                 };
 
                 restClient.Responded += handler;
