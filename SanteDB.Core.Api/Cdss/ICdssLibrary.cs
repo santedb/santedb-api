@@ -24,6 +24,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SanteDB.Core.Cdss
 {
@@ -41,13 +42,32 @@ namespace SanteDB.Core.Cdss
         /// Gets the protocols registered in the CDSS library
         /// </summary>
         [QueryParameter("protocol")]
-        IEnumerable<ICdssProtocol> Protocols { get; }
+        IEnumerable<ICdssProtocol> GetProtocols(Type contetType);
 
         /// <summary>
         /// Analyze the collected samples and determine if there are any detected issues
         /// </summary>
-        /// <remarks>This method allows callers to invoke the CDSS to analyse data which was provided in the user interface</remarks>
+        /// <remarks>This method allows callers to invoke the CDSS to analyse data which was provided in the user interface. 
+        /// <para>This method is equivalent to calling <c>ICdssLibrary.Execute(target).OfType&lt;DetectedIssue></c></para></remarks>
         IEnumerable<DetectedIssue> Analyze(IdentifiedData analysisTarget);
+
+        /// <summary>
+        /// Execute all applicable decision logic for <paramref name="target"/> and emit all of the proposed objects and raised issues
+        /// </summary>
+        /// <param name="target">The target to be analyzed</param>
+        /// <returns>The decision logic target</returns>
+        IEnumerable<Object> Execute(IdentifiedData target);
+
+        /// <summary>
+        /// Load the protocl definition to <paramref name="definitionStream"/>
+        /// </summary>
+        void Load(Stream definitionStream);
+
+        /// <summary>
+        /// Save the protocol definition to <paramref name="definitionStream"/>
+        /// </summary>
+        void Save(Stream definitionStream);
+
 
     }
 }

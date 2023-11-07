@@ -69,33 +69,6 @@ namespace SanteDB.Core.Cdss
         [QueryParameter("annotation")]
         String Documentation { get; }
 
-        /// <summary>
-        /// Load the protocl definition to <paramref name="definitionStream"/>
-        /// </summary>
-        void Load(Stream definitionStream);
-
-        /// <summary>
-        /// Save the protocol definition to <paramref name="definitionStream"/>
-        /// </summary>
-        void Save(Stream definitionStream);
-
     }
 
-
-    /// <summary>
-    /// Represents a protocol asset where the definition is wrapped
-    /// </summary>
-    /// <remarks>
-    /// These wrapped assets allow SanteDB to load the definition of a protocol from one asset format
-    /// while storing metadata in another location. For example, the <see cref="Wrapped"/> protocol asset
-    /// may be an XML defined clinical protocol, whilst the metadata comes from an HTTP message
-    /// </remarks>
-    public interface IProtocolAssetWrapper : ICdssAsset
-    {
-
-        /// <summary>
-        /// Gets the protocol asset which is wrapped
-        /// </summary>
-        ICdssAsset Wrapped { get; }
-    }
 }

@@ -18,33 +18,28 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Attributes;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Roles;
 using System;
-using System.Collections.Generic;
 
 namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// Represents a clinical protocol
+    /// Represents a CDSS execution context to be shared between protocols
     /// </summary>
-    public interface ICdssProtocol : ICdssAsset
+    public interface ICdssExecutionContext
     {
 
         /// <summary>
-        /// The scopes (types of encounters) in which the asset belongs
+        /// Gets a variable value by name
         /// </summary>
-        [QueryParameter("scope")]
-        IEnumerable<ICdssProtocolScope> Scopes { get; }
+        /// <param name="name">The name of the variable</param>
+        /// <returns></returns>
+        object GetValue(String name);
 
         /// <summary>
-        /// Calculate the clinical protocol for the given target data
+        /// Get the target of the CDSS context
         /// </summary>
-        IEnumerable<Act> ComputeProposals(IdentifiedData target, IDictionary<String, Object> parameters);
+        IdentifiedData Target { get; }
 
     }
 }

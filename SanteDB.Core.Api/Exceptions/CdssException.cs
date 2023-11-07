@@ -34,7 +34,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// The name of the protocol data element 
         /// </summary>
-        public const string ProtocolDataName = "protocols";
+        public const string LibraryDataName = "libraries";
         /// <summary>
         /// The name of the target data element
         /// </summary>
@@ -43,7 +43,7 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// Gets the protocols which caused the exception
         /// </summary>
-        public IEnumerable<ICdssProtocol> Protocols => this.Data[ProtocolDataName] as IEnumerable<ICdssProtocol>;
+        public IEnumerable<ICdssProtocol> Protocols => this.Data[LibraryDataName] as IEnumerable<ICdssProtocol>;
 
         /// <summary>
         /// Gets the target which caused the exception
@@ -53,21 +53,21 @@ namespace SanteDB.Core.Exceptions
         /// <summary>
         /// CDSS exception
         /// </summary>
-        /// <param name="protocols">The protocols which were applied</param>
+        /// <param name="libraries">The protocols which were applied</param>
         /// <param name="target">The target of the CDSS call</param>
         /// <param name="cause">The cause of the exception</param>
-        public CdssException(IEnumerable<ICdssProtocol> protocols, IdentifiedData target, Exception cause) : base($"Error executing CDSS rules against {target}", cause)
+        public CdssException(IEnumerable<ICdssLibrary> libraries, IdentifiedData target, Exception cause) : base($"Error executing CDSS rules against {target}", cause)
         {
-            this.Data.Add(ProtocolDataName, protocols);
+            this.Data.Add(LibraryDataName, libraries);
             this.Data.Add(TargetDataName, target.ToString());
         }
 
         /// <summary>
         /// Creates a new instance of the CDSS exception
         /// </summary>
-        /// <param name="protocols">The clinical protocols that were attempted to be applied</param>
+        /// <param name="libraries">The clinical protocols that were attempted to be applied</param>
         /// <param name="target">The target of the CDSS operation</param>
-        public CdssException(IEnumerable<ICdssProtocol> protocols, IdentifiedData target) : this(protocols, target, null)
+        public CdssException(IEnumerable<ICdssLibrary> libraries, IdentifiedData target) : this(libraries, target, null)
         {
 
         }

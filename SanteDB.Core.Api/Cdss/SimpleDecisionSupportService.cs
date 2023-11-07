@@ -45,17 +45,12 @@ namespace SanteDB.Core.Cdss
     /// these acts together into <see cref="PatientEncounter"/> instances based on safe time for grouping.</para>
     /// </remarks>
     [ServiceProvider("Default Care Planning Service")]
-    public class SimpleCarePlanService : ICarePlanService
+    public class SimpleDecisionSupportService : IDecisionSupportService
     {
         /// <summary>
         /// Gets the service name
         /// </summary>
         public string ServiceName => "Default Care Planning Service";
-
-        /// <summary>
-        /// True if the view model initializer for the care plans should be ignored
-        /// </summary>
-        public bool IgnoreViewModelInitializer { get; set; }
 
         /// <summary>
         /// Represents a parameter dictionary
@@ -124,16 +119,16 @@ namespace SanteDB.Core.Cdss
         }
 
         // Tracer
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleCarePlanService));
-        private readonly ICdssLibraryRepository m_protocolRepository;
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimpleDecisionSupportService));
+        private readonly ICdssLibraryRepository m_cdssLibraryRepository;
         private readonly IRepositoryService<ActParticipation> m_actParticipationRepository;
 
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
-        public SimpleCarePlanService(ICdssLibraryRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
+        public SimpleDecisionSupportService(ICdssLibraryRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository)
         {
-            this.m_protocolRepository = protocolRepository;
+            this.m_cdssLibraryRepository = protocolRepository;
             this.m_actParticipationRepository = actParticipationRepository;
         }
 
@@ -148,17 +143,11 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_protocolRepository.Find(o=>true).OfType<ICdssProtocol>().ToArray());
-        }
-
-       /// <inheritdoc/>
-        public CarePlan CreateCarePlan(Patient p, bool asEncounters, IDictionary<String, Object> parameters, string groupOid)
-        {
-            return this.CreateCarePlan(p, asEncounters, parameters, this.m_protocolRepository.Find(g=>g.Groups.Any(a=>a.Oid == groupOid)).OfType<ICdssProtocol>().ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_cdssLibraryRepository.Find(o=>true).ToArray());
         }
 
         /// <inheritdoc/>
-        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params ICdssProtocol[] protocols)
+        public CarePlan CreateCarePlan(Patient target, bool asEncounters, IDictionary<String, Object> parameters, params ICdssLibrary[] libraries)
         {
             if (target == null)
             {
@@ -202,15 +191,14 @@ namespace SanteDB.Core.Cdss
 
                     // Initialize
                     var parmDict = new ParameterDictionary(parameters);
-                    parmDict.Add("runProtocols", protocols.Distinct());
-                    if (!this.IgnoreViewModelInitializer)
-                    {
-                        protocols.ForEach(o => o.Prepare(patientCopy, parmDict));
-                    }
+                    parmDict.Add("runProtocols", libraries.Distinct());
+
 
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     // Compute the protocols
-                    var protocolActs = protocols
+                    var protocolActs = libraries
+                        .SelectMany(o=>o.GetProtocols(typeof(Patient)))
+                        .Where(p=>!parmDict.TryGetValue("scope", out var scope) && p.Scopes.Any(s=>s.Oid.StartsWith(scope.ToString()) || s.Name.Equals(scope)))
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
                         .SelectMany(proto =>
@@ -326,7 +314,7 @@ namespace SanteDB.Core.Cdss
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw new CdssException(protocols, target, e);
+                throw new CdssException(libraries, target, e);
             }
         }
 
@@ -354,14 +342,22 @@ namespace SanteDB.Core.Cdss
         }
 
 
-        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssProtocol[] protocols)
+        /// <inheritdoc/>
+        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
         {
-            throw new NotImplementedException(); // TODO: Implement
+            foreach(var lib in librariesToApply)
+            {
+                foreach(var iss in lib.Analyze(collectedData))
+                {
+                    yield return iss;
+                }
+            }
         }
 
+        /// <inheritdoc/>
         public IEnumerable<DetectedIssue> AnalyzeGlobal(Act collectedData)
         {
-            throw new NotImplementedException(); // TODO: Implement
+            return this.Analyze(collectedData, this.m_cdssLibraryRepository.Find(o => true).ToArray());
         }
     }
 }

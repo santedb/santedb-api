@@ -57,7 +57,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(DataInitializationService),
             typeof(RestClientFactory),
             typeof(LocalMailMessageService),
-            typeof(SimpleCarePlanService),
+            typeof(SimpleDecisionSupportService),
             typeof(AesSymmetricCrypographicProvider),
             typeof(FrameworkMailService),
             typeof(DefaultDataSigningService),

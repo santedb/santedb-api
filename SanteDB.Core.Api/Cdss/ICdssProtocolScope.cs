@@ -8,7 +8,7 @@ namespace SanteDB.Core.Cdss
     /// <summary>
     /// Represents an asset grouping
     /// </summary>
-    public interface ICdssProtocolGroup
+    public interface ICdssProtocolScope
     {
         /// <summary>
         /// Gets the ID of the asset group
