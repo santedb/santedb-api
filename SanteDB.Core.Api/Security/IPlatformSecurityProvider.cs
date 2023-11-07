@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -39,11 +40,12 @@ namespace SanteDB.Core.Security
         /// Checks if a certificate is trusted by the platform.
         /// </summary>
         /// <param name="certificate">The certificate to validate trust for.</param>
+        /// <param name="asOfDate">The date to use to validate the validiy of the certificate of. Use this for example to validate when a package was assembled.</param>
         /// <returns>True if the platform considers the certificate trusted. False otherwise.</returns>
         /// <remarks>
         ///     This method does not attempt to define what trusted is simply by the method signature. The exact definition of trust is outside the scope of the api. 
         /// </remarks>
-        bool IsCertificateTrusted(X509Certificate2 certificate);
+        bool IsCertificateTrusted(X509Certificate2 certificate, DateTimeOffset? asOfDate = null);
         /// <summary>
         /// Install a certificate into a platform store.
         /// </summary>
