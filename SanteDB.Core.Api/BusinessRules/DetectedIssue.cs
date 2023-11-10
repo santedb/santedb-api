@@ -108,7 +108,7 @@ namespace SanteDB.Core.BusinessRules
         /// <param name="text">The textual content of the detected issue</param>
         /// <param name="refersTo">The object the detected issue refers to</param>
         /// <param name="type">The codified type of the detected issue (examples: <see cref="DetectedIssueKeys"/>)</param>
-        public DetectedIssue(DetectedIssuePriorityType priority, String id, String text, Guid type, Guid refersTo) : this(priority, id, text, type)
+        public DetectedIssue(DetectedIssuePriorityType priority, String id, String text, Guid type, String refersTo) : this(priority, id, text, type)
         {
             this.RefersTo = refersTo;
         }
@@ -143,9 +143,9 @@ namespace SanteDB.Core.BusinessRules
         /// Gets or sets the object that the detected issue refers to
         /// </summary>
         [XmlAttribute("refersTo"), JsonProperty("refersTo")]
-        public Guid RefersTo { get; set; }
+        public String RefersTo { get; set; }
 
         /// <inheritdoc/>
-        public override string ToString() => $"{this.Priority} ({this.Id}) - {this.Text}";
+        public override string ToString() => $"{this.Priority} ({this.Id}) - {this.Text} {(!String.IsNullOrEmpty(this.RefersTo) ? $"@{this.RefersTo}" : "")}";
     }
 }

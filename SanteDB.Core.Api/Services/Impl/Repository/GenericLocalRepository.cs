@@ -214,7 +214,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         private void ThrowPrivacyValidationException(TEntity data)
         {
             throw new DetectedIssueException(
-                new DetectedIssue(DetectedIssuePriorityType.Error, "privacy", ErrorMessages.PRIVACY_VIOLATION_DETECTED, DetectedIssueKeys.PrivacyIssue, data.Key.GetValueOrDefault())
+                new DetectedIssue(DetectedIssuePriorityType.Error, "privacy", ErrorMessages.PRIVACY_VIOLATION_DETECTED, DetectedIssueKeys.PrivacyIssue, data.ToString())
             );
         }
 

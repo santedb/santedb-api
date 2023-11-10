@@ -171,13 +171,13 @@ namespace SanteDB.Core.Data.Quality
 
                     if (!result)
                     {
-                        retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue, data.Key.GetValueOrDefault()));
+                        retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Name, DetectedIssueKeys.FormalConstraintIssue, data.ToString()));
                     }
                 }
                 catch (Exception e)
                 {
                     this.m_tracer.TraceWarning("Error applying assertion {0} on {1} = {2} - {3}", assert.Id, data, false, e.Message);
-                    retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", $"{assert.Name} (e: {e.Message})", DetectedIssueKeys.FormalConstraintIssue, data.Key.GetValueOrDefault()));
+                    retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", $"{assert.Name} (e: {e.Message})", DetectedIssueKeys.FormalConstraintIssue, data.ToString()));
                 }
                 finally
                 {
