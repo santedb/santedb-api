@@ -195,10 +195,10 @@ namespace SanteDB.Core.Cdss
 
 
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
+                    _ = parmDict.TryGetValue("scope", out var scope);
                     // Compute the protocols
                     var protocolActs = libraries
-                        .SelectMany(o=>o.GetProtocols(typeof(Patient)))
-                        .Where(p=>!parmDict.TryGetValue("scope", out var scope) && p.Scopes.Any(s=>s.Oid.StartsWith(scope.ToString()) || s.Name.Equals(scope)))
+                        .SelectMany(o=>o.GetProtocols(scope.ToString()))
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
                         .SelectMany(proto =>

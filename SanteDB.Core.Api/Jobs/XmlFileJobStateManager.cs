@@ -126,11 +126,20 @@ namespace SanteDB.Core.Jobs
                 assembly = Assembly.GetCallingAssembly();
             }
 
+             
             if (null != assembly)
             {
                 try
                 {
-                    this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xstate.xml");
+                    var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
+                    if (dataDirectory is String ddir)
+                    {
+                        this.m_jobStateLocation = Path.Combine(ddir, "xcron.xml");
+                    }
+                    else
+                    {
+                        this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xstate.xml");
+                    }
                 }
                 catch (NotSupportedException)
                 {

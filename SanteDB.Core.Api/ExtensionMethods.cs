@@ -478,5 +478,26 @@ namespace SanteDB.Core
         /// <returns></returns>
         public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
 
+        /// <summary>
+        /// Resolve the reference
+        /// </summary>
+        public static ICdssLibrary ResolveReference(this ICdssLibraryRepository repository, String referenceString)
+        {
+
+            if(referenceString.StartsWith("#"))
+            {
+                referenceString = referenceString.Substring(1);
+                return repository.Find(o => o.Id == referenceString).FirstOrDefault();
+            }
+            else if(Guid.TryParse(referenceString, out var uuid))
+            {
+                return repository.Get(uuid);
+            }
+            else
+            {
+                return repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
+            }
+        }
+
     }
 }

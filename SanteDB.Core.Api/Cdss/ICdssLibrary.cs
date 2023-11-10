@@ -21,7 +21,9 @@
 
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,24 +41,31 @@ namespace SanteDB.Core.Cdss
     {
 
         /// <summary>
-        /// Gets the protocols registered in the CDSS library
+        /// Get the protocols which are defined in the library (note that implementers typically indicate that protocols are only for type Patient)
         /// </summary>
-        [QueryParameter("protocol")]
-        IEnumerable<ICdssProtocol> GetProtocols(Type contetType);
+        IEnumerable<ICdssProtocol> GetProtocols(String forScope);
 
         /// <summary>
         /// Analyze the collected samples and determine if there are any detected issues
         /// </summary>
+        /// <param name="analysisTarget">The target object souce which is to be analyzed</param>
+        /// <param name="parameters">The parameters to supply for the analysis</param>
         /// <remarks>This method allows callers to invoke the CDSS to analyse data which was provided in the user interface. 
-        /// <para>This method is equivalent to calling <c>ICdssLibrary.Execute(target).OfType&lt;DetectedIssue></c></para></remarks>
-        IEnumerable<DetectedIssue> Analyze(IdentifiedData analysisTarget);
+        /// <para>This method is equivalent to calling <c>ICdssLibrary.Execute(target).OfType&lt;DetectedIssue></c></para>
+        /// <para>Some decision logic may update the properties in <paramref name="target"/>, so calling this repeatedly may have different results. It is recommended 
+        /// if callers do not want <paramref name="target"/> to be modified, that they use <see cref="ICanDeepCopy.DeepCopy"/></para>
+        /// </remarks>
+        IEnumerable<DetectedIssue> Analyze(IdentifiedData analysisTarget, IDictionary<String, object> parameters = null);
 
         /// <summary>
         /// Execute all applicable decision logic for <paramref name="target"/> and emit all of the proposed objects and raised issues
         /// </summary>
         /// <param name="target">The target to be analyzed</param>
+        /// <param name="parameters">The parameters to be supplied in the execution of the protocol</param>
         /// <returns>The decision logic target</returns>
-        IEnumerable<Object> Execute(IdentifiedData target);
+        /// <remarks>Some decision logic may update the properties in <paramref name="target"/>, so calling this repeatedly may have different results. It is recommended 
+        /// if callers do not want <paramref name="target"/> to be modified, that they use <see cref="ICanDeepCopy.DeepCopy"/></remarks>
+        IEnumerable<Object> Execute(IdentifiedData target, IDictionary<String, object> parameters = null);
 
         /// <summary>
         /// Load the protocl definition to <paramref name="definitionStream"/>
@@ -67,7 +76,6 @@ namespace SanteDB.Core.Cdss
         /// Save the protocol definition to <paramref name="definitionStream"/>
         /// </summary>
         void Save(Stream definitionStream);
-
 
     }
 }

@@ -57,7 +57,12 @@ namespace SanteDB.Core.Jobs
                 assembly = Assembly.GetCallingAssembly();
             }
 
-            if (null != assembly)
+            var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
+            if(dataDirectory is String ddir)
+            {
+                this.m_cronTabLocation = Path.Combine(ddir, "xcron.xml");
+            }
+            else if (null != assembly)
             {
                 this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xcron.xml");
             }

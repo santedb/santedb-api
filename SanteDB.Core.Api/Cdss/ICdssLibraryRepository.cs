@@ -31,13 +31,6 @@ namespace SanteDB.Core.Cdss
         ICdssLibrary Get(Guid libraryUuid);
 
         /// <summary>
-        /// Get the protocol asset by OID
-        /// </summary>
-        /// <param name="libraryOid">The protocol asset OID to fetch</param>
-        /// <returns>The protocol asset with matching oid</returns>
-        ICdssLibrary GetByOid(String libraryOid);
-
-        /// <summary>
         /// Insert a protocol asset into the store
         /// </summary>
         /// <param name="libraryToInsert">The protocol asset to insert</param>
