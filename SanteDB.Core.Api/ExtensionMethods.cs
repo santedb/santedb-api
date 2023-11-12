@@ -483,20 +483,25 @@ namespace SanteDB.Core
         /// </summary>
         public static ICdssLibrary ResolveReference(this ICdssLibraryRepository repository, String referenceString)
         {
-
+            ICdssLibrary retVal = null;
             if(referenceString.StartsWith("#"))
             {
                 referenceString = referenceString.Substring(1);
-                return repository.Find(o => o.Id == referenceString).FirstOrDefault();
+                retVal = repository.Find(o => o.Id == referenceString).FirstOrDefault();
             }
             else if(Guid.TryParse(referenceString, out var uuid))
             {
-                return repository.Get(uuid);
+                retVal = repository.Get(uuid);
             }
             else
             {
-                return repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
+                retVal = repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
             }
+            if(retVal == null)
+            {
+                throw new KeyNotFoundException(String.Format(ErrorMessages.REFERENCE_NOT_FOUND, referenceString));
+            }
+            return retVal;
         }
 
     }
