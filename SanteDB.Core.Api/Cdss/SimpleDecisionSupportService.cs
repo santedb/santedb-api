@@ -162,7 +162,7 @@ namespace SanteDB.Core.Cdss
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
                     var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    patientCopy.Participations = target.Participations?.ToList();
+                    patientCopy.Participations = target.Participations?.ToList() ?? new List<ActParticipation>();
 
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
@@ -198,7 +198,7 @@ namespace SanteDB.Core.Cdss
                     _ = parmDict.TryGetValue("scope", out var scope);
                     // Compute the protocols
                     var protocolActs = libraries
-                        .SelectMany(o=>o.GetProtocols(scope.ToString()))
+                        .SelectMany(o=>o.GetProtocols(scope?.ToString()))
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
                         .SelectMany(proto =>
