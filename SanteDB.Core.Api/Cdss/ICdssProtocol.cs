@@ -44,7 +44,7 @@ namespace SanteDB.Core.Cdss
         /// <summary>
         /// Calculate the clinical protocol for the given target data
         /// </summary>
-        IEnumerable<Act> ComputeProposals(Patient target, IDictionary<String, Object> parameters);
+        IEnumerable<Object> ComputeProposals(Patient target, IDictionary<String, Object> parameters);
 
     }
 }

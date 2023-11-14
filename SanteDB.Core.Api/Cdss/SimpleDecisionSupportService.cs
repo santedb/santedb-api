@@ -197,7 +197,7 @@ namespace SanteDB.Core.Cdss
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     _ = parmDict.TryGetValue("scope", out var scope);
                     // Compute the protocols
-                    var protocolActs = libraries
+                    var protocolOutput = libraries
                         .SelectMany(o=>o.GetProtocols(scope?.ToString()))
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
@@ -217,9 +217,10 @@ namespace SanteDB.Core.Cdss
                                 return new Act[0];
                             }
                         })
-                        .OrderBy(o => o.StartTime ?? o.ActTime)
                         .ToList();
 
+                    var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
+                    protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));
                     // Group these as appointments 
                     if (asEncounters)
                     {
@@ -290,7 +291,7 @@ namespace SanteDB.Core.Cdss
                         }
                     }
 
-                    // TODO: Configure for days of week
+                    // TODO: Look up for the current schedule in the facility
                     foreach (var itm in protocolActs)
                     {
                         while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
@@ -305,7 +306,7 @@ namespace SanteDB.Core.Cdss
                         CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid), 
                         Extensions = new List<Model.DataTypes.ActExtension>()
                         {
-                            new Model.DataTypes.ActExtension(ExtensionTypeKeys.DataQualityExtension, typeof(DictionaryExtensionHandler), detectedIssueList.ToList())
+                            new Model.DataTypes.ActExtension(ExtensionTypeKeys.PatientSafetyConcernIssueExtension, typeof(DictionaryExtensionHandler), detectedIssueList.ToList())
                         }
                     };
 
