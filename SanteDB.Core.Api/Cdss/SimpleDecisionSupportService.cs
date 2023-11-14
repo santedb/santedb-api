@@ -195,6 +195,7 @@ namespace SanteDB.Core.Cdss
 
 
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
+                    var appliedProtocols = new ConcurrentBag<ICdssProtocol>();
                     _ = parmDict.TryGetValue("scope", out var scope);
                     // Compute the protocols
                     var protocolOutput = libraries
@@ -208,6 +209,7 @@ namespace SanteDB.Core.Cdss
                                 using (AuthenticationContext.EnterSystemContext())
                                 {
                                     var retVal = proto.ComputeProposals(patientCopy, parmDict);
+                                    appliedProtocols.Add(proto);
                                     return retVal;
                                 }
                             }
@@ -303,7 +305,21 @@ namespace SanteDB.Core.Cdss
                     
                     return new CarePlan(patientCopy, protocolActs.ToList())
                     {
+                        MoodConceptKey = ActMoodKeys.Propose,
+                        ActTime = DateTimeOffset.Now,
+                        StartTime = DateTimeOffset.Now,
+                        StatusConceptKey = StatusKeys.Active,
+                        StopTime = protocolActs.Select(o=>o.StopTime ?? o.ActTime).OrderByDescending(o=>o).FirstOrDefault(),
                         CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid), 
+                        Protocols = appliedProtocols.Select(o=>new ActProtocol()
+                        {
+                            ProtocolKey = o.Uuid,
+                            Protocol = new Protocol()
+                            {
+                                Name = o.Name,
+                                Oid = o.Oid
+                            }
+                        }).ToList(),
                         Extensions = new List<Model.DataTypes.ActExtension>()
                         {
                             new Model.DataTypes.ActExtension(ExtensionTypeKeys.PatientSafetyConcernIssueExtension, typeof(DictionaryExtensionHandler), detectedIssueList.ToList())
