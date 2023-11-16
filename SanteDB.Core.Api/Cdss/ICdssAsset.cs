@@ -36,8 +36,9 @@ namespace SanteDB.Core.Cdss
         /// <summary>
         /// Gets the identifier for the protocol
         /// </summary>
+        /// <remarks>Implementers should ensure that a call to set the UUID only succeeds if the current value is null</remarks>
         [QueryParameter("uuid")]
-        Guid Uuid { get; }
+        Guid Uuid { get; set;  }
 
         /// <summary>
         /// The unique identifier of the object in the scope of the protocol
