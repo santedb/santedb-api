@@ -164,7 +164,7 @@ namespace SanteDB.Core.Cdss
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
                     var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    patientCopy.Participations = target.Participations?.ToList() ?? new List<ActParticipation>();
+                    patientCopy.Participations = target.GetParticipations()?.ToList() ?? new List<ActParticipation>();
 
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {

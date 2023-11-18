@@ -479,25 +479,37 @@ namespace SanteDB.Core
         public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
 
         /// <summary>
+        /// Try to resolve a reference
+        /// </summary>
+        /// <param name="repository">The repository to resolve on</param>
+        /// <param name="referenceString">The reference string</param>
+        /// <param name="resolved">The resolved library</param>
+        /// <returns>True if resolution was successful</returns>
+        public static bool TryResolveReference(this ICdssLibraryRepository repository, String referenceString, out ICdssLibrary resolved)
+        {
+            if (referenceString.StartsWith("#"))
+            {
+                referenceString = referenceString.Substring(1);
+                resolved = repository.Find(o => o.Id == referenceString).FirstOrDefault();
+            }
+            else if (Guid.TryParse(referenceString, out var uuid))
+            {
+                resolved = repository.Get(uuid);
+            }
+            else
+            {
+                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
+            }
+
+            return resolved != null;
+        }
+        /// <summary>
         /// Resolve the reference
         /// </summary>
         public static ICdssLibrary ResolveReference(this ICdssLibraryRepository repository, String referenceString)
         {
-            ICdssLibrary retVal = null;
-            if(referenceString.StartsWith("#"))
-            {
-                referenceString = referenceString.Substring(1);
-                retVal = repository.Find(o => o.Id == referenceString).FirstOrDefault();
-            }
-            else if(Guid.TryParse(referenceString, out var uuid))
-            {
-                retVal = repository.Get(uuid);
-            }
-            else
-            {
-                retVal = repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
-            }
-            if(retVal == null)
+            
+            if(!repository.TryResolveReference(referenceString, out var retVal))
             {
                 throw new KeyNotFoundException(String.Format(ErrorMessages.REFERENCE_NOT_FOUND, referenceString));
             }

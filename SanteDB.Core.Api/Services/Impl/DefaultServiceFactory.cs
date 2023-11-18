@@ -68,7 +68,7 @@ namespace SanteDB.Core.Services.Impl
             typeof(CachedResourceCheckoutService),
             typeof(SimpleNotificationTemplateFiller),
             typeof(JwsResourcePointerService),
-            typeof(FileSystemDispatcherQueueService),
+            //typeof(FileSystemDispatcherQueueService),
             typeof(LocalRepositoryFactory),
             typeof(RegexPasswordValidator),
             typeof(DefaultOperatingSystemInfoService),
