@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
@@ -35,6 +36,7 @@ using System.Linq;
 
 namespace SanteDB.Core.Cdss
 {
+    
     /// <summary>
     /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
     /// </summary>
