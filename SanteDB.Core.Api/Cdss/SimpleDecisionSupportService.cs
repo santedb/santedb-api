@@ -317,6 +317,7 @@ namespace SanteDB.Core.Cdss
                         Protocols = appliedProtocols.Select(o=>new ActProtocol()
                         {
                             ProtocolKey = o.Uuid,
+                            Version = o.Version,
                             Protocol = new Protocol()
                             {
                                 Name = o.Name,

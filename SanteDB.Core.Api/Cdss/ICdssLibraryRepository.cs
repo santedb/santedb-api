@@ -27,8 +27,9 @@ namespace SanteDB.Core.Cdss
         /// Get the protocol asset by identifier
         /// </summary>
         /// <param name="libraryUuid">The protocol asset identifier</param>
+        /// <param name="versionUuid">The version of the data to fetch</param>
         /// <returns>The protocol asset with the matching asset id</returns>
-        ICdssLibrary Get(Guid libraryUuid);
+        ICdssLibrary Get(Guid libraryUuid, Guid? versionUuid);
 
         /// <summary>
         /// Insert a protocol asset into the store

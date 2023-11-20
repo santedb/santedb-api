@@ -77,5 +77,10 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         void Save(Stream definitionStream);
 
+        /// <summary>
+        /// If the CDSS library data came from storage, this is the metadata
+        /// </summary>
+        ICdssLibraryRepositoryMetadata StorageMetadata { get; set;  }
+
     }
 }

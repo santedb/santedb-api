@@ -494,11 +494,11 @@ namespace SanteDB.Core
             }
             else if (Guid.TryParse(referenceString, out var uuid))
             {
-                resolved = repository.Get(uuid);
+                resolved = repository.Get(uuid, null);
             }
             else
             {
-                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault(); ;
+                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault() ;
             }
 
             return resolved != null;
