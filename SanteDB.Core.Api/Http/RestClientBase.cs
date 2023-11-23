@@ -492,7 +492,7 @@ namespace SanteDB.Core.Http
 
                 // Invoke
                 var retVal = this.InvokeInternal<TBody, TResult>(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.ContentType, requestEventArgs.AdditionalHeaders, out responseHeaders, body, requestEventArgs.Query);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, requestEventArgs.ContentType, retVal, 200, 0, this.ConvertHeaders(responseHeaders)));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, responseHeaders[HttpRequestHeader.ContentType], retVal, 200, Int32.Parse(responseHeaders[HttpRequestHeader.ContentLength]), this.ConvertHeaders(responseHeaders)));
                 return retVal;
             }
             catch (Exception e)
