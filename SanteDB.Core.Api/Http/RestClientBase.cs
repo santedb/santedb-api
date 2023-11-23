@@ -33,6 +33,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -162,7 +163,20 @@ namespace SanteDB.Core.Http
             // Set appropriate header
             SetRequestAcceptEncoding(webrequest);
 
-            webrequest.Accept = this.Accept;
+            // HACK: If we are posting something other than application/xml or application/json (like multi-part data) we need to tell the server
+            // we want our response in the default
+            if (!String.IsNullOrEmpty(this.Accept))
+            {
+                var contentType = new ContentType(this.Accept);
+                if (contentType.MediaType.StartsWith("multipart/form-data"))
+                {
+                    webrequest.Accept = "application/xml";
+                }
+                else
+                {
+                    webrequest.Accept = this.Accept;
+                }
+            }
 
             return webrequest;
         }

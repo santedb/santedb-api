@@ -761,7 +761,7 @@ namespace SanteDB.Core.Http
 
                             using (var compressionstream = compressionscheme.CreateCompressionStream(NonDisposingStream.Create(memorystream)))
                             {
-                                serializer.Serialize(compressionstream, body, out mimetype); //TODO: Question; Why do we provide mime this in both places
+                                serializer.Serialize(compressionstream, body, out mimetype); //TODO: Question; Why do we provide mime this in both places - JF - This is so the body serializer can access extended parts of the mime type when needed (so: application/xml+XXYYZZ would use the XmlBodySerializer but may need to know XXYYZZ was passed as an extension)
                             }
                         }
                         else
