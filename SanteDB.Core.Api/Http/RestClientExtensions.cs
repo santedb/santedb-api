@@ -67,6 +67,12 @@ namespace SanteDB.Core.Http
                 timeDrift = MinusOne;
                 return false;
             }
+            catch(Exception)
+            {
+                latencyMs = 0;
+                timeDrift = MinusOne;
+                return false;
+            }
         }
     }
 }
