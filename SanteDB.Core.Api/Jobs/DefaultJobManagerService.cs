@@ -18,8 +18,12 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using Newtonsoft.Json.Linq;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
@@ -53,17 +57,19 @@ namespace SanteDB.Core.Jobs
 
         // Service manager
         private readonly IServiceManager m_serviceManager;
+        private readonly IConfigurationManager m_configurationManager;
 
         /// <summary>
         /// Create a new job manager service
         /// </summary>
-        public DefaultJobManagerService(IThreadPoolService threadPool, IServiceManager serviceManager, IJobStateManagerService jobStateManager = null, IJobScheduleManager cronTabManager = null)
+        public DefaultJobManagerService(IThreadPoolService threadPool, IServiceManager serviceManager, IConfigurationManager configurationManager, IJobStateManagerService jobStateManager = null, IJobScheduleManager cronTabManager = null)
         {
             this.m_threadPool = threadPool;
             this.m_jobScheduleManager = cronTabManager ?? new XmlFileJobScheduleManager();
             this.m_jobStateManager = jobStateManager ?? new XmlFileJobStateManager();
             this.m_serviceManager = serviceManager;
-
+            this.m_configurationManager = configurationManager;
+            this.m_configuration = configurationManager.GetSection<JobConfigurationSection>();
         }
 
         /// <summary>
@@ -115,7 +121,7 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Timer configuration
         /// </summary>
-        private JobConfigurationSection m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<JobConfigurationSection>();
+        private JobConfigurationSection m_configuration;
 
         /// <summary>
         /// Timer thread
@@ -146,6 +152,11 @@ namespace SanteDB.Core.Jobs
         /// Log of timers
         /// </summary>
         private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
+        
+        /// <inheritdoc/>
+        public IEnumerable<Type> GetAvailableJobs() =>
+            this.m_serviceManager.GetAllTypes()
+                .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IJob).IsAssignableFrom(t));
 
         #region ITimerService Members
 
@@ -299,6 +310,48 @@ namespace SanteDB.Core.Jobs
         {
             this.AddJob(jobObject, startType);
             this.SetJobSchedule(jobObject, interval);
+        }
+
+        /// <summary>
+        /// Registers the job and attempts to save the configuration
+        /// </summary>
+        public IJob RegisterJob(Type jobType)
+        {
+
+            if (this.IsJobRegistered(jobType))
+            {
+                return null; // Job is already added
+            }
+
+            var jobObject = jobType.CreateInjected() as IJob;
+            var ji = new JobExecutionInfo(jobObject, JobStartType.Never, new object[0]);
+            this.m_jobs.Add(ji);
+
+            // Try to save the configuration 
+            try
+            {
+                
+                // Is there no configuration?
+                if(this.m_configuration == null)
+                {
+                    this.m_configuration = new JobConfigurationSection() { Jobs = new List<JobItemConfiguration>() };
+                    this.m_configurationManager.Configuration.AddSection(this.m_configuration);
+                }
+                this.m_configuration.Jobs.Add(new JobItemConfiguration()
+                {
+                    StartType = JobStartType.Never,
+                    Type = jobType
+                });
+                if (!this.m_configurationManager.IsReadonly)
+                {
+                    ApplicationServiceContext.Current.GetService<IConfigurationManager>().SaveConfiguration();
+                }
+                return jobObject;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(ErrorMessages.WARN_CONFIGURATION_NOT_UPDATED, e);
+            }
         }
 
         /// <inheritdoc/>
