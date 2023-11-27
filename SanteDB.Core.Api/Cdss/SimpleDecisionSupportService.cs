@@ -36,7 +36,7 @@ using System.Linq;
 
 namespace SanteDB.Core.Cdss
 {
-    
+
     /// <summary>
     /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
     /// </summary>
@@ -145,7 +145,7 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_cdssLibraryRepository.Find(o=>true).ToArray());
+            return this.CreateCarePlan(p, asEncounters, null, this.m_cdssLibraryRepository.Find(o => true).ToArray());
         }
 
         /// <inheritdoc/>
@@ -164,8 +164,7 @@ namespace SanteDB.Core.Cdss
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
                     var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    patientCopy.Participations = target.GetParticipations()?.ToList() ?? new List<ActParticipation>();
-
+                    patientCopy.Participations = patientCopy.Participations?.ToList()  ?? patientCopy.GetParticipations()?.ToList();
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
                         patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key)
@@ -201,9 +200,9 @@ namespace SanteDB.Core.Cdss
                     _ = parmDict.TryGetValue("scope", out var scope);
                     // Compute the protocols
                     var protocolOutput = libraries
-                        .SelectMany(o=>o.GetProtocols(scope?.ToString()))
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
+                        .SelectMany(library => library.GetProtocols(patientCopy, scope?.ToString()))
                         .SelectMany(proto =>
                         {
                             try
@@ -215,7 +214,7 @@ namespace SanteDB.Core.Cdss
                                     return retVal;
                                 }
                             }
-                            catch(Exception e)
+                            catch (Exception e)
                             {
                                 detectedIssueList.Add(new DetectedIssue(DetectedIssuePriorityType.Error, e.HResult.ToString(), e.Message, DetectedIssueKeys.OtherIssue));
                                 return new Act[0];
@@ -233,9 +232,8 @@ namespace SanteDB.Core.Cdss
                         {
                             act.StopTime = act.StopTime ?? act.ActTime;
                             // Is there a candidate encounter which is bound by start/end
-                            var candidate = encounters.FirstOrDefault(e => (act.StartTime ?? DateTimeOffset.MinValue) <= (e.StopTime ?? DateTimeOffset.MaxValue)
-                                && (act.StopTime ?? DateTimeOffset.MaxValue) >= (e.StartTime ?? DateTimeOffset.MinValue)
-                                && !e.Relationships.Any(r => r.TargetAct?.Protocols.Intersect(act.Protocols, new ProtocolComparer()).Count() == r.TargetAct?.Protocols.Count())
+                            var candidate = encounters.FirstOrDefault(e => (act.StartTime?.Date ?? DateTimeOffset.MinValue) <= (e.StopTime?.Date ?? DateTimeOffset.MaxValue)
+                                && (act.StopTime?.Date ?? DateTimeOffset.MaxValue) >= (e.StartTime?.Date ?? DateTimeOffset.MinValue)
                             );
 
                             // Create candidate
@@ -304,17 +302,17 @@ namespace SanteDB.Core.Cdss
                         }
                     }
 
-                    
+
                     return new CarePlan(patientCopy, protocolActs.ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
                         StartTime = DateTimeOffset.Now,
                         StatusConceptKey = StatusKeys.Active,
-                        StopTime = protocolActs.Select(o=>o.StopTime ?? o.ActTime).OrderByDescending(o=>o).FirstOrDefault(),
-                        CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid), 
+                        StopTime = protocolActs.Select(o => o.StopTime ?? o.ActTime).OrderByDescending(o => o).FirstOrDefault(),
+                        CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid),
                         ProgramIdentifier = scope?.ToString(),
-                        Protocols = appliedProtocols.Select(o=>new ActProtocol()
+                        Protocols = appliedProtocols.Select(o => new ActProtocol()
                         {
                             ProtocolKey = o.Uuid,
                             Version = o.Version,
@@ -366,9 +364,9 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
         {
-            foreach(var lib in librariesToApply)
+            foreach (var lib in librariesToApply)
             {
-                foreach(var iss in lib.Analyze(collectedData))
+                foreach (var iss in lib.Analyze(collectedData))
                 {
                     yield return iss;
                 }

@@ -24,6 +24,7 @@ using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Roles;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,7 +44,9 @@ namespace SanteDB.Core.Cdss
         /// <summary>
         /// Get the protocols which are defined in the library (note that implementers typically indicate that protocols are only for type Patient)
         /// </summary>
-        IEnumerable<ICdssProtocol> GetProtocols(String forScope);
+        /// <param name="forPatient">The patient for which applicable protocols should be obtained</param>
+        /// <param name="forScope">The scope(s) for which the protocols should be obtained</param>
+        IEnumerable<ICdssProtocol> GetProtocols(Patient forPatient, String forScope);
 
         /// <summary>
         /// Analyze the collected samples and determine if there are any detected issues
