@@ -36,6 +36,16 @@ using System.Linq;
 
 namespace SanteDB.Core.Cdss
 {
+    /// <summary>
+    /// Type redirect
+    /// </summary>
+    [Obsolete("Use SimpleDecisionSupportService")]
+    public class SimpleCarePlanService : SimpleDecisionSupportService
+    {
+        public SimpleCarePlanService(ICdssLibraryRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository) : base(protocolRepository, actParticipationRepository)
+        {
+        }
+    }
 
     /// <summary>
     /// Represents a care plan service that can bundle protocol acts together based on their start/stop times
