@@ -27,6 +27,7 @@ using System.IO;
 namespace SanteDB.Core.Cdss
 {
 
+    
     /// <summary>
     /// An interface which defines a generic asset
     /// </summary>
