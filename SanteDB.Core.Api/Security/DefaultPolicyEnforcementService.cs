@@ -27,7 +27,6 @@ using System;
 using System.Security.Principal;
 
 #pragma warning disable CS0612
-#pragma warning disable CS0067
 namespace SanteDB.Core.Security
 {
     /// <summary>
