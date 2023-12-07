@@ -281,7 +281,6 @@ namespace SanteDB.Core.Http
 
                     try
                     {
-                        var connecttimeouttask = Task.Delay(GetConnectTimeout());
 
                         webrequest.Method = method;
 
@@ -292,7 +291,7 @@ namespace SanteDB.Core.Http
                         cancellationtoken.ThrowIfCancellationRequested();
 
                         var responsetask = webrequest.GetResponseAsync();
-
+                        var connecttimeouttask = Task.Delay(GetConnectTimeout());
                         var resulttask = await Task.WhenAny(connecttimeouttask, responsetask);
 
                         if (resulttask == connecttimeouttask)
