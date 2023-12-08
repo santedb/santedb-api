@@ -765,7 +765,7 @@ namespace SanteDB.Core.Http
                         }
                         else
                         {
-                            serializer.Serialize(memorystream, body, out mimetype);
+                            serializer.Serialize(NonDisposingStream.Create(memorystream), body, out mimetype);
                         }
 
                         if (this.Description.Trace)
