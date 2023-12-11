@@ -163,6 +163,10 @@ namespace SanteDB.Core.Security
         public const string UnrestrictedClinicalProtocolConfiguration = AlterSystemConfiguration + ".2";
 
         /// <summary>
+        /// Create a clinical protocol 
+        /// </summary>
+        public const string CreateClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".0";
+        /// <summary>
         /// Unrestricted access to modify clinical protocol definitions
         /// </summary>
         public const string AlterClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".1";

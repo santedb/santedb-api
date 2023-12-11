@@ -50,7 +50,27 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobScheduleManager()
         {
-            this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xcron.xml");
+            var assembly = Assembly.GetEntryAssembly();
+
+            if (null == assembly) //Fixes an issue where EntryAssembly is null when called from NUnit.
+            {
+                assembly = Assembly.GetCallingAssembly();
+            }
+
+            var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
+            if(dataDirectory is String ddir)
+            {
+                this.m_cronTabLocation = Path.Combine(ddir, "xcron.xml");
+            }
+            else if (null != assembly)
+            {
+                this.m_cronTabLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xcron.xml");
+            }
+            else
+            {
+                this.m_cronTabLocation = Path.Combine(System.Environment.CurrentDirectory, "xcron.xml");
+            }
+
             if (File.Exists(this.m_cronTabLocation))
             {
                 try

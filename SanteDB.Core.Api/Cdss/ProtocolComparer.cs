@@ -18,28 +18,27 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using System;
+using SanteDB.Core.Model.Acts;
+using System.Collections.Generic;
 
-namespace SanteDB.Core.Http.Description
+namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// REST based client endpoint description
+    /// Protocol comparer
     /// </summary>
-    public interface IRestClientEndpointDescription
+    internal class ProtocolComparer : IEqualityComparer<ActProtocol>
     {
         /// <summary>
-        /// Gets the address of the endpoint
+        /// Two protocols equal each other
         /// </summary>
-        string Address { get; }
+        public bool Equals(ActProtocol x, ActProtocol y)
+        {
+            return x.ProtocolKey == y.ProtocolKey;
+        }
 
-        /// <summary>
-        /// Gets or sets the timeout that a client will wait for a response from the server. Reading the response body stream can take longer than this value without throwing a <see cref="TimeoutException"/>.
-        /// </summary>
-        TimeSpan ConnectTimeout { get; set; }
-
-        /// <summary>
-        /// Gets or sets the timeout that a client will wait for the entire operation, including reading and processing the response body, before timing out and throwing a <see cref="TimeoutException"/>.
-        /// </summary>
-        TimeSpan? ReceiveTimeout { get; set; }
+        public int GetHashCode(ActProtocol obj)
+        {
+            return obj.ProtocolKey.GetHashCode();
+        }
     }
 }

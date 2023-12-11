@@ -23,6 +23,7 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -87,10 +88,9 @@ namespace SanteDB.Core.Services.Impl
             var entityData = new Dictionary<String, Object>()
             {
                 { "$type", entity.GetType().GetSerializationName() },
-                { "id", entity.Key.ToString() },
                 { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
                     {
-                        value = id.Value,
+                        value = entity.GetType().GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation ? id.Value.Mask() : id.Value,
                         checkDigit = id.CheckDigit
                     }).ToArray())
                 }
@@ -106,7 +106,7 @@ namespace SanteDB.Core.Services.Impl
             };
 
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
-                .WithCompression(Http.Description.HttpCompressionAlgorithm.Gzip)
+                .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
@@ -177,7 +177,7 @@ namespace SanteDB.Core.Services.Impl
 
                 // Attempt direct load?
                 IHasIdentifiers retVal = null;
-                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId))
+                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId) || Guid.TryParse(parsedToken.Payload.sub, out uuidId))
                 {
                     retVal = repoService.Get(uuidId) as IHasIdentifiers;
                 }

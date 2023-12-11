@@ -101,6 +101,18 @@ namespace SanteDB.Core.BusinessRules
         }
 
         /// <summary>
+        /// Creates a new detected issue with the specified field values
+        /// </summary>
+        /// <param name="id">The unique identifier (context specific) of the business rule violation</param>
+        /// <param name="priority">The priority / seriousness of the detected issue being raised</param>
+        /// <param name="text">The textual content of the detected issue</param>
+        /// <param name="refersTo">The object the detected issue refers to</param>
+        /// <param name="type">The codified type of the detected issue (examples: <see cref="DetectedIssueKeys"/>)</param>
+        public DetectedIssue(DetectedIssuePriorityType priority, String id, String text, Guid type, String refersTo) : this(priority, id, text, type)
+        {
+            this.RefersTo = refersTo;
+        }
+        /// <summary>
         /// Gets or sets the identifier of the detected issue
         /// </summary>
         /// <remarks>The identifier of the detected issue should indicate to the catcher of the issue, the exact codified type of the issue. It should be unique
@@ -127,7 +139,13 @@ namespace SanteDB.Core.BusinessRules
         [XmlAttribute("type"), JsonProperty("type"), Binding(typeof(DetectedIssueKeys))]
         public Guid TypeKey { get; set; }
 
+        /// <summary>
+        /// Gets or sets the object that the detected issue refers to
+        /// </summary>
+        [XmlAttribute("refersTo"), JsonProperty("refersTo")]
+        public String RefersTo { get; set; }
+
         /// <inheritdoc/>
-        public override string ToString() => $"{this.Priority} ({this.Id}) - {this.Text}";
+        public override string ToString() => $"{this.Priority} ({this.Id}) - {this.Text} {(!String.IsNullOrEmpty(this.RefersTo) ? $"@{this.RefersTo}" : "")}";
     }
 }

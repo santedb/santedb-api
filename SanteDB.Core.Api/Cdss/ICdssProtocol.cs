@@ -18,44 +18,33 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Attributes;
+using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Roles;
+using System;
+using System.Collections.Generic;
 
-[assembly: PluginTraceSource("SanteDB")]
-
-namespace SanteDB.Core
+namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// SanteDB Host Type
+    /// Represents a clinical protocol
     /// </summary>
-    public enum SanteDBHostType
+    public interface ICdssProtocol : ICdssAsset
     {
+
         /// <summary>
-        /// Environment is a server
+        /// The scopes (types of encounters) in which the asset belongs
         /// </summary>
-        Server = 1,
+        [QueryParameter("scope")]
+        IEnumerable<ICdssProtocolScope> Scopes { get; }
+
         /// <summary>
-        /// Environment is a client which bundles a user interface with the dCDR
+        /// Calculate the clinical protocol for the given target data
         /// </summary>
-        Client = 2,
-        /// <summary>
-        /// Environment is not in either client or server
-        /// </summary>
-        Other = 3,
-        /// <summary>
-        /// Environment is a test environment (like unit tests or debugger)
-        /// </summary>
-        Test = 4,
-        /// <summary>
-        /// Environment is a gateway environment (allow external connections)
-        /// </summary>
-        Gateway = 5,
-        /// <summary>
-        /// Environment is configuration tooling (allows some validation to be skipped)
-        /// </summary>
-        Configuration = 6,
-        /// <summary>
-        /// Debugger
-        /// </summary>
-        Debugger = 7
+        IEnumerable<Object> ComputeProposals(Patient target, IDictionary<String, Object> parameters);
+
     }
 }

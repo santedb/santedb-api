@@ -29,6 +29,7 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -341,7 +342,8 @@ namespace SanteDB.Core
         /// <param name="millisecondTimeout">The timeout to set</param>
         public static void SetTimeout(this IRestClient me, int millisecondTimeout)
         {
-            me.Description.Endpoint.ForEach(o => { o.Timeout = new TimeSpan(0, 0, 0, 0, millisecondTimeout); });
+            var timeout = TimeSpan.FromMilliseconds(millisecondTimeout);
+            me.Description.Endpoint.ForEach(o => { o.ConnectTimeout = timeout; });
         }
 
         /// <summary>
@@ -356,7 +358,7 @@ namespace SanteDB.Core
             {
                 tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
             }
-            else if (allowUnsignedAssemblies != true)
+            else if (!allowUnsignedAssemblies)
             {
                 // Verified assembly?
                 if (!m_verifiedAssemblies.Contains(asmFile))
@@ -458,5 +460,61 @@ namespace SanteDB.Core
         /// </summary>
         public static bool IsCompatible(this Version myVersion, Version otherVersion)
             => myVersion.Major == otherVersion.Major && myVersion.Minor >= otherVersion.Minor;
+
+        /// <summary>
+        /// Convert an <see cref="ICdssProtocol"/> to a <see cref="Core.Model.Acts.Protocol"/>
+        /// </summary>
+        public static Core.Model.Acts.Protocol ToProtocol(this ICdssProtocol me) => new Model.Acts.Protocol()
+        {
+            Key = me.Uuid,
+            Name = me.Name,
+            Oid = me.Oid
+        };
+
+        /// <summary>
+        /// Gets an assembly qualified name without version information
+        /// </summary>
+        /// <param name="me"></param>
+        /// <returns></returns>
+        public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
+
+        /// <summary>
+        /// Try to resolve a reference
+        /// </summary>
+        /// <param name="repository">The repository to resolve on</param>
+        /// <param name="referenceString">The reference string</param>
+        /// <param name="resolved">The resolved library</param>
+        /// <returns>True if resolution was successful</returns>
+        public static bool TryResolveReference(this ICdssLibraryRepository repository, String referenceString, out ICdssLibrary resolved)
+        {
+            if (referenceString.StartsWith("#"))
+            {
+                referenceString = referenceString.Substring(1);
+                resolved = repository.Find(o => o.Id == referenceString).FirstOrDefault();
+            }
+            else if (Guid.TryParse(referenceString, out var uuid))
+            {
+                resolved = repository.Get(uuid, null);
+            }
+            else
+            {
+                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault() ;
+            }
+
+            return resolved != null;
+        }
+        /// <summary>
+        /// Resolve the reference
+        /// </summary>
+        public static ICdssLibrary ResolveReference(this ICdssLibraryRepository repository, String referenceString)
+        {
+            
+            if(!repository.TryResolveReference(referenceString, out var retVal))
+            {
+                throw new KeyNotFoundException(String.Format(ErrorMessages.REFERENCE_NOT_FOUND, referenceString));
+            }
+            return retVal;
+        }
+
     }
 }

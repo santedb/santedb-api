@@ -80,6 +80,12 @@ namespace SanteDB.Core.Jobs
         void AddJob(IJob jobType, TimeSpan elapseTime, JobStartType startType = JobStartType.Immediate);
 
         /// <summary>
+        /// Adds a job by type to the job manager
+        /// </summary>
+        /// <param name="jobType">The job type to be registered</param>
+        IJob RegisterJob(Type jobType);
+
+        /// <summary>
         /// Add a job to the execution manager
         /// </summary>
         /// <param name="jobType">The type of job to add</param>
@@ -149,11 +155,16 @@ namespace SanteDB.Core.Jobs
         /// <param name="intervalSpan">The repeat interval of the job</param>
         /// <returns>The schedule of the job</returns>
         IJobSchedule SetJobSchedule(IJob job, TimeSpan intervalSpan);
+
         /// <summary>
         /// Clear the schedule of a job.
         /// </summary>
         /// <param name="job">The job to clear the schedule for.</param>
         void ClearJobSchedule(IJob job);
 
+        /// <summary>
+        /// Get all available jobs, in the current application domain
+        /// </summary>
+        IEnumerable<Type> GetAvailableJobs();
     }
 }

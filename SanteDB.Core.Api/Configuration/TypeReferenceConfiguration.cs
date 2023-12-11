@@ -113,7 +113,7 @@ namespace SanteDB.Core.Configuration
                 this.m_type = value;
                 if (value != null)
                 {
-                    this.m_typeXml = $"{value?.FullName}, {value?.Assembly.GetName().Name}"; // remove version 
+                    this.m_typeXml = value.AssemblyQualifiedNameWithoutVersion(); // remove version 
                 }
                 else
                 {

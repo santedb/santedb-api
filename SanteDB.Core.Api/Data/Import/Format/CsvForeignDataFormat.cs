@@ -177,7 +177,7 @@ namespace SanteDB.Core.Data.Import.Format
 
                     this.m_rowsRead++;
 
-                    this.m_values = s_columnExtract.Matches($"{this.m_source.ReadLine()},")
+                    this.m_values = s_columnExtract.Matches($"{this.m_source.ReadLine().Trim()},")
                         .OfType<Match>()
                         .Select(o => UnescapeValue(o.Groups[1].Value))
                         .ToArray();
@@ -195,7 +195,7 @@ namespace SanteDB.Core.Data.Import.Format
                     lock (this.m_syncLock)
                     {
                         m_columnNames = s_columnExtract
-                                .Matches($"{this.m_source.ReadLine()},")
+                                .Matches($"{this.m_source.ReadLine().Trim()},")
                                 .OfType<Match>()
                                 .Select(o => UnescapeValue(o.Groups[1].Value))
                                 .OfType<string>()

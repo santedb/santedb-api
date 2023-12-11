@@ -22,6 +22,8 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -243,6 +245,8 @@ namespace SanteDB.Core.Services.Impl
             {
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }
+            var pepService = ApplicationServiceContext.Current?.GetService<IPolicyEnforcementService>();
+            pepService?.Demand(PermissionPolicyIdentifiers.AlterSystemConfiguration);
 
             using (var s = File.Create(this.m_configurationFileName))
             {

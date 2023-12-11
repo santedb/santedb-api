@@ -34,11 +34,22 @@ namespace SanteDB.Core.Configuration.Http
     public class RestClientEndpointConfiguration : IRestClientEndpointDescription
     {
         /// <summary>
-        /// Timeout of 4 sec
+        /// Default ctor
         /// </summary>
         public RestClientEndpointConfiguration()
         {
-            this.Timeout = new TimeSpan(0, 1, 0);
+            this.ConnectTimeout = new TimeSpan(0, 1, 0);
+            this.ReceiveTimeout = null;
+        }
+
+        /// <summary>
+        /// Copy constructor
+        /// </summary>
+        public RestClientEndpointConfiguration(RestClientEndpointConfiguration copyFrom)
+        {
+            this.Address = copyFrom.Address;
+            this.ConnectTimeoutXml = copyFrom.ConnectTimeoutXml;
+            this.ReceiveTimeoutXml = copyFrom.ReceiveTimeoutXml;
         }
 
         /// <summary>
@@ -47,7 +58,7 @@ namespace SanteDB.Core.Configuration.Http
         public RestClientEndpointConfiguration(String address, TimeSpan? timeout = null)
         {
             this.Address = address;
-            this.Timeout = timeout ?? new TimeSpan(0, 1, 0);
+            this.ConnectTimeout = timeout ?? new TimeSpan(0, 1, 0);
         }
 
         /// <summary>
@@ -62,29 +73,59 @@ namespace SanteDB.Core.Configuration.Http
         }
 
         /// <summary>
-        /// Gets or sets the timeout
+        /// This property is part of the configuration system and should not be used directly in code. Use <see cref="ConnectTimeout"/> instead.
         /// </summary>
         [XmlAttribute("timeout"), JsonProperty("timeout")]
-        public String TimeoutXml
+        public String ConnectTimeoutXml
         {
-            get => XmlConvert.ToString(this.Timeout);
+            get => XmlConvert.ToString(this.ConnectTimeout);
             set
             {
                 if (TimeSpan.TryParse(value, out var ts))
                 {
-                    this.Timeout = ts;
+                    this.ConnectTimeout = ts;
                 }
                 else
                 {
-                    this.Timeout = XmlConvert.ToTimeSpan(value);
+                    this.ConnectTimeout = XmlConvert.ToTimeSpan(value);
                 }
             }
         }
 
-        /// <summary>
-        /// Gets or sets the timeout
-        /// </summary>
+        /// <inheritdoc />
         [XmlIgnore, JsonIgnore]
-        public TimeSpan Timeout { get; set; }
+        public TimeSpan ConnectTimeout { get; set; }
+
+        /// <summary>
+        /// This property is part of the configuration system and should not be used directly in code. Use <see cref="ReceiveTimeout"/> instead.
+        /// </summary>
+        [XmlAttribute("receiveTimeout"), JsonProperty("receiveTimeout")]
+        public String ReceiveTimeoutXml
+        {
+            get => ReceiveTimeout.HasValue ? XmlConvert.ToString(this.ReceiveTimeout.Value) : null;
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    if (TimeSpan.TryParse(value, out var ts))
+                    {
+                        this.ReceiveTimeout = ts;
+                    }
+                    else
+                    {
+                        this.ReceiveTimeout = XmlConvert.ToTimeSpan(value); //Tries to use an intermediary internal type to convert.
+
+                    }
+                }
+                else
+                {
+                    ReceiveTimeout = null;
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        [XmlIgnore, JsonIgnore]
+        public TimeSpan? ReceiveTimeout { get; set; }
     }
 }

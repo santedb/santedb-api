@@ -97,7 +97,7 @@ namespace SanteDB.Core.Data
             public event EventHandler<DataMergeEventArgs<TModel>> UnMerged;
 #pragma warning restore
 
-            public string ServiceName => throw new NotImplementedException();
+            public string ServiceName => "Single Instance Method Data Management Service";
 
             /// <summary>
             /// Creates a new resource merger with specified configuration

@@ -15,11 +15,12 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-5-19
+ * User: trevor
+ * Date: 2023-08-31
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Description;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
@@ -32,6 +33,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -126,57 +128,94 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <param name="query">The query which should be executed on the server</param>
         /// <param name="resourceNameOrUrl">The name of the resource at the base URL to be executed</param>
+        /// <exception cref="InvalidOperationException">Thrown when the description (configuration) does not contain any endpoints.</exception>
         protected virtual WebRequest CreateHttpRequest(String resourceNameOrUrl, NameValueCollection query)
         {
             // URL is relative to base address
-            if (this.Description.Endpoint.IsNullOrEmpty())
+            if (this.Description?.Endpoint?.IsNullOrEmpty() ?? true)
             {
+                //TODO: Translate this error message string.
                 throw new InvalidOperationException("No endpoints found, is the interface configured properly?");
             }
 
             if (!Uri.TryCreate(resourceNameOrUrl, UriKind.Absolute, out Uri uri)
-                || uri.Scheme == "file")
+                || uri.Scheme == "file") //TODO: fyfej: Should this be || (uri.Scheme != "http" && uri.Scheme != "https") instead?
             {
+                //TODO: Translate this tracer message.
                 s_tracer.TraceVerbose("Original resource {0} is not absolute or is wrong scheme - building service", resourceNameOrUrl);
-                var baseUrl = new Uri(this.Description.Endpoint[0].Address);
-                UriBuilder uriBuilder = new UriBuilder(baseUrl);
-
-                if (!String.IsNullOrEmpty(resourceNameOrUrl))
-                {
-                    uriBuilder.Path += "/" + resourceNameOrUrl;
-                }
-
-                // HACK:
-                uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
-                // Add query string
-                if (query != null && query.AllKeys.Any())
-                {
-                    uriBuilder.Query = CreateQueryString(query);
-                }
-
-                uri = uriBuilder.Uri;
+                uri = CreateCorrectRequestUri(resourceNameOrUrl, query);
             }
             else
             {
-                s_tracer.TraceVerbose("Constructed URI : {0}", uri);
+                //TODO: Translate this tracer message.
+                //s_tracer.TraceVerbose("Constructed URI : {0}", uri);
             }
 
+            //TODO: Translate this tracer message.
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);
 
-            // Add headers
-            HttpWebRequest retVal = (HttpWebRequest)HttpWebRequest.Create(uri.ToString());
+            //Create request object.
+            var webrequest = (HttpWebRequest)HttpWebRequest.Create(uri.ToString());
 
-            if (this.Credentials == null &&
-                this.Description.Binding.Security?.CredentialProvider != null &&
-                this.Description.Binding.Security?.PreemptiveAuthentication == true)
-            {
-                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
-            }
-
-            this.Credentials?.SetCredentials(retVal);
+            GetRequestCredentials()?.SetCredentials(webrequest);
 
             // Set appropriate header
+            SetRequestAcceptEncoding(webrequest);
+
+            // HACK: If we are posting something other than application/xml or application/json (like multi-part data) we need to tell the server
+            // we want our response in the default
+            if (!String.IsNullOrEmpty(this.Accept))
+            {
+                var contentType = new ContentType(this.Accept);
+                if (contentType.MediaType.StartsWith("multipart/form-data"))
+                {
+                    webrequest.Accept = "application/xml";
+                }
+                else
+                {
+                    webrequest.Accept = this.Accept;
+                }
+            }
+
+            return webrequest;
+        }
+
+        /// <summary>
+        /// Create a uri for a request when the request uri is not valid.
+        /// </summary>
+        /// <param name="resourceNameOrUrl">The type of resource object to fetch.</param>
+        /// <param name="query">The query parameters of the request.</param>
+        /// <returns>A uri that is valid for the request and can be passed to a <see cref="HttpWebRequest"/>.</returns>
+        protected virtual Uri CreateCorrectRequestUri(string resourceNameOrUrl, NameValueCollection query)
+        {
+            Uri uri;
+            var baseUrl = new Uri(this.Description.Endpoint.First().Address);
+            UriBuilder uriBuilder = new UriBuilder(baseUrl);
+
+            if (!String.IsNullOrEmpty(resourceNameOrUrl))
+            {
+                uriBuilder.Path += "/" + resourceNameOrUrl;
+            }
+
+            // HACK:
+            uriBuilder.Path = uriBuilder.Path.Replace("//", "/");
+            // Add query string
+            if (query != null && query.AllKeys.Any())
+            {
+                uriBuilder.Query = CreateQueryString(query);
+            }
+
+            uri = uriBuilder.Uri;
+            return uri;
+        }
+
+        /// <summary>
+        /// Sets the request Accept-Encoding header based on the <see cref="Description"/> for the client.
+        /// </summary>
+        /// <param name="webrequest">The request to set the header for.</param>
+        protected virtual void SetRequestAcceptEncoding(HttpWebRequest webrequest)
+        {
             StringBuilder acceptBuilder = new StringBuilder();
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
                 acceptBuilder.Append(",lzma");
@@ -187,13 +226,27 @@ namespace SanteDB.Core.Http
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
                 acceptBuilder.Append(",deflate");
 
-            if (acceptBuilder.Length > 0)
+            if (acceptBuilder.Length > 1)
             {
-                retVal.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString().Substring(1);
+                acceptBuilder.Remove(0, 1);
+                webrequest.Headers[HttpRequestHeader.AcceptEncoding] = acceptBuilder.ToString();
             }
-            retVal.Accept = this.Accept;
+        }
 
-            return retVal;
+        /// <summary>
+        /// Tries to retrieve the credentials that should be used for a <see cref="HttpWebRequest"/> request. Override this method to provide credentials to requests.
+        /// </summary>
+        /// <returns>An instance of <see cref="RestRequestCredentials"/> or <c>null</c> if no credentials are available.</returns>
+        protected virtual RestRequestCredentials GetRequestCredentials()
+        {
+            if (this.Credentials == null &&
+                            this.Description.Binding.Security?.CredentialProvider != null &&
+                            this.Description.Binding.Security?.PreemptiveAuthentication == true)
+            {
+                this.Credentials = this.Description.Binding.Security.CredentialProvider.GetCredentials(this);
+            }
+
+            return this.Credentials;
         }
 
         #region IRestClient implementation
@@ -225,18 +278,21 @@ namespace SanteDB.Core.Http
         /// <returns>The result</returns>
         public TResult Get<TResult>(string url, NameValueCollection query)
         {
-            return this.Invoke<Object, TResult>("GET", url, null, null, query);
+            return this.Invoke<Object, TResult>("GET", url, null, null, query, out _);
         }
 
         /// <inheritdoc/>
         public byte[] Get(String url) => this.Get(url, null);
 
-        /// <summary>
-        /// Retrieves a raw byte array of data from the specified location
-        /// </summary>
-        /// <param name="url">The resource URL to fetch from the server</param>
-        /// <param name="query">The query (as key=value) to send on the GET request</param>
+        /// <inheritdoc />
         public byte[] Get(String url, NameValueCollection query)
+        {
+            return this.Invoke<byte[], byte[]>("GET", url, null, null, query, out _);
+        }
+
+#if DEBUG
+
+        private byte[] GetOld(String url, NameValueCollection query)
         {
 
             try
@@ -362,6 +418,7 @@ namespace SanteDB.Core.Http
                 throw;
             }
         }
+#endif
 
         /// <summary>
         /// Invokes the specified method against the URL provided
@@ -373,7 +430,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL on which the invokation should occur</param>
         public TResult Invoke<TBody, TResult>(string method, string url, TBody body)
         {
-            return this.Invoke<TBody, TResult>(method, url, this.Accept, body, null);
+            return this.Invoke<TBody, TResult>(method, url, this.Accept, body, null, out _);
         }
 
         /// <summary>
@@ -387,7 +444,7 @@ namespace SanteDB.Core.Http
         /// <param name="url">The URL on which the invokation should occur</param>
         public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body)
         {
-            return this.Invoke<TBody, TResult>(method, url, contentType, body, null);
+            return this.Invoke<TBody, TResult>(method, url, contentType, body, null, out _);
         }
 
         /// <summary>
@@ -403,6 +460,24 @@ namespace SanteDB.Core.Http
         /// <returns>The server response</returns>
         public TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query)
         {
+            return this.Invoke<TBody, TResult>(method, url, contentType, body, query, out _);
+        }
+
+        /// <summary>
+        /// Invoke the specified method against the server
+        /// </summary>
+        /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
+        /// <typeparam name="TResult">The expected response type from the server</typeparam>
+        /// <param name="method">The HTTP method to be executed</param>
+        /// <param name="url">The resource URL to be executed against</param>
+        /// <param name="contentType">The content/type of <paramref name="body"/></param>
+        /// <param name="body">The contents of the request to send to the server</param>
+        /// <param name="query">The query to append to the URL</param>
+        /// <param name="responseHeaders"></param>
+        /// <returns>The server response</returns>
+        protected virtual TResult Invoke<TBody, TResult>(string method, string url, string contentType, TBody body, NameValueCollection query, out WebHeaderCollection responseHeaders)
+        {
+            responseHeaders = null;
             try
             {
 
@@ -416,21 +491,20 @@ namespace SanteDB.Core.Http
                 }
 
                 // Invoke
-                WebHeaderCollection responseHeaders = null;
                 var retVal = this.InvokeInternal<TBody, TResult>(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.ContentType, requestEventArgs.AdditionalHeaders, out responseHeaders, body, requestEventArgs.Query);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, requestEventArgs.ContentType, retVal, 200, 0, this.ConvertHeaders(responseHeaders)));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, responseHeaders[HttpRequestHeader.ContentType], retVal, 200, Int32.Parse(responseHeaders[HttpRequestHeader.ContentLength]), this.ConvertHeaders(responseHeaders)));
                 return retVal;
             }
             catch (Exception e)
             {
                 s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, query, contentType, null, 500, 0, null));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, query, contentType ?? this.Accept, null, 500, 0, null));
                 throw;
             }
         }
 
         /// <summary>
-        /// Implementation specific implementation of invoke
+        /// Invokes the request. Implementations of <see cref="RestClientBase"/> must provide the implementation of <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/>.
         /// </summary>
         /// <typeparam name="TBody">The type of <paramref name="body"/></typeparam>
         /// <typeparam name="TResult">The expected response (response hint) from the server</typeparam>
@@ -439,7 +513,7 @@ namespace SanteDB.Core.Http
         /// <param name="contentType">The content/type of <paramref name="body"/></param>
         /// <param name="requestHeaders">Additional request headers to be sent to the server</param>
         /// <param name="responseHeaders">Response headers from the server</param>
-        /// <param name="body">The body / contents to be submitted to the server</param>
+        /// <param name="body">The body / contents to be submitted to the server. If this is <c>default(TBody)</c>, no body is sent to the server.</param>
         /// <param name="query">The query to be affixed to the URL</param>
         /// <returns>The response from the server</returns>
         protected abstract TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query);
@@ -594,66 +668,63 @@ namespace SanteDB.Core.Http
         }
 
         /// <inheritdoc/>
-        public IDictionary<string, string> Head(string resourceName) => this.Head(resourceName, null);
+        public IDictionary<string, string> Head(string url) => this.Head(url, null);
 
-        /// <summary>
-        /// Perform a head operation against the specified url
-        /// </summary>
-        /// <param name="query">The query to execute</param>
-        /// <param name="resourceName">The name of the resource (url)</param>
-        /// <returns>The HTTP headers (result of the HEAD operation)</returns>
-        public IDictionary<string, string> Head(string resourceName, NameValueCollection query)
+        /// <inheritdoc />
+        public IDictionary<string, string> Head(string url, NameValueCollection query)
         {
+            _ = Invoke<byte[], byte[]>("HEAD", url, null, null, query, out var responseheaders);
+            return this.ConvertHeaders(responseheaders);
 
-            try
-            {
+            //try
+            //{
 
-                var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, query, null, null);
-                this.Requesting?.Invoke(this, requestEventArgs);
-                if (requestEventArgs.Cancel)
-                {
-                    s_tracer.TraceVerbose("HTTP request cancelled");
-                    return null;
-                }
+            //    var requestEventArgs = new RestRequestEventArgs("HEAD", resourceName, query, null, null);
+            //    this.Requesting?.Invoke(this, requestEventArgs);
+            //    if (requestEventArgs.Cancel)
+            //    {
+            //        s_tracer.TraceVerbose("HTTP request cancelled");
+            //        return null;
+            //    }
 
-                // Invoke
-                var httpWebReq = this.CreateHttpRequest(resourceName, requestEventArgs.Query);
-                httpWebReq.Method = "HEAD";
+            //    // Invoke
+            //    var httpWebReq = this.CreateHttpRequest(resourceName, requestEventArgs.Query);
+            //    httpWebReq.Method = "HEAD";
 
-                // Get the responst
-                Dictionary<String, String> retVal = new Dictionary<string, string>();
-                Exception fault = null;
-                var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
-                {
-                    if (o.IsFaulted)
-                    {
-                        fault = o.Exception.InnerExceptions.First();
-                    }
-                    else
-                    {
-                        this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
-                        foreach (var itm in o.Result.Headers.AllKeys)
-                        {
-                            retVal.Add(itm, o.Result.Headers[itm]);
-                        }
-                    }
-                }, TaskContinuationOptions.LongRunning);
-                httpTask.Wait();
-                if (fault != null)
-                {
-                    throw fault;
-                }
+            //    // Get the responst
+            //    Dictionary<String, String> retVal = new Dictionary<string, string>();
+            //    Exception fault = null;
+            //    var httpTask = httpWebReq.GetResponseAsync().ContinueWith(o =>
+            //    {
+            //        if (o.IsFaulted)
+            //        {
+            //            fault = o.Exception.InnerExceptions.First();
+            //        }
+            //        else
+            //        {
+            //            this.Responding?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, o.Result.ContentLength, this.ConvertHeaders(o.Result.Headers)));
+            //            foreach (var itm in o.Result.Headers.AllKeys)
+            //            {
+            //                retVal.Add(itm, o.Result.Headers[itm]);
+            //            }
+            //        }
+            //    }, TaskContinuationOptions.LongRunning);
+            //    httpTask.Wait();
+            //    if (fault != null)
+            //    {
+            //        throw fault;
+            //    }
 
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, 0, retVal));
+            //    this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 200, 0, retVal));
 
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
-                this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 500, 0, null));
-                throw;
-            }
+            //    return retVal;
+            //}
+            //catch (Exception e)
+            //{
+            //    s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
+            //    this.Responded?.Invoke(this, new RestResponseEventArgs("HEAD", resourceName, query, null, null, 500, 0, null));
+            //    throw;
+            //}
         }
 
         /// <summary>
@@ -672,7 +743,7 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TResult">Expected result type</typeparam>
         public TResult Lock<TResult>(string url)
         {
-            return this.Invoke<Object, TResult>("LOCK", url, null, null, null);
+            return this.Invoke<Object, TResult>("LOCK", url, null, null, null, out _);
         }
 
         /// <summary>
@@ -683,7 +754,7 @@ namespace SanteDB.Core.Http
         /// <typeparam name="TResult">The expected type of result</typeparam>
         public TResult Unlock<TResult>(string url)
         {
-            return this.Invoke<Object, TResult>("UNLOCK", url, null, null, null);
+            return this.Invoke<Object, TResult>("UNLOCK", url, null, null, null, out _);
         }
     }
 

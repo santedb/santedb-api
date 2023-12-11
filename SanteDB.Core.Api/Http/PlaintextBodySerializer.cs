@@ -39,7 +39,7 @@ namespace SanteDB.Core.Http
         /// <inheritdoc/>
         public object DeSerialize(Stream requestOrResponseStream, ContentType contentType, Type typeHint)
         {
-            using (var sr = new StreamReader(requestOrResponseStream, System.Text.Encoding.GetEncoding(contentType.CharSet)))
+            using (var sr = new StreamReader(requestOrResponseStream, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8")))
             {
                 return sr.ReadToEnd();
             }

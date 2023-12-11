@@ -18,63 +18,59 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Model.Acts;
-using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Attributes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
-namespace SanteDB.Core.Protocol
+namespace SanteDB.Core.Cdss
 {
+
+    
     /// <summary>
-    /// Represents a clinical protocol
+    /// An interface which defines a generic asset
     /// </summary>
-    public interface IClinicalProtocol
+    public interface ICdssAsset 
     {
-
-        /// <summary>
-        /// Load the specified protocol data
-        /// </summary>
-        IClinicalProtocol Load(Core.Model.Acts.Protocol protocolData);
-
-        /// <summary>
-        /// Get the protocol data
-        /// </summary>
-        Core.Model.Acts.Protocol GetProtocolData();
 
         /// <summary>
         /// Gets the identifier for the protocol
         /// </summary>
-        Guid Id { get; }
+        /// <remarks>Implementers should ensure that a call to set the UUID only succeeds if the current value is null</remarks>
+        [QueryParameter("uuid")]
+        Guid Uuid { get; set;  }
+
+        /// <summary>
+        /// The unique identifier of the object in the scope of the protocol
+        /// </summary>
+        [QueryParameter("id")]
+        String Id { get; }
 
         /// <summary>
         /// Gets the name of the protocol
         /// </summary>
+        [QueryParameter("name")]
         String Name { get; }
 
         /// <summary>
         /// Gets the version of the protocol
         /// </summary>
+        [QueryParameter("version")]
         String Version { get; }
 
         /// <summary>
-        /// Gets the group id
+        /// Gets the universal OID for this protocol
         /// </summary>
-        String GroupId { get; }
+        [QueryParameter("oid")]
+        String Oid { get; }
 
         /// <summary>
-        /// Calculate the clinical protocol for the given patient
+        /// Get the documentation
         /// </summary>
-        IEnumerable<Act> Calculate(Patient p, IDictionary<String, Object> parameters);
+        [QueryParameter("annotation")]
+        String Documentation { get; }
 
-        /// <summary>
-        /// Update the care plan based on new data
-        /// </summary>
-        IEnumerable<Act> Update(Patient p, IEnumerable<Act> existingPlan);
-
-        /// <summary>
-        /// Called prior to performing calculation of the care protocol allowing the protocol to prepare <paramref name="p"/> with
-        /// pre-requisite data is needed for the protocol
-        /// </summary>
-        void Prepare(Patient p, IDictionary<String, Object> parameters);
     }
+
 }

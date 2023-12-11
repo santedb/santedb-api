@@ -19,6 +19,8 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
@@ -115,7 +117,7 @@ namespace SanteDB.Core.Data.Initialization
             catch (Exception e)
             {
                 this.m_traceSource.TraceError("Error installing datasets: {0}", e);
-                return false;
+                throw new DataPersistenceException(ErrorMessages.CANNOT_INITIALIZE_APPLICATION, e);
             }
         }
 

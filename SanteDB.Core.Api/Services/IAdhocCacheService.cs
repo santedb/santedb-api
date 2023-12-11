@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using System;
+using System.IO;
 
 namespace SanteDB.Core.Services
 {
@@ -123,4 +124,5 @@ namespace SanteDB.Core.Services
         /// </summary>
         bool Exists(String key);
     }
+
 }

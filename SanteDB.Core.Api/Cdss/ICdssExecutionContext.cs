@@ -18,27 +18,28 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Model.Acts;
-using System.Collections.Generic;
+using SanteDB.Core.Model;
+using System;
 
-namespace SanteDB.Core.Protocol
+namespace SanteDB.Core.Cdss
 {
     /// <summary>
-    /// Protocol comparer
+    /// Represents a CDSS execution context to be shared between protocols
     /// </summary>
-    internal class ProtocolComparer : IEqualityComparer<ActProtocol>
+    public interface ICdssExecutionContext
     {
-        /// <summary>
-        /// Two protocols equal each other
-        /// </summary>
-        public bool Equals(ActProtocol x, ActProtocol y)
-        {
-            return x.ProtocolKey == y.ProtocolKey;
-        }
 
-        public int GetHashCode(ActProtocol obj)
-        {
-            return obj.ProtocolKey.GetHashCode();
-        }
+        /// <summary>
+        /// Gets a variable value by name
+        /// </summary>
+        /// <param name="name">The name of the variable</param>
+        /// <returns></returns>
+        object GetValue(String name);
+
+        /// <summary>
+        /// Get the target of the CDSS context
+        /// </summary>
+        IdentifiedData Target { get; }
+
     }
 }

@@ -119,7 +119,38 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public XmlFileJobStateManager()
         {
-            this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "xstate.xml");
+            var assembly = Assembly.GetEntryAssembly();
+
+            if (null == assembly) //Fixes an issue where EntryAssembly is null when called from NUnit.
+            {
+                assembly = Assembly.GetCallingAssembly();
+            }
+
+             
+            if (null != assembly)
+            {
+                try
+                {
+                    var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
+                    if (dataDirectory is String ddir)
+                    {
+                        this.m_jobStateLocation = Path.Combine(ddir, "xcron.xml");
+                    }
+                    else
+                    {
+                        this.m_jobStateLocation = Path.Combine(Path.GetDirectoryName(assembly.Location), "xstate.xml");
+                    }
+                }
+                catch (NotSupportedException)
+                {
+                    this.m_jobStateLocation = Path.Combine(System.Environment.CurrentDirectory, "xstate.xml");
+                }
+            }
+            else
+            {
+                this.m_jobStateLocation = Path.Combine(System.Environment.CurrentDirectory, "xstate.xml");
+            }
+
             if (File.Exists(this.m_jobStateLocation))
             {
                 try

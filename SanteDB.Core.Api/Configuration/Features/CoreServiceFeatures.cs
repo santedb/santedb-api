@@ -18,7 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
-using SanteDB.Core.Protocol;
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Services;
 using SanteDB.Core.Services.Impl;
 using System;
@@ -79,7 +79,7 @@ namespace SanteDB.Core.Configuration.Features
         {
             // Get the configuratoin
             switch (configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Count(
-                s => s.Type == typeof(SimplePatchService) || s.Type == typeof(SimpleCarePlanService)
+                s => s.Type == typeof(SimplePatchService) || s.Type == typeof(SimpleDecisionSupportService)
                 ))
             {
                 case 2:
@@ -235,10 +235,10 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService)))
+                if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleDecisionSupportService)))
                 {
                     this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallCarePlannerServiceTask), 0.0f, "Registering SimpleCarePlanService..."));
-                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
                     return true;
                 }
                 return false;
@@ -256,14 +256,14 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleCarePlanService));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleDecisionSupportService));
                 return true;
             }
 
             /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
-                return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService));
+                return !configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleDecisionSupportService));
             }
         }
 
@@ -338,7 +338,7 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleCarePlanService));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(t => t.Type == typeof(SimpleDecisionSupportService));
                 return true;
             }
 
@@ -356,14 +356,14 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleCarePlanService)));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
                 return true;
             }
 
             /// <inheritdoc/>
             public bool VerifyState(SanteDBConfiguration configuration)
             {
-                return configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleCarePlanService));
+                return configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleDecisionSupportService));
             }
         }
 
