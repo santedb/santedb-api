@@ -134,7 +134,7 @@ namespace SanteDB.Core.Jobs
                     var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
                     if (dataDirectory is String ddir)
                     {
-                        this.m_jobStateLocation = Path.Combine(ddir, "xcron.xml");
+                        this.m_jobStateLocation = Path.Combine(ddir, "xstate.xml");
                     }
                     else
                     {
