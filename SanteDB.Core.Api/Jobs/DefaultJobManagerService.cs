@@ -422,6 +422,12 @@ namespace SanteDB.Core.Jobs
             return this.m_jobs.FirstOrDefault(o => o.Job.Id == jobKey)?.Job;
         }
 
+        /// <inheritdoc/>
+        public IJob GetJobInstance(Type jobType)
+        {
+            return this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType)?.Job;
+        }
+
         /// <summary>
         /// Start a job
         /// </summary>

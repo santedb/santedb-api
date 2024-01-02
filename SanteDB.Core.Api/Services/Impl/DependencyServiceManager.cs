@@ -337,6 +337,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public IEnumerable<Type> GetAllTypes() => AppDomain.CurrentDomain.GetAllTypes();
 
+        /// <inheritdoc/>
+        public IEnumerable<Type> GetAllTypes<TImplements>() => AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(TImplements).IsAssignableFrom(t));
+
         /// <summary>
         /// Get service in a safe manner
         /// </summary>
