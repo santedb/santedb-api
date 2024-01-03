@@ -133,6 +133,13 @@ namespace SanteDB.Core.Jobs
         IJob GetJobInstance(Guid jobKey);
 
         /// <summary>
+        /// Get the job instance from <paramref name="jobType"/>
+        /// </summary>
+        /// <param name="jobType">The type of job to fetch the instance of</param>
+        /// <returns>The job instance that was registered with the job manager</returns>
+        IJob GetJobInstance(Type jobType);
+
+        /// <summary>
         /// Get the schedule for the specified job
         /// </summary>
         /// <param name="job">The job to gather schedules for</param>

@@ -63,6 +63,11 @@ namespace SanteDB.Core.Services
         IEnumerable<Type> GetAllTypes();
 
         /// <summary>
+        /// Gets all type where the the type is assignable from <typeparamref name="TImplements"/>
+        /// </summary>
+        IEnumerable<Type> GetAllTypes<TImplements>();
+
+        /// <summary>
         /// Creates injected instances of all <typeparamref name="TType"/>
         /// </summary>
         IEnumerable<TType> CreateInjectedOfAll<TType>(Assembly fromAssembly = null);

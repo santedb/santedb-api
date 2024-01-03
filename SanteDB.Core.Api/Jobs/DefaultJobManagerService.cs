@@ -174,6 +174,7 @@ namespace SanteDB.Core.Jobs
             {
                 if (this.m_configuration != null)
                 {
+                    // Load from static configuration file and from the cron-tab
                     foreach (var configuration in this.m_configuration.Jobs)
                     {
                         var job = configuration.Type.CreateInjected() as IJob;
@@ -420,6 +421,12 @@ namespace SanteDB.Core.Jobs
         public IJob GetJobInstance(Guid jobKey)
         {
             return this.m_jobs.FirstOrDefault(o => o.Job.Id == jobKey)?.Job;
+        }
+
+        /// <inheritdoc/>
+        public IJob GetJobInstance(Type jobType)
+        {
+            return this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType)?.Job;
         }
 
         /// <summary>

@@ -41,6 +41,9 @@ namespace SanteDB.Core.Security
         // Context key
         private byte[] m_contextKey;
 
+        // Lockbox
+        private readonly object m_lock = new object();
+
         // Context key file name
         private readonly string m_contextKeyFile;
         // Configuration
@@ -166,7 +169,10 @@ namespace SanteDB.Core.Security
 
             if (defaultKey.Algorithm != SignatureAlgorithm.HS256)
             {
-                this.SaveContextKey(m_contextKey, defaultKey);
+                lock (this.m_lock)
+                {
+                    this.SaveContextKey(m_contextKey, defaultKey);
+                }
                 return true;
             }
             return false;
@@ -178,20 +184,23 @@ namespace SanteDB.Core.Security
         /// </summary>
         private byte[] ReadContextKey(SecuritySignatureConfiguration key)
         {
-            if (!File.Exists(this.m_contextKeyFile))
+            lock (this.m_lock)
             {
-                var keyData = new byte[32];
-                System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
-                this.SaveContextKey(keyData, key);
-                return keyData;
-            }
-            else
-            {
-                using (var fs = File.OpenRead(this.m_contextKeyFile))
+                if (!File.Exists(this.m_contextKeyFile))
                 {
-                    var buffer = new byte[fs.Length];
-                    fs.Read(buffer, 0, buffer.Length);
-                    return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                    var keyData = new byte[32];
+                    System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
+                    this.SaveContextKey(keyData, key);
+                    return keyData;
+                }
+                else
+                {
+                    using (var fs = File.OpenRead(this.m_contextKeyFile))
+                    {
+                        var buffer = new byte[fs.Length];
+                        fs.Read(buffer, 0, buffer.Length);
+                        return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                    }
                 }
             }
         }
