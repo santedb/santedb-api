@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
@@ -34,25 +35,25 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Gets or sets whether the rule set is enabled
         /// </summary>
-        [XmlAttribute("enabled")]
+        [XmlAttribute("enabled"), JsonProperty("enabled")]
         public bool Enabled { get; set; }
 
         /// <summary>
         /// Gets or sets the unique identifier of the rule set
         /// </summary>
-        [XmlAttribute("id")]
+        [XmlAttribute("id"), JsonProperty("id")]
         public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the rule set
         /// </summary>
-        [XmlAttribute("name")]
+        [XmlAttribute("name"), JsonProperty("name")]
         public string Name { get; set; }
 
         /// <summary>
         /// Adds the specified resources
         /// </summary>
-        [XmlArray("resources"), XmlArrayItem("add")]
+        [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
         public List<DataQualityResourceConfiguration> Resources { get; set; }
 
     }

@@ -38,7 +38,13 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Get the rule set 
         /// </summary>
-        DataQualityRulesetConfiguration GetRuleSet(string name);
+        DataQualityRulesetConfiguration GetRuleSet(string id);
+
+        /// <summary>
+        /// Delete rule set identified by <paramref name="id"/>
+        /// </summary>
+        /// <param name="id">The id of the ruleset to remove</param>
+        void RemoveRuleSet(string id);
 
         /// <summary>
         /// Save the specified ruleset
