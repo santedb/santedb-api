@@ -174,6 +174,7 @@ namespace SanteDB.Core.Jobs
             {
                 if (this.m_configuration != null)
                 {
+                    // Load from static configuration file and from the cron-tab
                     foreach (var configuration in this.m_configuration.Jobs)
                     {
                         var job = configuration.Type.CreateInjected() as IJob;
