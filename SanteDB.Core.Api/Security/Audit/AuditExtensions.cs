@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Data.Import;
+using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -929,6 +930,13 @@ namespace SanteDB.Core.Security.Audit
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeForeignFile;
                     retVal.ObjectId = fds.Key.ToString();
                     retVal.NameData = fds.Name;
+                    break;
+                case DataQualityRulesetConfiguration dqrc:
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.DataQualityConfiguration;
+                    retVal.ObjectId = dqrc.Id;
+                    retVal.NameData = dqrc.Name;
                     break;
                 default:
                     if (obj is IdentifiedData iid)

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Model.Serialization;
 using System;
 using System.Collections.Generic;
@@ -35,13 +36,13 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Gets or sets the resource name
         /// </summary>
-        [XmlAttribute("resource")]
+        [XmlAttribute("resource"), JsonProperty("resource")]
         public string ResourceName { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the resource
         /// </summary>
-        [XmlIgnore]
+        [XmlIgnore, JsonIgnore]
         public Type ResourceType
         {
             get => new ModelSerializationBinder().BindToType(null, this.ResourceName);
@@ -55,7 +56,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Gets or sets the assertions
         /// </summary>
-        [XmlElement("assert")]
+        [XmlElement("assert"), JsonProperty("assert")]
         public List<DataQualityResourceAssertion> Assertions { get; set; }
 
     }

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model.Query;
 using System;
@@ -38,31 +39,31 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Gets or sets the identifier
         /// </summary>
-        [XmlAttribute("id")]
+        [XmlAttribute("id"), JsonProperty("id")]
         public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the name 
         /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
+        [XmlAttribute("name"), JsonProperty("name")]
+        public string Text { get; set; }
 
         /// <summary>
         /// Gets or sets the priority 
         /// </summary>
-        [XmlAttribute("priority")]
+        [XmlAttribute("priority"), JsonProperty("priority")]
         public DetectedIssuePriorityType Priority { get; set; }
 
         /// <summary>
         /// The evaluation
         /// </summary>
-        [XmlAttribute("evaluation")]
+        [XmlAttribute("evaluation"), JsonProperty("evaluation")]
         public AssertionEvaluationType Evaluation { get; set; }
 
         /// <summary>
         /// Gets or sets the expressions which are checked
         /// </summary>
-        [XmlElement("expression")]
+        [XmlElement("expression"), JsonProperty("expression")]
         public List<string> Expressions { get; set; }
 
 
@@ -97,16 +98,16 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// All of the expressions must evaluate to true
         /// </summary>
         [XmlEnum("all")]
-        All,
+        All = 0,
         /// <summary>
         /// Any of the expressions must evaluate to true
         /// </summary>
         [XmlEnum("any")]
-        Any,
+        Any = 1,
         /// <summary>
         /// None of the expressions should evaluate to true
         /// </summary>
         [XmlEnum("none")]
-        None
+        None = 2
     }
 }

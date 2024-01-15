@@ -50,9 +50,9 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Get the total set of rules
         /// </summary>
-        public DataQualityRulesetConfiguration GetRuleSet(string name)
+        public DataQualityRulesetConfiguration GetRuleSet(string id)
         {
-            return this.m_configuration.RuleSets.FirstOrDefault(o => o.Name == name);
+            return this.m_configuration.RuleSets.FirstOrDefault(o => o.Id == id);
         }
 
         /// <summary>
@@ -69,6 +69,12 @@ namespace SanteDB.Core.Data.Quality.Configuration
         public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>()
         {
             return this.m_configuration.RuleSets.SelectMany(o => o.Resources).Where(r => r.ResourceType == typeof(T));
+        }
+
+        /// <inheritdoc/>
+        public void RemoveRuleSet(string id)
+        {
+            throw new NotSupportedException();
         }
 
         /// <summary>

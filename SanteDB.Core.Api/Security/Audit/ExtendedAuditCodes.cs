@@ -55,6 +55,7 @@ namespace SanteDB.Core.Security.Audit
         public static readonly AuditCode CustomIdTypePolicyDecision = new AuditCode("PolicyDecision", "http://santedb.org/model");
         public static readonly AuditCode CustomIdTypeForeignFile = new AuditCode("ForeignDataFile", "http://santedb.org/model") { DisplayName = "External Data File" };
         public static readonly AuditCode CustomIdTypeSession = new AuditCode("SecuritySession", "http://santedb.org/model") { DisplayName = "Security Session" };
+        public static readonly AuditCode DataQualityConfiguration = new AuditCode("DataQualityConfiguration", "http://santedb.org/configuration") { DisplayName = "Data Quality Configuration" };
         public static readonly AuditCode CustomIdTypeMaskedFields = new AuditCode("SecurityUsitCode-MaskedFields", "SecurityAuditCode") { DisplayName = "Masked Fields" };
 #pragma warning restore CS1591
 
