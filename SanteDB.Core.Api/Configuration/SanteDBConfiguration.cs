@@ -296,6 +296,9 @@ namespace SanteDB.Core.Configuration
                     cryptoConfig.EncryptionMetadata = crypto.Encrypt(aesKey, RSAEncryptionPadding.Pkcs1); // Save the encrypted secret in the config file
                     cryptoConfig.Sections = cryptoConfig.Sections.Select(o =>
                     {
+#if DEBUG
+                        return o;
+#else
                         if (o is IEncryptedConfigurationSection)
                         {
                             return new SanteDBProtectedConfigurationSectionWrapper(aesKey, o as IConfigurationSection);
@@ -304,6 +307,7 @@ namespace SanteDB.Core.Configuration
                         {
                             return o;
                         }
+#endif
                     }).ToList();
                     xsz.Serialize(dataStream, cryptoConfig, xmlns);
 
