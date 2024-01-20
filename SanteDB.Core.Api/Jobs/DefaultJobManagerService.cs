@@ -152,7 +152,7 @@ namespace SanteDB.Core.Jobs
         /// Log of timers
         /// </summary>
         private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
-        
+
         /// <inheritdoc/>
         public IEnumerable<Type> GetAvailableJobs() =>
             this.m_serviceManager.GetAllTypes()
@@ -175,10 +175,9 @@ namespace SanteDB.Core.Jobs
                 if (this.m_configuration != null)
                 {
                     // Load from static configuration file and from the cron-tab
-                    foreach (var configuration in this.m_configuration.Jobs)
+                    foreach (var configuration in this.m_configuration.Jobs.Where(j => !this.m_jobs.Any(r => r.Job.GetType() == j.Type)))
                     {
                         var job = configuration.Type.CreateInjected() as IJob;
-
                         var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
                         this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
                         this.m_jobs.Add(ji);
@@ -331,9 +330,9 @@ namespace SanteDB.Core.Jobs
             // Try to save the configuration 
             try
             {
-                
+
                 // Is there no configuration?
-                if(this.m_configuration == null)
+                if (this.m_configuration == null)
                 {
                     this.m_configuration = new JobConfigurationSection() { Jobs = new List<JobItemConfiguration>() };
                     this.m_configurationManager.Configuration.AddSection(this.m_configuration);
