@@ -336,20 +336,22 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                if (data.Key.HasValue && this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
+                var currentObject = this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).FirstOrDefault();
+                if (data.Key.HasValue && currentObject != null)
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = this.m_dataPersistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterUpdate(data);
+                    this.Saved?.Invoke(this, new DataPersistedOriginalEventArgs<TEntity>(data, currentObject, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
                 else
                 {
                     data = businessRulesService?.BeforeInsert(data) ?? data;
                     data = this.m_dataPersistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterInsert(data);
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
 
-                this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 return this.m_privacyService?.Apply(data, AuthenticationContext.Current.Principal) ?? data;
             }
             catch (KeyNotFoundException)
