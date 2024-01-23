@@ -25,6 +25,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -336,7 +337,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                var currentObject = this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).FirstOrDefault();
+                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).FirstOrDefault();
                 if (data.Key.HasValue && currentObject != null)
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
