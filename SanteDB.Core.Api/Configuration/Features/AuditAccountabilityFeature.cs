@@ -74,7 +74,8 @@ namespace SanteDB.Core.Configuration.Features
                     CompleteAuditTrail = true,
                     AuditFilters = new List<AuditFilterConfiguration>
                     {
-                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, false, false),
+                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, true, false),
+                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.EmergencyOverrideStarted | EventIdentifierType.SecurityAlert, null, true, true),
                         new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true)
                     },
                     SourceInformation = new AuditSourceConfiguration()

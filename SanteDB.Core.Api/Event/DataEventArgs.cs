@@ -263,6 +263,25 @@ namespace SanteDB.Core.Event
     }
 
     /// <summary>
+    /// An event argument for when data is modified in the solution
+    /// </summary>
+    public class DataPersistedOriginalEventArgs<TData> : DataPersistedEventArgs<TData> where TData : class
+    {
+        /// <summary>
+        /// Create new instance of a persisted saved event args
+        /// </summary>
+        public DataPersistedOriginalEventArgs(TData data, TData original, TransactionMode transactionMode, IPrincipal principal) : base(data, transactionMode, principal)
+        {
+            this.OriginalData = original;
+        }
+
+        /// <summary>
+        /// Gets the original copy of data prior to saving
+        /// </summary>
+        public TData OriginalData { get; }
+    }
+
+    /// <summary>
     /// Represents event data associated with a data retrieval operation
     /// </summary>
     /// <remarks>This event allows for the cancelation / inspection of queries to the data store prior to being executed</remarks>
