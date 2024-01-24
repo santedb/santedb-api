@@ -62,7 +62,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets or sets the If-Modified-Since header
         /// </summary>
-        public DateTime? IfModifiedSince { get; set; }
+        public DateTimeOffset? IfModifiedSince { get; set; }
 
         /// <summary>
         /// Gets or sets the If-None-Match
