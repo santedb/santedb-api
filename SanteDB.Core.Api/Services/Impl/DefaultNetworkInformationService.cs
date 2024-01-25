@@ -97,8 +97,8 @@ namespace SanteDB.Core.Services.Impl
                 o.GetPhysicalAddress().ToString(),
                 o.OperationalStatus == OperationalStatus.Up,
                 o.Description,
-                o.GetIPProperties().UnicastAddresses.FirstOrDefault()?.ToString(),
-                o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.ToString(),
+                o.GetIPProperties().UnicastAddresses.FirstOrDefault(a=>a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.Address.ToString(),
+                o.GetIPProperties().GatewayAddresses.FirstOrDefault()?.Address.ToString(),
                 o.NetworkInterfaceType
             ));
 
