@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -38,11 +39,12 @@ namespace SanteDB.Core.Data.Backup
     {
         // Backup configuration section
         private readonly BackupConfigurationSection m_configuration;
+        private readonly bool m_allowPublicBackups;
         private readonly IServiceManager m_serviceManager;
         private readonly IPolicyEnforcementService m_pepService;
         private ILocalizationService m_localizationService;
 
-        private const string BACKUP_EXTENSION = "sdbk.bz2";
+        private const string BACKUP_EXTENSION = "bz2.sdbk";
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupManager));
 
         /// <summary>
@@ -62,6 +64,7 @@ namespace SanteDB.Core.Data.Backup
             ILocalizationService localizationService)
         {
             this.m_configuration = configurationManager.GetSection<BackupConfigurationSection>();
+            this.m_allowPublicBackups = configurationManager.GetSection<SecurityConfigurationSection>().GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false);
             this.m_serviceManager = serviceManager;
             this.m_pepService = pepService;
             this.m_localizationService = localizationService;
@@ -77,13 +80,20 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
-
+            else if((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.POLICY_PREVENTS_ACTION, SecurityPolicyIdentification.AllowPublicBackups));
+            }
 
             // Set file and output
             String backupDescriptor = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
+            }
+            else if(!Directory.Exists(backupPath))
+            {
+                Directory.CreateDirectory(backupPath);
             }
             backupPath = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptor, BACKUP_EXTENSION));
 

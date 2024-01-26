@@ -62,13 +62,6 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Open or return the stream
         /// </summary>
-        public Stream Open()
-        {
-            if (this.m_stream == null)
-            {
-                this.m_stream = this.m_getStreamFunc();
-            }
-            return this.m_stream;
-        }
+        public Stream Open() => this.m_getStreamFunc();
     }
 }

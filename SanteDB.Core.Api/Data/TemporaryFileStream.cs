@@ -38,7 +38,7 @@ namespace SanteDB.Core.Data
         /// </summary>
         public TemporaryFileStream()
         {
-            this.m_fileName = Path.GetTempFileName();
+            this.m_fileName = Path.Combine(Path.GetTempPath(), $"sdb-tfs-{Guid.NewGuid()}.tmp");
             this.m_stream = File.Create(this.m_fileName);
         }
 

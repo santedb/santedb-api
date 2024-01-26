@@ -18,11 +18,14 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
+using SanteDB.Core.IO;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -34,8 +37,10 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents a symmetric cryptographic provider based on AES
     /// </summary>
-    public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider
+    public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider, IProvideBackupAssets, IRestoreBackupAssets
     {
+        private readonly Guid CONTEXT_KEY_ASSET_ID = Guid.Parse("EF601F26-1B2F-4A4E-A909-1DE4C8DF17DD");
+
         internal const int IV_SIZE = 16;
 
         // Context key
@@ -62,6 +67,9 @@ namespace SanteDB.Core.Security
         /// Service name
         /// </summary>
         public String ServiceName => "AES Symmetric Cryptographic Provider";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { CONTEXT_KEY_ASSET_ID };
 
         private Aes CreateAlgorithm() => Aes.Create();
 
@@ -270,6 +278,53 @@ namespace SanteDB.Core.Security
         {
             return new CryptoStream(underlyingStream, this.CreateAlgorithm().CreateDecryptor(key, iv), CryptoStreamMode.Read);
 
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            // Is there even a context key persisted?
+            if (File.Exists(this.m_contextKeyFile))
+            {
+                yield return new ByteArrayBackupAsset(CONTEXT_KEY_ASSET_ID, "ctxkey.key", this.m_contextKey); // unencrypted context key in the backup - the backup should be encrypted with a password to protect this
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if (backupAsset.AssetClassId != CONTEXT_KEY_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            lock (this.m_lock) {
+                // We want to use the most recent configuration file since that could have been restored as well
+                this.m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+                var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
+                if (defaultKey.Algorithm != SignatureAlgorithm.HS256) // we want to save this key
+                {
+                    // Read the context key
+                    using (var astr = backupAsset.Open())
+                    {
+                        if (astr.Length > 512)
+                        {
+                            throw new InvalidOperationException();
+                        }
+
+                        byte[] buffer = new byte[astr.Length];
+                        var bytesRead = astr.Read(buffer, 0, (int)astr.Length);
+                        this.m_contextKey = buffer.Take(bytesRead).ToArray();
+                        this.SaveContextKey(this.m_contextKey, defaultKey);
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
     }
 }

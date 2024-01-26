@@ -70,7 +70,6 @@ namespace SanteDB.Core.Data.Backup
         public static BackupReader Open(Stream backupStream, String password = null)
         {
 
-            backupStream = new BZip2Stream(NonDisposingStream.Create(backupStream), SharpCompress.Compressors.CompressionMode.Decompress, false);
 
             // Validate format
             byte[] magicHeader = new byte[MAGIC.Length];
@@ -86,25 +85,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
             }
-            var backupDate = new DateTime(BitConverter.ToInt64(longBuffer, 0));
-
-            // Read the number of asset manifests and populate their data
-            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
-            {
-                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-            }
-            var backupAsset = new BackupAssetInfo[BitConverter.ToInt64(longBuffer, 0)];
-
-            // Each backup descriptor is 272 bytes
-            var assetBuffer = new byte[272];
-            for (int ast = 0; ast < backupAsset.Length; ast++)
-            {
-                if (backupStream.Read(assetBuffer, 0, assetBuffer.Length) != assetBuffer.Length)
-                {
-                    throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-                }
-                backupAsset[ast] = new BackupAssetInfo(assetBuffer);
-            }
+            var backupDate = new DateTime(BitConverter.ToInt64(longBuffer, 0), DateTimeKind.Utc);
 
             // Next byte is the IV (if encrypted)
             var iv = new byte[16];
@@ -139,6 +120,27 @@ namespace SanteDB.Core.Data.Backup
                 }
 
             }
+
+
+            // Read the number of asset manifests and populate their data
+            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
+            {
+                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
+            }
+            var backupAsset = new BackupAssetInfo[BitConverter.ToInt64(longBuffer, 0)];
+
+            // Each backup descriptor is 272 bytes
+            var assetBuffer = new byte[272];
+            for (int ast = 0; ast < backupAsset.Length; ast++)
+            {
+                if (backupStream.Read(assetBuffer, 0, assetBuffer.Length) != assetBuffer.Length)
+                {
+                    throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
+                }
+                backupAsset[ast] = new BackupAssetInfo(assetBuffer);
+            }
+
+            backupStream = new BZip2Stream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress, false);
 
             return new BackupReader(backupStream, backupDate, backupAsset);
         }

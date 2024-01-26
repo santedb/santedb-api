@@ -247,7 +247,6 @@
     <None Include="Notifications\Templating\RazorNotificationTemplateFiller.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\Backup\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
