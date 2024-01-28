@@ -29,7 +29,7 @@ namespace SanteDB.Core.Data.Backup
     public class StreamBackupAsset : IBackupAsset
     {
 
-        private Stream m_stream;
+        private Stream m_fetchedStream;
         private readonly Func<Stream> m_getStreamFunc;
 
         /// <summary>
@@ -48,20 +48,20 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public string Name { get; }
 
+        /// <summary>
+        /// Open or return the stream
+        /// </summary>
+        public Stream Open()
+        {
+            this.m_fetchedStream = this.m_getStreamFunc();
+            return this.m_fetchedStream;
+        }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (this.m_stream != null)
-            {
-                this.m_stream.Dispose();
-                this.m_stream = null;
-            }
+            this.m_fetchedStream?.Dispose();
         }
 
-        /// <summary>
-        /// Open or return the stream
-        /// </summary>
-        public Stream Open() => this.m_getStreamFunc();
     }
 }
