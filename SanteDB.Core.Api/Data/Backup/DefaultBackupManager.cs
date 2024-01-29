@@ -110,7 +110,7 @@ namespace SanteDB.Core.Data.Backup
             }
 
             // Set file and output
-            String backupDescriptorLabel = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+            String backupDescriptorLabel = DateTime.Now.Ticks.ToString();
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
@@ -184,6 +184,34 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public IBackupDescriptor GetBackup(BackupMedia media, String backupDescriptorLabel)
         {
+            var retVal = this.GetBackupInternal(media, backupDescriptorLabel);
+            if(retVal == null)
+            {
+                throw new KeyNotFoundException(backupDescriptorLabel);
+            }
+            else
+            {
+                return retVal;
+            }
+        }
+
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackup(String backupDescriptorLabel, out BackupMedia locatedOnMedia)
+        {
+            foreach(var bm in new[]{ BackupMedia.Private, BackupMedia.Public, BackupMedia.ExternalPublic })
+            {
+                var backup = this.GetBackupInternal(bm, backupDescriptorLabel);
+                if(backup != null)
+                {
+                    locatedOnMedia = bm;
+                    return backup;
+                }
+            }
+            locatedOnMedia = default(BackupMedia);
+            return null;
+        }
+
+        private IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel) { 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
 
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
@@ -194,7 +222,7 @@ namespace SanteDB.Core.Data.Backup
             var backupFile = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
             if (!File.Exists(backupFile))
             {
-                throw new KeyNotFoundException(backupDescriptorLabel);
+                return null;
             }
             else
             {

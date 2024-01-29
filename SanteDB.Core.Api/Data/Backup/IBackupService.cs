@@ -77,5 +77,13 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="backupDescriptorLabel">The descirptor label</param>
         /// <returns>The backup descriptor</returns>
         IBackupDescriptor GetBackup(BackupMedia media, string backupDescriptorLabel);
+
+        /// <summary>
+        /// Get the backup with the specified <paramref name="backupDescriptorLabel"/> from any backup source
+        /// </summary>
+        /// <param name="backupDescriptorLabel">The descriptor label of the backup to load</param>
+        /// <param name="locatedOnMedia">The location of the media</param>
+        /// <returns>The retrieved backup or null if not found</returns>
+        IBackupDescriptor GetBackup(string backupDescriptorLabel, out BackupMedia locatedOnMedia);
     }
 }
