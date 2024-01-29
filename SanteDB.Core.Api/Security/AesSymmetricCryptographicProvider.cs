@@ -311,13 +311,9 @@ namespace SanteDB.Core.Security
                     // Read the context key
                     using (var astr = backupAsset.Open())
                     {
-                        if (astr.Length > 512)
-                        {
-                            throw new InvalidOperationException();
-                        }
 
-                        byte[] buffer = new byte[astr.Length];
-                        var bytesRead = astr.Read(buffer, 0, (int)astr.Length);
+                        byte[] buffer = new byte[1024];
+                        var bytesRead = astr.Read(buffer, 0, 1024);
                         this.m_contextKey = buffer.Take(bytesRead).ToArray();
                         this.SaveContextKey(this.m_contextKey, defaultKey);
                         return true;
