@@ -28,7 +28,7 @@ namespace SanteDB.Core.Data.Backup
     /// <summary>
     /// Backup asset metadata
     /// </summary>
-    public class BackupAssetInfo
+    public class BackupAssetInfo : IBackupAssetDescriptor
     {
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace SanteDB.Core.Data.Backup
         internal BackupAssetInfo(byte[] assetBuffer)
         {
             this.AssetClassId = new Guid(assetBuffer.Take(16).ToArray());
-            this.AssetName = Encoding.UTF8.GetString(assetBuffer, 16, 256).Trim();
+            this.Name = Encoding.UTF8.GetString(assetBuffer, 16, 256).Trim();
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace SanteDB.Core.Data.Backup
         internal BackupAssetInfo(IBackupAsset asset)
         {
             this.AssetClassId = asset.AssetClassId;
-            this.AssetName = asset.Name;
+            this.Name = asset.Name;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Gets the name of the asset
         /// </summary>
-        public String AssetName { get; set; }
+        public String Name { get; set; }
 
         /// <summary>
         /// Convert to an entry array for the backup file
@@ -66,7 +66,7 @@ namespace SanteDB.Core.Data.Backup
         {
             var retVal = Enumerable.Range(0, 272).Select(o => (byte)' ').ToArray();
             Array.Copy(this.AssetClassId.ToByteArray(), 0, retVal, 0, 16);
-            var nameBytes = Encoding.UTF8.GetBytes(this.AssetName).Take(256).ToArray();
+            var nameBytes = Encoding.UTF8.GetBytes(this.Name).Take(256).ToArray();
             Array.Copy(nameBytes, 0, retVal, 16, nameBytes.Length);
             return retVal;
         }

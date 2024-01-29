@@ -215,24 +215,37 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
-            catch (XmlException) // attempt a restore
+            catch(XmlException)
             {
-                if (File.Exists(backupFileName))
+                this.RestoreBackupFile(backupFileName);
+            }
+            catch(Exception e) when (e.InnerException is XmlException)
+            {
+                this.RestoreBackupFile(backupFileName);
+            }
+        }
+
+        /// <summary>
+        /// Restore the backup configuration file
+        /// </summary>
+        /// <param name="backupFileName"></param>
+        private void RestoreBackupFile(string backupFileName)
+        {
+            if (File.Exists(backupFileName))
+            {
+                using (var backupFile = File.OpenRead(backupFileName))
                 {
-                    using (var backupFile = File.OpenRead(backupFileName))
+                    using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
                     {
-                        using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
+                        using (var configFileStream = File.Create(this.m_configurationFileName))
                         {
-                            using (var configFileStream = File.Create(this.m_configurationFileName))
-                            {
-                                gzStream.CopyTo(configFileStream);
-                                configFileStream.Flush();
-                            }
+                            gzStream.CopyTo(configFileStream);
+                            configFileStream.Flush();
+                            configFileStream.Seek(0, SeekOrigin.Begin);
+                            Configuration = SanteDBConfiguration.Load(configFileStream);
                         }
                     }
-                    this.Reload();
                 }
-                throw;
             }
         }
 
@@ -264,7 +277,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     using (var configStream = File.Create(this.m_configurationFileName))
                     {
-                        assetStream.CopyTo(assetStream);
+                        assetStream.CopyTo(configStream);
                         return true;
                     }
                 }

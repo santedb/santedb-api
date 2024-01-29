@@ -23,6 +23,7 @@ using SharpCompress.Compressors.BZip2;
 using SharpCompress.IO;
 using SharpCompress.Readers.Tar;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -44,23 +45,88 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Backup manifest
         /// </summary>
-        private BackupReader(Stream underlyingStream, DateTime backupDate, BackupAssetInfo[] assets)
+        private BackupReader(Stream underlyingStream, DateTime backupDate, String creator, BackupAssetInfo[] assets)
         {
             this.m_underlyingStream = underlyingStream;
             this.m_tarReader = TarReader.Open(underlyingStream);
             this.BackupAsset = assets;
             this.BackupDate = backupDate;
+            this.CreatedBy = creator;
         }
 
         /// <summary>
         /// Gets or set sthe backup date
         /// </summary>
-        public DateTime BackupDate { get; }
+        public DateTimeOffset BackupDate { get; }
+
+        /// <summary>
+        /// Gets the user that created the backup
+        /// </summary>
+        public string CreatedBy { get; }
 
         /// <summary>
         /// The assets in this backup
         /// </summary>
         public BackupAssetInfo[] BackupAsset { get; }
+
+        /// <summary>
+        /// Open the file for metadata only
+        /// </summary>
+        internal static bool OpenDescriptor(Stream backupStream, out DateTime dateOfBackup, out BackupAssetInfo[] assets, out string creator, out byte[] iv)
+        {
+
+            // Validate format
+            dateOfBackup = DateTime.MinValue;
+            assets = new BackupAssetInfo[0];
+            iv = new byte[16];
+            creator = String.Empty;
+
+            byte[] magicHeader = new byte[MAGIC.Length];
+            if (backupStream.Read(magicHeader, 0, magicHeader.Length) != magicHeader.Length ||
+                !magicHeader.SequenceEqual(MAGIC))
+            {
+                return false;
+            }
+
+            // Next bytes are date
+            byte[] longBuffer = new byte[sizeof(long)];
+            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
+            {
+                return false;
+            }
+            dateOfBackup = new DateTime(BitConverter.ToInt64(longBuffer, 0), DateTimeKind.Utc);
+
+            // Creator 
+            var creatorLength = backupStream.ReadByte();
+            var creatorBuffer = new byte[creatorLength];
+            backupStream.Read(creatorBuffer, 0, creatorLength);
+            creator = Encoding.UTF8.GetString(creatorBuffer);
+
+            // Read the number of asset manifests and populate their data
+            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
+            {
+                return false;
+            }
+            assets = new BackupAssetInfo[BitConverter.ToInt64(longBuffer, 0)];
+
+            // Each backup descriptor is 272 bytes
+            var assetBuffer = new byte[272];
+            for (int ast = 0; ast < assets.Length; ast++)
+            {
+                if (backupStream.Read(assetBuffer, 0, assetBuffer.Length) != assetBuffer.Length)
+                {
+                    return false;
+                }
+                assets[ast] = new BackupAssetInfo(assetBuffer);
+            }
+
+            if (backupStream.Read(iv, 0, iv.Length) != iv.Length)
+            {
+                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Load the specified 
@@ -70,29 +136,11 @@ namespace SanteDB.Core.Data.Backup
         public static BackupReader Open(Stream backupStream, String password = null)
         {
 
-
-            // Validate format
-            byte[] magicHeader = new byte[MAGIC.Length];
-            if (backupStream.Read(magicHeader, 0, magicHeader.Length) != magicHeader.Length ||
-                !magicHeader.SequenceEqual(MAGIC))
-            {
+            if(!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv)) {
                 throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
             }
-
-            // Next bytes are date
-            byte[] longBuffer = new byte[sizeof(long)];
-            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
-            {
-                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-            }
-            var backupDate = new DateTime(BitConverter.ToInt64(longBuffer, 0), DateTimeKind.Utc);
 
             // Next byte is the IV (if encrypted)
-            var iv = new byte[16];
-            if (backupStream.Read(iv, 0, iv.Length) != iv.Length)
-            {
-                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-            }
 
             if (!iv.All(o => o == 0))
             {
@@ -109,6 +157,7 @@ namespace SanteDB.Core.Data.Backup
                 desCrypto.Key = passKey;
                 desCrypto.Padding = PaddingMode.PKCS7;
                 backupStream = new CryptoStream(backupStream, desCrypto.CreateDecryptor(), CryptoStreamMode.Read);
+                byte[] magicHeader = new byte[MAGIC.Length];
                 if (backupStream.Read(magicHeader, 0, MAGIC.Length) != MAGIC.Length)
                 {
                     throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
@@ -118,31 +167,11 @@ namespace SanteDB.Core.Data.Backup
                     throw new BackupException(ErrorMessages.FILE_ENCRYPTED_INVALID_PASSPHRASE);
 
                 }
-
-            }
-
-
-            // Read the number of asset manifests and populate their data
-            if (backupStream.Read(longBuffer, 0, longBuffer.Length) != longBuffer.Length)
-            {
-                throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-            }
-            var backupAsset = new BackupAssetInfo[BitConverter.ToInt64(longBuffer, 0)];
-
-            // Each backup descriptor is 272 bytes
-            var assetBuffer = new byte[272];
-            for (int ast = 0; ast < backupAsset.Length; ast++)
-            {
-                if (backupStream.Read(assetBuffer, 0, assetBuffer.Length) != assetBuffer.Length)
-                {
-                    throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
-                }
-                backupAsset[ast] = new BackupAssetInfo(assetBuffer);
             }
 
             backupStream = new BZip2Stream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress, false);
 
-            return new BackupReader(backupStream, backupDate, backupAsset);
+            return new BackupReader(backupStream, backupDate, creator, backupAsset);
         }
 
         /// <summary>
@@ -161,8 +190,8 @@ namespace SanteDB.Core.Data.Backup
                 assetInfo = null;
                 return false;
             }
-            var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.AssetName}" == this.m_tarReader.Entry.Key);
-            assetInfo = new TarBackupAsset(assetInfoMeta.AssetName, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
+            var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.Name}" == this.m_tarReader.Entry.Key);
+            assetInfo = new TarBackupAsset(assetInfoMeta.Name, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
             return true;
         }
 

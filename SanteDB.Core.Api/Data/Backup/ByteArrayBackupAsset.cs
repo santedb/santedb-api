@@ -13,7 +13,7 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Create anew byte array backup asset
         /// </summary>
-        public ByteArrayBackupAsset(Guid assetClassId, string assetName, byte[] data) : base(assetClassId, assetName, ()=> new MemoryStream(data))
+        public ByteArrayBackupAsset(Guid assetClassId, string assetName, byte[] data) : base(assetClassId, assetName, () => new MemoryStream(data))
         {
         }
     }

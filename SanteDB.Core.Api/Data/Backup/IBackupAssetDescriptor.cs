@@ -19,24 +19,24 @@
  * Date: 2023-5-19
  */
 using System;
-using System.IO;
 
 namespace SanteDB.Core.Data.Backup
 {
     /// <summary>
-    /// Represents a single asset (file, database, etc.) which can be backed up
+    /// Represents a backup asset description
     /// </summary>
-    public interface IBackupAsset : IBackupAssetDescriptor, IDisposable
+    public interface IBackupAssetDescriptor
     {
 
         /// <summary>
-        /// Open the backup stream 
+        /// Gets the asset type identifier used for restoring 
         /// </summary>
-        /// <remarks>Implementers of this interface should ensure that on an Open() the file 
-        /// or backing source is frozen - so that changes from other threads cannot be written</remarks>
-        /// <returns>A stream containing the data to be backed up</returns>
-        Stream Open();
+        Guid AssetClassId { get; }
+
+        /// <summary>
+        /// Get the name of the asset
+        /// </summary>
+        String Name { get; }
 
     }
-
 }
