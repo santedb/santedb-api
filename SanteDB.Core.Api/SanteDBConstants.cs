@@ -94,6 +94,10 @@ namespace SanteDB.Core
         /// </summary>
         public const string LocalUserGroupName = "LOCAL_USERS";
         /// <summary>
+        /// Local administrators 
+        /// </summary>
+        public const string LocalAdminGroupName = "LOCAL_ADMINISTRATORS";
+        /// <summary>
         /// Administrators will be a member of this group
         /// </summary>
         public const string AdministratorGroupName = "ADMINISTRATORS";

@@ -13,6 +13,7 @@ namespace SanteDB.Core.Http
         private const string HTTP_PING = "PING";
         private const string HTTP_ROOT_PATH = "/";
         private static readonly TimeSpan MinusOne = TimeSpan.FromMilliseconds(-1);
+        private const int PING_TIMEOUT = 3000; // MS for a PING timeout
 
         /// <summary>
         /// Attempts to send an HTTP PING to the rest client service. If successful, the reported time drift and latency are returned.
@@ -49,7 +50,7 @@ namespace SanteDB.Core.Http
                 };
 
                 restClient.Responded += handler;
-
+                restClient.SetTimeout(PING_TIMEOUT);
                 var sw = Stopwatch.StartNew();
                 restClient.Invoke<object, object>(HTTP_PING, HTTP_ROOT_PATH, null);
                 sw.Stop();
