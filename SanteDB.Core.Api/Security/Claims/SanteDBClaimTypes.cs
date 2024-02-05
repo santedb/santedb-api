@@ -96,6 +96,10 @@ namespace SanteDB.Core.Security.Claims
         /// Device identifier claim
         /// </summary>
         public const string SanteDBDeviceIdentifierClaim = "urn:santedb:org:claim:devid";
+        /// <summary>
+        /// Device identifier claim
+        /// </summary>
+        public const string SanteDBDeviceNameClaim = "urn:santedb:org:claim:devname";
 
         /// <summary>
         /// Audience claim
@@ -106,6 +110,11 @@ namespace SanteDB.Core.Security.Claims
         /// Identifier of the application
         /// </summary>
         public const string SanteDBApplicationIdentifierClaim = "urn:santedb:org:claim:appid";
+
+        /// <summary>
+        /// Application name claim
+        /// </summary>
+        public const string SanteDBApplicationNameClaim = "urn:santedb:org:claim:appname";
 
         /// <summary>
         /// The specific user identifier claim issued by an OAuth implementation in SanteDB.
@@ -162,6 +171,11 @@ namespace SanteDB.Core.Security.Claims
         /// Session id claim
         /// </summary>
         public const string SanteDBSessionIdClaim = "urn:santedb:org:claim:session";
+
+        /// <summary>
+        /// Session token claim
+        /// </summary>
+        public const string SanteDBAccessTokenClaim = "urn:santedb:org:claim:access_token";
 
         /// <summary>
         /// Name claims

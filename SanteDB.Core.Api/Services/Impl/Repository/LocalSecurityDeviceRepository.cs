@@ -55,7 +55,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override SecurityDevice Insert(SecurityDevice data)
         {
             // Create the identity
-            var id = this.m_identityProvider.CreateIdentity(data.Name, data.DeviceSecret, AuthenticationContext.Current.Principal);
+            var id = this.m_identityProvider.CreateIdentity(data.Name, data.DeviceSecret, AuthenticationContext.Current.Principal, data.Key);
 
             // Now ensure local db record exists
             Guid sid = Guid.Empty;

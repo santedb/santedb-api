@@ -337,7 +337,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).FirstOrDefault();
+                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Get(data.Key.GetValueOrDefault(), null, AuthenticationContext.Current.Principal);
                 if (data.Key.HasValue && currentObject != null)
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;

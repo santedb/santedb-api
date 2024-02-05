@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -181,8 +182,9 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the identity</param>
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
+        /// <param name="withSid">When supplied, the security identifier to be assigned to the identity</param>
         /// <param name="principal">The principal that was created</param>
-        IIdentity CreateIdentity(String userName, String password, IPrincipal principal);
+        IIdentity CreateIdentity(String userName, String password, IPrincipal principal, Guid? withSid = null);
 
         /// <summary>
         /// Authenticate the user creating an identity
