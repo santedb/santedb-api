@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -131,7 +132,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public AuditEventData Insert(AuditEventData audit)
         {
-            return this.m_persistenceService?.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var preArgs = new DataPersistingEventArgs<AuditEventData>(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var retVal = this.m_persistenceService?.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return retVal;
         }
 
         /// <summary>
@@ -140,8 +143,8 @@ namespace SanteDB.Core.Services.Impl.Repository
         public AuditEventData Delete(Guid key)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
-
-            return this.m_persistenceService?.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var retVal = this.m_persistenceService?.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return retVal;
         }
 
         /// <summary>
@@ -151,15 +154,19 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
 
+            var preArgs = new DataPersistingEventArgs<AuditEventData>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
             var existing = this.m_persistenceService.Get(data.Key.Value, null, AuthenticationContext.Current.Principal);
+            AuditEventData retVal = null;
             if (existing == null)
             {
-                return this.m_persistenceService?.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                retVal = this.m_persistenceService?.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
             else
             {
-                return this.m_persistenceService?.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                retVal = this.m_persistenceService?.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
+            return retVal;
         }
     }
 }

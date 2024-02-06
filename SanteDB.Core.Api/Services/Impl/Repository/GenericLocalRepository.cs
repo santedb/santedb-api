@@ -25,6 +25,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -336,20 +337,22 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                if (data.Key.HasValue && this.m_dataPersistenceService.Query(a => a.Key == data.Key, AuthenticationContext.Current.Principal).Any())
+                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Get(data.Key.GetValueOrDefault(), null, AuthenticationContext.Current.Principal);
+                if (data.Key.HasValue && currentObject != null)
                 {
                     data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = this.m_dataPersistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterUpdate(data);
+                    this.Saved?.Invoke(this, new DataPersistedOriginalEventArgs<TEntity>(data, currentObject, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
                 else
                 {
                     data = businessRulesService?.BeforeInsert(data) ?? data;
                     data = this.m_dataPersistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterInsert(data);
+                    this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
 
-                this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 return this.m_privacyService?.Apply(data, AuthenticationContext.Current.Principal) ?? data;
             }
             catch (KeyNotFoundException)

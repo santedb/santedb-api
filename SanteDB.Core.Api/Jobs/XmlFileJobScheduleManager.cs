@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Data.Backup;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,8 +31,10 @@ namespace SanteDB.Core.Jobs
     /// <summary>
     /// A job manager which uses a file-based "cron" configuration file
     /// </summary>
-    public class XmlFileJobScheduleManager : IJobScheduleManager
+    public class XmlFileJobScheduleManager : IJobScheduleManager, IProvideBackupAssets, IRestoreBackupAssets
     {
+
+        private readonly Guid JOB_SCHEDULE_ASSET_ID = Guid.Parse("626A752F-2693-4C42-AB0B-D94906AE900C");
 
         // Serializer
         private readonly XmlSerializer m_xsz = new XmlSerializer(typeof(List<JobItemConfiguration>));
@@ -44,6 +47,9 @@ namespace SanteDB.Core.Jobs
 
         // Job item schedules
         private List<JobItemConfiguration> m_jobSchedules = new List<JobItemConfiguration>();
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { JOB_SCHEDULE_ASSET_ID };
 
         /// <summary>
         /// Initialize the job schedule manager
@@ -185,5 +191,49 @@ namespace SanteDB.Core.Jobs
             StopDateSpecified = stopDate.HasValue,
             Type = JobScheduleType.Scheduled
         });
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if(backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if(backupAsset.AssetClassId != JOB_SCHEDULE_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            lock(this.m_lock)
+            {
+                using(var fs = File.Create(this.m_cronTabLocation))
+                {
+                    using(var astr = backupAsset.Open())
+                    {
+                        astr.CopyTo(fs);
+                    }
+
+                    fs.Seek(0, SeekOrigin.Begin);
+
+                    // Clear the current bag
+                    this.m_jobSchedules.Clear();
+
+                    foreach (var itm in this.m_xsz.Deserialize(fs) as List<JobItemConfiguration>)
+                    {
+                        this.m_jobSchedules.Add(itm);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            lock(this.m_lock)
+            {
+                yield return new FileBackupAsset(JOB_SCHEDULE_ASSET_ID, Path.GetFileName(this.m_cronTabLocation), this.m_cronTabLocation);
+            }
+        }
     }
 }

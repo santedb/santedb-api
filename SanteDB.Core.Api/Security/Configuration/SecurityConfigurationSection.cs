@@ -75,6 +75,10 @@ namespace SanteDB.Core.Security.Configuration
         /// Session length policy
         /// </summary>
         public const string LocalSessionLengthDisclosureName = "sec.ses";
+        /// <summary>
+        /// Allow public backups
+        /// </summary>
+        public const string PublicBackupsAllowedDisclosureName = "backup.public";
 
         /// <summary>
         /// Security configuration section
@@ -184,6 +188,8 @@ namespace SanteDB.Core.Security.Configuration
             yield return new AppSettingKeyValuePair(PasswordValidationDisclosureName, this.PasswordRegex);
             yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
             yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
+            yield return new AppSettingKeyValuePair(PublicBackupsAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false).ToString());
+
         }
 
     }

@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-5-19
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -89,15 +90,17 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         [XmlElement("lastStop")]
         public DateTime? LastStopTime { get; set; }
+
     }
 
 
     /// <summary>
     /// A simple job state manager class which controls job state via an XML file
     /// </summary>
-    public class XmlFileJobStateManager : IJobStateManagerService, IDisposable
+    public class XmlFileJobStateManager : IJobStateManagerService, IDisposable, IProvideBackupAssets, IRestoreBackupAssets
     {
 
+        private readonly Guid JOB_STATE_ASSET_ID = Guid.Parse("BFB822E4-633F-49CA-8459-1DDBD7C435B5");
 
         // Get job states of the job objects
         private readonly ConcurrentBag<XmlJobState> m_jobStates;
@@ -126,7 +129,7 @@ namespace SanteDB.Core.Jobs
                 assembly = Assembly.GetCallingAssembly();
             }
 
-             
+
             if (null != assembly)
             {
                 try
@@ -276,6 +279,53 @@ namespace SanteDB.Core.Jobs
         public void Dispose()
         {
             this.SaveState();
+        }
+
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { JOB_STATE_ASSET_ID };
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            lock (this.m_lock)
+            {
+                yield return new FileBackupAsset(JOB_STATE_ASSET_ID, Path.GetFileName(this.m_jobStateLocation), this.m_jobStateLocation);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if (backupAsset.AssetClassId != JOB_STATE_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            lock (this.m_lock)
+            {
+                using (var fs = File.Create(this.m_jobStateLocation))
+                {
+                    using (var astr = backupAsset.Open())
+                    {
+                        astr.CopyTo(fs);
+                    }
+                    fs.Seek(0, SeekOrigin.Begin);
+
+                    // Clear the current bag
+                    while (this.m_jobStates.TryTake(out _)) ;
+
+                    foreach (var itm in this.m_xsz.Deserialize(fs) as List<XmlJobState>)
+                    {
+                        this.m_jobStates.Add(itm);
+                    }
+                    return true;
+                }
+            }
         }
     }
 }

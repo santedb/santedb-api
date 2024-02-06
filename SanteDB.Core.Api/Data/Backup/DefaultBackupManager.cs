@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -38,11 +39,13 @@ namespace SanteDB.Core.Data.Backup
     {
         // Backup configuration section
         private readonly BackupConfigurationSection m_configuration;
+        private readonly bool m_allowPublicBackups;
         private readonly IServiceManager m_serviceManager;
         private readonly IPolicyEnforcementService m_pepService;
         private ILocalizationService m_localizationService;
+        private IDictionary<Guid, IRestoreBackupAssets> m_backupAssetClasses;
 
-        private const string BACKUP_EXTENSION = "sdbk.bz2";
+        internal const string BACKUP_EXTENSION = "sdbk";
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupManager));
 
         /// <summary>
@@ -62,30 +65,61 @@ namespace SanteDB.Core.Data.Backup
             ILocalizationService localizationService)
         {
             this.m_configuration = configurationManager.GetSection<BackupConfigurationSection>();
+            this.m_allowPublicBackups = configurationManager.GetSection<SecurityConfigurationSection>().GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false);
             this.m_serviceManager = serviceManager;
             this.m_pepService = pepService;
             this.m_localizationService = localizationService;
+
+            this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
+
+        }
+
+
+        /// <summary>
+        /// Get backup classes
+        /// </summary>
+        private IDictionary<Guid, IRestoreBackupAssets> GetBackupRestoreServices()
+        {
+            lock (this.m_backupAssetClasses)
+            {
+                if (this.m_backupAssetClasses?.Any() == false)
+                {
+                    this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
+                    this.m_serviceManager.GetServices()
+                        .OfType<IRestoreBackupAssets>()
+                        .ToList()
+                        .ForEach(irba => irba.AssetClassIdentifiers.ToList().ForEach(c => this.m_backupAssetClasses.Add(c, irba)));
+                }
+                return this.m_backupAssetClasses;
+            }
         }
 
         /// <inheritdoc/>
         public string ServiceName => "Default Backup Manager";
 
         /// <inheritdoc/>
-        public String Backup(BackupMedia media, string password = null)
+        public IBackupDescriptor Backup(BackupMedia media, string password = null)
         {
             if (this.m_configuration.RequireEncryptedBackups && String.IsNullOrEmpty(password))
             {
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
-
+            else if((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.POLICY_PREVENTS_ACTION, SecurityPolicyIdentification.AllowPublicBackups));
+            }
 
             // Set file and output
-            String backupDescriptor = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+            String backupDescriptorLabel = DateTime.Now.Ticks.ToString();
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-            backupPath = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptor, BACKUP_EXTENSION));
+            else if(!Directory.Exists(backupPath))
+            {
+                Directory.CreateDirectory(backupPath);
+            }
+            backupPath = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
 
             if (media == BackupMedia.Private)
             {
@@ -114,7 +148,7 @@ namespace SanteDB.Core.Data.Backup
                     {
                         for (var i = 0; i < assets.Length; i++)
                         {
-                            this.m_tracer.TraceInfo("Adding {0} to {1}", assets[i].Name, backupDescriptor);
+                            this.m_tracer.TraceInfo("Adding {0} to {1}", assets[i].Name, backupDescriptorLabel);
                             this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
                             bw.WriteAssetEntry(assets[i]);
                         }
@@ -123,7 +157,7 @@ namespace SanteDB.Core.Data.Backup
 
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), 1f, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
 
-                return backupDescriptor;
+                return new FileBackupDescriptor(new FileInfo(backupPath));
             }
             catch (Exception ex)
             {
@@ -132,7 +166,7 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <inheritdoc/>
-        public IEnumerable<string> GetBackupDescriptors(BackupMedia media)
+        public IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
 
@@ -140,19 +174,72 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
+            else if(!Directory.Exists(backupPath))
+            {
+                Directory.CreateDirectory(backupPath);
+            }
+            return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => new FileBackupDescriptor(new FileInfo(o)));
+        }
 
-            return Directory.GetFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => Path.GetFileNameWithoutExtension(o));
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackup(BackupMedia media, String backupDescriptorLabel)
+        {
+            var retVal = this.GetBackupInternal(media, backupDescriptorLabel);
+            if(retVal == null)
+            {
+                throw new KeyNotFoundException(backupDescriptorLabel);
+            }
+            else
+            {
+                return retVal;
+            }
+        }
+
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackup(String backupDescriptorLabel, out BackupMedia locatedOnMedia)
+        {
+            foreach(var bm in new[]{ BackupMedia.Private, BackupMedia.Public, BackupMedia.ExternalPublic })
+            {
+                var backup = this.GetBackupInternal(bm, backupDescriptorLabel);
+                if(backup != null)
+                {
+                    locatedOnMedia = bm;
+                    return backup;
+                }
+            }
+            locatedOnMedia = default(BackupMedia);
+            return null;
+        }
+
+        private IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel) { 
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+
+            if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
+            {
+                throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
+            }
+
+            var backupFile = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
+            if (!File.Exists(backupFile))
+            {
+                return null;
+            }
+            else
+            {
+                return new FileBackupDescriptor(new FileInfo(backupFile));
+            }
+
         }
 
         /// <inheritdoc/>
         public bool HasBackup(BackupMedia media) => this.GetBackupDescriptors(media).Any();
 
         /// <inheritdoc/>
-        public void RemoveBackup(BackupMedia media, string backupDescriptor)
+        public void RemoveBackup(BackupMedia media, string backupDescriptorLabel)
         {
-            if (String.IsNullOrEmpty(backupDescriptor))
+            if (String.IsNullOrEmpty(backupDescriptorLabel))
             {
-                throw new ArgumentNullException(nameof(backupDescriptor));
+                throw new ArgumentNullException(nameof(backupDescriptorLabel));
             }
 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
@@ -164,7 +251,7 @@ namespace SanteDB.Core.Data.Backup
 
             try
             {
-                File.Delete(Path.Combine(backupPath, Path.ChangeExtension(backupDescriptor, BACKUP_EXTENSION)));
+                File.Delete(Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION)));
             }
             catch (Exception e)
             {
@@ -175,11 +262,11 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <inheritdoc/>
-        public bool Restore(BackupMedia media, string backupDescriptor, string password = null)
+        public bool Restore(BackupMedia media, string backupDescriptorLabel, string password = null)
         {
-            if (String.IsNullOrEmpty(backupDescriptor))
+            if (String.IsNullOrEmpty(backupDescriptorLabel))
             {
-                throw new ArgumentNullException(nameof(backupDescriptor));
+                throw new ArgumentNullException(nameof(backupDescriptorLabel));
             }
 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
@@ -189,7 +276,7 @@ namespace SanteDB.Core.Data.Backup
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
 
-            backupFile = Path.Combine(backupFile, Path.ChangeExtension(backupFile, BACKUP_EXTENSION));
+            backupFile = Path.Combine(backupFile, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
             if (!File.Exists(backupFile))
             {
                 throw new FileNotFoundException(backupFile);
@@ -198,11 +285,6 @@ namespace SanteDB.Core.Data.Backup
             try
             {
                 this.m_tracer.TraceInfo("Restoring {0}...", backupFile);
-                var restoreProviderReference = new Dictionary<Guid, IRestoreBackupAssets>();
-                this.m_serviceManager.GetServices()
-                    .OfType<IRestoreBackupAssets>()
-                    .ToList()
-                    .ForEach(irba => irba.AssetClassIdentifiers.ToList().ForEach(c => restoreProviderReference.Add(c, irba)));
 
                 int i = 0;
                 using (var fs = File.OpenRead(backupFile))
@@ -214,10 +296,14 @@ namespace SanteDB.Core.Data.Backup
                             this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), ((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
                             using (backupAsset)
                             {
-                                if (restoreProviderReference.TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
+                                if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
                                 {
                                     this.m_tracer.TraceInfo("Restoring {0}...", backupAsset.Name);
                                     restoreProvider.Restore(backupAsset);
+                                }
+                                else
+                                {
+                                    this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
                                 }
                             }
                         }
@@ -233,5 +319,11 @@ namespace SanteDB.Core.Data.Backup
                 throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_RESTORE_ERR), e);
             }
         }
+
+        /// <summary>
+        /// Get backup classes
+        /// </summary>
+        public IDictionary<Guid, Type> GetBackupAssetClasses() => this.GetBackupRestoreServices().ToDictionary(o => o.Key, o => o.Value.GetType());
+
     }
 }

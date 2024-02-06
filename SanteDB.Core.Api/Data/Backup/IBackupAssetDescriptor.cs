@@ -19,49 +19,24 @@
  * Date: 2023-5-19
  */
 using System;
-using System.IO;
 
 namespace SanteDB.Core.Data.Backup
 {
     /// <summary>
-    /// A stream based backup asset
+    /// Represents a backup asset description
     /// </summary>
-    public class StreamBackupAsset : IBackupAsset
+    public interface IBackupAssetDescriptor
     {
 
-        private Stream m_fetchedStream;
-        private readonly Func<Stream> m_getStreamFunc;
+        /// <summary>
+        /// Gets the asset type identifier used for restoring 
+        /// </summary>
+        Guid AssetClassId { get; }
 
         /// <summary>
-        /// Create a new stream backup asset
+        /// Get the name of the asset
         /// </summary>
-        public StreamBackupAsset(Guid assetClassId, String assetName, Func<Stream> getStreamFunc)
-        {
-            this.AssetClassId = assetClassId;
-            this.Name = assetName;
-            this.m_getStreamFunc = getStreamFunc;
-        }
-
-        /// <inheritdoc/>
-        public Guid AssetClassId { get; }
-
-        /// <inheritdoc/>
-        public string Name { get; }
-
-        /// <summary>
-        /// Open or return the stream
-        /// </summary>
-        public Stream Open()
-        {
-            this.m_fetchedStream = this.m_getStreamFunc();
-            return this.m_fetchedStream;
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            this.m_fetchedStream?.Dispose();
-        }
+        String Name { get; }
 
     }
 }

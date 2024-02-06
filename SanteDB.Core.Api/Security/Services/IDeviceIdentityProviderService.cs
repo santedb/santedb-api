@@ -96,7 +96,8 @@ namespace SanteDB.Core.Security.Services
         /// <param name="secret">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
         /// <param name="principal">The principal that was created</param>
-        IDeviceIdentity CreateIdentity(String deviceName, String secret, IPrincipal principal);
+        /// <param name="withSid">When supplied, the security identifier to apply</param>
+        IDeviceIdentity CreateIdentity(String deviceName, String secret, IPrincipal principal, Guid? withSid = null);
 
         /// <summary>
         /// Gets the SID for the specified identity

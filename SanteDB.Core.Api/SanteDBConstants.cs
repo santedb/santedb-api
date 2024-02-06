@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using System;
+using System.Data;
 
 namespace SanteDB.Core
 {
@@ -87,5 +88,42 @@ namespace SanteDB.Core
         /// Gets the thread pooling performance counter
         /// </summary>
         public static readonly Guid DiskUseCounter = new Guid("9E77D692-1F71-4442-BDA1-056D3DB1A488");
+
+        /// <summary>
+        /// Local users will be members of this group
+        /// </summary>
+        public const string LocalUserGroupName = "LOCAL_USERS";
+        /// <summary>
+        /// Local administrators 
+        /// </summary>
+        public const string LocalAdminGroupName = "LOCAL_ADMINISTRATORS";
+        /// <summary>
+        /// Administrators will be a member of this group
+        /// </summary>
+        public const string AdministratorGroupName = "ADMINISTRATORS";
+        /// <summary>
+        /// Users will be a member of this group
+        /// </summary>
+        public const string UserGroupName = "USERS";
+        /// <summary>
+        /// Device policies are drawn from this group
+        /// </summary>
+        public const string DeviceGroupName = "DEVICE";
+        /// <summary>
+        /// Application policies are drawn from this group
+        /// </summary>
+        public const string ApplicationGroupName = "APPLICATIONS";
+        /// <summary>
+        /// Group for anonymous users
+        /// </summary>
+        public const string AnonymousGroupName = "ANONYMOUS";
+        /// <summary>
+        /// Group for system users
+        /// </summary>
+        public const string SystemGroupName = "SYSTEM";
+        /// <summary>
+        /// Clinical staff group name
+        /// </summary>
+        public const string ClinicalStaffGroupName = "CLINICAL_STAFF";
     }
 }

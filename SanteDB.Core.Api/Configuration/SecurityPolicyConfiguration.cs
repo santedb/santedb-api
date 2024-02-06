@@ -136,7 +136,12 @@ namespace SanteDB.Core.Configuration
         /// Default MFA method for the system if the user has selected none
         /// </summary>
         [XmlEnum("auth.mfa.default")]
-        DefaultMfaMethod
+        DefaultMfaMethod,
+        /// <summary>
+        /// True if public backups are permitted
+        /// </summary>
+        [XmlEnum("backup.public")]
+        AllowPublicBackups
 
     }
 

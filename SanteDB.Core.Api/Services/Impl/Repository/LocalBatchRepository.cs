@@ -22,6 +22,7 @@ using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -97,9 +98,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Save(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item)
+            foreach (var itm in data.Item.Select(o=>o.GetType()).Distinct())
             {
-                var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
+                var irst = typeof(IRepositoryService<>).MakeGenericType(itm);
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService)
                 {

@@ -22,6 +22,7 @@ using NUnit.Framework;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Roles;
+using SharpCompress.IO;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -54,7 +55,7 @@ namespace SanteDB.Core.Api.Test
 
             using (var backupStream = new MemoryStream())
             {
-                using (var backupWriter = BackupWriter.Create(backupStream, assets))
+                using (var backupWriter = BackupWriter.Create(NonDisposingStream.Create(backupStream), assets))
                 {
                     foreach (var ast in assets)
                     {
@@ -100,7 +101,7 @@ namespace SanteDB.Core.Api.Test
 
             using (var backupStream = new MemoryStream())
             {
-                using (var backupWriter = BackupWriter.Create(backupStream, assets, "fluffy_fluffy_penguins"))
+                using (var backupWriter = BackupWriter.Create(NonDisposingStream.Create(backupStream), assets, "fluffy_fluffy_penguins"))
                 {
                     foreach (var ast in assets)
                     {

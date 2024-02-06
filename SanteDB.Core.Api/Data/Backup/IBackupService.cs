@@ -37,18 +37,18 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="media">Where the backup should be stored</param>
         /// <param name="password">The password to protect the backup</param>
         /// <returns>The backup descriptor</returns>
-        String Backup(BackupMedia media, string password = null);
+        IBackupDescriptor Backup(BackupMedia media, string password = null);
 
         /// <summary>
         /// Restore from media
         /// </summary>
-        /// <param name="backupDescriptor">The identifier of the backup set to restore</param>
+        /// <param name="backupDescriptorLabel">The identifier of the backup set to restore</param>
         /// <param name="media">The media from which the restore should occur</param>
         /// <param name="password">The password for the restore</param>
         /// <returns>True if the restore was successful</returns>
         /// <remarks>If the restore is successful, the caller should make the determination of whether to terminate the 
         /// current application environment and restart the application host</remarks>
-        bool Restore(BackupMedia media, string backupDescriptor, string password = null);
+        bool Restore(BackupMedia media, string backupDescriptorLabel, string password = null);
 
         /// <summary>
         /// Has backup on the specified media
@@ -58,11 +58,32 @@ namespace SanteDB.Core.Data.Backup
         /// <summary>
         /// Gets the backup descriptors for the specified media
         /// </summary>
-        IEnumerable<String> GetBackupDescriptors(BackupMedia media);
+        IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media);
+
+        /// <summary>
+        /// Get all registered backup asset classes
+        /// </summary>
+        IDictionary<Guid, Type> GetBackupAssetClasses();
 
         /// <summary>
         /// Remove a backup
         /// </summary>
-        void RemoveBackup(BackupMedia media, string backupDescriptor);
+        void RemoveBackup(BackupMedia media, string backupDescriptorLabel);
+
+        /// <summary>
+        /// Get the descriptor for a specific backup
+        /// </summary>
+        /// <param name="media">The media on which the backup is located</param>
+        /// <param name="backupDescriptorLabel">The descirptor label</param>
+        /// <returns>The backup descriptor</returns>
+        IBackupDescriptor GetBackup(BackupMedia media, string backupDescriptorLabel);
+
+        /// <summary>
+        /// Get the backup with the specified <paramref name="backupDescriptorLabel"/> from any backup source
+        /// </summary>
+        /// <param name="backupDescriptorLabel">The descriptor label of the backup to load</param>
+        /// <param name="locatedOnMedia">The location of the media</param>
+        /// <returns>The retrieved backup or null if not found</returns>
+        IBackupDescriptor GetBackup(string backupDescriptorLabel, out BackupMedia locatedOnMedia);
     }
 }

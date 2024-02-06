@@ -26,18 +26,8 @@ namespace SanteDB.Core.Data.Backup
     /// <summary>
     /// Represents a single asset (file, database, etc.) which can be backed up
     /// </summary>
-    public interface IBackupAsset : IDisposable
+    public interface IBackupAsset : IBackupAssetDescriptor, IDisposable
     {
-
-        /// <summary>
-        /// Gets the asset type identifier used for restoring 
-        /// </summary>
-        Guid AssetClassId { get; }
-
-        /// <summary>
-        /// Get the name of the asset
-        /// </summary>
-        String Name { get; }
 
         /// <summary>
         /// Open the backup stream 

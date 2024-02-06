@@ -76,7 +76,8 @@ namespace SanteDB.Core.Security.Services
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
         /// <param name="principal">The principal that was created</param>
-        IApplicationIdentity CreateIdentity(String applicationName, String password, IPrincipal principal);
+        /// <param name="withSid">When supplied the security identifier for the new identity</param>
+        IApplicationIdentity CreateIdentity(String applicationName, String password, IPrincipal principal, Guid? withSid = null);
 
         /// <summary>
         /// Gets the specified identity for an application.
@@ -96,7 +97,7 @@ namespace SanteDB.Core.Security.Services
         /// Gets the SID for the specified identity
         /// </summary>
         Guid GetSid(string name);
-
+        
         /// <summary>
         /// Set the lockout status
         /// </summary>

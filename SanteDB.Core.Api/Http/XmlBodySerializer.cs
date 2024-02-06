@@ -58,7 +58,7 @@ namespace SanteDB.Core.Http
         public void Serialize(System.IO.Stream s, object o, out ContentType contentType)
         {
             contentType = new ContentType($"{this.ContentType}; charset=utf-8");
-            using (var sw = new StreamWriter(s, System.Text.Encoding.UTF8))
+            using (var sw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
             using (var xw = XmlWriter.Create(sw))
             {
                 this.GetSerializerInternal(o.GetType()).Serialize(xw, o);
@@ -70,7 +70,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         public object DeSerialize(System.IO.Stream s, ContentType contentType, Type typeHint)
         {
-            using (var sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8")))
+            using (var sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8"), true, 2048, true))
             using (var xr = XmlReader.Create(sr))
             {
                 while (xr.NodeType != XmlNodeType.Element)

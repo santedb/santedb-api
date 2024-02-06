@@ -19,6 +19,7 @@
  * Date: 2023-5-19
  */
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
@@ -32,12 +33,18 @@ namespace SanteDB.Core.Diagnostics.Tracing
     /// <summary>
     /// A log file manager service which manages rollover logs
     /// </summary>
-    public class RolloverLogManagerService : ILogManagerService
+    public class RolloverLogManagerService : ILogManagerService, IProvideBackupAssets, IRestoreBackupAssets
     {
+
+        private readonly Guid LOG_FILE_ASSET_ID = Guid.Parse("D0B81E88-6626-448B-A92E-6C1537B52BAD");
+
         /// <summary>
         /// Gets the name of the service
         /// </summary>
         public string ServiceName => "Log File Manager";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { LOG_FILE_ASSET_ID };
 
         // Root path
         private readonly string m_rootPath;
@@ -78,6 +85,38 @@ namespace SanteDB.Core.Diagnostics.Tracing
         public IEnumerable<FileInfo> GetLogFiles()
         {
             return Directory.GetFiles(this.m_rootPath, "*.log").Select(o => new FileInfo(o));
+        }
+
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if(backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if(backupAsset.AssetClassId != LOG_FILE_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            using(var fs = File.Create(Path.Combine(this.m_rootPath, backupAsset.Name)))
+            {
+                using(var astr = backupAsset.Open())
+                {
+                    astr.CopyTo(fs);
+                    return true;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach(var itm in this.GetLogFiles())
+            {
+                yield return new FileBackupAsset(LOG_FILE_ASSET_ID, itm.Name, itm.FullName);
+            }
         }
     }
 }
