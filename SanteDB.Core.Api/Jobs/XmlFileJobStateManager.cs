@@ -213,7 +213,7 @@ namespace SanteDB.Core.Jobs
         }
 
         /// <inheritdoc/>
-        public void SetState(IJob job, JobStateType state)
+        public void SetState(IJob job, JobStateType state, string statusText)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
             if (jobData == null)
@@ -249,7 +249,7 @@ namespace SanteDB.Core.Jobs
                     break;
             }
             jobData.CurrentState = state;
-
+            jobData.StatusText = statusText;
             this.SaveState();
         }
 

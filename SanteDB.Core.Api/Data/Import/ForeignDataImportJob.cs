@@ -144,7 +144,7 @@ namespace SanteDB.Core.Data.Import
             catch (Exception ex)
             {
                 this.m_tracer.TraceError("Error executing transform job: {0}", ex);
-                this.m_jobStateManager.SetState(this, JobStateType.Aborted);
+                this.m_jobStateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
             }
         }
     }

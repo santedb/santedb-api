@@ -206,7 +206,7 @@ namespace SanteDB.Core.Jobs
             {
                 this.m_tracer.TraceError("Failure running retention job: {0}", ex);
                 this.m_stateManager.SetProgress(this, ex.Message, 0.0f);
-                this.m_stateManager.SetState(this, JobStateType.Aborted);
+                this.m_stateManager.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
             }
             finally
             {

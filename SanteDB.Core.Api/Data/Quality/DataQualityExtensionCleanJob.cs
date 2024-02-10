@@ -108,7 +108,7 @@ namespace SanteDB.Core.Data.Quality
             {
                 this.m_tracer.TraceInfo("Error cleaning data quality extensions: {0}", ex);
                 this.m_stateManagerService.SetProgress(this, ex.Message, 0.0f);
-                this.m_stateManagerService.SetState(this, JobStateType.Aborted);
+                this.m_stateManagerService.SetState(this, JobStateType.Aborted, ex.ToHumanReadableString());
 
             }
         }

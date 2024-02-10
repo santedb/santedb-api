@@ -70,7 +70,8 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         /// <param name="job">The job for which the state should be set</param>
         /// <param name="state">The state of the job</param>
-        void SetState(IJob job, JobStateType state);
+        /// <param name="statusText">Informational text which describes the status</param>
+        void SetState(IJob job, JobStateType state, String statusText = null);
 
         /// <summary>
         /// Set the progress of the job
