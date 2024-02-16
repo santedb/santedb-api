@@ -48,7 +48,12 @@ namespace SanteDB.Core.Security.Tfa
         /// TOTP has a 60 second interval
         /// </summary>
         [EnumMember(Value = "t60")]
-        TotpSixtySecondInterval
+        TotpSixtySecondInterval,
+        /// <summary>
+        /// Ten minute interval
+        /// </summary>
+        [EnumMember(Value = "t600")]
+        TotpTenMinuteInterval
     }
 
     /// <summary>

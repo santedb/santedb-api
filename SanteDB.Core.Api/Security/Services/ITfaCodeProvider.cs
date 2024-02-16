@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Security.Tfa;
 using System;
+using System.Security;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Services
@@ -63,6 +64,13 @@ namespace SanteDB.Core.Security.Services
         string StartTfaRegistration(IIdentity identity, int codeLength, Rfc4226Mode rfc4226Mode, IPrincipal principal);
 
         /// <summary>
+        /// Remove a TFA registration from <paramref name="identity"/>
+        /// </summary>
+        /// <param name="identity">The identity from which the TFA setting should be removed</param>
+        /// <param name="principal">The principal which is destroying the TFA setting</param>
+        void RemoveTfaRegistration(IIdentity identity, IPrincipal principal);
+
+        /// <summary>
         /// Completes an RFC4226 MFA secret registration
         /// </summary>
         /// <param name="identity">The identity to which the secret registraiton is to be completed</param>
@@ -70,6 +78,16 @@ namespace SanteDB.Core.Security.Services
         /// <param name="principal">The prinicpal which is completing the registration process</param>
         /// <returns>True if the registration was successfully completed</returns>
         bool FinishTfaRegistration(IIdentity identity, string code, IPrincipal principal);
+
+        /// <summary>
+        /// Get the secret for claim 
+        /// </summary>
+        /// <param name="identity">The identity which is getting the secret</param>
+        /// <param name="principal">The principal getting the secret</param>
+        /// <returns>The secret claim which backs the TFA mechanism</returns>
+        /// <remarks>This method should only be called between <see cref="StartTfaRegistration(IIdentity, int, Rfc4226Mode, IPrincipal)"/> and 
+        /// <see cref="FinishTfaRegistration(IIdentity, string, IPrincipal)"/> otherwise as <see cref="SecurityException"/> may be thrown</remarks>
+        byte[] GetSharedSecret(IIdentity identity);
     }
 
 

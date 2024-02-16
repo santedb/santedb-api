@@ -195,7 +195,9 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">The data to be updated.</param>
         /// <param name="forceUpdate">When true, indicates that update should not do a safety check</param>
-        void Update(IdentifiedData data, bool forceUpdate = false);
+        /// <param name="autoResolveConflict">When true indicates that the implementation should attempt to automatically resolve any conflicts with the server
+        /// (note: this may increase bandwidth use)</param>
+        void Update(IdentifiedData data, bool forceUpdate = false, bool autoResolveConflict = false);
 
         /// <summary>
         /// Authenticate as the device

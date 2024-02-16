@@ -20,9 +20,11 @@
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Diagnostics.Tracing;
+using System.Linq;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -31,11 +33,17 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// </summary>
     public class LocalSecurityUserRepositoryService : GenericLocalSecurityRepository<SecurityUser>
     {
+        private readonly ITfaSecretManager m_tfaSecretManager;
+
         /// <summary>
         /// Creates a DI security user repository
         /// </summary>
-        public LocalSecurityUserRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<SecurityUser> dataPersistenceService, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
+        public LocalSecurityUserRepositoryService(IPolicyEnforcementService policyService,
+            IDataPersistenceService<SecurityUser> dataPersistenceService,
+            ITfaSecretManager tfaSecretManager = null,
+            IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistenceService, privacyService)
         {
+            this.m_tfaSecretManager = tfaSecretManager;
         }
 
         /// <inheritdoc/>
@@ -101,6 +109,11 @@ namespace SanteDB.Core.Services.Impl.Repository
             if (!String.IsNullOrEmpty(data.Password))
             {
                 ApplicationServiceContext.Current.GetService<IIdentityProviderService>().ChangePassword(data.UserName, data.Password, AuthenticationContext.Current.Principal);
+            }
+
+            if(!data.TwoFactorEnabled)
+            {
+                data.TwoFactorMechnaismKey = Guid.Empty;
             }
             return base.Save(data);
         }

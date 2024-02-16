@@ -21,9 +21,11 @@
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net.Sockets;
 using System.Security.Principal;
 
 namespace SanteDB.Core.Security.Tfa
@@ -38,7 +40,6 @@ namespace SanteDB.Core.Security.Tfa
         /// </summary>
         public static readonly Guid MechanismId = Guid.Parse("D919457D-E015-435C-BD35-42E425E2C60C");
         private static readonly string s_TemplateName = "org.santedb.notifications.mfa.email";
-
         readonly INotificationService _NotificationService;
         readonly ITfaCodeProvider _TfaCodeProvider;
         private readonly ITfaSecretManager _TfaSecretManager;
@@ -60,6 +61,47 @@ namespace SanteDB.Core.Security.Tfa
         public string Name => "org.santedb.tfa.email";
 
         /// <inheritdoc/>
+        public SanteDBHostType[] HostTypes => new SanteDBHostType[] {
+            SanteDBHostType.Server
+        };
+
+        /// <inheritdoc/>
+        public TfaMechanismClassification Classification => TfaMechanismClassification.Message;
+
+        /// <inheritdoc/>
+        public string SetupHelpText => "org.santedb.tfa.email.setup";
+
+        /// <inheritdoc/>
+        public string BeginSetup(IIdentity user)
+        {
+            if (user is IClaimsIdentity ci)
+            {
+                this._TfaSecretManager.RemoveTfaRegistration(ci, AuthenticationContext.Current.Principal);
+                var email = this.GetEmailAddressOrThrow(ci);
+                var secret = _TfaSecretManager.StartTfaRegistration(ci, 6, Rfc4226Mode.TotpTenMinuteInterval, AuthenticationContext.SystemPrincipal);
+                return this.SendCodeNotification(email, secret, ci.Name);
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot send notification to non-claims identity.");
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool EndSetup(IIdentity user, string verificationCode)
+        {
+            if (user is IClaimsIdentity ci)
+            {
+                var email = this.GetEmailAddressOrThrow(ci);
+                return _TfaSecretManager.FinishTfaRegistration(ci, verificationCode, AuthenticationContext.SystemPrincipal);
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot send notification to non-claims identity.");
+            }
+        }
+
+        /// <inheritdoc/>
         public string Send(IIdentity user)
         {
             if (null == user)
@@ -69,50 +111,54 @@ namespace SanteDB.Core.Security.Tfa
 
             if (user is IClaimsIdentity ci)
             {
-                var email = ci.GetFirstClaimValue(SanteDBClaimTypes.Email);
-
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    throw new InvalidOperationException("E-Mail TFA requires e-mail address registered");
-                }
-                else if (!email.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
-                {
-                    email = "mailto:" + email;
-                }
-
-                string secret = null;
-                try
-                {
-                    secret = _TfaCodeProvider.GenerateTfaCode(ci);
-                }
-                catch (ArgumentException)
-                {
-                    secret = _TfaSecretManager.StartTfaRegistration(ci, 6, Rfc4226Mode.HotpIncrementOnGenerate, AuthenticationContext.SystemPrincipal);
-                    _TfaSecretManager.FinishTfaRegistration(ci, secret, AuthenticationContext.SystemPrincipal);
-                    secret = _TfaCodeProvider.GenerateTfaCode(ci);
-                }
-
-                var templatemodel = new Dictionary<String, Object>()
-                {
-                    {"user",  user.Name },
-                    { "code", secret },
-                    { "principal", AuthenticationContext.Current.Principal }
-                };
-
-                try
-                {
-                    _NotificationService.SendTemplatedNotification(new[] { email }, s_TemplateName, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, templatemodel, null, false);
-                    var censoredemail = email.Split('@')[1];
-                    return $"Code sent to ******@{censoredemail}";
-                }
-                catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
-                {
-                    throw new Exception("Error sending notification for tfa email.", ex);
-                }
+                var email = this.GetEmailAddressOrThrow(ci);
+                string secret = _TfaCodeProvider.GenerateTfaCode(ci);
+                return this.SendCodeNotification(email, secret, user.Name);
             }
             else
             {
                 throw new InvalidOperationException("Cannot send notification to non-claims identity.");
+            }
+        }
+
+        /// <summary>
+        /// Get the e-mail address for <paramref name="claimsIdentity"/>
+        /// </summary>
+        private string GetEmailAddressOrThrow(IClaimsIdentity claimsIdentity)
+        {
+            var email = claimsIdentity.GetFirstClaimValue(SanteDBClaimTypes.Email);
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                throw new InvalidOperationException("E-Mail TFA requires e-mail address registered");
+            }
+            else if (!email.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+            {
+                return "mailto:" + email;
+            }
+            return email;
+        }
+
+        /// <summary>
+        /// Send the actual notification e-mail to the user
+        /// </summary>
+        private string SendCodeNotification(String email, string code, string userName)
+        {
+            try
+            {
+                var templatemodel = new Dictionary<String, Object>()
+                {
+                    {"user",  userName },
+                    { "code", code }
+                };
+
+                _NotificationService.SendTemplatedNotification(new[] { email }, s_TemplateName, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, templatemodel, null, false);
+                var censoredemail = email.Split('@')[1];
+                return $"Code sent to ******@{censoredemail}";
+            }
+            catch (Exception ex) when (!(ex is StackOverflowException || ex is OutOfMemoryException))
+            {
+                throw new Exception("Error sending notification for tfa email.", ex);
             }
         }
 

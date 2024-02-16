@@ -369,8 +369,9 @@ namespace SanteDB.Core
                         extraCerts.Import(asmFile);
 
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
+                        var asmTimestamp = new FileInfo(asmFile).CreationTime;
                         tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
-                        valid = certificate.IsTrustedIntern(extraCerts, out IEnumerable<X509ChainStatus> chainStatus);
+                        valid = certificate.IsTrustedIntern(extraCerts, asmTimestamp,   out IEnumerable<X509ChainStatus> chainStatus);
                         if (!valid)
                         {
                             throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");

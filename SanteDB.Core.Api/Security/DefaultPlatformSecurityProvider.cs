@@ -76,7 +76,7 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public bool IsCertificateTrusted(X509Certificate2 certificate, DateTimeOffset? asOfDate = null)
         {
-            return certificate?.IsTrustedIntern(new X509Certificate2Collection(), out _) == true;
+            return certificate?.IsTrustedIntern(new X509Certificate2Collection(), asOfDate?.DateTime, out _) == true;
         }
 
         ///<inheritdoc />

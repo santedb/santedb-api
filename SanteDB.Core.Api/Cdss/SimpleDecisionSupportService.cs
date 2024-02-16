@@ -321,7 +321,7 @@ namespace SanteDB.Core.Cdss
                         StatusConceptKey = StatusKeys.Active,
                         StopTime = protocolActs.Select(o => o.StopTime ?? o.ActTime).OrderByDescending(o => o).FirstOrDefault(),
                         CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid),
-                        ProgramIdentifier = scope?.ToString(),
+                        CarePathwayIdentifier = scope?.ToString(),
                         Protocols = appliedProtocols.Select(o => new ActProtocol()
                         {
                             ProtocolKey = o.Uuid,

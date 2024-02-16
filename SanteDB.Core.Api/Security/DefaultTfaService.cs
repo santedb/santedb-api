@@ -37,6 +37,8 @@ namespace SanteDB.Core.Security
     public class DefaultTfaService : ITfaService
     {
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultTfaService));
+        private IEnumerable<ITfaMechanism> m_tfaMechanisms = null;
+        private readonly IServiceManager m_serviceManager;
 
         /// <summary>
         /// Gets the service name
@@ -48,7 +50,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public DefaultTfaService(IServiceManager serviceManager)
         {
-            this.Mechanisms = serviceManager.CreateInjectedOfAll<ITfaMechanism>().ToList();
+            this.m_serviceManager = serviceManager;
         }
 
         /// <summary>
@@ -56,7 +58,15 @@ namespace SanteDB.Core.Security
         /// </summary>
         public IEnumerable<ITfaMechanism> Mechanisms
         {
-            get; private set;
+            get
+            {
+                if(this.m_tfaMechanisms == null)
+                {
+                    var host = ApplicationServiceContext.Current.HostType;
+                    this.m_tfaMechanisms = this.m_serviceManager.CreateInjectedOfAll<ITfaMechanism>().Where(m=>m.HostTypes.Contains(host)).ToList();
+                }
+                return this.m_tfaMechanisms;
+            }
         }
 
         /// <summary>
