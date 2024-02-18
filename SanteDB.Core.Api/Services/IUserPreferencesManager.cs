@@ -36,14 +36,14 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="forUser">The user identity to get the settings for</param>
         /// <returns>The dictionary of settings</returns>
-        List<AppSettingKeyValuePair> GetUserSettings(String forUser);
+        IEnumerable<AppSettingKeyValuePair> GetUserSettings(String forUser);
 
         /// <summary>
         /// Set user settings for <paramref name="forUser"/>
         /// </summary>
         /// <param name="forUser">The user for which settings must be saved</param>
         /// <param name="settings">The settings to save in the manager</param>
-        void SetUserSettings(String forUser, List<AppSettingKeyValuePair> settings);
+        void SetUserSettings(String forUser, IEnumerable<AppSettingKeyValuePair> settings);
 
     }
 }
