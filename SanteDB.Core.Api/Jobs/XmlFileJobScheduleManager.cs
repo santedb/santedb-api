@@ -167,7 +167,7 @@ namespace SanteDB.Core.Jobs
         {
             lock (this.m_lock)
             {
-                return this.m_jobSchedules.Find(o => o.Type == job.GetType())?.Schedule;
+                return this.m_jobSchedules.Find(o => o.Type == job.GetType())?.Schedule ?? new List<JobItemSchedule>();
             }
         }
 

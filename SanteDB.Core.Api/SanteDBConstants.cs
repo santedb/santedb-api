@@ -125,5 +125,10 @@ namespace SanteDB.Core
         /// Clinical staff group name
         /// </summary>
         public const string ClinicalStaffGroupName = "CLINICAL_STAFF";
+
+        /// <summary>
+        /// Automatic merging tag name
+        /// </summary>
+        public const string AutoMatchTagName = "$sim.automerge";
     }
 }

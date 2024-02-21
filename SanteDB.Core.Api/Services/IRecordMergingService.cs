@@ -181,6 +181,12 @@ namespace SanteDB.Core.Services
         void ClearIgnoreFlags(Guid masterKey);
 
         /// <summary>
+        /// Perform the necessary operations to detect merge candidates for <paramref name="masterKey" />
+        /// </summary>
+        /// <param name="masterKey">The key of the master record for which merge candidtes should be detected</param>
+        void DetectMergeCandidates(Guid masterKey);
+
+        /// <summary>
         /// Reset the specified merge service data on the specified record
         /// </summary>
         void Reset(Guid masterKey, bool includeVerified, bool linksOnly);
