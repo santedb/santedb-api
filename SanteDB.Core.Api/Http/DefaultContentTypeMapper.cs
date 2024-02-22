@@ -105,7 +105,7 @@ namespace SanteDB.Core.Http
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");
+                 throw new ArgumentOutOfRangeException(nameof(contentType), contentType, "Not supported");
             }
 
         }

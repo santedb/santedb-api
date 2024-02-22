@@ -21,6 +21,7 @@
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
+using SharpCompress;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -104,7 +105,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService)
                 {
-                    (irsi as ISecuredRepositoryService).DemandAlter(itm);
+                    data.Item.Where(o=>itm == o.GetType()).ForEach(i=> (irsi as ISecuredRepositoryService).DemandAlter(i));
                 }
             }
 

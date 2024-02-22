@@ -85,8 +85,16 @@ namespace SanteDB.Core.Data.Management
                 throw new ArgumentNullException(nameof(dataElement));
             }
 
-            var dType = typeof(SimResourceInterceptor<>).MakeGenericType(dataElement.GetType());
-            return this.m_listeners.FirstOrDefault(o => o.GetType() == dType);
+            var deType = dataElement.GetType();
+            if (typeof(IHasClassConcept).IsAssignableFrom(deType) && typeof(IHasRelationships).IsAssignableFrom(deType))
+            {
+                var dType = typeof(SimResourceInterceptor<>).MakeGenericType(deType);
+                return this.m_listeners.FirstOrDefault(o => o.GetType() == dType);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -108,6 +116,10 @@ namespace SanteDB.Core.Data.Management
                     else
                     {
                         persistenceBundle.AddRange(handler.DoMatchingLogic(itm));
+                        if(!persistenceBundle.Item.Contains(itm))
+                        {
+                            persistenceBundle.Add(itm);
+                        }
                     }
                 }
 

@@ -22,10 +22,13 @@ using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -38,6 +41,7 @@ namespace SanteDB.Core.Data.Quality
         private Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityExtensionCleanJob));
         // State manager
         private readonly IJobStateManagerService m_stateManagerService;
+        private readonly IDataQualityConfigurationProviderService m_dataQualityConfigurationProvider;
         private readonly IDataPersistenceServiceEx<EntityExtension> m_entityExtensionPersistence;
         private readonly IDataPersistenceServiceEx<ActExtension> m_actExtensionPersistence;
 
@@ -49,16 +53,20 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Gets the name of the job
         /// </summary>
-        public string Name => "Data Quality Extension Clean";
+        public string Name => "Data Quality Job";
 
         /// <inheritdoc/>
-        public string Description => "Cleans obsolete or otherwise amended data quality extension tags";
+        public string Description => "Cleans and re-runs data quality rules for all data in the database";
 
         /// <summary>
         /// DI constructor
         /// </summary>
-        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService, IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence, IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
+        public DataQualityExtensionCleanJob(IJobStateManagerService stateManagerService,
+            IDataQualityConfigurationProviderService dataQualityConfigurationProviderService,
+            IDataPersistenceServiceEx<EntityExtension> entityExtensionPersistence,
+            IDataPersistenceServiceEx<ActExtension> actExtensionPersistence)
         {
+            this.m_dataQualityConfigurationProvider = dataQualityConfigurationProviderService;
             this.m_entityExtensionPersistence = entityExtensionPersistence;
             this.m_actExtensionPersistence = actExtensionPersistence;
             this.m_stateManagerService = stateManagerService;
@@ -72,7 +80,11 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Gets the parameters for this job
         /// </summary>
-        public IDictionary<string, Type> Parameters => null;
+        public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
+        {
+            { "re-calculate", typeof(bool) },
+            { "clear", typeof(bool) }
+        };
 
         /// <summary>
         /// Cancel the job
@@ -92,13 +104,43 @@ namespace SanteDB.Core.Data.Quality
             {
                 this.m_stateManagerService.SetState(this, JobStateType.Running);
 
-
-
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
-                using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
+                var shouldClear = parameters.Length == 0 || parameters.Length >= 2 && (parameters[1] == null || (bool?)parameters[1] == true);
+                var shouldCalc = parameters.Length == 0 || parameters.Length >= 1 && (parameters[0] == null || (bool?)parameters[0] == true);
+
+                if (shouldClear)
                 {
-                    this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
+                    {
+                        this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                        this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+                if (shouldCalc)
+                {
+                    foreach (var config in this.m_dataQualityConfigurationProvider.GetRuleSets().SelectMany(o => o.Resources.Select(r => new { res = r, conf = o })).GroupBy(o => o.res))
+                    {
+                        var persistenceType = typeof(IDataPersistenceService<>).MakeGenericType(config.Key.ResourceType);
+                        var persistenceService = ApplicationServiceContext.Current.GetService(persistenceType) as IDataPersistenceService;
+                        if (persistenceService == null)
+                        {
+                            throw new InvalidOperationException();
+                        }
+                        var query = QueryExpressionParser.BuildLinqExpression(config.Key.ResourceType, String.Join("&", StatusKeys.ActiveStates.Select(o => $"statusConcept={o}")).ParseQueryString());
+                        foreach (var resource in persistenceService.Query(query).OfType<IExtendable>())
+                        {
+                            var tag = resource.TagDataQualityIssues(false);
+                            switch (tag)
+                            {
+                                case EntityExtension ee:
+                                    this.m_entityExtensionPersistence.Insert(ee, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                                    break;
+                                case ActExtension ae:
+                                    this.m_actExtensionPersistence.Insert(ae, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                                    break;
+                            }
+                        }
+                    }
                 }
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
