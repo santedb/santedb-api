@@ -106,7 +106,7 @@ namespace SanteDB.Core.Data.Quality
 
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
                 var shouldClear = parameters.Length == 0 || parameters.Length >= 2 && (parameters[1] == null || (bool?)parameters[1] == true);
-                var shouldCalc = parameters.Length == 0 || parameters.Length >= 1 && (parameters[0] == null || (bool?)parameters[0] == true);
+                var shouldCalc = parameters.Length == 0 || parameters.Length >= 1 && (bool?)parameters[0] == true; // For backwards compatibility
 
                 if (shouldClear)
                 {
