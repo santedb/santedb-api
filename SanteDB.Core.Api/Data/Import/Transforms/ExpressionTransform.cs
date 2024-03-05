@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using DynamicExpresso;
 using System;
@@ -42,7 +42,7 @@ namespace SanteDB.Core.Data.Import.Transforms
                         .Reference(typeof(TimeSpan))
                         .EnableReflection();
             var arguments = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => new Parameter(sourceRecord.GetName(o), sourceRecord[o] ?? String.Empty))
-                .Union(dataMapParameters.Select(p=>new Parameter($"parameters_{p.Key}", p.Value)))
+                .Union(dataMapParameters.Select(p => new Parameter($"parameters_{p.Key}", p.Value)))
                 .ToArray();
             return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o => o.Value).ToArray());
         }

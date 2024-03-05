@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Configuration;
@@ -191,11 +191,19 @@ namespace SanteDB.Core.Interop
             this.Capabilities = provider.Capabilities;
             this.SecurityScheme = SecurityScheme.None;
             if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BasicAuth))
+            {
                 this.SecurityScheme |= SecurityScheme.Basic;
+            }
             else if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.BearerAuth))
+            {
                 this.SecurityScheme |= SecurityScheme.Bearer;
+            }
+
             if (provider.Capabilities.HasFlag(ServiceEndpointCapabilities.CertificateAuth))
+            {
                 this.SecurityScheme |= SecurityScheme.ClientCertificate;
+            }
+
             if (provider.BehaviorType != null)
             {
                 this.Behavior = new TypeReferenceConfiguration(provider.BehaviorType);

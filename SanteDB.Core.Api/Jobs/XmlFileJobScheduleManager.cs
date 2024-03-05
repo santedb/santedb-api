@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data.Backup;
@@ -64,7 +64,7 @@ namespace SanteDB.Core.Jobs
             }
 
             var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
-            if(dataDirectory is String ddir)
+            if (dataDirectory is String ddir)
             {
                 this.m_cronTabLocation = Path.Combine(ddir, "xcron.xml");
             }
@@ -195,20 +195,20 @@ namespace SanteDB.Core.Jobs
         /// <inheritdoc/>
         public bool Restore(IBackupAsset backupAsset)
         {
-            if(backupAsset == null)
+            if (backupAsset == null)
             {
                 throw new ArgumentNullException(nameof(backupAsset));
             }
-            else if(backupAsset.AssetClassId != JOB_SCHEDULE_ASSET_ID)
+            else if (backupAsset.AssetClassId != JOB_SCHEDULE_ASSET_ID)
             {
                 throw new InvalidOperationException();
             }
 
-            lock(this.m_lock)
+            lock (this.m_lock)
             {
-                using(var fs = File.Create(this.m_cronTabLocation))
+                using (var fs = File.Create(this.m_cronTabLocation))
                 {
-                    using(var astr = backupAsset.Open())
+                    using (var astr = backupAsset.Open())
                     {
                         astr.CopyTo(fs);
                     }
@@ -230,7 +230,7 @@ namespace SanteDB.Core.Jobs
         /// <inheritdoc/>
         public IEnumerable<IBackupAsset> GetBackupAssets()
         {
-            lock(this.m_lock)
+            lock (this.m_lock)
             {
                 yield return new FileBackupAsset(JOB_SCHEDULE_ASSET_ID, Path.GetFileName(this.m_cronTabLocation), this.m_cronTabLocation);
             }

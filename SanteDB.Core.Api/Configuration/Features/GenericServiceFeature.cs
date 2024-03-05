@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Services;
@@ -155,13 +155,16 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Execute(SanteDBConfiguration configuration)
             {
-                if (this.m_shouldInstall != null && !this.m_shouldInstall(configuration)) return true;
+                if (this.m_shouldInstall != null && !this.m_shouldInstall(configuration))
+                {
+                    return true;
+                }
 
                 var serviceType = typeof(TServiceType);
                 var taskidentifier = $"installtask-{serviceType.Name}";
 
                 this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.0f, $"Installing Service {this.Feature.Name}..."));
-                
+
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));

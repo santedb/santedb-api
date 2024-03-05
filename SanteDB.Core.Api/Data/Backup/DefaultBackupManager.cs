@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -104,7 +104,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
-            else if((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
+            else if ((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.POLICY_PREVENTS_ACTION, SecurityPolicyIdentification.AllowPublicBackups));
             }
@@ -115,7 +115,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-            else if(!Directory.Exists(backupPath))
+            else if (!Directory.Exists(backupPath))
             {
                 Directory.CreateDirectory(backupPath);
             }
@@ -174,7 +174,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-            else if(!Directory.Exists(backupPath))
+            else if (!Directory.Exists(backupPath))
             {
                 Directory.CreateDirectory(backupPath);
             }
@@ -185,7 +185,7 @@ namespace SanteDB.Core.Data.Backup
         public IBackupDescriptor GetBackup(BackupMedia media, String backupDescriptorLabel)
         {
             var retVal = this.GetBackupInternal(media, backupDescriptorLabel);
-            if(retVal == null)
+            if (retVal == null)
             {
                 throw new KeyNotFoundException(backupDescriptorLabel);
             }
@@ -198,10 +198,10 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public IBackupDescriptor GetBackup(String backupDescriptorLabel, out BackupMedia locatedOnMedia)
         {
-            foreach(var bm in new[]{ BackupMedia.Private, BackupMedia.Public, BackupMedia.ExternalPublic })
+            foreach (var bm in new[] { BackupMedia.Private, BackupMedia.Public, BackupMedia.ExternalPublic })
             {
                 var backup = this.GetBackupInternal(bm, backupDescriptorLabel);
-                if(backup != null)
+                if (backup != null)
                 {
                     locatedOnMedia = bm;
                     return backup;
@@ -211,7 +211,8 @@ namespace SanteDB.Core.Data.Backup
             return null;
         }
 
-        private IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel) { 
+        private IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel)
+        {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
 
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))

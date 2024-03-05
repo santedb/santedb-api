@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.Cdss;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data;
 using SanteDB.Core.Diagnostics;
@@ -29,7 +30,6 @@ using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
-using SanteDB.Core.Cdss;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Claims;
@@ -113,7 +113,7 @@ namespace SanteDB.Core
         /// </summary>
         public static bool TryGetSignatureSettings(this IDataSigningService serviceInstance, JsonWebSignatureHeader jwsHeader, out SignatureSettings signatureSettings)
         {
-            if(!Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var signatureAlgorithm))
+            if (!Enum.TryParse<SignatureAlgorithm>(jwsHeader.Algorithm, true, out var signatureAlgorithm))
             {
                 throw new ArgumentOutOfRangeException(nameof(jwsHeader.Algorithm));
             }
@@ -129,9 +129,9 @@ namespace SanteDB.Core
         /// <returns>The device identity</returns>
         public static IDeviceIdentity GetDeviceIdentity(this AuthenticationContext authContext)
         {
-            if(authContext.Principal is IClaimsPrincipal icp)
+            if (authContext.Principal is IClaimsPrincipal icp)
             {
-                return icp.Identities.OfType<IDeviceIdentity>().FirstOrDefault() ;
+                return icp.Identities.OfType<IDeviceIdentity>().FirstOrDefault();
             }
             return authContext.Principal.Identity as IDeviceIdentity;
         }
@@ -157,12 +157,12 @@ namespace SanteDB.Core
         /// <returns>The user identity from the authentication context</returns>
         public static IIdentity GetUserIdentity(this AuthenticationContext authContext)
         {
-            if(authContext.Principal is IClaimsPrincipal icp)
+            if (authContext.Principal is IClaimsPrincipal icp)
             {
                 return icp.Identities.FirstOrDefault(o => o.FindFirst(SanteDBClaimTypes.Actor)?.Value == ActorTypeKeys.HumanUser.ToString()) ??
                     icp.Identities.FirstOrDefault(o => !(o is IDeviceIdentity || o is IApplicationIdentity));
             }
-            else if(!(authContext.Principal.Identity is IApplicationIdentity || authContext.Principal.Identity is IDeviceIdentity))
+            else if (!(authContext.Principal.Identity is IApplicationIdentity || authContext.Principal.Identity is IDeviceIdentity))
             {
                 return authContext.Principal.Identity;
             }
@@ -371,7 +371,7 @@ namespace SanteDB.Core
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
                         var asmTimestamp = new FileInfo(asmFile).CreationTime;
                         tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
-                        valid = certificate.IsTrustedIntern(extraCerts, asmTimestamp,   out IEnumerable<X509ChainStatus> chainStatus);
+                        valid = certificate.IsTrustedIntern(extraCerts, asmTimestamp, out IEnumerable<X509ChainStatus> chainStatus);
                         if (!valid)
                         {
                             throw new SecurityException($"File {asmFile} published by {certificate.Subject} is not trusted in this environment ({String.Join(",", chainStatus.Select(o => $"{o.Status}:{o.StatusInformation}"))})");
@@ -499,7 +499,7 @@ namespace SanteDB.Core
             }
             else
             {
-                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault() ;
+                resolved = repository.Find(o => o.Name == referenceString).FirstOrDefault();
             }
 
             return resolved != null;
@@ -509,8 +509,8 @@ namespace SanteDB.Core
         /// </summary>
         public static ICdssLibrary ResolveReference(this ICdssLibraryRepository repository, String referenceString)
         {
-            
-            if(!repository.TryResolveReference(referenceString, out var retVal))
+
+            if (!repository.TryResolveReference(referenceString, out var retVal))
             {
                 throw new KeyNotFoundException(String.Format(ErrorMessages.REFERENCE_NOT_FOUND, referenceString));
             }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,20 +16,18 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2024-2-19
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
-using SanteDB.Core.Model.Collection;
-using SanteDB.Core.Model.Entities;
-using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Security.Principal;
 using System.Linq;
-using SanteDB.Core.Security;
 
 namespace SanteDB.Core.Data.Management
 {
@@ -103,20 +101,20 @@ namespace SanteDB.Core.Data.Management
         protected void OnSaving(object sender, DataPersistingEventArgs<Bundle> e)
         {
             e.Cancel = e.Data.Item.Any(o => this.GetResourceInterceptor(o) != null);
-            if(e.Cancel)
+            if (e.Cancel)
             {
                 var persistenceBundle = new Bundle();
-                foreach(var itm in e.Data.Item)
+                foreach (var itm in e.Data.Item)
                 {
                     var handler = this.GetResourceInterceptor(itm);
-                    if(handler == null)
+                    if (handler == null)
                     {
                         persistenceBundle.Add(itm);
                     }
                     else
                     {
                         persistenceBundle.AddRange(handler.DoMatchingLogic(itm));
-                        if(!persistenceBundle.Item.Contains(itm))
+                        if (!persistenceBundle.Item.Contains(itm))
                         {
                             persistenceBundle.Add(itm);
                         }

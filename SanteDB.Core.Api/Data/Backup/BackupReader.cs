@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,14 +16,12 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.i18n;
 using SharpCompress.Compressors.BZip2;
-using SharpCompress.IO;
 using SharpCompress.Readers.Tar;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -136,7 +134,8 @@ namespace SanteDB.Core.Data.Backup
         public static BackupReader Open(Stream backupStream, String password = null)
         {
 
-            if(!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv)) {
+            if (!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv))
+            {
                 throw new BackupException(ErrorMessages.INVALID_FILE_FORMAT);
             }
 
@@ -202,8 +201,16 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarReader != null)
             {
-                while (this.m_tarReader.MoveToNextEntry()) ; // exhaust the readers if the user did not
-                while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0) ;
+                while (this.m_tarReader.MoveToNextEntry())
+                {
+                    ; // exhaust the readers if the user did not
+                }
+
+                while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0)
+                {
+                    ;
+                }
+
                 this.m_tarReader.Dispose();
                 this.m_underlyingStream.Dispose();
                 this.m_tarReader = null;

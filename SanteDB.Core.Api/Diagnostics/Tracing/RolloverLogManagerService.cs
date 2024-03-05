@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data.Backup;
-using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -91,18 +90,18 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// <inheritdoc/>
         public bool Restore(IBackupAsset backupAsset)
         {
-            if(backupAsset == null)
+            if (backupAsset == null)
             {
                 throw new ArgumentNullException(nameof(backupAsset));
             }
-            else if(backupAsset.AssetClassId != LOG_FILE_ASSET_ID)
+            else if (backupAsset.AssetClassId != LOG_FILE_ASSET_ID)
             {
                 throw new InvalidOperationException();
             }
 
-            using(var fs = File.Create(Path.Combine(this.m_rootPath, backupAsset.Name)))
+            using (var fs = File.Create(Path.Combine(this.m_rootPath, backupAsset.Name)))
             {
-                using(var astr = backupAsset.Open())
+                using (var astr = backupAsset.Open())
                 {
                     astr.CopyTo(fs);
                     return true;
@@ -113,7 +112,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// <inheritdoc/>
         public IEnumerable<IBackupAsset> GetBackupAssets()
         {
-            foreach(var itm in this.GetLogFiles())
+            foreach (var itm in this.GetLogFiles())
             {
                 yield return new FileBackupAsset(LOG_FILE_ASSET_ID, itm.Name, itm.FullName);
             }

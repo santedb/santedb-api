@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
@@ -28,8 +28,6 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
@@ -37,9 +35,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
-using System.Dynamic;
 using System.Linq;
-using System.Security.Principal;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -111,7 +107,7 @@ namespace SanteDB.Core.Services.Impl
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
             var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
-            if(signingCertificate?.Any() == true)
+            if (signingCertificate?.Any() == true)
             {
                 signature = signature.WithCertificate(signingCertificate.First());
             }
@@ -177,7 +173,7 @@ namespace SanteDB.Core.Services.Impl
 
                 // Attempt direct load?
                 IHasIdentifiers retVal = null;
-                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId) || Guid.TryParse(parsedToken.Payload.sub, out uuidId))
+                if (payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId) || Guid.TryParse(parsedToken.Payload.sub, out uuidId))
                 {
                     retVal = repoService.Get(uuidId) as IHasIdentifiers;
                 }

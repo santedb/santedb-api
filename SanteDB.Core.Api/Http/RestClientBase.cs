@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,12 +15,11 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: trevor
- * Date: 2023-08-31
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Description;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
@@ -218,13 +217,24 @@ namespace SanteDB.Core.Http
         {
             StringBuilder acceptBuilder = new StringBuilder();
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Lzma))
+            {
                 acceptBuilder.Append(",lzma");
+            }
+
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Bzip2))
+            {
                 acceptBuilder.Append(",bzip2");
+            }
+
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Gzip))
+            {
                 acceptBuilder.Append(",gzip");
+            }
+
             if (this.Description.Binding.OptimizationMethod.HasFlag(HttpCompressionAlgorithm.Deflate))
+            {
                 acceptBuilder.Append(",deflate");
+            }
 
             if (acceptBuilder.Length > 1)
             {

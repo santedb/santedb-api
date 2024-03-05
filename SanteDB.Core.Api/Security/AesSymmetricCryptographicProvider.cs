@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,11 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
-using SanteDB.Core.IO;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -302,7 +301,8 @@ namespace SanteDB.Core.Security
                 throw new InvalidOperationException();
             }
 
-            lock (this.m_lock) {
+            lock (this.m_lock)
+            {
                 // We want to use the most recent configuration file since that could have been restored as well
                 this.m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
                 var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
