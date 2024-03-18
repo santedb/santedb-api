@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,10 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-11-27
  */
 using SanteDB.Core.BusinessRules;
-using SanteDB.Core.Cdss;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
@@ -174,7 +173,7 @@ namespace SanteDB.Core.Cdss
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
                     var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    patientCopy.Participations = patientCopy.Participations?.ToList()  ?? patientCopy.GetParticipations()?.ToList();
+                    patientCopy.Participations = patientCopy.Participations?.ToList() ?? patientCopy.GetParticipations()?.ToList();
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
                         patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key)
@@ -321,7 +320,7 @@ namespace SanteDB.Core.Cdss
                         StatusConceptKey = StatusKeys.Active,
                         StopTime = protocolActs.Select(o => o.StopTime ?? o.ActTime).OrderByDescending(o => o).FirstOrDefault(),
                         CreatedByKey = Guid.Parse(Security.AuthenticationContext.SystemApplicationSid),
-                        ProgramIdentifier = scope?.ToString(),
+                        CarePathwayIdentifier = scope?.ToString(),
                         Protocols = appliedProtocols.Select(o => new ActProtocol()
                         {
                             ProtocolKey = o.Uuid,

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Attributes;
 using SanteDB.Core.Diagnostics;
@@ -184,10 +184,10 @@ namespace SanteDB.Core.Configuration.Features
                 configuration.AddSection(config);
 
                 // Add rollover manager
-                if(config.TraceWriter.Any(w=>w.TraceWriter == typeof(RolloverTextWriterTraceWriter)))
+                if (config.TraceWriter.Any(w => w.TraceWriter == typeof(RolloverTextWriterTraceWriter)))
                 {
                     var appSect = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-                    if(!appSect.ServiceProviders.Any(p=>p.Type == typeof(RolloverLogManagerService)))
+                    if (!appSect.ServiceProviders.Any(p => p.Type == typeof(RolloverLogManagerService)))
                     {
                         appSect.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RolloverLogManagerService)));
                     }

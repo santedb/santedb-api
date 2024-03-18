@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
@@ -177,7 +177,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Returns true if the certificate <paramref name="me"/> is trusted by a SanteSuite certificate
         /// </summary>
-        public static bool IsTrustedIntern(this X509Certificate2 me, X509Certificate2Collection extraCerts, out IEnumerable<X509ChainStatus> chainStatus)
+        public static bool IsTrustedIntern(this X509Certificate2 me, X509Certificate2Collection extraCerts, DateTime? asOfDate, out IEnumerable<X509ChainStatus> chainStatus)
         {
             var chain = X509Chain.Create();
             chain.ChainPolicy = new X509ChainPolicy()
@@ -212,7 +212,8 @@ namespace SanteDB.Core.Security
                     retVal = myUserStore.Certificates.Find(X509FindType.FindByThumbprint, me.Thumbprint, false).Count > 0;
                 }
             }
-            return retVal || HasTrustedRootCert(chain) || chainStatus.All(o=>o.Status == X509ChainStatusFlags.NotTimeValid); //If the cert is expired we still want to trust it
+
+            return retVal || HasTrustedRootCert(chain) || chainStatus.All(o => o.Status == X509ChainStatusFlags.NotTimeValid && asOfDate.HasValue && asOfDate.Value < me.NotAfter); //If the cert is expired we still want to trust it
         }
 
         /// <summary>
