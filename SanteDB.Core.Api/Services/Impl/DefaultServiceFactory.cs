@@ -44,6 +44,7 @@ namespace SanteDB.Core.Services.Impl
         private readonly Type[] m_defaultServices = new Type[]
         {
             typeof(FileSystemDataStreamManager),
+            typeof(DefaultBarcodeProviderService),
             typeof(DefaultForeignDataImporter),
             typeof(DefaultPolicyEnforcementService),
             typeof(LocalTagPersistenceService),

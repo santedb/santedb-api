@@ -96,13 +96,13 @@ namespace SanteDB.Core.Services.Impl
             {
                 ver = typeof(JwsResourcePointerService).Assembly.GetName().Version.ToString(),
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                sub = entity.Key.ToString(),
+                sub = entity.Key.Value.ToString(),
                 gen_by = AuthenticationContext.Current.Principal.Identity.Name,
                 data = entityData
             };
 
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
-                .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
+                .WithCompression(Http.Description.HttpCompressionAlgorithm.None)
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
