@@ -20,6 +20,8 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Data.Backup;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -47,11 +49,12 @@ namespace SanteDB.Core.Diagnostics.Tracing
 
         // Root path
         private readonly string m_rootPath;
+        private readonly IPolicyEnforcementService m_pepService;
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public RolloverLogManagerService(IConfigurationManager configurationManager)
+        public RolloverLogManagerService(IConfigurationManager configurationManager, IPolicyEnforcementService pepService)
         {
             var logFileTracerConfig = configurationManager.GetSection<DiagnosticsConfigurationSection>().TraceWriter.FirstOrDefault(o => o.TraceWriter == typeof(RolloverTextWriterTraceWriter)) ??
                 new TraceWriterConfiguration()
@@ -66,23 +69,28 @@ namespace SanteDB.Core.Diagnostics.Tracing
             {
                 this.m_rootPath = Path.GetDirectoryName(logFileTracerConfig.InitializationData);
             }
+
+            this.m_pepService = pepService;
         }
 
         /// <inheritdoc/>
         public void DeleteLogFile(string logId)
         {
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.DeleteServiceLogs);
             File.Delete(Path.ChangeExtension(Path.Combine(this.m_rootPath, logId), "log"));
         }
 
         /// <inheritdoc/>
         public FileInfo GetLogFile(string logId)
         {
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadServiceLogs);
             return new FileInfo(Path.ChangeExtension(Path.Combine(this.m_rootPath, logId), "log"));
         }
 
         /// <inheritdoc/>
         public IEnumerable<FileInfo> GetLogFiles()
         {
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadServiceLogs);
             return Directory.GetFiles(this.m_rootPath, "*.log").Select(o => new FileInfo(o));
         }
 

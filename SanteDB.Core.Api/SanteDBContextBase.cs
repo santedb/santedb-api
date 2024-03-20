@@ -87,6 +87,7 @@ namespace SanteDB.Core
             this.ActivityUuid = Guid.NewGuid();
             this.HostType = hostEnvironment;
             this.m_serviceProvider.AddServiceProvider(configurationManager);
+            
         }
 
         /// <summary>

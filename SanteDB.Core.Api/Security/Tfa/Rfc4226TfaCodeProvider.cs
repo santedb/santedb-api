@@ -175,7 +175,7 @@ namespace SanteDB.Core.Security.Tfa
                     case 6:
                     case 7:
                     case 8:
-                        return (number % Math.Pow(10, numberOfDigits)).ToString();
+                        return (number % Math.Pow(10, numberOfDigits)).ToString().PadLeft(numberOfDigits, '0');
                     default:
                         throw new ArgumentOutOfRangeException(nameof(numberOfDigits), "Invalid number of digits. Must be 6, 7, or 8");
                 }

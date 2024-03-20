@@ -103,7 +103,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Save the configuration
         /// </summary>
-        void SaveConfiguration();
+        void SaveConfiguration(bool restart = true);
 
         /// <summary>
         /// Adds a connection string only for the lifetime of the server

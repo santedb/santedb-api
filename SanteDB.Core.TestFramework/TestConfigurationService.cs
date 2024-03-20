@@ -124,7 +124,7 @@ namespace SanteDB.Core.TestFramework
         }
 
         /// <inheritdoc />
-        public void SaveConfiguration()
+        public void SaveConfiguration(bool restart = true)
         {
             throw new NotImplementedException();
         }

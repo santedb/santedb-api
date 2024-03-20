@@ -25,6 +25,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -89,6 +90,13 @@ namespace SanteDB.Core.Data.Backup
                         .OfType<IRestoreBackupAssets>()
                         .ToList()
                         .ForEach(irba => irba.AssetClassIdentifiers.ToList().ForEach(c => this.m_backupAssetClasses.Add(c, irba)));
+                    // Now fetch the backup services that in the context for restoration which may not be in our configured
+                    this.m_serviceManager.CreateInjectedOfAll<IRestoreBackupAssets>()
+                        .ForEach(irba =>
+                            irba.AssetClassIdentifiers.Where(c=>!this.m_backupAssetClasses.ContainsKey(c)).ForEach(a=>this.m_backupAssetClasses.Add(a, irba))
+                        );
+
+
                 }
                 return this.m_backupAssetClasses;
             }

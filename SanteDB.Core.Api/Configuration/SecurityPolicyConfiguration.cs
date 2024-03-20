@@ -131,7 +131,7 @@ namespace SanteDB.Core.Configuration
         /// Users must have MFA to their registered e-mail address
         /// </summary>
         [XmlEnum("auth.mfa.required")]
-        ForceMfa,
+        RequireMfa,
         /// <summary>
         /// Default MFA method for the system if the user has selected none
         /// </summary>
@@ -213,6 +213,8 @@ namespace SanteDB.Core.Configuration
             return new PolicyValueTimeSpan() { Value = instance };
         }
 
+        /// <inheritdoc/>
+        public override string ToString() => this.ValueXml;
     }
 
     /// <summary>
