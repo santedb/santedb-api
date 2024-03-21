@@ -76,7 +76,7 @@ namespace SanteDB.Core.Security.Configuration
         /// Gets or sets the resource type
         /// </summary>
         [XmlElement("resourceType")]
-        [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
+        [Editor("SanteDB.Configuration.Editors.ResourceTypePicker, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public ResourceTypeReferenceConfiguration ResourceType { get; set; }
 
         /// <summary>
