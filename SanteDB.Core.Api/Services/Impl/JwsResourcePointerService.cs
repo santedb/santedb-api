@@ -102,7 +102,7 @@ namespace SanteDB.Core.Services.Impl
             };
 
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
-                .WithCompression(Http.Description.HttpCompressionAlgorithm.None)
+                .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)

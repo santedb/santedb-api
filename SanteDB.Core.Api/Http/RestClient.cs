@@ -317,7 +317,7 @@ namespace SanteDB.Core.Http
                         {
                             //TODO: Optimize this when we have our InvokeInternalAsync() in place.
                             cancellationtoken.ThrowIfCancellationRequested();
-                            var redirectresult = this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, requestHeaders, out responseheaders, default, query);
+                            var redirectresult = this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], this.Accept, requestHeaders, out responseheaders, default, query);
                             return (redirectresult, responseheaders);
                         }
                         else if (response.StatusCode == HttpStatusCode.NotModified)
