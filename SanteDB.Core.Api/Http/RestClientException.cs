@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.i18n;
 using System;
 using System.Net;
 
@@ -60,7 +61,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create the client exception
         /// </summary>
-        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", null, status, response)
+        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, null, status, response)
         {
             this.Result = result;
             if (response is HttpWebResponse hwr)

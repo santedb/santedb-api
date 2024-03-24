@@ -33,7 +33,17 @@ namespace SanteDB.Core.Data.Backup
         /// Creates a new backup asset for a file
         /// </summary>
         public FileBackupAsset(Guid assetClassId, String name, String filePath)
-            : base(assetClassId, name, () => File.OpenRead(filePath))
+            : base(assetClassId, name, () =>
+            {
+                try
+                {
+                    return File.OpenRead(filePath);
+                }
+                catch
+                {
+                    return new MemoryStream();
+                }
+            })
         {
         }
 

@@ -368,11 +368,10 @@ namespace SanteDB.Core.Http
 
                             try
                             {
-                                errorResult = ReadResponseBody<TResult>(errorresponse);
+                                errorResult = ReadResponseBody<Object>(errorresponse);
                             }
                             catch (Exception e2)
                             {
-                                // De-Serialize using 
                                 throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2, e.Status, e.Response);
                             }
 

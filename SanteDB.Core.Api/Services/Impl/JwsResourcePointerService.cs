@@ -24,6 +24,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -91,6 +92,11 @@ namespace SanteDB.Core.Services.Impl
                     }).ToArray())
                 }
             };
+
+            if(entity is UserEntity ue)
+            {
+                entityData.Add("securityUser", ue.SecurityUserKey);
+            }
 
             var domainList = new
             {

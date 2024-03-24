@@ -202,7 +202,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Authenticate as the device
         /// </summary>
-        IPrincipal AuthenticateAsDevice();
+        IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null);
 
     }
 
