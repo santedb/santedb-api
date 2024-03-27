@@ -41,7 +41,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyDecisionService : IPolicyDecisionService
     {
         // Adhoc cache reference
-        private IAdhocCacheService m_adhocCacheService;
+        protected IAdhocCacheService m_adhocCacheService;
 
         private IPasswordHashingService m_hasher;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
@@ -239,7 +239,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Compute cache key
         /// </summary>
-        private string ComputeCacheKey(IPrincipal principal)
+        protected string ComputeCacheKey(IPrincipal principal)
         {
             if (principal is IClaimsPrincipal cp)
             {
