@@ -66,10 +66,13 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Get all rules for the specified type
         /// </summary>
-        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>()
-        {
-            return this.m_configuration.RuleSets.SelectMany(o => o.Resources).Where(r => r.ResourceType == typeof(T));
-        }
+        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>() => this.GetRulesForType(typeof(T));
+
+        /// <summary>
+        /// Get all rules for the specified type
+        /// </summary>
+        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType(Type forType) => this.m_configuration.RuleSets.SelectMany(o => o.Resources).Where(r => r.ResourceType == forType);
+        
 
         /// <inheritdoc/>
         public void RemoveRuleSet(string id)

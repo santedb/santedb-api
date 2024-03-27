@@ -19,6 +19,7 @@
  * Date: 2023-6-21
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
@@ -29,7 +30,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
     /// </summary>
     [XmlType(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
     [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
-    public class DataQualityRulesetConfiguration
+    public class DataQualityRulesetConfiguration : NonVersionedEntityData
     {
 
         /// <summary>

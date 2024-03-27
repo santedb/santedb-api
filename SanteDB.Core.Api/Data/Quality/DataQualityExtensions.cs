@@ -87,7 +87,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public static IEnumerable<DetectedIssue> Validate<TModel>(this TModel data)
         {
-            foreach (var itm in m_dataQualityConfigurationService.GetRulesForType<TModel>())
+            foreach (var itm in m_dataQualityConfigurationService.GetRulesForType(data.GetType()))
             {
                 foreach (var iss in data.Validate(itm))
                 {
@@ -109,7 +109,7 @@ namespace SanteDB.Core.Data.Quality
                 bool result = assert.Evaluation == AssertionEvaluationType.Any ? false : true;
                 try
                 {
-                    foreach (var expression in assert.GetDelegates<TModel>())
+                    foreach (var expression in assert.GetDelegates(data.GetType()))
                     {
                         var linqResult = expression(data);
                         switch (assert.Evaluation)
