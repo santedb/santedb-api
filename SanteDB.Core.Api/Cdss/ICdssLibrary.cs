@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using System;
@@ -80,6 +81,7 @@ namespace SanteDB.Core.Cdss
         /// <summary>
         /// If the CDSS library data came from storage, this is the metadata
         /// </summary>
+        [QueryParameter("storage")]
         ICdssLibraryRepositoryMetadata StorageMetadata { get; set; }
 
     }
