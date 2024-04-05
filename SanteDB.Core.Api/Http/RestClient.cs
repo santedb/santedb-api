@@ -290,7 +290,7 @@ namespace SanteDB.Core.Http
 
                         var responsetask = webrequest.GetResponseAsync();
                         var connecttimeouttask = Task.Delay(GetConnectTimeout());
-                        var resulttask = await Task.WhenAny(connecttimeouttask, responsetask);
+                        var resulttask = await Task.WhenAny(responsetask, connecttimeouttask);
 
                         if (resulttask == connecttimeouttask)
                         {
