@@ -254,6 +254,13 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The name of the user</param>
         /// <returns>The applicable authentication methods</returns>
         AuthenticationMethod GetAuthenticationMethods(String userName);
+
+        /// <summary>
+        /// Indicates that the password for the <paramref name="userName"/> should be immediately expired (user must change password at next login)
+        /// </summary>
+        /// <param name="userName">The name of the user whos password is expired</param>
+        /// <param name="principal">Th pincipal under which the lockout is being set</param>
+        void ExpirePassword(string userName, IPrincipal principal);
     }
 
 
