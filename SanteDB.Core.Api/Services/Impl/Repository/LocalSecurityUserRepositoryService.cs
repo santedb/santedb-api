@@ -89,7 +89,6 @@ namespace SanteDB.Core.Services.Impl.Repository
                 retVal.SecurityHash = data.SecurityHash;
                 retVal.TwoFactorEnabled = data.TwoFactorEnabled;
                 retVal.UserPhoto = data.UserPhoto;
-                retVal.PasswordExpiration = data.PasswordExpiration;
                 retVal.UserClass = data.UserClass;
                 base.Save(retVal);
             }
