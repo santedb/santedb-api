@@ -85,7 +85,7 @@ namespace SanteDB.Core.Services.Impl
             var entityData = new Dictionary<String, Object>()
             {
                 { "$type", entity.GetType().GetSerializationName() },
-                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                { "identifier", entity.LoadProperty(o => o.Identifiers).Where(o => o.IdentityDomain.PolicyKey == null /* Exclude domains where any disclosure policy exists. */).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
                     {
                         value = entity.GetType().GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation ? id.Value.Mask() : id.Value,
                         checkDigit = id.CheckDigit
