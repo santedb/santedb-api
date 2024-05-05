@@ -90,7 +90,12 @@ namespace SanteDB.Core.Security
         public void Demand(string policyId, IPrincipal principal)
         {
             var result = this.GetGrant(principal, policyId);
-            ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+
+            if (principal != AuthenticationContext.SystemPrincipal)
+            {
+                ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+            }
+
             if (result != PolicyGrantType.Grant)
             {
                 throw new PolicyViolationException(principal, policyId, result);

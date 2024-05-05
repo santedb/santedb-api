@@ -226,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
 
                     foreach (var q in this.GetQueues().Where(q => !q.Name.Contains(".dead")))
                     {
-                        foreach (var f in this.GetQueueEntries(q.Name).ToArray())
+                        foreach (var f in this.GetQueueEntries(q.Name))
                         {
                             if (this.m_watchers.TryGetValue(q.Name, out var callbacks))
                             {
