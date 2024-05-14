@@ -37,6 +37,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -85,7 +86,7 @@ namespace SanteDB.Core.Services.Impl
             var entityData = new Dictionary<String, Object>()
             {
                 { "$type", entity.GetType().GetSerializationName() },
-                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                { "identifier", entity.LoadProperty(o => o.Identifiers).Where(o => o.IdentityDomain.PolicyKey == null /* Exclude domains where any disclosure policy exists. */).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
                     {
                         value = entity.GetType().GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation ? id.Value.Mask() : id.Value,
                         checkDigit = id.CheckDigit
@@ -199,9 +200,20 @@ namespace SanteDB.Core.Services.Impl
 
                     // HACK: .NET is using late binding and getting confused
                     var results = repoService.Find(filterExpression);
-                    if (results.Count() != 1)
+                    if (results.Count() > 1)
                     {
                         throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    }
+                    else if (!results.Any())
+                    {
+                        if (uuidId != Guid.Empty)
+                        {
+                            throw new KeyNotFoundException(string.Format(ErrorMessages.OBJECT_NOT_FOUND, uuidId));
+                        }
+                        else
+                        {
+                            throw new KeyNotFoundException(ErrorMessages.NO_RESULTS);
+                        }
                     }
 
                     retVal = results.FirstOrDefault() as IHasIdentifiers;
