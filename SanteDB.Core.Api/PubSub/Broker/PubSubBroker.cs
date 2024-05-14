@@ -216,7 +216,8 @@ namespace SanteDB.Core.PubSub.Broker
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
                         .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
-                        .ToList()
+                        .ToList();
+                subscriptions = subscriptions
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -252,7 +253,7 @@ namespace SanteDB.Core.PubSub.Broker
                                 this.m_filterCriteria.TryAdd(s.Key.Value, fn);
                             }
                             return fn(data);
-                        });
+                        }).ToList();
 
                 // Now we want to filter by channel, since the channel is really what we're interested in
                 foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
