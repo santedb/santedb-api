@@ -533,7 +533,14 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry entry = null;
                 try
                 {
-                    entry = this.ReadQueueEntry(f);
+                    if (File.Exists(f))
+                    {
+                        entry = this.ReadQueueEntry(f);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -562,6 +569,7 @@ namespace SanteDB.Core.Services.Impl
                     }
                     continue;
                 }
+
                 yield return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(f), queueName, entry.CreationTime, entry.Type, entry.XmlData);
             }
         }
