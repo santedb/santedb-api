@@ -102,7 +102,9 @@ namespace SanteDB.Core.Services.Impl
         public bool Checkout<T>(Guid key)
         {
             var resourceLock = this.m_adhocCache.Get<ResourceCheckoutLock>(this.CreateCacheKey<T>(key));
-            if (resourceLock == null || resourceLock.UserIdentity.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase)) // Take the lock
+            if (resourceLock == null || 
+                resourceLock.UserIdentity.Equals(AuthenticationContext.Current.Principal.Identity.Name, StringComparison.OrdinalIgnoreCase) ||
+                resourceLock.LockExpiry < DateTimeOffset.Now) // Take the lock
             {
                 resourceLock = new ResourceCheckoutLock()
                 {

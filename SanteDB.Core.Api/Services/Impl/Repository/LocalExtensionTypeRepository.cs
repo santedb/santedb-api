@@ -44,7 +44,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             var name = uri.ToString();
             int t;
-            return base.Find(o => o.Name == name, 0, 1, out t).FirstOrDefault();
+            return base.Find(o => o.Uri == name, 0, 1, out t).FirstOrDefault();
         }
     }
 }

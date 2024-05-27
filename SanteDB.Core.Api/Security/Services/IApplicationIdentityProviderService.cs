@@ -139,4 +139,5 @@ namespace SanteDB.Core.Security.Services
         void RemoveClaim(String applicationName, String claimType, IPrincipal principal);
     }
 
+
 }

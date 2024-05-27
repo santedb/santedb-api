@@ -35,7 +35,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyEnforcementService : IPolicyEnforcementService
     {
         // Default policy decision service
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyEnforcementService));
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;
@@ -90,7 +90,12 @@ namespace SanteDB.Core.Security
         public void Demand(string policyId, IPrincipal principal)
         {
             var result = this.GetGrant(principal, policyId);
-            ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+
+            if (principal != AuthenticationContext.SystemPrincipal)
+            {
+                ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+            }
+
             if (result != PolicyGrantType.Grant)
             {
                 throw new PolicyViolationException(principal, policyId, result);

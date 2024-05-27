@@ -226,7 +226,7 @@ namespace SanteDB.Core.Services.Impl
 
                     foreach (var q in this.GetQueues().Where(q => !q.Name.Contains(".dead")))
                     {
-                        foreach (var f in this.GetQueueEntries(q.Name).ToArray())
+                        foreach (var f in this.GetQueueEntries(q.Name))
                         {
                             if (this.m_watchers.TryGetValue(q.Name, out var callbacks))
                             {
@@ -533,7 +533,14 @@ namespace SanteDB.Core.Services.Impl
                 QueueEntry entry = null;
                 try
                 {
-                    entry = this.ReadQueueEntry(f);
+                    if (File.Exists(f))
+                    {
+                        entry = this.ReadQueueEntry(f);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -562,6 +569,7 @@ namespace SanteDB.Core.Services.Impl
                     }
                     continue;
                 }
+
                 yield return new Core.Queue.DispatcherQueueEntry(Path.GetFileNameWithoutExtension(f), queueName, entry.CreationTime, entry.Type, entry.XmlData);
             }
         }

@@ -73,15 +73,15 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Delegates
         /// </summary>
-        public List<Func<Object, bool>> GetDelegates<TModel>()
+        public List<Func<Object, bool>> GetDelegates(Type forType)
         {
             if (this.m_delegates == null)
             {
                 this.m_delegates = this.Expressions.Select(o =>
                 {
-                    var expression = QueryExpressionParser.BuildLinqExpression<TModel>(o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
+                    var expression = QueryExpressionParser.BuildLinqExpression(forType, o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
                     var parm = Expression.Parameter(typeof(Object));
-                    return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, typeof(TModel))), parm).Compile();
+                    return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, forType)), parm).Compile();
                 }).ToList();
             }
             return this.m_delegates;

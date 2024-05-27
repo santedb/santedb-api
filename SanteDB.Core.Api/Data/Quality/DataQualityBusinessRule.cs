@@ -61,7 +61,7 @@ namespace SanteDB.Core.Data.Quality
         {
             if (data is IExtendable extendable)
             {
-                data = (TModel)extendable.TagDataQualityIssues();
+                extendable.TagDataQualityIssues();
             }
             return base.BeforeInsert(data);
         }
@@ -73,7 +73,7 @@ namespace SanteDB.Core.Data.Quality
         {
             if (data is IExtendable extendable)
             {
-                data = (TModel)extendable.TagDataQualityIssues();
+                extendable.TagDataQualityIssues();
             }
             return base.BeforeUpdate(data);
         }

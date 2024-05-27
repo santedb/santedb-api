@@ -252,7 +252,7 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// Save configuration
         /// </summary>
-        public void SaveConfiguration()
+        public void SaveConfiguration(bool restart = true)
         {
             if (this.IsReadonly)
             {
@@ -265,7 +265,11 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.Configuration.Save(s);
             }
-            this.RestartRequested?.Invoke(this, EventArgs.Empty);
+
+            if (restart)
+            {
+                this.RestartRequested?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <inheritdoc />

@@ -64,6 +64,10 @@ namespace SanteDB.Core.Security.Configuration
     public class SecurityConfigurationSection : IEncryptedConfigurationSection
     {
         /// <summary>
+        /// If MFA is required
+        /// </summary>
+        public const string RequireMfaName = "auth.mfa.required";
+        /// <summary>
         /// Password complexity requirements disclosure
         /// </summary>
         public const string PasswordValidationDisclosureName = "sec.pwd";
@@ -186,6 +190,7 @@ namespace SanteDB.Core.Security.Configuration
         public IEnumerable<AppSettingKeyValuePair> ForDisclosure()
         {
             yield return new AppSettingKeyValuePair(PasswordValidationDisclosureName, this.PasswordRegex);
+            yield return new AppSettingKeyValuePair(RequireMfaName, this.GetSecurityPolicy(SecurityPolicyIdentification.RequireMfa, false).ToString());
             yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
             yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
             yield return new AppSettingKeyValuePair(PublicBackupsAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false).ToString());

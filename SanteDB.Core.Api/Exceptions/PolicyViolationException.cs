@@ -117,6 +117,11 @@ namespace SanteDB.Core.Exceptions
         public string PolicyId { get; private set; }
 
         /// <summary>
+        /// Policy name
+        /// </summary>
+        public string PolicyName => this.m_policyName;
+
+        /// <summary>
         /// The details of the violation
         /// </summary>
         public PolicyDecision Detail { get; private set; }

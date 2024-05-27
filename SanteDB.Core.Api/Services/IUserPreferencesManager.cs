@@ -19,17 +19,57 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Event;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Entities;
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
     /// <summary>
+    /// A user's preferences have been updated
+    /// </summary>
+    public class UserPreferencesUpdatedEventArgs : EventArgs
+    {
+
+        /// <summary>
+        /// Create new updated user preferences
+        /// </summary>
+        public UserPreferencesUpdatedEventArgs(String userName, IEnumerable<AppSettingKeyValuePair> settings, Object settingsObject)
+        {
+            this.User = userName;
+            this.Settings = settings;
+            this.SettingsObject = settingsObject;
+        }
+
+        /// <summary>
+        /// Gets the user which was updated
+        /// </summary>
+        public String User { get; }
+
+        /// <summary>
+        /// Gets the settings which were updated
+        /// </summary>
+        public IEnumerable<AppSettingKeyValuePair> Settings { get; }
+
+        /// <summary>
+        /// Gets the settings object that was actually updated
+        /// </summary>
+        public object SettingsObject { get; }
+    }
+
+    /// <summary>
     /// A special type of configuration manager that allows users to set custom settings 
     /// (like views, color schemes, etc)
     /// </summary>
     public interface IUserPreferencesManager
     {
+
+        /// <summary>
+        /// Event fired when user preferences are updated
+        /// </summary>
+        event EventHandler<UserPreferencesUpdatedEventArgs> Updated;
 
         /// <summary>
         /// Get the user settings for the <paramref name="forUser"/>

@@ -24,6 +24,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
@@ -36,6 +37,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -84,7 +86,7 @@ namespace SanteDB.Core.Services.Impl
             var entityData = new Dictionary<String, Object>()
             {
                 { "$type", entity.GetType().GetSerializationName() },
-                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                { "identifier", entity.LoadProperty(o => o.Identifiers).Where(o => o.IdentityDomain.PolicyKey == null /* Exclude domains where any disclosure policy exists. */).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
                     {
                         value = entity.GetType().GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation ? id.Value.Mask() : id.Value,
                         checkDigit = id.CheckDigit
@@ -92,11 +94,16 @@ namespace SanteDB.Core.Services.Impl
                 }
             };
 
+            if(entity is UserEntity ue)
+            {
+                entityData.Add("securityUser", ue.SecurityUserKey);
+            }
+
             var domainList = new
             {
                 ver = typeof(JwsResourcePointerService).Assembly.GetName().Version.ToString(),
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                sub = entity.Key.ToString(),
+                sub = entity.Key.Value.ToString(),
                 gen_by = AuthenticationContext.Current.Principal.Identity.Name,
                 data = entityData
             };
@@ -141,7 +148,7 @@ namespace SanteDB.Core.Services.Impl
                         case JsonWebSignatureParseResult.MissingAlgorithm:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Token cannot be validated - missing algorithm", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingKeyId:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.nokey", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.UnsupportedAlgorithm:
@@ -193,9 +200,20 @@ namespace SanteDB.Core.Services.Impl
 
                     // HACK: .NET is using late binding and getting confused
                     var results = repoService.Find(filterExpression);
-                    if (results.Count() != 1)
+                    if (results.Count() > 1)
                     {
                         throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    }
+                    else if (!results.Any())
+                    {
+                        if (uuidId != Guid.Empty)
+                        {
+                            throw new KeyNotFoundException(string.Format(ErrorMessages.OBJECT_NOT_FOUND, uuidId));
+                        }
+                        else
+                        {
+                            throw new KeyNotFoundException(ErrorMessages.NO_RESULTS);
+                        }
                     }
 
                     retVal = results.FirstOrDefault() as IHasIdentifiers;

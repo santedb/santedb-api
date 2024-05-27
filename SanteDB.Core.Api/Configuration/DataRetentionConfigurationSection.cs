@@ -145,7 +145,7 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the resource type
         /// </summary>
         [XmlElement("type"), JsonProperty("type"), DisplayName("Applies To")]
-        [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
+        [Editor("SanteDB.Configuration.Editors.ResourceTypePicker, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public ResourceTypeReferenceConfiguration ResourceType { get; set; }
 
         /// <summary>

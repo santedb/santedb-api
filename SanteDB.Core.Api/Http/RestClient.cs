@@ -290,7 +290,7 @@ namespace SanteDB.Core.Http
 
                         var responsetask = webrequest.GetResponseAsync();
                         var connecttimeouttask = Task.Delay(GetConnectTimeout());
-                        var resulttask = await Task.WhenAny(connecttimeouttask, responsetask);
+                        var resulttask = await Task.WhenAny(responsetask, connecttimeouttask);
 
                         if (resulttask == connecttimeouttask)
                         {
@@ -317,7 +317,7 @@ namespace SanteDB.Core.Http
                         {
                             //TODO: Optimize this when we have our InvokeInternalAsync() in place.
                             cancellationtoken.ThrowIfCancellationRequested();
-                            var redirectresult = this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, requestHeaders, out responseheaders, default, query);
+                            var redirectresult = this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], this.Accept, requestHeaders, out responseheaders, default, query);
                             return (redirectresult, responseheaders);
                         }
                         else if (response.StatusCode == HttpStatusCode.NotModified)
@@ -368,11 +368,10 @@ namespace SanteDB.Core.Http
 
                             try
                             {
-                                errorResult = ReadResponseBody<TResult>(errorresponse);
+                                errorResult = ReadResponseBody<Object>(errorresponse);
                             }
                             catch (Exception e2)
                             {
-                                // De-Serialize using 
                                 throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2, e.Status, e.Response);
                             }
 

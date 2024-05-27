@@ -153,6 +153,11 @@ namespace SanteDB.Core.Security.Claims
         public const string PurposeOfUse = "urn:oasis:names:tc:xacml:2.0:action:purpose";
 
         /// <summary>
+        /// Indicates the object/authentication is on behalf of another object
+        /// </summary>
+        public const string OnBehalfOf = "urn:santedb:org:claim:onBehalfOf";
+
+        /// <summary>
         /// Facility id claim
         /// </summary>
         public const string XspaFacilityClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";

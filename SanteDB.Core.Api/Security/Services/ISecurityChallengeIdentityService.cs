@@ -45,6 +45,7 @@ namespace SanteDB.Core.Security.Services
         /// Authenticates the specified user with a challenge key and response
         /// </summary>
         IPrincipal Authenticate(string userName, Guid challengeKey, string response, string tfaSecret);
+
     }
 
 }

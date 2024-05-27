@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Quality
@@ -55,5 +56,12 @@ namespace SanteDB.Core.Data.Quality
         /// Get rule sets for the specified object
         /// </summary>
         IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>();
+
+        /// <summary>
+        /// Get rulesets for <paramref name="forType"/>
+        /// </summary>
+        /// <param name="forType">The type for which rules should be fetched</param>
+        /// <returns></returns>
+        IEnumerable<DataQualityResourceConfiguration> GetRulesForType(Type forType);
     }
 }

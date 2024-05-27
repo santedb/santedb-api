@@ -290,6 +290,21 @@ namespace SanteDB.Core.Data.Management
                 yield return subsumedRecord;
             }
 
+            if(survivorRecord is IHasIdentifiers survivorId && subsumedRecord is IHasIdentifiers subsumedId)
+            {
+                foreach(var itm in subsumedId.LoadCollection(o=>o.Identifiers))
+                {
+                    if(!survivorId.Identifiers.Any(i=>i.IdentityDomainKey == itm.IdentityDomainKey && i.Value == itm.Value && i.CheckDigit == itm.CheckDigit))
+                    {
+                        var newId = survivorId.AddIdentifier(itm.IdentityDomainKey.Value, itm.Value);
+                        newId.Reliability = itm.Reliability;
+                        newId.CheckDigit = itm.CheckDigit;
+                        newId.ExpiryDate = itm.ExpiryDate;
+                        newId.IssueDate = itm.IssueDate;
+                        newId.IdentifierTypeKey = itm.IdentifierTypeKey;
+                    }
+                }
+            }
             switch (survivorRecord)
             {
                 case Act survivorAct:
