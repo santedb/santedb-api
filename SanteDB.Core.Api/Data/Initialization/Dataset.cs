@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -101,7 +102,10 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         public void Save(Stream str)
         {
-            m_xsz.Serialize(str, this);
+            using (SerializationControlContext.EnterExportContext())
+            {
+                m_xsz.Serialize(str, this);
+            }
         }
     }
 
