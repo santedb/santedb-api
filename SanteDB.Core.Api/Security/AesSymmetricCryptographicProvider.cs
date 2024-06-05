@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,13 +16,15 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -34,12 +36,17 @@ namespace SanteDB.Core.Security
     /// <summary>
     /// Represents a symmetric cryptographic provider based on AES
     /// </summary>
-    public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider
+    public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider, IProvideBackupAssets, IRestoreBackupAssets
     {
+        private readonly Guid CONTEXT_KEY_ASSET_ID = Guid.Parse("EF601F26-1B2F-4A4E-A909-1DE4C8DF17DD");
+
         internal const int IV_SIZE = 16;
 
         // Context key
         private byte[] m_contextKey;
+
+        // Lockbox
+        private readonly object m_lock = new object();
 
         // Context key file name
         private readonly string m_contextKeyFile;
@@ -59,6 +66,9 @@ namespace SanteDB.Core.Security
         /// Service name
         /// </summary>
         public String ServiceName => "AES Symmetric Cryptographic Provider";
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { CONTEXT_KEY_ASSET_ID };
 
         private Aes CreateAlgorithm() => Aes.Create();
 
@@ -166,7 +176,10 @@ namespace SanteDB.Core.Security
 
             if (defaultKey.Algorithm != SignatureAlgorithm.HS256)
             {
-                this.SaveContextKey(m_contextKey, defaultKey);
+                lock (this.m_lock)
+                {
+                    this.SaveContextKey(m_contextKey, defaultKey);
+                }
                 return true;
             }
             return false;
@@ -178,20 +191,23 @@ namespace SanteDB.Core.Security
         /// </summary>
         private byte[] ReadContextKey(SecuritySignatureConfiguration key)
         {
-            if (!File.Exists(this.m_contextKeyFile))
+            lock (this.m_lock)
             {
-                var keyData = new byte[32];
-                System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
-                this.SaveContextKey(keyData, key);
-                return keyData;
-            }
-            else
-            {
-                using (var fs = File.OpenRead(this.m_contextKeyFile))
+                if (!File.Exists(this.m_contextKeyFile))
                 {
-                    var buffer = new byte[fs.Length];
-                    fs.Read(buffer, 0, buffer.Length);
-                    return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                    var keyData = new byte[32];
+                    System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
+                    this.SaveContextKey(keyData, key);
+                    return keyData;
+                }
+                else
+                {
+                    using (var fs = File.OpenRead(this.m_contextKeyFile))
+                    {
+                        var buffer = new byte[fs.Length];
+                        fs.Read(buffer, 0, buffer.Length);
+                        return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                    }
                 }
             }
         }
@@ -261,6 +277,50 @@ namespace SanteDB.Core.Security
         {
             return new CryptoStream(underlyingStream, this.CreateAlgorithm().CreateDecryptor(key, iv), CryptoStreamMode.Read);
 
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            // Is there even a context key persisted?
+            if (File.Exists(this.m_contextKeyFile))
+            {
+                yield return new ByteArrayBackupAsset(CONTEXT_KEY_ASSET_ID, "ctxkey.key", this.m_contextKey); // unencrypted context key in the backup - the backup should be encrypted with a password to protect this
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if (backupAsset.AssetClassId != CONTEXT_KEY_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            lock (this.m_lock)
+            {
+                // We want to use the most recent configuration file since that could have been restored as well
+                this.m_configuration = ApplicationServiceContext.Current.GetService<IConfigurationManager>().GetSection<SecurityConfigurationSection>();
+                var defaultKey = this.m_configuration.Signatures.FirstOrDefault(o => String.IsNullOrEmpty(o.KeyName) || o.KeyName == "default");
+                if (defaultKey.Algorithm != SignatureAlgorithm.HS256) // we want to save this key
+                {
+                    // Read the context key
+                    using (var astr = backupAsset.Open())
+                    {
+
+                        byte[] buffer = new byte[1024];
+                        var bytesRead = astr.Read(buffer, 0, 1024);
+                        this.m_contextKey = buffer.Take(bytesRead).ToArray();
+                        this.SaveContextKey(this.m_contextKey, defaultKey);
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
     }
 }

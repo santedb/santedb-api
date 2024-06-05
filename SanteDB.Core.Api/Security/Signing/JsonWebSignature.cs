@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Http.Compression;
@@ -26,7 +26,6 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Dynamic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -204,7 +203,7 @@ namespace SanteDB.Core.Security.Signing
             parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
             parsedWebSignature.Signature = signatureBytes;
             // First, validate the signature
-            if(!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
+            if (!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
             {
                 return JsonWebSignatureParseResult.MissingKeyId;
             }
@@ -319,7 +318,7 @@ namespace SanteDB.Core.Security.Signing
                 {
                     this.Header.KeyId = keyId;
                 }
-                else if(this.m_signingSettings.Certificate != null)
+                else if (this.m_signingSettings.Certificate != null)
                 {
                     this.WithCertificate(this.m_signingSettings.Certificate);
                 }

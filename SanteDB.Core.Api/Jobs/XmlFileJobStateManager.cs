@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -89,15 +90,17 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         [XmlElement("lastStop")]
         public DateTime? LastStopTime { get; set; }
+
     }
 
 
     /// <summary>
     /// A simple job state manager class which controls job state via an XML file
     /// </summary>
-    public class XmlFileJobStateManager : IJobStateManagerService, IDisposable
+    public class XmlFileJobStateManager : IJobStateManagerService, IDisposable, IProvideBackupAssets, IRestoreBackupAssets
     {
 
+        private readonly Guid JOB_STATE_ASSET_ID = Guid.Parse("BFB822E4-633F-49CA-8459-1DDBD7C435B5");
 
         // Get job states of the job objects
         private readonly ConcurrentBag<XmlJobState> m_jobStates;
@@ -126,7 +129,7 @@ namespace SanteDB.Core.Jobs
                 assembly = Assembly.GetCallingAssembly();
             }
 
-             
+
             if (null != assembly)
             {
                 try
@@ -134,7 +137,7 @@ namespace SanteDB.Core.Jobs
                     var dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory");
                     if (dataDirectory is String ddir)
                     {
-                        this.m_jobStateLocation = Path.Combine(ddir, "xcron.xml");
+                        this.m_jobStateLocation = Path.Combine(ddir, "xstate.xml");
                     }
                     else
                     {
@@ -210,7 +213,7 @@ namespace SanteDB.Core.Jobs
         }
 
         /// <inheritdoc/>
-        public void SetState(IJob job, JobStateType state)
+        public void SetState(IJob job, JobStateType state, string statusText)
         {
             var jobData = this.m_jobStates.FirstOrDefault(o => o.JobId == job.Id);
             if (jobData == null)
@@ -246,7 +249,7 @@ namespace SanteDB.Core.Jobs
                     break;
             }
             jobData.CurrentState = state;
-
+            jobData.StatusText = statusText;
             this.SaveState();
         }
 
@@ -276,6 +279,56 @@ namespace SanteDB.Core.Jobs
         public void Dispose()
         {
             this.SaveState();
+        }
+
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { JOB_STATE_ASSET_ID };
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            lock (this.m_lock)
+            {
+                yield return new FileBackupAsset(JOB_STATE_ASSET_ID, Path.GetFileName(this.m_jobStateLocation), this.m_jobStateLocation);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if (backupAsset.AssetClassId != JOB_STATE_ASSET_ID)
+            {
+                throw new InvalidOperationException();
+            }
+
+            lock (this.m_lock)
+            {
+                using (var fs = File.Create(this.m_jobStateLocation))
+                {
+                    using (var astr = backupAsset.Open())
+                    {
+                        astr.CopyTo(fs);
+                    }
+                    fs.Seek(0, SeekOrigin.Begin);
+
+                    // Clear the current bag
+                    while (this.m_jobStates.TryTake(out _))
+                    {
+                        ;
+                    }
+
+                    foreach (var itm in this.m_xsz.Deserialize(fs) as List<XmlJobState>)
+                    {
+                        this.m_jobStates.Add(itm);
+                    }
+                    return true;
+                }
+            }
         }
     }
 }

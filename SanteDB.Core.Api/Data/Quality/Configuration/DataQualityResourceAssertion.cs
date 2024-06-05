@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model.Query;
 using System;
@@ -38,31 +39,31 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Gets or sets the identifier
         /// </summary>
-        [XmlAttribute("id")]
+        [XmlAttribute("id"), JsonProperty("id")]
         public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the name 
         /// </summary>
-        [XmlAttribute("name")]
-        public string Name { get; set; }
+        [XmlAttribute("name"), JsonProperty("name")]
+        public string Text { get; set; }
 
         /// <summary>
         /// Gets or sets the priority 
         /// </summary>
-        [XmlAttribute("priority")]
+        [XmlAttribute("priority"), JsonProperty("priority")]
         public DetectedIssuePriorityType Priority { get; set; }
 
         /// <summary>
         /// The evaluation
         /// </summary>
-        [XmlAttribute("evaluation")]
+        [XmlAttribute("evaluation"), JsonProperty("evaluation")]
         public AssertionEvaluationType Evaluation { get; set; }
 
         /// <summary>
         /// Gets or sets the expressions which are checked
         /// </summary>
-        [XmlElement("expression")]
+        [XmlElement("expression"), JsonProperty("expression")]
         public List<string> Expressions { get; set; }
 
 
@@ -72,15 +73,15 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Delegates
         /// </summary>
-        public List<Func<Object, bool>> GetDelegates<TModel>()
+        public List<Func<Object, bool>> GetDelegates(Type forType)
         {
             if (this.m_delegates == null)
             {
                 this.m_delegates = this.Expressions.Select(o =>
                 {
-                    var expression = QueryExpressionParser.BuildLinqExpression<TModel>(o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
+                    var expression = QueryExpressionParser.BuildLinqExpression(forType, o.ParseQueryString(), null, safeNullable: true, forceLoad: true);
                     var parm = Expression.Parameter(typeof(Object));
-                    return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, typeof(TModel))), parm).Compile();
+                    return (Func<Object, bool>)Expression.Lambda<Func<Object, bool>>(Expression.Invoke(expression, Expression.Convert(parm, forType)), parm).Compile();
                 }).ToList();
             }
             return this.m_delegates;
@@ -97,16 +98,16 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// All of the expressions must evaluate to true
         /// </summary>
         [XmlEnum("all")]
-        All,
+        All = 0,
         /// <summary>
         /// Any of the expressions must evaluate to true
         /// </summary>
         [XmlEnum("any")]
-        Any,
+        Any = 1,
         /// <summary>
         /// None of the expressions should evaluate to true
         /// </summary>
         [XmlEnum("none")]
-        None
+        None = 2
     }
 }

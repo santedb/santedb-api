@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -131,7 +132,9 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public AuditEventData Insert(AuditEventData audit)
         {
-            return this.m_persistenceService?.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var preArgs = new DataPersistingEventArgs<AuditEventData>(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var retVal = this.m_persistenceService?.Insert(audit, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return retVal;
         }
 
         /// <summary>
@@ -140,8 +143,8 @@ namespace SanteDB.Core.Services.Impl.Repository
         public AuditEventData Delete(Guid key)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
-
-            return this.m_persistenceService?.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            var retVal = this.m_persistenceService?.Delete(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            return retVal;
         }
 
         /// <summary>
@@ -151,15 +154,19 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.AccessAuditLog);
 
+            var preArgs = new DataPersistingEventArgs<AuditEventData>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
             var existing = this.m_persistenceService.Get(data.Key.Value, null, AuthenticationContext.Current.Principal);
+            AuditEventData retVal = null;
             if (existing == null)
             {
-                return this.m_persistenceService?.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                retVal = this.m_persistenceService?.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
             else
             {
-                return this.m_persistenceService?.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                retVal = this.m_persistenceService?.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             }
+            return retVal;
         }
     }
 }

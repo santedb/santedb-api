@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,12 +16,14 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
+using SharpCompress;
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -97,13 +99,13 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Save(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item)
+            foreach (var itm in data.Item.Select(o => o.GetType()).Distinct())
             {
-                var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
+                var irst = typeof(IRepositoryService<>).MakeGenericType(itm);
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService)
                 {
-                    (irsi as ISecuredRepositoryService).DemandAlter(itm);
+                    data.Item.Where(o => itm == o.GetType()).ForEach(i => (irsi as ISecuredRepositoryService).DemandAlter(i));
                 }
             }
 

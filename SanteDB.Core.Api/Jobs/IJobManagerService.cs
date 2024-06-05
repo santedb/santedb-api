@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Services;
 using System;
@@ -131,6 +131,13 @@ namespace SanteDB.Core.Jobs
         /// <param name="jobKey">The job type to fetch</param>
         /// <returns>The job instance that matches the job key</returns>
         IJob GetJobInstance(Guid jobKey);
+
+        /// <summary>
+        /// Get the job instance from <paramref name="jobType"/>
+        /// </summary>
+        /// <param name="jobType">The type of job to fetch the instance of</param>
+        /// <returns>The job instance that was registered with the job manager</returns>
+        IJob GetJobInstance(Type jobType);
 
         /// <summary>
         /// Get the schedule for the specified job

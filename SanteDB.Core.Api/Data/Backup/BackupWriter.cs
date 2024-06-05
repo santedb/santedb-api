@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,11 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.Security;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
-using SharpCompress.IO;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
@@ -60,9 +60,14 @@ namespace SanteDB.Core.Data.Backup
         public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null)
         {
 
-            underlyingStream = new BZip2Stream(NonDisposingStream.Create(underlyingStream), CompressionMode.Compress, false);
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
             underlyingStream.Write(BitConverter.GetBytes(DateTime.UtcNow.Ticks), 0, sizeof(long));
+
+            // Save the creator
+            var createdBy = Encoding.UTF8.GetBytes(AuthenticationContext.Current.Principal.Identity.Name);
+            underlyingStream.WriteByte((byte)createdBy.Length);
+            underlyingStream.Write(createdBy, 0, createdBy.Length);
+
             underlyingStream.Write(BitConverter.GetBytes((long)assetsToWrite.Count), 0, sizeof(long));
             foreach (var ast in assetsToWrite)
             {
@@ -88,6 +93,8 @@ namespace SanteDB.Core.Data.Backup
                 underlyingStream = new CryptoStream(underlyingStream, desCrypto.CreateEncryptor(), CryptoStreamMode.Write);
                 underlyingStream.Write(MAGIC, 0, MAGIC.Length);
             }
+
+            underlyingStream = new BZip2Stream(underlyingStream, CompressionMode.Compress, false);
 
             return new BackupWriter(underlyingStream);
         }
@@ -116,6 +123,10 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarWriter != null)
             {
+                if (this.m_underlyingStream is CryptoStream cs)
+                {
+                    cs.FlushFinalBlock();
+                }
                 this.m_underlyingStream.Flush();
                 this.m_tarWriter.Dispose();
                 this.m_underlyingStream.Dispose();

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,11 +16,13 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SanteDB.Core.Services.Impl
@@ -28,8 +30,10 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// File system based stream manager
     /// </summary>
-    public class FileSystemDataStreamManager : IDataStreamManager
+    public class FileSystemDataStreamManager : IDataStreamManager, IProvideBackupAssets, IRestoreBackupAssets
     {
+        private readonly Guid DATA_STREAM_FILE = Guid.Parse("E915F19B-82A6-45E9-85F2-13A4A04500D5");
+
         private readonly ISymmetricCryptographicProvider m_symmetricCryptographicProvider;
         private readonly string m_fileLocation;
 
@@ -45,6 +49,9 @@ namespace SanteDB.Core.Services.Impl
                 Directory.CreateDirectory(this.m_fileLocation);
             }
         }
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { DATA_STREAM_FILE };
 
         /// <inheritdoc/>
         public Guid Add(Stream stream)
@@ -94,6 +101,15 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach (var fileName in Directory.EnumerateFiles(this.m_fileLocation))
+            {
+                yield return new FileBackupAsset(DATA_STREAM_FILE, Path.GetFileName(fileName), fileName);
+            }
+        }
+
+        /// <inheritdoc/>
         public void Remove(Guid streamId)
         {
             var fileName = Path.Combine(this.m_fileLocation, streamId.ToString());
@@ -102,6 +118,28 @@ namespace SanteDB.Core.Services.Impl
                 throw new FileNotFoundException(fileName);
             }
             File.Delete(fileName);
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if (backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if (backupAsset.AssetClassId != DATA_STREAM_FILE)
+            {
+                throw new InvalidOperationException();
+            }
+
+            using (var fs = File.Create(Path.Combine(this.m_fileLocation, backupAsset.Name)))
+            {
+                using (var astr = backupAsset.Open())
+                {
+                    astr.CopyTo(fs);
+                    return true;
+                }
+            }
         }
     }
 }

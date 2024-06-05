@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
@@ -24,12 +24,11 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Security;
-using SanteDB.Core.Security.Claims;
-using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using System;
@@ -37,9 +36,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
-using System.Dynamic;
 using System.Linq;
-using System.Security.Principal;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -88,7 +86,7 @@ namespace SanteDB.Core.Services.Impl
             var entityData = new Dictionary<String, Object>()
             {
                 { "$type", entity.GetType().GetSerializationName() },
-                { "identifier", entity.LoadProperty(o => o.Identifiers).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
+                { "identifier", entity.LoadProperty(o => o.Identifiers).Where(o => o.IdentityDomain.PolicyKey == null /* Exclude domains where any disclosure policy exists. */).GroupBy(o => o.IdentityDomain.DomainName).ToDictionary(o => o.Key, o => o.Select(id => new
                     {
                         value = entity.GetType().GetResourceSensitivityClassification() == ResourceSensitivityClassification.PersonalHealthInformation ? id.Value.Mask() : id.Value,
                         checkDigit = id.CheckDigit
@@ -96,11 +94,16 @@ namespace SanteDB.Core.Services.Impl
                 }
             };
 
+            if(entity is UserEntity ue)
+            {
+                entityData.Add("securityUser", ue.SecurityUserKey);
+            }
+
             var domainList = new
             {
                 ver = typeof(JwsResourcePointerService).Assembly.GetName().Version.ToString(),
                 iat = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                sub = entity.Key.ToString(),
+                sub = entity.Key.Value.ToString(),
                 gen_by = AuthenticationContext.Current.Principal.Identity.Name,
                 data = entityData
             };
@@ -111,7 +114,7 @@ namespace SanteDB.Core.Services.Impl
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
             var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
-            if(signingCertificate?.Any() == true)
+            if (signingCertificate?.Any() == true)
             {
                 signature = signature.WithCertificate(signingCertificate.First());
             }
@@ -145,7 +148,7 @@ namespace SanteDB.Core.Services.Impl
                         case JsonWebSignatureParseResult.MissingAlgorithm:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Token cannot be validated - missing algorithm", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingKeyId:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.nokey", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.UnsupportedAlgorithm:
@@ -177,7 +180,7 @@ namespace SanteDB.Core.Services.Impl
 
                 // Attempt direct load?
                 IHasIdentifiers retVal = null;
-                if(payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId) || Guid.TryParse(parsedToken.Payload.sub, out uuidId))
+                if (payloadData.TryGetValue("id", out var idValue) && Guid.TryParse(idValue.ToString(), out var uuidId) || Guid.TryParse(parsedToken.Payload.sub, out uuidId))
                 {
                     retVal = repoService.Get(uuidId) as IHasIdentifiers;
                 }
@@ -197,9 +200,20 @@ namespace SanteDB.Core.Services.Impl
 
                     // HACK: .NET is using late binding and getting confused
                     var results = repoService.Find(filterExpression);
-                    if (results.Count() != 1)
+                    if (results.Count() > 1)
                     {
                         throw new ConstraintException(ErrorMessages.AMBIGUOUS_DATA_REFERENCE);
+                    }
+                    else if (!results.Any())
+                    {
+                        if (uuidId != Guid.Empty)
+                        {
+                            throw new KeyNotFoundException(string.Format(ErrorMessages.OBJECT_NOT_FOUND, uuidId));
+                        }
+                        else
+                        {
+                            throw new KeyNotFoundException(ErrorMessages.NO_RESULTS);
+                        }
                     }
 
                     retVal = results.FirstOrDefault() as IHasIdentifiers;

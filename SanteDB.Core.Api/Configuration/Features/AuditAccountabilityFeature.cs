@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Services;
@@ -74,7 +74,8 @@ namespace SanteDB.Core.Configuration.Features
                     CompleteAuditTrail = true,
                     AuditFilters = new List<AuditFilterConfiguration>
                     {
-                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, false, false),
+                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, true, false),
+                        new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.EmergencyOverrideStarted | EventIdentifierType.SecurityAlert, null, true, true),
                         new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true)
                     },
                     SourceInformation = new AuditSourceConfiguration()

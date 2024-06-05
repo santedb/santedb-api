@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using System;
 using System.IO;
@@ -26,18 +26,8 @@ namespace SanteDB.Core.Data.Backup
     /// <summary>
     /// Represents a single asset (file, database, etc.) which can be backed up
     /// </summary>
-    public interface IBackupAsset : IDisposable
+    public interface IBackupAsset : IBackupAssetDescriptor, IDisposable
     {
-
-        /// <summary>
-        /// Gets the asset type identifier used for restoring 
-        /// </summary>
-        Guid AssetClassId { get; }
-
-        /// <summary>
-        /// Get the name of the asset
-        /// </summary>
-        String Name { get; }
 
         /// <summary>
         /// Open the backup stream 

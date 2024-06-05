@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,14 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
-using Newtonsoft.Json.Linq;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
-using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
@@ -152,11 +149,11 @@ namespace SanteDB.Core.Jobs
         /// Log of timers
         /// </summary>
         private ConcurrentBag<JobExecutionInfo> m_jobs = new ConcurrentBag<JobExecutionInfo>();
-        
+
         /// <inheritdoc/>
         public IEnumerable<Type> GetAvailableJobs() =>
             this.m_serviceManager.GetAllTypes()
-                .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IJob).IsAssignableFrom(t));
+                .Where(t => !t.IsGenericTypeDefinition && !t.IsInterface && !t.IsAbstract && typeof(IJob).IsAssignableFrom(t));
 
         #region ITimerService Members
 
@@ -174,10 +171,10 @@ namespace SanteDB.Core.Jobs
             {
                 if (this.m_configuration != null)
                 {
-                    foreach (var configuration in this.m_configuration.Jobs)
+                    // Load from static configuration file and from the cron-tab
+                    foreach (var configuration in this.m_configuration.Jobs.Where(j => !this.m_jobs.Any(r => r.Job.GetType() == j.Type)))
                     {
                         var job = configuration.Type.CreateInjected() as IJob;
-
                         var ji = new JobExecutionInfo(job, configuration.StartType, configuration.Parameters);
                         this.m_tracer.TraceInfo("Adding {0} from configuration (start type of {0})", ji.Job.Name, configuration.StartType);
                         this.m_jobs.Add(ji);
@@ -330,9 +327,9 @@ namespace SanteDB.Core.Jobs
             // Try to save the configuration 
             try
             {
-                
+
                 // Is there no configuration?
-                if(this.m_configuration == null)
+                if (this.m_configuration == null)
                 {
                     this.m_configuration = new JobConfigurationSection() { Jobs = new List<JobItemConfiguration>() };
                     this.m_configurationManager.Configuration.AddSection(this.m_configuration);
@@ -420,6 +417,12 @@ namespace SanteDB.Core.Jobs
         public IJob GetJobInstance(Guid jobKey)
         {
             return this.m_jobs.FirstOrDefault(o => o.Job.Id == jobKey)?.Job;
+        }
+
+        /// <inheritdoc/>
+        public IJob GetJobInstance(Type jobType)
+        {
+            return this.m_jobs.FirstOrDefault(o => o.Job.GetType() == jobType)?.Job;
         }
 
         /// <summary>

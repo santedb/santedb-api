@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,9 +16,10 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Data.Import;
+using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -762,8 +763,13 @@ namespace SanteDB.Core.Security.Audit
             return builder.WithAuditableObjects(objects.SelectMany(o =>
                 {
                     if (o is IResourceCollection bundle)
+                    {
                         return bundle.Item.Select(i => i.ToAuditableObject());
-                    else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
+                    }
+                    else
+                    {
+                        return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
+                    }
                 }
             ).OfType<AuditableObject>());
         }
@@ -786,8 +792,13 @@ namespace SanteDB.Core.Security.Audit
                 .WithAuditableObjects(data?.OfType<TData>()?.SelectMany(o =>
                 {
                     if (o is Bundle bundle)
+                    {
                         return bundle.Item.Select(i => i.ToAuditableObject(lifecycle));
-                    else return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
+                    }
+                    else
+                    {
+                        return new AuditableObject[] { o.ToAuditableObject(lifecycle) };
+                    }
                 }).OfType<AuditableObject>())
                 .WithAuditableObjects(
                     !string.IsNullOrEmpty(queryPerformed) ? new AuditableObject
@@ -871,7 +882,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification?.GetDisplayName("en") };
                     retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
+                    {
                         lifecycle = AuditableObjectLifecycle.Deidentification;
+                    }
+
                     break;
                 case SecurityUser su:
                     retVal.Role = AuditableObjectRole.SecurityUser;
@@ -929,6 +943,13 @@ namespace SanteDB.Core.Security.Audit
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeForeignFile;
                     retVal.ObjectId = fds.Key.ToString();
                     retVal.NameData = fds.Name;
+                    break;
+                case DataQualityRulesetConfiguration dqrc:
+                    retVal.IDTypeCode = AuditableObjectIdType.Custom;
+                    retVal.Type = AuditableObjectType.SystemObject;
+                    retVal.CustomIdTypeCode = ExtendedAuditCodes.DataQualityConfiguration;
+                    retVal.ObjectId = dqrc.Id;
+                    retVal.NameData = dqrc.Name;
                     break;
                 default:
                     if (obj is IdentifiedData iid)
@@ -1129,6 +1150,7 @@ namespace SanteDB.Core.Security.Audit
             }
 
             if (ex is PolicyViolationException polvex)
+            {
                 builder.WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Uri,
@@ -1138,7 +1160,9 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject,
                     NameData = ex.Message
                 });
+            }
             else
+            {
                 builder.WithAuditableObjects(new AuditableObject()
                 {
                     IDTypeCode = AuditableObjectIdType.Uri,
@@ -1148,6 +1172,7 @@ namespace SanteDB.Core.Security.Audit
                     Type = AuditableObjectType.SystemObject,
                     NameData = ex.Message
                 });
+            }
 
             if (requestHeaders != null)
             {

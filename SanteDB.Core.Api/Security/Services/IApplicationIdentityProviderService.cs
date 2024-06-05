@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Principal;
@@ -76,7 +76,8 @@ namespace SanteDB.Core.Security.Services
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
         /// <param name="principal">The principal that was created</param>
-        IApplicationIdentity CreateIdentity(String applicationName, String password, IPrincipal principal);
+        /// <param name="withSid">When supplied the security identifier for the new identity</param>
+        IApplicationIdentity CreateIdentity(String applicationName, String password, IPrincipal principal, Guid? withSid = null);
 
         /// <summary>
         /// Gets the specified identity for an application.
@@ -137,5 +138,6 @@ namespace SanteDB.Core.Security.Services
         /// <param name="applicationName">The name of the device account from which the claim should be removed</param>
         void RemoveClaim(String applicationName, String claimType, IPrincipal principal);
     }
+
 
 }

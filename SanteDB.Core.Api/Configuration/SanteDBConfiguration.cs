@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
@@ -296,6 +296,9 @@ namespace SanteDB.Core.Configuration
                     cryptoConfig.EncryptionMetadata = crypto.Encrypt(aesKey, RSAEncryptionPadding.Pkcs1); // Save the encrypted secret in the config file
                     cryptoConfig.Sections = cryptoConfig.Sections.Select(o =>
                     {
+#if DEBUG
+                        return o;
+#else
                         if (o is IEncryptedConfigurationSection)
                         {
                             return new SanteDBProtectedConfigurationSectionWrapper(aesKey, o as IConfigurationSection);
@@ -304,6 +307,7 @@ namespace SanteDB.Core.Configuration
                         {
                             return o;
                         }
+#endif
                     }).ToList();
                     xsz.Serialize(dataStream, cryptoConfig, xmlns);
 

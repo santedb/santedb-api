@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,13 +16,17 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using NUnit.Framework;
+using SanteDB.Core.Data.Query;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Query.FilterExtension;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Security;
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace SanteDB.Core.Api.Test
 {
@@ -30,6 +34,33 @@ namespace SanteDB.Core.Api.Test
     [TestFixture(Category = "Core API")]
     public class ExtendedQueryFilterTest
     {
+
+        [Test]
+        public void TestHasClaimFilter()
+        {
+            var test = new SecurityUser[]
+            {
+                new SecurityUser() { UserName = "Bob" },
+                new SecurityUser() { UserName = "Allison" }
+            };
+
+            QueryFilterExtensions.AddExtendedFilter(new ClaimLookupQueryFilterExtension());
+            var filterQuery = "$self@SecurityUser=:(getClaim|someClaim)true".ParseQueryString();
+            var expr = QueryExpressionParser.BuildLinqExpression<SecurityUser>(filterQuery);
+
+            // See if the query expression throws NRE (no application context)
+            Assert.Throws<NullReferenceException>(() => test.FirstOrDefault(expr.Compile()));
+
+            // Ensure multi works
+            filterQuery = "$self@SecurityUser=:(getClaim|\"someClaim\")true&userName=Bob".ParseQueryString();
+            expr = QueryExpressionParser.BuildLinqExpression<SecurityUser>(filterQuery);
+            Assert.Throws<NullReferenceException>(() => test.FirstOrDefault(expr.Compile()));
+
+            var nvc = QueryExpressionBuilder.BuildQuery<SecurityUser>(expr);
+            Assert.AreEqual(2, nvc.AllKeys.Count());
+            Assert.AreEqual(filterQuery.ToHttpString(), nvc.ToHttpString());
+        }
+
         [Test]
         public void TestAgeFilter()
         {

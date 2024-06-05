@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using System;
 using System.IO;
@@ -29,7 +29,7 @@ namespace SanteDB.Core.Data.Backup
     public class StreamBackupAsset : IBackupAsset
     {
 
-        private Stream m_stream;
+        private Stream m_fetchedStream;
         private readonly Func<Stream> m_getStreamFunc;
 
         /// <summary>
@@ -48,27 +48,20 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public string Name { get; }
 
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (this.m_stream != null)
-            {
-                this.m_stream.Dispose();
-                this.m_stream = null;
-            }
-        }
-
         /// <summary>
         /// Open or return the stream
         /// </summary>
         public Stream Open()
         {
-            if (this.m_stream == null)
-            {
-                this.m_stream = this.m_getStreamFunc();
-            }
-            return this.m_stream;
+            this.m_fetchedStream = this.m_getStreamFunc();
+            return this.m_fetchedStream;
         }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.m_fetchedStream?.Dispose();
+        }
+
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,14 +15,13 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: trevor
- * Date: 2023-08-31
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Http.Compression;
 using SanteDB.Core.Http.Description;
 using SanteDB.Core.i18n;
-using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
@@ -38,7 +37,6 @@ using System.Net.Mime;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +66,7 @@ namespace SanteDB.Core.Http
                 s_UserAgent = "SanteDB 0.0 (0.0.0.0)";
             }
 
-            
+
             s_InfiniteTimeout = TimeSpan.FromMilliseconds(-1);
             //Set this to -1 for infinite timeout.
             //s_DefaultTimeout = TimeSpan.FromMilliseconds(-1);
@@ -249,7 +247,7 @@ namespace SanteDB.Core.Http
         protected virtual TimeSpan GetReceiveTimeout() => this.Description?.Endpoint?.First()?.ReceiveTimeout ?? s_InfiniteTimeout;
 
 
-        
+
 
         /// <inheritdoc />
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
@@ -292,7 +290,7 @@ namespace SanteDB.Core.Http
 
                         var responsetask = webrequest.GetResponseAsync();
                         var connecttimeouttask = Task.Delay(GetConnectTimeout());
-                        var resulttask = await Task.WhenAny(connecttimeouttask, responsetask);
+                        var resulttask = await Task.WhenAny(responsetask, connecttimeouttask);
 
                         if (resulttask == connecttimeouttask)
                         {
@@ -319,7 +317,7 @@ namespace SanteDB.Core.Http
                         {
                             //TODO: Optimize this when we have our InvokeInternalAsync() in place.
                             cancellationtoken.ThrowIfCancellationRequested();
-                            var redirectresult = this.InvokeInternal<TBody, TResult>(method, response.Headers[HttpResponseHeader.Location], contentType, requestHeaders, out responseheaders, default, query);
+                            var redirectresult = this.InvokeInternal<TBody, TResult>("GET", response.Headers[HttpResponseHeader.Location], this.Accept, requestHeaders, out responseheaders, default, query);
                             return (redirectresult, responseheaders);
                         }
                         else if (response.StatusCode == HttpStatusCode.NotModified)
@@ -350,7 +348,7 @@ namespace SanteDB.Core.Http
                         (Exception ex)
 #endif 
                         {
-                            
+
                         }
                         this.m_tracer.TraceError("Request timed out: {0}", e.Message);
                         throw;
@@ -370,11 +368,10 @@ namespace SanteDB.Core.Http
 
                             try
                             {
-                                errorResult = ReadResponseBody<TResult>(errorresponse);
+                                errorResult = ReadResponseBody<Object>(errorresponse);
                             }
                             catch (Exception e2)
                             {
-                                // De-Serialize using 
                                 throw new RestClientException<object>(ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, e2, e.Status, e.Response);
                             }
 
@@ -501,6 +498,26 @@ namespace SanteDB.Core.Http
         }
 
         /// <summary>
+        /// Uses the <see cref="System.IO.Stream.CopyTo(Stream)"/> method to copy a stream while running an asynchronous timer to report the progress of the operation using the <see cref="RestClientBase.FireProgressChanged(string, float)"/> method.
+        /// </summary>
+        /// <param name="fromStream">The stream to copy from.</param>
+        /// <param name="toStream">The stream to copy to.</param>
+        /// <param name="byteCountingStream">The stream which reports the bytes read. This can be the same stream as <paramref name="fromStream"/> if there are no intermediate streams (e.g. a decompression stream) involved.</param>
+        /// <param name="contentLength">When the content length is known, this is used to calculate the percentage completion of the operation.</param>
+        /// <param name="state">Optional state string that is reported with the progress of the operation.</param>
+        private void CopyStreamWithProgressReport(Stream fromStream, Stream toStream, IO.ByteCountingStream byteCountingStream, long contentLength, string state = null)
+        {
+            using (var reporttimer = new Timer((_) =>
+            {
+                var progress = contentLength > 0 ? (float)byteCountingStream.BytesRead / (float)contentLength : -1;
+                this.FireProgressChanged(state, progress);
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1)))
+            {
+                fromStream.CopyTo(toStream);
+            }
+        }
+
+        /// <summary>
         /// Read the response body from the from <see cref="HttpWebResponse"/>.
         /// </summary>
         /// <typeparam name="TResult">The desired type of the result.</typeparam>
@@ -527,33 +544,45 @@ namespace SanteDB.Core.Http
                 compressionscheme = null;
             }
 
+            var responselength = response.ContentLength;
+
+            if (responselength < 0)
+            {
+                responselength = 0; //Later this will trigger an indeterminate progress indicator.
+            }
+
             if (tresult == typeof(byte[])) //Fast path for byte array
             {
                 //TODO: Handle large payloads that shouldn't buffer in memory.
                 using (var responsestream = response.GetResponseStream())
                 {
-                    using (var memorystream = new MemoryStream())
+                    using (var bytecountingstream = new IO.ByteCountingStream(responsestream, false))
                     {
-                        if (null != compressionscheme)
+                        using (var memorystream = new MemoryStream())
                         {
-                            using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(responsestream)))
+                            if (null != compressionscheme)
                             {
-                                compressionstream.CopyTo(memorystream);
+                                using (var compressionstream = compressionscheme.CreateDecompressionStream(bytecountingstream))
+                                {
+                                    CopyStreamWithProgressReport(compressionstream, memorystream, bytecountingstream, responselength);
+                                    //compressionstream.CopyTo(memorystream);
+                                }
                             }
-                        }
-                        else
-                        {
-                            responsestream.CopyTo(memorystream);
-                        }
+                            else
+                            {
+                                CopyStreamWithProgressReport(bytecountingstream, memorystream, bytecountingstream, responselength);
+                                //responsestream.CopyTo(memorystream);
+                            }
 
-                        var responsebytes = memorystream.ToArray();
+                            var responsebytes = memorystream.ToArray();
 
-                        if (this.Description.Trace)
-                        {
-                            this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(responsebytes));
+                            if (this.Description.Trace)
+                            {
+                                this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(responsebytes));
+                            }
+
+                            return responsebytes;
                         }
-
-                        return responsebytes;
                     }
                 }
             }
@@ -562,27 +591,32 @@ namespace SanteDB.Core.Http
                 //TODO: Handle large payloads that shouldn't buffer in memory.
                 using (var responsestream = response.GetResponseStream())
                 {
-                    var memorystream = new MemoryStream(); //Not in a using because we're going to be returning it. It will be the caller's responsibility to dispose of it.
-
-                    if (null != compressionscheme)
+                    using (var bytecountingstream = new IO.ByteCountingStream(responsestream, false))
                     {
-                        using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(responsestream)))
+                        var memorystream = new MemoryStream(); //Not in a using because we're going to be returning it. It will be the caller's responsibility to dispose of it.
+
+                        if (null != compressionscheme)
                         {
-                            compressionstream.CopyTo(memorystream);
+                            using (var compressionstream = compressionscheme.CreateDecompressionStream(NonDisposingStream.Create(responsestream)))
+                            {
+                                //compressionstream.CopyTo(memorystream);
+                                CopyStreamWithProgressReport(compressionstream, memorystream, bytecountingstream, responselength);
+                            }
                         }
-                    }
-                    else
-                    {
-                        responsestream.CopyTo(memorystream);
-                    }
+                        else
+                        {
+                            CopyStreamWithProgressReport(bytecountingstream, memorystream, bytecountingstream, responselength);
+                            //responsestream.CopyTo(memorystream);
+                        }
 
-                    if (this.Description.Trace)
-                    {
-                        this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(memorystream.ToArray()));
-                    }
+                        if (this.Description.Trace)
+                        {
+                            this.m_tracer.TraceVerbose("HTTP << {0}", Convert.ToBase64String(memorystream.ToArray()));
+                        }
 
-                    memorystream.Seek(0, SeekOrigin.Begin); //Reset the stream's position so that callers are ready to read the buffered response.
-                    return memorystream;
+                        memorystream.Seek(0, SeekOrigin.Begin); //Reset the stream's position so that callers are ready to read the buffered response.
+                        return memorystream;
+                    }
                 }
             }
             else if (!string.IsNullOrEmpty(response.ContentType))
@@ -600,7 +634,11 @@ namespace SanteDB.Core.Http
 
                     using (var responsestream = response.GetResponseStream())
                     {
-                        responsestream.CopyTo(memorystream);
+                        using (var bytecountingstream = new IO.ByteCountingStream(responsestream, false))
+                        {
+                            CopyStreamWithProgressReport(bytecountingstream, memorystream, bytecountingstream, responselength);
+                            //responsestream.CopyTo(memorystream);
+                        }
                     }
 
                     memorystream.Seek(0, SeekOrigin.Begin);

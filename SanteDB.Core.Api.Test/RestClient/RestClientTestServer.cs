@@ -1,12 +1,28 @@
-﻿using Newtonsoft.Json;
+﻿/*
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
+ * the License.
+ * 
+ * User: fyfej
+ * Date: 2023-9-14
+ */
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +35,7 @@ namespace SanteDB.Core.Api.Test.RestClient
         readonly CancellationTokenSource _Cts;
         private bool disposedValue;
         private Task _ListenLoop;
-        
+
 
         public RestClientTestServer()
         {
@@ -59,13 +75,14 @@ namespace SanteDB.Core.Api.Test.RestClient
                     {
                         await HandleRequestAsync(ctx, ct);
                     }
-                    catch(Exception ex) {
+                    catch (Exception ex)
+                    {
                         Console.WriteLine($"{nameof(RestClientTestServer)}::ListenerMainLoop - Unhandled Exception (Returning 500)\n{ex.ToString()}");
                         ctx.Response.StatusCode = 500;
                         ctx.Response.StatusDescription = "Internal Server Error";
                         ctx.Response.Close();
                     }
-                    
+
                 }
             }
         }
@@ -122,7 +139,7 @@ namespace SanteDB.Core.Api.Test.RestClient
                 {
                     delay = TimeSpan.FromMilliseconds(s);
                 }
-                
+
                 else if (TimeSpan.TryParse(delayamountstring, out var d))
                 {
                     delay = d;
@@ -162,7 +179,8 @@ namespace SanteDB.Core.Api.Test.RestClient
             response.ContentLength64 = ms.Length;
 
             int b = -1;
-            while(!token.IsCancellationRequested && (b = ms.ReadByte()) >= 0){
+            while (!token.IsCancellationRequested && (b = ms.ReadByte()) >= 0)
+            {
                 await Task.Delay(delay, token);
                 token.ThrowIfCancellationRequested();
                 response.OutputStream.WriteByte((byte)b);
@@ -217,8 +235,8 @@ namespace SanteDB.Core.Api.Test.RestClient
             }
 
             var responsebodystr = JsonConvert.SerializeObject(responsebody);
-            
-            using(var sw = new StreamWriter(response.OutputStream, Encoding.UTF8, 1024, true))
+
+            using (var sw = new StreamWriter(response.OutputStream, Encoding.UTF8, 1024, true))
             {
                 await sw.WriteLineAsync(responsebodystr);
             }
@@ -296,7 +314,7 @@ namespace SanteDB.Core.Api.Test.RestClient
                     if (null != _Listener)
                     {
                         _Cts.Cancel();
-                        
+
                         try
                         {
                             _Listener.Abort();
@@ -309,7 +327,9 @@ namespace SanteDB.Core.Api.Test.RestClient
                         }
 
                         if (!_ListenLoop.IsCompleted)
+                        {
                             _ListenLoop.Wait();
+                        }
                     }
                 }
 
@@ -331,9 +351,9 @@ namespace SanteDB.Core.Api.Test.RestClient
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
-        } 
+        }
         #endregion
 
-        
+
     }
 }

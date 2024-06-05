@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Services;
 using System;
@@ -50,9 +50,9 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Get the total set of rules
         /// </summary>
-        public DataQualityRulesetConfiguration GetRuleSet(string name)
+        public DataQualityRulesetConfiguration GetRuleSet(string id)
         {
-            return this.m_configuration.RuleSets.FirstOrDefault(o => o.Name == name);
+            return this.m_configuration.RuleSets.FirstOrDefault(o => o.Id == id);
         }
 
         /// <summary>
@@ -66,9 +66,18 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Get all rules for the specified type
         /// </summary>
-        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>()
+        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>() => this.GetRulesForType(typeof(T));
+
+        /// <summary>
+        /// Get all rules for the specified type
+        /// </summary>
+        public IEnumerable<DataQualityResourceConfiguration> GetRulesForType(Type forType) => this.m_configuration.RuleSets.SelectMany(o => o.Resources).Where(r => r.ResourceType == forType);
+        
+
+        /// <inheritdoc/>
+        public void RemoveRuleSet(string id)
         {
-            return this.m_configuration.RuleSets.SelectMany(o => o.Resources).Where(r => r.ResourceType == typeof(T));
+            throw new NotSupportedException();
         }
 
         /// <summary>

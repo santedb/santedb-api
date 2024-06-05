@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -101,7 +102,10 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         public void Save(Stream str)
         {
-            m_xsz.Serialize(str, this);
+            using (SerializationControlContext.EnterExportContext())
+            {
+                m_xsz.Serialize(str, this);
+            }
         }
     }
 

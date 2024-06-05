@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
@@ -27,7 +27,6 @@ using System;
 using System.Security.Principal;
 
 #pragma warning disable CS0612
-#pragma warning disable CS0067
 namespace SanteDB.Core.Security
 {
     /// <summary>
@@ -36,7 +35,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyEnforcementService : IPolicyEnforcementService
     {
         // Default policy decision service
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyEnforcementService));
 
         // PDP Service
         private IPolicyDecisionService m_pdpService;
@@ -91,7 +90,12 @@ namespace SanteDB.Core.Security
         public void Demand(string policyId, IPrincipal principal)
         {
             var result = this.GetGrant(principal, policyId);
-            ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+
+            if (principal != AuthenticationContext.SystemPrincipal)
+            {
+                ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
+            }
+
             if (result != PolicyGrantType.Grant)
             {
                 throw new PolicyViolationException(principal, policyId, result);

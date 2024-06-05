@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
@@ -62,7 +62,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Gets or sets the If-Modified-Since header
         /// </summary>
-        public DateTime? IfModifiedSince { get; set; }
+        public DateTimeOffset? IfModifiedSince { get; set; }
 
         /// <summary>
         /// Gets or sets the If-None-Match
@@ -195,12 +195,14 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="data">The data to be updated.</param>
         /// <param name="forceUpdate">When true, indicates that update should not do a safety check</param>
-        void Update(IdentifiedData data, bool forceUpdate = false);
+        /// <param name="autoResolveConflict">When true indicates that the implementation should attempt to automatically resolve any conflicts with the server
+        /// (note: this may increase bandwidth use)</param>
+        void Update(IdentifiedData data, bool forceUpdate = false, bool autoResolveConflict = false);
 
         /// <summary>
         /// Authenticate as the device
         /// </summary>
-        IPrincipal AuthenticateAsDevice();
+        IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null);
 
     }
 

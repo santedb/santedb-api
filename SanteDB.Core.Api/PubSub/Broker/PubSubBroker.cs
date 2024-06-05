@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
@@ -32,6 +32,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Xml;
 
 namespace SanteDB.Core.PubSub.Broker
 {
@@ -107,7 +108,7 @@ namespace SanteDB.Core.PubSub.Broker
         private IServiceManager m_serviceManager;
 
         // Queue service
-        private IDispatcherQueueManagerService m_queue;
+        private IDispatcherQueueManagerService m_queueService;
 
         /// <summary>
         /// Create a new pub-sub broker
@@ -115,15 +116,16 @@ namespace SanteDB.Core.PubSub.Broker
         public PubSubBroker(IServiceManager serviceManager, IDispatcherQueueManagerService queueService, IPubSubManagerService pubSubManager)
         {
             this.m_serviceManager = serviceManager;
-            this.m_queue = queueService;
+            this.m_queueService = queueService;
             this.m_pubSubManager = pubSubManager;
             // Create necessary service listener
-            this.m_pubSubManager.Subscribed += this.PubSubSubscribed;
+            this.m_pubSubManager.Subscribed += this.PubSubSubscribe;
             this.m_pubSubManager.UnSubscribed += this.PubSubUnSubscribed;
+            this.m_pubSubManager.Activated += (o, e) =>
+            {
+                this.PubSubSubscribe(o, e);
+            };
 
-            queueService.Open(QueueName);
-            queueService.SubscribeTo(QueueName, this.NotificationQueued);
-            queueService.Open($"{QueueName}.dead");
         }
 
         /// <summary>
@@ -136,7 +138,7 @@ namespace SanteDB.Core.PubSub.Broker
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     Object queueObject = null;
-                    while ((queueObject = this.m_queue.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is PubSubNotifyQueueEntry evtData)
+                    while ((queueObject = this.m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is PubSubNotifyQueueEntry evtData)
                     {
                         try
                         {
@@ -194,7 +196,7 @@ namespace SanteDB.Core.PubSub.Broker
                         catch (Exception ex)
                         {
                             this.m_tracer.TraceError("Error dispatching notification from PubSub broker: {0}", ex);
-                            this.m_queue.Enqueue($"{QueueName}.dead", evtData);
+                            this.m_queueService.Enqueue($"{e.QueueName}.dead", evtData);
                         }
                     }
                 }
@@ -216,7 +218,8 @@ namespace SanteDB.Core.PubSub.Broker
                 var resourceName = data.GetType().GetSerializationName();
                 var subscriptions = this.m_pubSubManager
                         .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
-                        .ToList()
+                        .ToList();
+                subscriptions = subscriptions
                         .Where(o => o.Event.HasFlag(eventType))
                         .Where(s =>
                         {
@@ -252,7 +255,7 @@ namespace SanteDB.Core.PubSub.Broker
                                 this.m_filterCriteria.TryAdd(s.Key.Value, fn);
                             }
                             return fn(data);
-                        });
+                        }).ToList();
 
                 // Now we want to filter by channel, since the channel is really what we're interested in
                 foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
@@ -278,7 +281,7 @@ namespace SanteDB.Core.PubSub.Broker
             }
 
             this.m_repositoryListeners = null;
-            this.m_queue.UnSubscribe(QueueName, this.NotificationQueued);
+            this.m_queueService.UnSubscribe(QueueName, this.NotificationQueued);
         }
 
         /// <summary>
@@ -290,25 +293,25 @@ namespace SanteDB.Core.PubSub.Broker
             this.Starting?.Invoke(this, EventArgs.Empty);
             this.m_repositoryListeners = new List<IDisposable>();
 
-            ApplicationServiceContext.Current.Started += (o, e) =>
+            using (AuthenticationContext.EnterSystemContext())
             {
-                using (AuthenticationContext.EnterSystemContext())
+                try
                 {
-                    try
+                    var bundleListener = this.m_serviceManager.CreateInjected<BundleRepositoryListener>();
+                    this.m_repositoryListeners.Add(bundleListener);
+
+                    // Hook up the listeners for existing
+                    foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
                     {
-                        // Hook up the listeners for existing
-                        foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
-                        {
-                            this.PubSubSubscribed(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        this.m_tracer.TraceWarning("Cannot wire up subscription broker - {0}", ex);
+                        this.PubSubSubscribe(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
+                        bundleListener.AddSubscription(psd);
                     }
                 }
-            };
-            this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected<BundleRepositoryListener>());
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceWarning("Cannot wire up subscription broker - {0}", ex);
+                }
+            }
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;
@@ -336,11 +339,18 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Pub-sub definition has been subscribed
         /// </summary>
-        private void PubSubSubscribed(object sender, Event.DataPersistedEventArgs<PubSubSubscriptionDefinition> e)
+        private void PubSubSubscribe(object sender, Event.DataPersistedEventArgs<PubSubSubscriptionDefinition> e)
         {
             lock (this.m_lock)
             {
                 var lt = typeof(PubSubRepositoryListener<>).MakeGenericType(e.Data.ResourceType);
+
+                var queueName = $"{QueueName}.{e.Data.Name}";
+                this.m_queueService.Open(queueName);
+                this.m_queueService.SubscribeTo(queueName, this.NotificationQueued);
+                this.m_queueService.Open($"{queueName}.dead");
+
+                this.m_repositoryListeners.OfType<BundleRepositoryListener>().First().AddSubscription(e.Data);
                 if (!this.m_repositoryListeners.Any(o => o.GetType().Equals(lt)))
                 {
                     this.m_repositoryListeners.Add(this.m_serviceManager.CreateInjected(lt) as IDisposable);

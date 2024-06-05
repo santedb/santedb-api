@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,8 +16,9 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
+using SanteDB.Core.i18n;
 using System;
 using System.Net;
 
@@ -60,7 +61,7 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Create the client exception
         /// </summary>
-        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? "Request failed", null, status, response)
+        public RestClientException(TResult result, Exception inner, WebExceptionStatus status, WebResponse response) : base(inner?.Message ?? ErrorMessages.COMMUNICATION_RESPONSE_FAILURE, null, status, response)
         {
             this.Result = result;
             if (response is HttpWebResponse hwr)

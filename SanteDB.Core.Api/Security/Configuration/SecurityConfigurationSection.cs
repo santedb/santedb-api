@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Model.Map;
@@ -64,6 +64,10 @@ namespace SanteDB.Core.Security.Configuration
     public class SecurityConfigurationSection : IEncryptedConfigurationSection
     {
         /// <summary>
+        /// If MFA is required
+        /// </summary>
+        public const string RequireMfaName = "auth.mfa.required";
+        /// <summary>
         /// Password complexity requirements disclosure
         /// </summary>
         public const string PasswordValidationDisclosureName = "sec.pwd";
@@ -75,6 +79,10 @@ namespace SanteDB.Core.Security.Configuration
         /// Session length policy
         /// </summary>
         public const string LocalSessionLengthDisclosureName = "sec.ses";
+        /// <summary>
+        /// Allow public backups
+        /// </summary>
+        public const string PublicBackupsAllowedDisclosureName = "backup.public";
 
         /// <summary>
         /// Security configuration section
@@ -182,8 +190,11 @@ namespace SanteDB.Core.Security.Configuration
         public IEnumerable<AppSettingKeyValuePair> ForDisclosure()
         {
             yield return new AppSettingKeyValuePair(PasswordValidationDisclosureName, this.PasswordRegex);
+            yield return new AppSettingKeyValuePair(RequireMfaName, this.GetSecurityPolicy(SecurityPolicyIdentification.RequireMfa, false).ToString());
             yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
             yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
+            yield return new AppSettingKeyValuePair(PublicBackupsAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false).ToString());
+
         }
 
     }

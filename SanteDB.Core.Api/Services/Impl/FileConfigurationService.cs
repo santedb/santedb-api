@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Configuration.Data;
@@ -215,31 +215,44 @@ namespace SanteDB.Core.Services.Impl
                     }
                 }
             }
-            catch (XmlException) // attempt a restore
+            catch (XmlException)
             {
-                if (File.Exists(backupFileName))
+                this.RestoreBackupFile(backupFileName);
+            }
+            catch (Exception e) when (e.InnerException is XmlException)
+            {
+                this.RestoreBackupFile(backupFileName);
+            }
+        }
+
+        /// <summary>
+        /// Restore the backup configuration file
+        /// </summary>
+        /// <param name="backupFileName"></param>
+        private void RestoreBackupFile(string backupFileName)
+        {
+            if (File.Exists(backupFileName))
+            {
+                using (var backupFile = File.OpenRead(backupFileName))
                 {
-                    using (var backupFile = File.OpenRead(backupFileName))
+                    using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
                     {
-                        using (var gzStream = new GZipStream(backupFile, CompressionMode.Decompress))
+                        using (var configFileStream = File.Create(this.m_configurationFileName))
                         {
-                            using (var configFileStream = File.Create(this.m_configurationFileName))
-                            {
-                                gzStream.CopyTo(configFileStream);
-                                configFileStream.Flush();
-                            }
+                            gzStream.CopyTo(configFileStream);
+                            configFileStream.Flush();
+                            configFileStream.Seek(0, SeekOrigin.Begin);
+                            Configuration = SanteDBConfiguration.Load(configFileStream);
                         }
                     }
-                    this.Reload();
                 }
-                throw;
             }
         }
 
         /// <summary>
         /// Save configuration
         /// </summary>
-        public void SaveConfiguration()
+        public void SaveConfiguration(bool restart = true)
         {
             if (this.IsReadonly)
             {
@@ -252,7 +265,11 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.Configuration.Save(s);
             }
-            this.RestartRequested?.Invoke(this, EventArgs.Empty);
+
+            if (restart)
+            {
+                this.RestartRequested?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <inheritdoc />
@@ -264,7 +281,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     using (var configStream = File.Create(this.m_configurationFileName))
                     {
-                        assetStream.CopyTo(assetStream);
+                        assetStream.CopyTo(configStream);
                         return true;
                     }
                 }

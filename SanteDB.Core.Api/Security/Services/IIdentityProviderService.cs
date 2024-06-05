@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
@@ -181,8 +181,9 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The username of the identity</param>
         /// <param name="password">The intitial password of the identity</param>
         /// <returns>The created identity</returns>
+        /// <param name="withSid">When supplied, the security identifier to be assigned to the identity</param>
         /// <param name="principal">The principal that was created</param>
-        IIdentity CreateIdentity(String userName, String password, IPrincipal principal);
+        IIdentity CreateIdentity(String userName, String password, IPrincipal principal, Guid? withSid = null);
 
         /// <summary>
         /// Authenticate the user creating an identity
@@ -253,6 +254,13 @@ namespace SanteDB.Core.Security.Services
         /// <param name="userName">The name of the user</param>
         /// <returns>The applicable authentication methods</returns>
         AuthenticationMethod GetAuthenticationMethods(String userName);
+
+        /// <summary>
+        /// Indicates that the password for the <paramref name="userName"/> should be immediately expired (user must change password at next login)
+        /// </summary>
+        /// <param name="userName">The name of the user whos password is expired</param>
+        /// <param name="principal">Th pincipal under which the lockout is being set</param>
+        void ExpirePassword(string userName, IPrincipal principal);
     }
 
 

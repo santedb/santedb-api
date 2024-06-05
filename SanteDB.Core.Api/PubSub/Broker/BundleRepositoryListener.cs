@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,12 +16,16 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Event;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Subscription;
 using SanteDB.Core.Queue;
 using SanteDB.Core.Services;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SanteDB.Core.PubSub.Broker
@@ -33,6 +37,7 @@ namespace SanteDB.Core.PubSub.Broker
     {
         // Thread pool
         private IDispatcherQueueManagerService m_queue;
+        private readonly ConcurrentDictionary<Type, List<PubSubSubscriptionDefinition>> m_subscriptionTypes;
 
         /// <summary>
         /// Bundle repository listener ctor
@@ -40,37 +45,74 @@ namespace SanteDB.Core.PubSub.Broker
         public BundleRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<Bundle> repositoryService) : base(pubSubManager, queueService, serviceManager, repositoryService, null)
         {
             this.m_queue = queueService;
+            this.m_subscriptionTypes = new ConcurrentDictionary<Type, List<PubSubSubscriptionDefinition>>();
         }
+
+
+        /// <summary>
+        /// Add a subscription
+        /// </summary>
+        internal void AddSubscription(PubSubSubscriptionDefinition pubSubSubscriptionDefinition)
+        {
+            if (!this.m_subscriptionTypes.TryGetValue(pubSubSubscriptionDefinition.ResourceType, out var subs))
+            {
+                subs = new List<PubSubSubscriptionDefinition>();
+                this.m_subscriptionTypes.TryAdd(pubSubSubscriptionDefinition.ResourceType, subs);
+            }
+            subs.Add(pubSubSubscriptionDefinition);
+        }
+
+        /// <summary>
+        /// Remove a subscription definition
+        /// </summary>
+        internal void RemoveSubscription(PubSubSubscriptionDefinition pubSubSubscriptionDefinition)
+        {
+            if (this.m_subscriptionTypes.TryGetValue(pubSubSubscriptionDefinition.ResourceType, out var subs))
+            {
+                subs.RemoveAll(o => o.Key == pubSubSubscriptionDefinition.Key || o.Name == pubSubSubscriptionDefinition.Name);
+            }
+        }
+
+
 
         /// <summary>
         /// Notify inserted
         /// </summary>
         protected override void OnInserted(object sender, DataPersistedEventArgs<Bundle> evt)
         {
+            if (!this.m_subscriptionTypes.Any())
+            {
+                return;
+            }
+
             foreach (var itm in evt.Data.Item.Where(i => !evt.Data.FocalObjects.Any() || evt.Data.FocalObjects.Contains(i.Key.GetValueOrDefault())))
             {
-                PubSubNotifyQueueEntry queueEntry = null;
 
-                switch (itm.BatchOperation)
+                if (this.m_subscriptionTypes.TryGetValue(itm.GetType(), out var subs))
                 {
-                    case Model.DataTypes.BatchOperationType.Auto:
-                    case Model.DataTypes.BatchOperationType.InsertOrUpdate:
-                    case Model.DataTypes.BatchOperationType.Insert:
-                        queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Create, itm);
-                        break;
+                    PubSubNotifyQueueEntry queueEntry = null;
 
-                    case Model.DataTypes.BatchOperationType.Update:
-                        queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Update, itm);
-                        break;
+                    switch (itm.BatchOperation)
+                    {
+                        case Model.DataTypes.BatchOperationType.Auto:
+                        case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                        case Model.DataTypes.BatchOperationType.Insert:
+                            queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Create, itm);
+                            break;
 
-                    case Model.DataTypes.BatchOperationType.Delete:
-                        queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Delete, itm);
-                        break;
-                    case Model.DataTypes.BatchOperationType.Ignore:
-                        return;
+                        case Model.DataTypes.BatchOperationType.Update:
+                            queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Update, itm);
+                            break;
+
+                        case Model.DataTypes.BatchOperationType.Delete:
+                            queueEntry = new PubSubNotifyQueueEntry(itm.GetType(), PubSubEventType.Delete, itm);
+                            break;
+                        case Model.DataTypes.BatchOperationType.Ignore:
+                            return;
+                    }
+
+                    subs.ForEach(q => this.m_queue.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueEntry));
                 }
-
-                this.m_queue.Enqueue(PubSubBroker.QueueName, queueEntry);
             }
         }
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Serialization;
 using System;
@@ -58,7 +58,7 @@ namespace SanteDB.Core.Http
         public void Serialize(System.IO.Stream s, object o, out ContentType contentType)
         {
             contentType = new ContentType($"{this.ContentType}; charset=utf-8");
-            using (var sw = new StreamWriter(s, System.Text.Encoding.UTF8))
+            using (var sw = new StreamWriter(s, System.Text.Encoding.UTF8, 2048, true))
             using (var xw = XmlWriter.Create(sw))
             {
                 this.GetSerializerInternal(o.GetType()).Serialize(xw, o);
@@ -70,7 +70,7 @@ namespace SanteDB.Core.Http
         /// </summary>
         public object DeSerialize(System.IO.Stream s, ContentType contentType, Type typeHint)
         {
-            using (var sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8")))
+            using (var sr = new StreamReader(s, System.Text.Encoding.GetEncoding(contentType.CharSet ?? "utf-8"), true, 2048, true))
             using (var xr = XmlReader.Create(sr))
             {
                 while (xr.NodeType != XmlNodeType.Element)

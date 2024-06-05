@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,22 +16,19 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-11-27
  */
 using SanteDB.Core.Model.Attributes;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 
 namespace SanteDB.Core.Cdss
 {
 
-    
+
     /// <summary>
     /// An interface which defines a generic asset
     /// </summary>
-    public interface ICdssAsset 
+    public interface ICdssAsset
     {
 
         /// <summary>
@@ -39,7 +36,7 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         /// <remarks>Implementers should ensure that a call to set the UUID only succeeds if the current value is null</remarks>
         [QueryParameter("uuid")]
-        Guid Uuid { get; set;  }
+        Guid Uuid { get; set; }
 
         /// <summary>
         /// The unique identifier of the object in the scope of the protocol
@@ -70,6 +67,7 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         [QueryParameter("annotation")]
         String Documentation { get; }
+
 
     }
 

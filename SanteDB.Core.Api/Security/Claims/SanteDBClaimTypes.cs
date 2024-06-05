@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using System;
 using System.Security.Principal;
@@ -96,6 +96,10 @@ namespace SanteDB.Core.Security.Claims
         /// Device identifier claim
         /// </summary>
         public const string SanteDBDeviceIdentifierClaim = "urn:santedb:org:claim:devid";
+        /// <summary>
+        /// Device identifier claim
+        /// </summary>
+        public const string SanteDBDeviceNameClaim = "urn:santedb:org:claim:devname";
 
         /// <summary>
         /// Audience claim
@@ -106,6 +110,11 @@ namespace SanteDB.Core.Security.Claims
         /// Identifier of the application
         /// </summary>
         public const string SanteDBApplicationIdentifierClaim = "urn:santedb:org:claim:appid";
+
+        /// <summary>
+        /// Application name claim
+        /// </summary>
+        public const string SanteDBApplicationNameClaim = "urn:santedb:org:claim:appname";
 
         /// <summary>
         /// The specific user identifier claim issued by an OAuth implementation in SanteDB.
@@ -144,6 +153,11 @@ namespace SanteDB.Core.Security.Claims
         public const string PurposeOfUse = "urn:oasis:names:tc:xacml:2.0:action:purpose";
 
         /// <summary>
+        /// Indicates the object/authentication is on behalf of another object
+        /// </summary>
+        public const string OnBehalfOf = "urn:santedb:org:claim:onBehalfOf";
+
+        /// <summary>
         /// Facility id claim
         /// </summary>
         public const string XspaFacilityClaim = "urn:oasis:names:tc:xspa:1.0:subject:facility";
@@ -162,6 +176,11 @@ namespace SanteDB.Core.Security.Claims
         /// Session id claim
         /// </summary>
         public const string SanteDBSessionIdClaim = "urn:santedb:org:claim:session";
+
+        /// <summary>
+        /// Session token claim
+        /// </summary>
+        public const string SanteDBAccessTokenClaim = "urn:santedb:org:claim:access_token";
 
         /// <summary>
         /// Name claims

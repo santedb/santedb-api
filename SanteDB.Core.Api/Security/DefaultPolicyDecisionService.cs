@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
@@ -41,7 +41,7 @@ namespace SanteDB.Core.Security
     public class DefaultPolicyDecisionService : IPolicyDecisionService
     {
         // Adhoc cache reference
-        private IAdhocCacheService m_adhocCacheService;
+        protected IAdhocCacheService m_adhocCacheService;
 
         private IPasswordHashingService m_hasher;
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultPolicyDecisionService));
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Policy for the grant
         /// </summary>
-        private class EffectivePolicy : IPolicy
+        protected class EffectivePolicy : IPolicy
         {
             /// <summary>
             /// Generic policy
@@ -114,7 +114,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Represents an effective policy instance from this PDP
         /// </summary>
-        private class EffectivePolicyInstance : IPolicyInstance
+        protected class EffectivePolicyInstance : IPolicyInstance
         {
             // Securable
             private object m_securable;
@@ -196,7 +196,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get the effective policies (most restrictive of set)
         /// </summary>
-        public IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal principal)
+        public virtual IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal principal)
         {
             string cacheKey = this.ComputeCacheKey(principal);
             var result = this.m_adhocCacheService?.Get<EffectivePolicyInstance[]>(cacheKey);
@@ -218,7 +218,7 @@ namespace SanteDB.Core.Security
                 result = allPolicies.Select(masterPolicy =>
                 {
                     // Get all policies which are related to this policy
-                    var activePolicy = activePoliciesForObject.Where(p => masterPolicy.Oid.StartsWith(p.Policy.Oid)).OrderByDescending(o => o.Policy.Oid.Length).FirstOrDefault(); // The most specific policy grant for this policy
+                    var activePolicy = activePoliciesForObject.Where(p => masterPolicy.Oid.StartsWith($"{p.Policy.Oid}.") || masterPolicy.Oid == p.Policy.Oid).OrderByDescending(o => o.Policy.Oid.Length).FirstOrDefault(); // The most specific policy grant for this policy
 
                     // What is the most specific policy in this tree?
                     if (activePolicy == null)
@@ -239,7 +239,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Compute cache key
         /// </summary>
-        private string ComputeCacheKey(IPrincipal principal)
+        protected string ComputeCacheKey(IPrincipal principal)
         {
             if (principal is IClaimsPrincipal cp)
             {
@@ -258,7 +258,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get a policy decision
         /// </summary>
-        public PolicyDecision GetPolicyDecision(IPrincipal principal, object securable)
+        public virtual PolicyDecision GetPolicyDecision(IPrincipal principal, object securable)
         {
             if (principal == null)
             {
@@ -306,7 +306,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Get a policy outcome
         /// </summary>
-        public PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
+        public virtual PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId)
         {
             if (principal == null)
             {

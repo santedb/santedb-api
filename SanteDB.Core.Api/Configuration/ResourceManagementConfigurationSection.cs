@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Services;
@@ -44,7 +44,7 @@ namespace SanteDB.Core.Configuration
         /// Gets or sets the resource types
         /// </summary>
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
-        [Editor("SanteDB.Configuration.Editors.ResourceCollectionEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0")]
+        [Editor("SanteDB.Configuration.Editors.ResourceTypePicker, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public List<ResourceTypeReferenceConfiguration> ResourceTypes { get; set; }
 
         /// <summary>

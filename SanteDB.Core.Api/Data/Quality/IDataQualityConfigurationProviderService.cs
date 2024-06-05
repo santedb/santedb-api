@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,10 +16,11 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Services;
+using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Quality
@@ -38,7 +39,13 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Get the rule set 
         /// </summary>
-        DataQualityRulesetConfiguration GetRuleSet(string name);
+        DataQualityRulesetConfiguration GetRuleSet(string id);
+
+        /// <summary>
+        /// Delete rule set identified by <paramref name="id"/>
+        /// </summary>
+        /// <param name="id">The id of the ruleset to remove</param>
+        void RemoveRuleSet(string id);
 
         /// <summary>
         /// Save the specified ruleset
@@ -49,5 +56,12 @@ namespace SanteDB.Core.Data.Quality
         /// Get rule sets for the specified object
         /// </summary>
         IEnumerable<DataQualityResourceConfiguration> GetRulesForType<T>();
+
+        /// <summary>
+        /// Get rulesets for <paramref name="forType"/>
+        /// </summary>
+        /// <param name="forType">The type for which rules should be fetched</param>
+        /// <returns></returns>
+        IEnumerable<DataQualityResourceConfiguration> GetRulesForType(Type forType);
     }
 }

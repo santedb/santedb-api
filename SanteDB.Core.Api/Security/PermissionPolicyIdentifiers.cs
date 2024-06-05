@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 namespace SanteDB.Core.Security
 {
@@ -225,6 +225,47 @@ namespace SanteDB.Core.Security
         /// Manage foreign data
         /// </summary>
         public const string ManageForeignData = UnrestrictedAdministration + ".20";
+
+        /// <summary>
+        /// Unrestricted access to download and view service logs
+        /// </summary>
+        public const string UnrestrictedServiceLogs = UnrestrictedAdministration + ".21";
+
+        /// <summary>
+        /// Read service logs
+        /// </summary>
+        public const string ReadServiceLogs = UnrestrictedServiceLogs + ".1";
+
+        /// <summary>
+        /// Delete service logs
+        /// </summary>
+        public const string DeleteServiceLogs = UnrestrictedServiceLogs + ".2";
+
+        /// <summary>
+        /// Unrestricted access to system jobs
+        /// </summary>
+        public const string UnrestrictedJobManagement = UnrestrictedAdministration + ".22";
+
+        /// <summary>
+        /// View system jobs
+        /// </summary>
+        public const string ReadSystemJobs = UnrestrictedJobManagement + ".0";
+
+        /// <summary>
+        /// Start a system job
+        /// </summary>
+        public const string StartSystemJob = UnrestrictedJobManagement + ".1";
+
+        /// <summary>
+        /// Alter a job schedule
+        /// </summary>
+        public const string AlterSystemJobSchedule = UnrestrictedJobManagement + ".2";
+
+        /// <summary>
+        /// Register a system job
+        /// </summary>
+        public const string RegisterSystemJob = UnrestrictedJobManagement + ".3";
+
 
         /// <summary>
         /// Policy identifier for allowance of login

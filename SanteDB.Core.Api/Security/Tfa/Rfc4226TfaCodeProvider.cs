@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,15 +16,17 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography;
 using System.Security.Principal;
 
@@ -35,16 +37,18 @@ namespace SanteDB.Core.Security.Tfa
     /// </summary>
     public class Rfc4226TfaCodeProvider : ITfaCodeProvider, ITfaSecretManager
     {
-        readonly IApplicationServiceContext _ServiceContext;
         readonly Tracer _Tracer;
+        private readonly IIdentityProviderService m_identityProivderService;
+        private readonly IPolicyEnforcementService m_pepService;
 
         /// <summary>
         /// Creates a new <see cref="Rfc4226TfaCodeProvider"/>
         /// </summary>
-        public Rfc4226TfaCodeProvider(IApplicationServiceContext serviceContext)
+        public Rfc4226TfaCodeProvider(IIdentityProviderService identityProviderService, IPolicyEnforcementService policyEnforcementService)
         {
             _Tracer = new Tracer(nameof(Rfc4226TfaCodeProvider));
-            _ServiceContext = serviceContext;
+            this.m_identityProivderService = identityProviderService;
+            this.m_pepService = policyEnforcementService;
         }
 
         /// <inheritdoc/>
@@ -113,7 +117,7 @@ namespace SanteDB.Core.Security.Tfa
         {
             yield return GenerateCode(counter, key, numberOfDigits);
 
-            for (var slew = 1; slew <= counterSlew; slew++)
+            for (var slew = -counterSlew; slew <= counterSlew; slew++)
             {
                 yield return GenerateCode(counter - slew, key, numberOfDigits);
                 yield return GenerateCode(counter + slew, key, numberOfDigits);
@@ -171,7 +175,7 @@ namespace SanteDB.Core.Security.Tfa
                     case 6:
                     case 7:
                     case 8:
-                        return (number % Math.Pow(10, numberOfDigits)).ToString();
+                        return (number % Math.Pow(10, numberOfDigits)).ToString().PadLeft(numberOfDigits, '0');
                     default:
                         throw new ArgumentOutOfRangeException(nameof(numberOfDigits), "Invalid number of digits. Must be 6, 7, or 8");
                 }
@@ -190,16 +194,9 @@ namespace SanteDB.Core.Security.Tfa
                 throw new ArgumentNullException(nameof(claim));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
-
-            if (null == identityprovider)
-            {
-                throw new InvalidOperationException("No IIdentityProviderService is present.");
-            }
-
             var sdbclaim = new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim));
 
-            identityprovider.AddClaim(identity.Name, sdbclaim, principal);
+            this.m_identityProivderService.AddClaim(identity.Name, sdbclaim, principal);
 
             return claim;
         }
@@ -212,14 +209,7 @@ namespace SanteDB.Core.Security.Tfa
                 throw new ArgumentNullException(nameof(identity));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
-
-            if (identityprovider == null)
-            {
-                throw new InvalidOperationException("No IIdentityProviderService is present.");
-            }
-
-            var claims = identityprovider.GetClaims(identity.Name)?.Where(c => c.Type == SanteDBClaimTypes.SanteDBRfc4226Secret);
+            var claims = this.m_identityProivderService.GetClaims(identity.Name)?.Where(c => c.Type == SanteDBClaimTypes.SanteDBRfc4226Secret);
 
             var secrets = new List<Rfc4226SecretClaim>();
 
@@ -250,22 +240,26 @@ namespace SanteDB.Core.Security.Tfa
                 throw new ArgumentNullException(nameof(identity));
             }
 
-            var identityprovider = _ServiceContext.GetService<IIdentityProviderService>();
-
-            if (null == identityprovider)
-            {
-                throw new InvalidOperationException("No IIdentityProviderService is present.");
-            }
-
-            identityprovider.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
+            this.m_identityProivderService.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
 
             if (claims?.Count() > 0)
             {
                 foreach (var claim in claims)
                 {
-                    identityprovider.AddClaim(identity.Name, new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim)), principal);
+                    this.m_identityProivderService.AddClaim(identity.Name, new SanteDBClaim(SanteDBClaimTypes.SanteDBRfc4226Secret, JsonConvert.SerializeObject(claim)), principal);
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public void RemoveTfaRegistration(IIdentity identity, IPrincipal principal)
+        {
+            if (null == identity)
+            {
+                throw new ArgumentNullException(nameof(identity));
+            }
+
+            this.m_identityProivderService.RemoveClaim(identity.Name, SanteDBClaimTypes.SanteDBRfc4226Secret, principal);
         }
 
         /// <inheritdoc/>
@@ -339,9 +333,24 @@ namespace SanteDB.Core.Security.Tfa
                     return (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 30L;
                 case Rfc4226Mode.TotpSixtySecondInterval:
                     return (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 60L;
+                case Rfc4226Mode.TotpTenMinuteInterval:
+                    return (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - secret.StartValue) / 600L;
                 default:
                     throw new ArgumentException("Invalid Rfc4226 Mode.", nameof(secret.Mode));
             }
+        }
+
+        /// <inheritdoc/>
+        public byte[] GetSharedSecret(IIdentity identity)
+        {
+            // TODO:
+            var secret = this.GetSecretsForIdentity(identity);
+            var uninitializedSecret = secret.FirstOrDefault(o => !o.Initialized);
+            if (uninitializedSecret == null)
+            {
+                throw new SecurityException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, nameof(GetSharedSecret)));
+            }
+            return uninitializedSecret.Secret;
         }
     }
 }

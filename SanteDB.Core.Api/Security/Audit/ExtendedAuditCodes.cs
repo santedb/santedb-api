@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2023, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,7 @@
  * the License.
  * 
  * User: fyfej
- * Date: 2023-5-19
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Audit;
 
@@ -55,6 +55,7 @@ namespace SanteDB.Core.Security.Audit
         public static readonly AuditCode CustomIdTypePolicyDecision = new AuditCode("PolicyDecision", "http://santedb.org/model");
         public static readonly AuditCode CustomIdTypeForeignFile = new AuditCode("ForeignDataFile", "http://santedb.org/model") { DisplayName = "External Data File" };
         public static readonly AuditCode CustomIdTypeSession = new AuditCode("SecuritySession", "http://santedb.org/model") { DisplayName = "Security Session" };
+        public static readonly AuditCode DataQualityConfiguration = new AuditCode("DataQualityConfiguration", "http://santedb.org/configuration") { DisplayName = "Data Quality Configuration" };
         public static readonly AuditCode CustomIdTypeMaskedFields = new AuditCode("SecurityUsitCode-MaskedFields", "SecurityAuditCode") { DisplayName = "Masked Fields" };
 #pragma warning restore CS1591
 
