@@ -182,9 +182,9 @@ namespace SanteDB.Core
             retVal &= !me.StopTime.HasValue || refDate < me.StopTime.Value; // The reference date is in valid bounds of stop (if specified)
 
             // Are there week days specified
-            if (me.Type == Configuration.JobScheduleType.Interval && (!lastRun.HasValue || refDate.Subtract(lastRun.Value) > me.Interval))
+            if (me.Type == Configuration.JobScheduleType.Interval)
             {
-                return true;
+                retVal &=  (!lastRun.HasValue || refDate.Subtract(lastRun.Value) > me.Interval);
             }
             else if (me.Type == Configuration.JobScheduleType.Scheduled)
             {
