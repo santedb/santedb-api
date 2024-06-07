@@ -19,11 +19,14 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
+using SanteDB.Core.Interop;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
@@ -61,7 +64,7 @@ namespace SanteDB.Core.Security.Configuration
     /// SanteDB Security configuration
     /// </summary>
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class SecurityConfigurationSection : IEncryptedConfigurationSection
+    public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection
     {
         /// <summary>
         /// If MFA is required
@@ -194,6 +197,18 @@ namespace SanteDB.Core.Security.Configuration
             yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
             yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
             yield return new AppSettingKeyValuePair(PublicBackupsAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false).ToString());
+
+        }
+
+        /// <inheritdoc/>
+        public void Injest(IEnumerable<AppSettingKeyValuePair> settings)
+        {
+            this.PasswordRegex = settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
+                    this.PasswordRegex;
+            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
+            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
+            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
+            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
 
         }
 
