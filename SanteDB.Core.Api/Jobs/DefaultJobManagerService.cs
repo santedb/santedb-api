@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

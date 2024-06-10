@@ -114,7 +114,6 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         IDictionary<String, Type> Parameters { get; }
 
-
     }
 
 

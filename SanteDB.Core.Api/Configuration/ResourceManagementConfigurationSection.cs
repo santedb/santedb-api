@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using SanteDB.Core.Services;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -30,8 +31,14 @@ namespace SanteDB.Core.Configuration
     /// Represents a configuration for MDM
     /// </summary>
     [XmlType(nameof(ResourceManagementConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class ResourceManagementConfigurationSection : IConfigurationSection
+    public class ResourceManagementConfigurationSection : IConfigurationSection, IDisclosedConfigurationSection
     {
+
+        /// <summary>
+        /// Resources managed under RM
+        /// </summary>
+        public const string ResourcesUnderRMSetting = "managedResource";
+
         /// <summary>
         /// MDM configuration
         /// </summary>
@@ -52,5 +59,14 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlElement("oldMasterRetention"), Description("Specifies the retention mode for old master relationship data which is not needed"), DisplayName("Master Data Retention")]
         public DeleteMode MasterDataDeletionMode { get; set; }
+
+        /// <inheritdoc/>
+        public IEnumerable<AppSettingKeyValuePair> ForDisclosure() => this.ResourceTypes?.Select(o => new AppSettingKeyValuePair(ResourcesUnderRMSetting, o.TypeXml));
+
+        /// <inheritdoc/>
+        public void Injest(IEnumerable<AppSettingKeyValuePair> remoteSettings)
+        {
+            this.ResourceTypes = remoteSettings.Where(o => o.Key == ResourcesUnderRMSetting).Select(o => new ResourceTypeReferenceConfiguration(o.Value)).ToList();
+        }
     }
 }
