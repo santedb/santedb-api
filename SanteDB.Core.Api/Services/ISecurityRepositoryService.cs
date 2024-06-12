@@ -160,5 +160,6 @@ namespace SanteDB.Core.Services
         /// Find provenance objects matching the specified object
         /// </summary>
         IQueryResultSet<SecurityProvenance> FindProvenance(Expression<Func<SecurityProvenance, bool>> query);
+
     }
 }

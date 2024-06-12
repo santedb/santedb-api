@@ -153,6 +153,7 @@ namespace SanteDB.Core.Data.Management
             {
                 e.Data = this.m_businessRulesService?.AfterUpdate(e.Data) ?? e.Data;
             }
+            e.Success = true;
         }
 
         /// <summary>

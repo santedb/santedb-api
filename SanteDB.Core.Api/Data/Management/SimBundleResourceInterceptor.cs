@@ -121,9 +121,11 @@ namespace SanteDB.Core.Data.Management
                     }
                 }
 
+                
                 e.Data = this.m_businessRulesService?.BeforeInsert(persistenceBundle) ?? persistenceBundle;
                 e.Data = this.m_bundlePersistence.Insert(e.Data, e.Mode, AuthenticationContext.Current.Principal);
                 e.Data = this.m_businessRulesService?.AfterInsert(e.Data);
+                e.Success = true;
             }
         }
 

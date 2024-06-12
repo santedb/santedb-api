@@ -128,7 +128,7 @@ namespace SanteDB.Core.Data.Quality
                         }
                     }
 
-                    if (!result)
+                    if (result)
                     {
                         retVal.Add(new DetectedIssue(assert.Priority, $"{assert.Id}", assert.Text, DetectedIssueKeys.FormalConstraintIssue, data.ToString()));
                     }
