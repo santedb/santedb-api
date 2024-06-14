@@ -61,32 +61,32 @@ namespace SanteDB.Core.Http
         /// <summary>
         /// Gets or sets the mime type of the attachment
         /// </summary>
-        public String MimeType { get; set; }
+        public String MimeType { get; private set; }
 
         /// <summary>
         /// Gets or sets the name of the attachment
         /// </summary>
-        public String Name { get; set; }
+        public String Name { get; private set; }
 
         /// <summary>
         /// Represents the data in the attachment
         /// </summary>
-        public byte[] Data { get; set; }
+        public byte[] Data { get; private set; }
 
         /// <summary>
         /// When true instructs the serializer to use form data
         /// </summary>
-        public bool UseFormEncoding { get; set; }
+        public bool UseFormEncoding { get; private set; }
 
         /// <summary>
         /// True if the mime data is a file
         /// </summary>
-        public bool IsFile { get; set; }
+        public bool IsFile { get; private set; }
 
         /// <summary>
         /// Gets or sets the name of the file
         /// </summary>
-        public string FileName { get; set; }
+        public string FileName { get; private set; }
 
         /// <inheritdoc/>
         public override string ToString()
@@ -164,7 +164,7 @@ namespace SanteDB.Core.Http
                     }
                     else
                     {
-                        sw.WriteLine("Content-Disposition: attachment; filename=\"{0}\"", mimeInfo.FileName);
+                        sw.WriteLine("Content-Disposition: attachment; name=\"{0}\"; filename=\"{1}\"", mimeInfo.Name, mimeInfo.FileName);
                     }
 
                     sw.WriteLine("Content-Type: {0}", mimeInfo.MimeType);
