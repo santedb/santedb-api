@@ -351,6 +351,12 @@ namespace SanteDB.Core
         /// </summary>
         public static void ValidateCodeIsSigned(this Assembly asm, bool allowUnsignedAssemblies)
         {
+
+            if(ApplicationServiceContext.Current.HostType == SanteDBHostType.Test)
+            {
+                allowUnsignedAssemblies = true;
+            }
+
             var tracer = Tracer.GetTracer(typeof(ExtensionMethods));
             bool valid = false;
             var asmFile = asm.Location;
