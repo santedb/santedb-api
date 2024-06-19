@@ -221,11 +221,11 @@ namespace SanteDB.Core.Data.Import.Format
                 {
                     return bl;
                 }
-                else if (long.TryParse(csvValue, out var lv))
+                else if (!csvValue.StartsWith("0") && long.TryParse(csvValue, out var lv))
                 {
                     return lv;
                 }
-                else if (double.TryParse(csvValue, out var dbl))
+                else if (!csvValue.StartsWith("0") && double.TryParse(csvValue, out var dbl))
                 {
                     return dbl;
                 }

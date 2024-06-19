@@ -93,6 +93,11 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("when"), JsonProperty("when")]
         public List<ForeignDataMapOnlyWhenCondition> OnlyWhen { get; set; }
 
+        /// <summary>
+        /// When set to true, if any <see cref="DuplicateCheck"/> returns an existing value, just include it as is and don't update it
+        /// </summary>
+        [XmlAttribute("preserveExisting"), JsonProperty("preserveExisting")]
+        public bool PreserveExisting { get; set; }
 
         /// <summary>
         /// Mappings for this object

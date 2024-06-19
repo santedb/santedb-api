@@ -37,5 +37,16 @@ namespace SanteDB.Core.Data.Import.Definition
         [XmlElement("value"), JsonProperty("value")]
         public List<string> Value { get; set; }
 
+        /// <summary>
+        /// Negation of the when condition (NOT)
+        /// </summary>
+        [XmlAttribute("negate"), JsonProperty("negate")]
+        public bool Negation { get; set; }
+
+        /// <summary>
+        /// Gets or sets another column to compare to
+        /// </summary>
+        [XmlElement("refValue"), JsonProperty("refValue")]
+        public string Other { get; set; }
     }
 }

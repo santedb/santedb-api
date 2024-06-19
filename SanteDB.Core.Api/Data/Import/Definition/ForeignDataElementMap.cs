@@ -80,7 +80,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// Gets or sets the target HDSI path
         /// </summary>
         [XmlElement("target"), JsonProperty("target")]
-        public string TargetHdsiPath { get; set; }
+        public ForeignDataTargetExpression TargetHdsiPath { get; set; }
 
 
         /// <summary>
@@ -94,14 +94,14 @@ namespace SanteDB.Core.Data.Import.Definition
         /// </summary>
         internal IEnumerable<ValidationResultDetail> Validate(Type context)
         {
-            if (String.IsNullOrEmpty(this.TargetHdsiPath))
+            if (String.IsNullOrEmpty(this.TargetHdsiPath?.Value))
             {
                 yield return new ValidationResultDetail(ResultDetailType.Error, $"Need target path", null, this.Source);
             }
             Exception buildError = null;
             try
             {
-                QueryExpressionParser.BuildPropertySelector(context, this.TargetHdsiPath);
+                QueryExpressionParser.BuildPropertySelector(context, this.TargetHdsiPath?.Value);
             }
             catch (Exception e)
             {

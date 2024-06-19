@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
 
 namespace SanteDB.Core.Data
 {
@@ -100,9 +101,17 @@ namespace SanteDB.Core.Data
             var parm = Expression.Parameter(relatedType);
             var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
 
-            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey)))), parm);
-            var retVal = persistenceService.Query(expr);
-            return retVal;
+            var memberRel = relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey));
+            if (memberRel == null)
+            {
+                return null;
+            }
+            else
+            {
+                Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, memberRel)), parm);
+                var retVal = persistenceService.Query(expr);
+                return retVal;
+            }
         }
 
         /// <summary>
