@@ -31,6 +31,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Xml;
 
@@ -259,7 +260,11 @@ namespace SanteDB.Core.Services.Impl
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }
             var pepService = ApplicationServiceContext.Current?.GetService<IPolicyEnforcementService>();
-            pepService?.Demand(PermissionPolicyIdentifiers.AlterSystemConfiguration);
+
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal && ApplicationServiceContext.Current.HostType != SanteDBHostType.Server)
+            {
+                pepService?.Demand(PermissionPolicyIdentifiers.AlterSystemConfiguration);
+            }
 
             using (var s = File.Create(this.m_configurationFileName))
             {
