@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
@@ -61,6 +62,31 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// Alter policy for entities
         /// </summary>
         protected override string AlterPolicy => PermissionPolicyIdentifiers.UnrestrictedMetadata;
+
+        /// <inheritdoc/>
+        public override void DemandWrite(object data)
+        {
+            this.DemandAlter(data);
+        }
+
+        /// <inheritdoc/>
+        public override void DemandAlter(object data)
+        {
+            if (data is EntityRelationship er)
+            {
+                var source = er.LoadProperty(o => o.SourceEntity);
+                var irst = typeof(IRepositoryService<>).MakeGenericType(source?.GetType() ?? typeof(Entity));
+                var irsi = ApplicationServiceContext.Current.GetService(irst);
+                if (irsi is ISecuredRepositoryService isrs)
+                {
+                    isrs.DemandAlter(source ?? new Entity());
+                }
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(EntityRelationship), data.GetType()));
+            }
+        }
 
         /// <summary>
         /// Insert the entity relationship

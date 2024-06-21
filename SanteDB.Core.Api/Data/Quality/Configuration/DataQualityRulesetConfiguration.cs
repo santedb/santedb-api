@@ -21,6 +21,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using System.Collections.Generic;
+using System.IO;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Quality.Configuration
@@ -32,6 +33,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
     [XmlRoot(nameof(DataQualityRulesetConfiguration), Namespace = "http://santedb.org/configuration")]
     public class DataQualityRulesetConfiguration : NonVersionedEntityData
     {
+        private static XmlSerializer m_xsz = new XmlSerializer(typeof(DataQualityRulesetConfiguration));
 
         /// <summary>
         /// Gets or sets whether the rule set is enabled
@@ -57,5 +59,20 @@ namespace SanteDB.Core.Data.Quality.Configuration
         [XmlArray("resources"), XmlArrayItem("add"), JsonProperty("resources")]
         public List<DataQualityResourceConfiguration> Resources { get; set; }
 
+        /// <summary>
+        /// Save this object to <paramref name="stream"/>
+        /// </summary>
+        public void Save(Stream stream)
+        {
+            m_xsz.Serialize(stream, this);
+        }
+
+        /// <summary>
+        /// Load an object from <paramref name="stream"/>
+        /// </summary>
+        public static DataQualityRulesetConfiguration Load(Stream stream)
+        {
+            return m_xsz.Deserialize(stream) as DataQualityRulesetConfiguration;
+        }
     }
 }

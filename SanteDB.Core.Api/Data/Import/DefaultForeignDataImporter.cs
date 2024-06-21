@@ -158,7 +158,7 @@ namespace SanteDB.Core.Data.Import
                             mappedObject = mappedObject?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
                             if (mappedObject != null)
                             {
-                                mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Update;
+                                mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
                             }
                         }
 
@@ -251,9 +251,14 @@ namespace SanteDB.Core.Data.Import
             {
                 return sourceReader[s.Source] != null;
             }
+            else if(!String.IsNullOrEmpty(s.Other))
+            {
+                var equal = sourceReader[s.Source] == sourceReader[s.Other];
+                return s.Negation ? !equal : equal;
+            }
             else
             {
-                return s.Value?.Contains(sourceReader[s.Source]?.ToString()) == true;
+                return s.Value?.Contains(sourceReader[s.Source]?.ToString()) == !s.Negation;
             }
         }
 
@@ -363,7 +368,7 @@ namespace SanteDB.Core.Data.Import
                         continue;
                     }
 
-                    if (String.IsNullOrEmpty(map.TargetHdsiPath))
+                    if (String.IsNullOrEmpty(map.TargetHdsiPath?.Value))
                     {
                         throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING_TARGET));
                     }
@@ -440,7 +445,12 @@ namespace SanteDB.Core.Data.Import
                         }
                     }
 
-                    mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath, targetValue, replace: map.ReplaceExisting);
+                    if (map.TargetHdsiPath.PreserveExisting)
+                    {
+                        var currentValue = mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value);
+                        if (currentValue != null) continue;
+                    }
+                    mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value, targetValue, replace: map.ReplaceExisting);
 
                 }
 

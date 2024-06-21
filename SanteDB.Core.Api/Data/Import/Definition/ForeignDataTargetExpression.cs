@@ -18,25 +18,29 @@
  * User: fyfej
  * Date: 2023-6-21
  */
-using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using System.Xml.Serialization;
 
-namespace SanteDB.Core.Data.Import.Transforms
+namespace SanteDB.Core.Data.Import.Definition
 {
     /// <summary>
-    /// Camel case transformation
+    /// Represents a target expression
     /// </summary>
-    public class CamelCaseTransform : IForeignDataElementTransform
+    [XmlType(nameof(ForeignDataTargetExpression), Namespace = "http://santedb.org/import")]
+    public class ForeignDataTargetExpression
     {
 
-        private readonly Regex m_wordRegex = new Regex(@"[^a-zA-Z]([A-Z-a-z])", RegexOptions.Compiled);
+        /// <summary>
+        /// When true instructs the <see cref="Value"/> only be placed when the current value is null
+        /// </summary>
+        [XmlAttribute("preserveExisting"), JsonProperty("preserveExisting")]
+        public bool PreserveExisting { get; set; }
 
-        /// <inheritdoc/>
-        public string Name => "CamelCase";
+        /// <summary>
+        /// Gets or sets the value
+        /// </summary>
+        [XmlText(), JsonProperty("value")]
+        public string Value { get; set; }
 
-        /// <inheritdoc/>
-        public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
-        {
-            return m_wordRegex.Replace(input.ToString(), o => o.Groups[1].Value.ToUpperInvariant());
-        }
     }
 }

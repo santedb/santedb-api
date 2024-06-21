@@ -153,6 +153,7 @@ namespace SanteDB.Core.Data.Management
             {
                 e.Data = this.m_businessRulesService?.AfterUpdate(e.Data) ?? e.Data;
             }
+            e.Success = true;
         }
 
         /// <summary>
@@ -227,7 +228,7 @@ namespace SanteDB.Core.Data.Management
             }
             else
             {
-                foreach (var itm in this.DoMarkDuplicateLogicInternal(inputRecord, matches))
+                foreach (var itm in this.DoMarkDuplicateLogicInternal(inputRecord, groupedMatches[RecordMatchClassification.Match].Union(groupedMatches[RecordMatchClassification.Probable]).GroupBy(o=>o.Record.Key).Select(o=>o.OrderByDescending(m=>m.Strength).First())))
                 {
                     yield return itm;
                 }

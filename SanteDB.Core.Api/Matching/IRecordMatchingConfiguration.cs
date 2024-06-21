@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using Newtonsoft.Json;
 using System;
 
 namespace SanteDB.Core.Matching
@@ -25,6 +26,7 @@ namespace SanteDB.Core.Matching
     /// <summary>
     /// Gets the record matching configuration
     /// </summary>
+    [JsonObject("MatchConfiguration")]
     public interface IRecordMatchingConfiguration
     {
         /// <summary>
