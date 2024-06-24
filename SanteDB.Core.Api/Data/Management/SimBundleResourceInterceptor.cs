@@ -21,7 +21,10 @@
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -103,6 +106,8 @@ namespace SanteDB.Core.Data.Management
             e.Cancel = e.Data.Item.Any(o => this.GetResourceInterceptor(o) != null);
             if (e.Cancel)
             {
+                e.Data.Item.RemoveAll(itm => itm is EntityRelationship er && er.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !er.NegationIndicator ||
+                    itm is ActRelationship ar && ar.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && !ar.NegationIndicator);
                 var persistenceBundle = new Bundle();
                 foreach (var itm in e.Data.Item)
                 {
@@ -114,7 +119,7 @@ namespace SanteDB.Core.Data.Management
                     else
                     {
                         persistenceBundle.AddRange(handler.DoMatchingLogic(itm));
-                        if (!persistenceBundle.Item.Contains(itm))
+                        if (!persistenceBundle.Item.Any(i=>i.SemanticEquals(itm)))
                         {
                             persistenceBundle.Add(itm);
                         }
