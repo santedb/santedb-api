@@ -479,13 +479,6 @@ namespace SanteDB.Core
         };
 
         /// <summary>
-        /// Gets an assembly qualified name without version information
-        /// </summary>
-        /// <param name="me"></param>
-        /// <returns></returns>
-        public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
-
-        /// <summary>
         /// Try to resolve a reference
         /// </summary>
         /// <param name="repository">The repository to resolve on</param>
