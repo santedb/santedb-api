@@ -37,7 +37,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Generate a barcode from the specified identifier
         /// </summary>
-        Stream Generate(IHasIdentifiers entity);
+        Stream Generate(IHasIdentifiers entity, params string[] identityDomains);
 
         /// <summary>
         /// Generate the barcode from raw data

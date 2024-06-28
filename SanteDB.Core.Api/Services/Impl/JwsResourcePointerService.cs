@@ -118,10 +118,13 @@ namespace SanteDB.Core.Services.Impl
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
-            var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
-            if (signingCertificate?.Any() == true)
+            var platformCertManager = X509CertificateUtils.GetPlatformServiceOrDefault();
+            var signingCertificateEntries = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity)
+                .Select(o => platformCertManager.TryGetCertificate(System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint, o.Thumbprint, out var privateStore) ?
+                    privateStore : o);
+            if (signingCertificateEntries?.Any(k=>k.HasPrivateKey) == true)
             {
-                signature = signature.WithCertificate(signingCertificate.First());
+                signature = signature.WithCertificate(signingCertificateEntries.First(k=>k.HasPrivateKey));
             }
             else
             {
