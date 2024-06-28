@@ -60,7 +60,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// DI constructor
         /// </summary>
-        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
+        public JwsResourcePointerService(IDataSigningService signingService, 
+            IApplicationIdentityProviderService applicationIdentityProviderService = null, 
+            IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_signingService = signingService;
             this.m_applicationIdService = applicationIdentityProviderService;
@@ -108,6 +110,9 @@ namespace SanteDB.Core.Services.Impl
                 data = entityData
             };
 
+
+            // 
+
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
@@ -121,8 +126,10 @@ namespace SanteDB.Core.Services.Impl
             else
             {
                 signature = signature.WithSystemKey("default");
+                
             }
 
+            //signature = signature.WithIssuer(ApplicationServiceContext.Current.NodeIdentifier);
             return signature.AsSigned().Token;
         }
 
@@ -148,7 +155,7 @@ namespace SanteDB.Core.Services.Impl
                         case JsonWebSignatureParseResult.MissingAlgorithm:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Token cannot be validated - missing algorithm", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingKeyId:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key for validation", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.UnsupportedAlgorithm:

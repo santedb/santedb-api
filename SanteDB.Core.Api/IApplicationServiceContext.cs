@@ -57,6 +57,7 @@ namespace SanteDB.Core
         /// </summary>
         string ApplicationName { get; }
 
+
         /// <summary>
         /// Gets the activity UUID
         /// </summary>
