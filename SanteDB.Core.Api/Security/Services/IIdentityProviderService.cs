@@ -189,12 +189,12 @@ namespace SanteDB.Core.Security.Services
         /// Authenticate the user creating an identity
         /// </summary>
         /// <returns></returns>
-        IPrincipal Authenticate(String userName, String password);
+        IPrincipal Authenticate(String userName, String password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null);
 
         /// <summary>
         /// Authenticate the user using two factor authentication
         /// </summary>
-        IPrincipal Authenticate(String userName, String password, String tfaSecret);
+        IPrincipal Authenticate(String userName, String password, String tfaSecret, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null);
 
         /// <summary>
         /// Recheck the authentication of an already authenticated <paramref name="principal"/>.

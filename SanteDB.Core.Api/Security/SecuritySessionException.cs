@@ -19,6 +19,7 @@
  * Date: 2023-6-21
  */
 using System;
+using System.Runtime.CompilerServices;
 using System.Security;
 
 namespace SanteDB.Core.Security
@@ -56,7 +57,11 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Token signature validation error
         /// </summary>
-        SignatureFailure
+        SignatureFailure,
+        /// <summary>
+        /// The session is missing a required claim
+        /// </summary>
+        MissingRequiredClaim
     }
 
     /// <summary>
@@ -64,6 +69,9 @@ namespace SanteDB.Core.Security
     /// </summary>
     public class SecuritySessionException : SecurityException
     {
+
+        public const string DATA_CLAIM_TYPE_KEY = "claimType";
+        public const string DATA_CLAIM_VALUE_KEY = "claimValue";
 
         /// <summary>
         /// Creates a new security session exception
@@ -90,5 +98,6 @@ namespace SanteDB.Core.Security
         /// Gets the impact session
         /// </summary>
         public ISession Session { get; }
+
     }
 }
