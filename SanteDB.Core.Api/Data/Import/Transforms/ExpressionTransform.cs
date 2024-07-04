@@ -41,9 +41,12 @@ namespace SanteDB.Core.Data.Import.Transforms
                         .Reference(typeof(Guid))
                         .Reference(typeof(TimeSpan))
                         .EnableReflection();
-            var arguments = Enumerable.Range(0, sourceRecord.ColumnCount).Select(o => new Parameter(sourceRecord.GetName(o), sourceRecord[o] ?? String.Empty))
-                .Union(dataMapParameters.Select(p => new Parameter($"parameters_{p.Key}", p.Value)))
-                .ToArray();
+            var arguments = new Parameter[]
+            {
+                new Parameter("input", input),
+                new Parameter("parameters", dataMapParameters),
+                new Parameter("row", sourceRecord)
+            };
             return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o => o.Value).ToArray());
         }
     }

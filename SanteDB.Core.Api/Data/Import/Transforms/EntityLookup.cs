@@ -81,12 +81,13 @@ namespace SanteDB.Core.Data.Import.Transforms
                 return String.Empty;
             });
             var result = this.m_adhocCache?.Get<Guid?>(key);
-            if (result == null)
+            if (result.GetValueOrDefault() == Guid.Empty)
             {
 
 
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
-                result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
+                var results = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector);
+                result = results.SingleOrDefault();
                 this.m_adhocCache?.Add(key, result ?? Guid.Empty);
 
             }
