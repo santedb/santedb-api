@@ -45,7 +45,7 @@ namespace SanteDB.Core.Data.Import.Transforms
             {
                 new Parameter("input", input),
                 new Parameter("parameters", dataMapParameters),
-                new Parameter("row", sourceRecord)
+                new Parameter("source", sourceRecord)
             };
             return interpreter.Parse(args[0].ToString(), arguments).Invoke(arguments.Select(o => o.Value).ToArray());
         }
