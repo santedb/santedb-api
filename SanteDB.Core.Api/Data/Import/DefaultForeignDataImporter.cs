@@ -203,7 +203,7 @@ namespace SanteDB.Core.Data.Import
                             }
                             if (existingRecord != null)
                             {
-                                mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Ignore;
+                                mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
                                 mappedObject.Key = existingRecord.Key;
                             }
                         }

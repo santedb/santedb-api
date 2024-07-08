@@ -23,6 +23,7 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,6 +70,10 @@ namespace SanteDB.Core.Data.Import.Transforms
             {
                 var parmNo = i;
                 parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
+            }
+            foreach(var kv in dataMapParameters)
+            {
+                parms.Add(kv.Key, () => kv.Value);
             }
             parms.Add("input", () => input);
 
