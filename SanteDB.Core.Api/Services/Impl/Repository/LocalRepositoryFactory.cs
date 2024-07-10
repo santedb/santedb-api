@@ -56,6 +56,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(GenericLocalConceptRepository<ConceptSet>),
                 typeof(GenericLocalMetadataRepository<IdentityDomain>),
                 typeof(GenericLocalMetadataRepository<ExtensionType>),
+                typeof(LocalContainerRepository),
                 typeof(GenericLocalMetadataRepository<TemplateDefinition>),
                 typeof(LocalBatchRepository),
                 typeof(LocalMaterialRepository),
