@@ -154,7 +154,7 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public CarePlan CreateCarePlan(Patient p, bool asEncounters)
         {
-            return this.CreateCarePlan(p, asEncounters, null, this.m_cdssLibraryRepository.Find(o => true).ToArray());
+            return this.CreateCarePlan(p, asEncounters, null);
         }
 
         /// <inheritdoc/>
@@ -176,9 +176,12 @@ namespace SanteDB.Core.Cdss
                     patientCopy.Participations = patientCopy.Participations?.ToList() ?? patientCopy.GetParticipations()?.ToList();
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
-                        patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key)
+                        patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence)
                             .ToList();
                     }
+
+                    // We only want events which DID occur to be considered in the CDSS
+                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence);
 
                     patientCopy.Participations.OfType<ActParticipation>()
                             .AsParallel()
@@ -199,14 +202,19 @@ namespace SanteDB.Core.Cdss
                                 }
                             });
 
+                    // No libraries spec = all libraries
+                    if(libraries.Length == 0)
+                    {
+                        libraries = this.m_cdssLibraryRepository.Find(o => true).ToArray();
+                    }
+
                     // Initialize
                     var parmDict = new ParameterDictionary(parameters);
                     parmDict.Add("runProtocols", libraries.Distinct());
 
-
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     var appliedProtocols = new ConcurrentBag<ICdssProtocol>();
-                    _ = parmDict.TryGetValue("scope", out var scope);
+                    _ = parmDict.TryGetValue("scope", out var scope) || parmDict.TryGetValue("pathway", out scope);
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()

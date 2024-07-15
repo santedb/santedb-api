@@ -46,5 +46,10 @@ namespace SanteDB.Core.Cdss
         [QueryParameter("oid")]
         String Oid { get; }
 
+        /// <summary>
+        /// Gets the ID of the asset group
+        /// </summary>
+        [QueryParameter("id")]
+        String Id { get; }
     }
 }
