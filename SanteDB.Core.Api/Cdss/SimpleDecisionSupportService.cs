@@ -373,6 +373,11 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
         {
+            if(librariesToApply.Length == 0 )
+            {
+                librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
+            }
+
             foreach (var lib in librariesToApply)
             {
                 foreach (var iss in lib.Analyze(collectedData))
