@@ -34,7 +34,7 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Get data quality rule set
         /// </summary>
-        IEnumerable<DataQualityRulesetConfiguration> GetRuleSets();
+        IEnumerable<DataQualityRulesetConfiguration> GetRuleSets(bool includeObsolete = false);
 
         /// <summary>
         /// Get the rule set 

@@ -58,7 +58,7 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// <summary>
         /// Get all rule sets
         /// </summary>
-        public IEnumerable<DataQualityRulesetConfiguration> GetRuleSets()
+        public IEnumerable<DataQualityRulesetConfiguration> GetRuleSets(bool includeObsoleted = false)
         {
             return this.m_configuration.RuleSets;
         }
