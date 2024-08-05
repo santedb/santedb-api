@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
@@ -144,52 +145,62 @@ namespace SanteDB.Core.PubSub.Broker
                         {
                             foreach (var dsptchr in this.GetDispatchers(evtData.EventType, evtData.Data))
                             {
-                                switch (evtData.EventType)
+                                try
                                 {
-                                    case PubSubEventType.Create:
-                                        dsptchr.NotifyCreated(evtData.Data as IdentifiedData);
-                                        break;
+                                    switch (evtData.EventType)
+                                    {
+                                        case PubSubEventType.Create:
+                                            dsptchr.NotifyCreated(evtData.Data as IdentifiedData);
+                                            break;
 
-                                    case PubSubEventType.Delete:
-                                        dsptchr.NotifyObsoleted(evtData.Data as IdentifiedData);
-                                        break;
+                                        case PubSubEventType.Delete:
+                                            dsptchr.NotifyObsoleted(evtData.Data as IdentifiedData);
+                                            break;
 
-                                    case PubSubEventType.Update:
-                                        dsptchr.NotifyUpdated(evtData.Data as IdentifiedData);
-                                        break;
+                                        case PubSubEventType.Update:
+                                            dsptchr.NotifyUpdated(evtData.Data as IdentifiedData);
+                                            break;
 
-                                    case PubSubEventType.Merge:
-                                        {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
+                                        case PubSubEventType.Merge:
                                             {
-                                                dsptchr.NotifyMerged(survivor, duplicates.Item);
+                                                if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
+                                                {
+                                                    dsptchr.NotifyMerged(survivor, duplicates.Item);
+                                                }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                    case PubSubEventType.UnMerge:
-                                        {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
+                                        case PubSubEventType.UnMerge:
                                             {
-                                                dsptchr.NotifyUnMerged(survivor, duplicates.Item);
+                                                if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
+                                                {
+                                                    dsptchr.NotifyUnMerged(survivor, duplicates.Item);
+                                                }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                    case PubSubEventType.Link:
-                                        {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                        case PubSubEventType.Link:
                                             {
-                                                dsptchr.NotifyLinked(holder, target);
+                                                if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                                {
+                                                    dsptchr.NotifyLinked(holder, target);
+                                                }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                    case PubSubEventType.UnLink:
-                                        {
-                                            if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                        case PubSubEventType.UnLink:
                                             {
-                                                dsptchr.NotifyUnlinked(holder, target);
+                                                if (evtData.Data is ParameterCollection pc && pc.TryGet("holder", out IdentifiedData holder) && pc.TryGet("target", out IdentifiedData target))
+                                                {
+                                                    dsptchr.NotifyUnlinked(holder, target);
+                                                }
+                                                break;
                                             }
-                                            break;
-                                        }
+                                    }
+                                }
+                                finally
+                                {
+                                    if(dsptchr is IDisposable disp)
+                                    {
+                                        disp.Dispose();
+                                    }
                                 }
                             }
                         }
