@@ -294,6 +294,7 @@ namespace SanteDB.Core.Http
 
                         if (resulttask == connecttimeouttask)
                         {
+                            //TODO: Fix this with language service
                             throw new TimeoutException(string.Format(ErrorMessageStrings.TIMEOUT, "rest operation"));
                         }
 
@@ -453,6 +454,7 @@ namespace SanteDB.Core.Http
                 if (whenanytask.Result == receivetimeouttask)
                 {
                     cts.Cancel();
+                    //TODO: Fix this error message with language service.
                     var errormessage = string.Format(ErrorMessageStrings.TIMEOUT, "rest operation");
                     this.m_tracer.TraceError(errormessage);
                     throw new TimeoutException(errormessage);
