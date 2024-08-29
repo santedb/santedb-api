@@ -83,8 +83,6 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>()
         {
-            { "re-calculate", typeof(bool) },
-            { "clear", typeof(bool) }
         };
 
         /// <summary>
@@ -106,43 +104,13 @@ namespace SanteDB.Core.Data.Quality
                 this.m_stateManagerService.SetState(this, JobStateType.Running);
 
                 this.m_tracer.TraceInfo("Cleaning Entity extensions...");
-                var shouldClear = parameters.Length == 0 || parameters.Length >= 2 && (parameters[1] == null || (bool?)parameters[1] == true);
-                var shouldCalc = parameters.Length == 0 || parameters.Length >= 1 && (bool?)parameters[0] == true; // For backwards compatibility
 
-                if (shouldClear)
+                using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
                 {
-                    using (DataPersistenceControlContext.Create(DeleteMode.PermanentDelete))
-                    {
-                        this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                        this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    }
+                    this.m_entityExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    this.m_actExtensionPersistence.DeleteAll(o => o.ExtensionTypeKey == ExtensionTypeKeys.DataQualityExtension && o.ObsoleteVersionSequenceId != null, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
-                if (shouldCalc)
-                {
-                    foreach (var config in this.m_dataQualityConfigurationProvider.GetRuleSets().SelectMany(o => o.Resources.Select(r => new { res = r, conf = o })).GroupBy(o => o.res))
-                    {
-                        var persistenceType = typeof(IDataPersistenceService<>).MakeGenericType(config.Key.ResourceType);
-                        var persistenceService = ApplicationServiceContext.Current.GetService(persistenceType) as IDataPersistenceService;
-                        if (persistenceService == null)
-                        {
-                            throw new InvalidOperationException();
-                        }
-                        var query = QueryExpressionParser.BuildLinqExpression(config.Key.ResourceType, String.Join("&", StatusKeys.ActiveStates.Select(o => $"statusConcept={o}")).ParseQueryString());
-                        foreach (var resource in persistenceService.Query(query).OfType<IExtendable>())
-                        {
-                            var tag = resource.TagDataQualityIssues(false);
-                            switch (tag)
-                            {
-                                case EntityExtension ee:
-                                    this.m_entityExtensionPersistence.Insert(ee, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                                    break;
-                                case ActExtension ae:
-                                    this.m_actExtensionPersistence.Insert(ae, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                                    break;
-                            }
-                        }
-                    }
-                }
+
                 this.m_tracer.TraceInfo("Completed cleaning extensions...");
 
                 this.m_stateManagerService.SetState(this, JobStateType.Completed);
