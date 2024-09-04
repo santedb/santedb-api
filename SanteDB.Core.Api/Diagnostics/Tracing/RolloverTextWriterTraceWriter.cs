@@ -211,7 +211,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         {
             foreach (var obj in data)
             {
-                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, String.Join(",", obj)));
             }
         }
     }
