@@ -47,6 +47,12 @@ namespace SanteDB.Core.Data.Import.Definition
         public Guid? Key { get; set; }
 
         /// <summary>
+        /// Priority this definition has
+        /// </summary>
+        [XmlAttribute("priority"), JsonProperty("id")]
+        public int Priority { get; set; }
+
+        /// <summary>
         /// Gets or sets the name of the element
         /// </summary>
         [XmlElement("name"), JsonProperty("name")]
