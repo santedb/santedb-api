@@ -111,7 +111,7 @@ namespace SanteDB.Core.PubSub.Broker
                             return;
                     }
 
-                    subs.ForEach(q => this.m_queue.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueEntry));
+                    subs.FilterSubscriptionMatch(queueEntry.EventType, queueEntry.Data).ToList().ForEach(q => this.m_queue.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueEntry));
                 }
             }
         }
