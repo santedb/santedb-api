@@ -233,7 +233,7 @@ namespace SanteDB.Core.Cdss
                     var protocolOutput = libraries
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
-                        .SelectMany(library => library.GetProtocols(patientCopy, scope?.ToString()))
+                        .SelectMany(library => library.GetProtocols(patientCopy, scope?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic))
                         .SelectMany(proto =>
                         {
                             try
