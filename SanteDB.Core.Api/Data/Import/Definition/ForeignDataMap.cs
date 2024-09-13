@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Priority this definition has
         /// </summary>
-        [XmlAttribute("priority"), JsonProperty("id")]
+        [XmlAttribute("priority"), JsonProperty("priority")]
         public int Priority { get; set; }
 
         /// <summary>
