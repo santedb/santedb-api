@@ -270,7 +270,7 @@ namespace SanteDB.Core.Cdss
                             // Create candidate
                             if (candidate == null)
                             {
-                                candidate = this.CreateEncounter(act, patientCopy, pathwayDef.TemplateKey);
+                                candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
@@ -312,7 +312,7 @@ namespace SanteDB.Core.Cdss
                             var candidate = encounters.OrderBy(o => o.StartTime).FirstOrDefault(e => e.StartTime >= act.StartTime);
                             if (candidate == null)
                             {
-                                candidate = this.CreateEncounter(act, patientCopy, pathwayDef.TemplateKey);
+                                candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
