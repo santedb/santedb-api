@@ -16,10 +16,21 @@
  * the License.
  * 
  */
+using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace SanteDB.Core.Services.Impl.Repository
@@ -31,12 +42,13 @@ namespace SanteDB.Core.Services.Impl.Repository
         GenericLocalMetadataRepository<CarePathwayDefinition>,
         ICarePathwayDefinitionRepositoryService
     {
-        /// <summary>DI constructor</summary>
+        /// <inheritdoc/>
         public LocalCarePathwayDefinitionRepositoryService(IPolicyEnforcementService policyService, IDataPersistenceService<CarePathwayDefinition> dataPersistence, IPrivacyEnforcementService privacyService = null) : base(policyService, dataPersistence, privacyService)
         {
         }
 
         /// <inheritdoc/>
         public CarePathwayDefinition GetCarepathDefinition(string mnemonic) => this.Find(o => o.Mnemonic == mnemonic && o.ObsoletionTime == null).FirstOrDefault();
+
     }
 }

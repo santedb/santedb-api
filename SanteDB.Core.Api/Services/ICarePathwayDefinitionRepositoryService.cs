@@ -17,6 +17,7 @@
  * 
  */
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Roles;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -32,6 +33,8 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Get the specified care pathway which has the mnemonic 
         /// </summary>
+        /// <param name="mnemonic">The mnemonic of the care pathway definition</param>
+        /// <returns>The matching carepath definition</returns>
         CarePathwayDefinition GetCarepathDefinition(String mnemonic);
 
     }
