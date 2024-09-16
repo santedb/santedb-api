@@ -619,7 +619,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void ValidateServiceSignature(Type type)
         {
-            type.Assembly.ValidateCodeIsSigned(this.m_configuration?.AllowUnsignedAssemblies == true);
+            type.Assembly.ValidateCodeIsSigned(this.m_configuration?.AllowUnsignedAssemblies != false);
         }
 
         /// <summary>

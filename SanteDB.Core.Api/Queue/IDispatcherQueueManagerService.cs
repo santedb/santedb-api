@@ -41,6 +41,7 @@ namespace SanteDB.Core.Queue
         /// </summary>
         void Open(String queueName);
 
+
         /// <summary>
         /// Subscribes to <paramref name="queueName"/> using <paramref name="callback"/>
         /// </summary>

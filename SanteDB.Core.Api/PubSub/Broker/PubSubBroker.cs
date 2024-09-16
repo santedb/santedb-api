@@ -290,6 +290,10 @@ namespace SanteDB.Core.PubSub.Broker
                     var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.Equals(o.GetType()));
                     listener.Dispose();
                     this.m_repositoryListeners.Remove(listener);
+
+                    // TODO: Clean up queues
+                    //this.m_queueService.Destroy($"{QueueName}.{e.Data.Name}");
+                    //this.m_queueService.Destroy($"{QueueName}.{e.Data.Name}.dead");
                 }
             }
         }
