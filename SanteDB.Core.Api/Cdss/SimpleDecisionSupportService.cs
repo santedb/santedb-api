@@ -15,13 +15,12 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-11-27
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
@@ -225,7 +224,7 @@ namespace SanteDB.Core.Cdss
                         pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(scope.ToString());
                         if(pathwayDef == null)
                         {
-                            throw new KeyNotFoundException(scope.ToString());
+                            throw new KeyNotFoundException(String.Format(ErrorMessages.CARE_PATHWAY_NOT_FOUND, scope.ToString()));
                         }
                     }
 
