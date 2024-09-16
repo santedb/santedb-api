@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Acts;
@@ -60,6 +58,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(GenericLocalMetadataRepository<TemplateDefinition>),
                 typeof(LocalBatchRepository),
                 typeof(LocalMaterialRepository),
+                typeof(LocalCarePathwayDefinitionRepositoryService),
                 typeof(LocalManufacturedMaterialRepository),
                 typeof(LocalOrganizationRepository),
                 typeof(LocalPlaceRepository),

@@ -14,9 +14,6 @@
  - WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
  - License for the specific language governing permissions and limitations under 
  - the License.
- - 
- - User: fyfej
- - Date: 2023-6-21
  -->
 <ForeignDataMap xmlns="http://santedb.org/santedb" name="A Sample Foreign Data Map">
   <description>A simple map</description>

@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-11-27
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
@@ -44,7 +42,7 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         /// <param name="forPatient">The patient for which applicable protocols should be obtained</param>
         /// <param name="forScope">The scope(s) for which the protocols should be obtained</param>
-        IEnumerable<ICdssProtocol> GetProtocols(Patient forPatient, String forScope);
+        IEnumerable<ICdssProtocol> GetProtocols(Patient forPatient, params String[] forScope);
 
         /// <summary>
         /// Analyze the collected samples and determine if there are any detected issues

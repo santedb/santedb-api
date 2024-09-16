@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Interfaces;
@@ -49,7 +47,7 @@ namespace SanteDB.Core.Data.Import.Definition
         /// <summary>
         /// Priority this definition has
         /// </summary>
-        [XmlAttribute("priority"), JsonProperty("id")]
+        [XmlAttribute("priority"), JsonProperty("priority")]
         public int Priority { get; set; }
 
         /// <summary>
