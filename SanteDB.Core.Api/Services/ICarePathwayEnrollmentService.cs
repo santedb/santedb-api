@@ -47,7 +47,8 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="patient">The patient to check for enrolment</param>
         /// <param name="carePathway">The care pathway which enrolment is to be checked</param>
+        /// <param name="carePlan">The care plan which is registered</param>
         /// <returns>True if <paramref name="patient"/> is enrolled in <paramref name="carePathway"/></returns>
-        bool IsEnrolled(Patient patient, CarePathwayDefinition carePathway);
+        bool TryGetEnrollment(Patient patient, CarePathwayDefinition carePathway, out CarePlan carePlan);
     }
 }

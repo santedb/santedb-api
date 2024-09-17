@@ -316,7 +316,7 @@ namespace SanteDB.Core.Cdss
                                 protocolActs.Add(candidate);
                             }
                             // Add the protocol act
-                            candidate.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
+                            candidate.LoadProperty(o=>o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
 
                             // Remove so we don't have duplicates
                             protocolActs.Remove(act);
@@ -348,6 +348,7 @@ namespace SanteDB.Core.Cdss
                             Version = o.Version,
                             Protocol = new Protocol()
                             {
+                                Key = o.Uuid,
                                 Name = o.Name,
                                 Oid = o.Oid
                             }
