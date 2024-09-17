@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
@@ -75,6 +76,11 @@ namespace SanteDB.Core.Cdss
         /// Save the protocol definition to <paramref name="definitionStream"/>
         /// </summary>
         void Save(Stream definitionStream);
+
+        /// <summary>
+        /// Get the protocol definitions from the CDSS library
+        /// </summary>
+        IEnumerable<Protocol> GetProtocolDefinitions();
 
         /// <summary>
         /// If the CDSS library data came from storage, this is the metadata
