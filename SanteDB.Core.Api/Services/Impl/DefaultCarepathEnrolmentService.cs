@@ -1,4 +1,5 @@
 ﻿using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
@@ -7,6 +8,8 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Security;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services.Impl.Repository;
 using System;
@@ -25,6 +28,8 @@ namespace SanteDB.Core.Services.Impl
     {
 
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultCarepathEnrolmentService));
+        private readonly CarePathwayConfigurationSection m_configuration;
+        private readonly IPolicyEnforcementService m_pepService;
         private readonly INotifyRepositoryService<Patient> m_patientRepository;
         private readonly IRepositoryService<CarePlan> m_carePlanRepository;
         private readonly INotifyRepositoryService<CarePathwayDefinition> m_carePathwayRepository;
@@ -34,6 +39,7 @@ namespace SanteDB.Core.Services.Impl
 
         /// <summary>DI constructor</summary>
         public DefaultCarepathEnrolmentService(
+            IConfigurationManager configurationManager,
             IPolicyEnforcementService policyService,
             INotifyRepositoryService<CarePathwayDefinition> carePathwayRepository,
             IJobManagerService jobManager,
@@ -42,6 +48,11 @@ namespace SanteDB.Core.Services.Impl
             INotifyRepositoryService<Patient> patientRepository,
             IRepositoryService<CarePlan> careplanRepository) 
         {
+            this.m_configuration = configurationManager.GetSection<CarePathwayConfigurationSection>() ?? new CarePathwayConfigurationSection()
+            {
+                EnableAutoEnrollment = true
+            };
+            this.m_pepService = policyService;
             this.m_patientRepository = patientRepository;
             this.m_carePlanRepository = careplanRepository;
             this.m_carePathwayRepository = carePathwayRepository;
@@ -52,6 +63,12 @@ namespace SanteDB.Core.Services.Impl
             this.m_patientRepository.Saved += patientRepositoryChange;
             this.m_carePathwayRepository.Inserted += carePathwayRepositoryChange;
             this.m_carePathwayRepository.Saved += carePathwayRepositoryChange;
+
+            // Register the care planning job
+            if(!this.m_jobManager.IsJobRegistered(typeof(CareplanEnrolmentJob)))
+            {
+                this.m_jobManager.RegisterJob(typeof(CareplanEnrolmentJob));
+            }
         }
 
         /// <inheritdoc/>
@@ -62,7 +79,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void carePathwayRepositoryChange(object sender, Event.DataPersistedEventArgs<CarePathwayDefinition> e)
         {
-            if (e.Data.EnrolmentMode == CarePathwayEnrolmentMode.Automatic)
+            if (e.Data.EnrolmentMode == CarePathwayEnrolmentMode.Automatic && this.m_configuration.EnableAutoEnrollment)
             {
                 this.m_jobManager.StartJob(typeof(CareplanEnrolmentJob), new object[] { e.Data.Key.Value });
             }
@@ -111,9 +128,16 @@ namespace SanteDB.Core.Services.Impl
             {
                 throw new DetectedIssueException(BusinessRules.DetectedIssuePriorityType.Error, "carepath.enroll.eligibility", String.Format("Patient {0} is ineligible to be enrolled in {1}", patient, carePathway), DetectedIssueKeys.SafetyConcernIssue, null);
             }
+            else if(AuthenticationContext.Current.Principal.Identity is IApplicationIdentity || AuthenticationContext.Current.Principal.Identity is IDeviceIdentity)
+            {
+                this.m_tracer.TraceWarning("Enrollment into care plans can only be sourced/started by SYSTEM or human user");
+                return null;
+            }
 
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.WriteClinicalData);
             var cp = this.m_decisionSupportService.CreateCarePlan(patient, true, new Dictionary<String, object>() { { "pathway", carePathway.Mnemonic } });
             cp.StatusConceptKey = StatusKeys.Active;
+
             return this.m_carePlanRepository.Insert(cp);
         }
 
@@ -166,6 +190,8 @@ namespace SanteDB.Core.Services.Impl
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, String.Format("{0} already enrolled in {1}", patient, carePathway)));
             }
+
+            this.m_pepService.Demand(PermissionPolicyIdentifiers.WriteClinicalData);
 
             var cp = this.m_carePlanRepository.Find(o => o.CarePathwayKey == carePathway.Key && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active).FirstOrDefault();
             cp.StatusConceptKey = StatusKeys.Cancelled;
