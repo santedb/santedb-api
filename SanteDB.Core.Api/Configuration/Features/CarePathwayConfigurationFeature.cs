@@ -6,9 +6,9 @@ using System.Text;
 namespace SanteDB.Core.Configuration.Features
 {
     /// <summary>
-    /// Represents a configuration feature which enables the <see cref="DefaultCarepathEnrolmentService"/>
+    /// Represents a configuration feature which enables the <see cref="DefaultCarepathEnrollmentService"/>
     /// </summary>
-    public class CarePathwayConfigurationFeature : GenericServiceFeature<DefaultCarepathEnrolmentService>
+    public class CarePathwayConfigurationFeature : GenericServiceFeature<DefaultCarepathEnrollmentService>
     {
         /// <inheritdoc/>
         public override Type ConfigurationType => typeof(CarePathwayConfigurationSection);

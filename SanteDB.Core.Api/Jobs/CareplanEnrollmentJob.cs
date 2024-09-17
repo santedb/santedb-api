@@ -17,7 +17,7 @@ namespace SanteDB.Core.Jobs
     /// <summary>
     /// Careplan enrolment job
     /// </summary>
-    public class CareplanEnrolmentJob : IJob
+    public class CareplanEnrollmentJob : IJob
     {
 
         // Job id
@@ -27,13 +27,13 @@ namespace SanteDB.Core.Jobs
         private readonly IRepositoryService<Patient> m_patientRepository;
         private readonly ICarePathwayDefinitionRepositoryService m_carePathwayService;
         private readonly ICarePathwayEnrollmentService m_carePathwayEnrollmentService;
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(CareplanEnrolmentJob));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(CareplanEnrollmentJob));
         private bool m_cancel = false;
 
         /// <summary>
         /// Careplan enrolment job
         /// </summary>
-        public CareplanEnrolmentJob(
+        public CareplanEnrollmentJob(
             IConfigurationManager configurationManager,
             ICarePathwayEnrollmentService carePathwayEnrollmentService, 
             ICarePathwayDefinitionRepositoryService carePathwayDefinitionRepositoryService,
@@ -96,7 +96,7 @@ namespace SanteDB.Core.Jobs
                     }
                     else
                     {
-                        pathways.AddRange(this.m_carePathwayService.Find(o => o.EnrolmentMode == CarePathwayEnrolmentMode.Automatic));
+                        pathways.AddRange(this.m_carePathwayService.Find(o => o.EnrollmentMode == CarePathwayEnrollmentMode.Automatic));
                     }
 
                     foreach (var cp in pathways)

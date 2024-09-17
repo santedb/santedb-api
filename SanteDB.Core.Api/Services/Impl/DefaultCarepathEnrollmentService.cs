@@ -27,10 +27,10 @@ namespace SanteDB.Core.Services.Impl
     /// <summary>
     /// Default carepath enrolment service
     /// </summary>
-    public class DefaultCarepathEnrolmentService : ICarePathwayEnrollmentService, IDisposable
+    public class DefaultCarepathEnrollmentService : ICarePathwayEnrollmentService, IDisposable
     {
 
-        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultCarepathEnrolmentService));
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultCarepathEnrollmentService));
         private readonly CarePathwayConfigurationSection m_configuration;
         private readonly IPolicyEnforcementService m_pepService;
         private readonly INotifyRepositoryService<Patient> m_patientRepository;
@@ -41,7 +41,7 @@ namespace SanteDB.Core.Services.Impl
         private readonly ConcurrentDictionary<Guid, Func<Patient, bool>> m_compiledExpressions = new ConcurrentDictionary<Guid, Func<Patient, bool>>();
 
         /// <summary>DI constructor</summary>
-        public DefaultCarepathEnrolmentService(
+        public DefaultCarepathEnrollmentService(
             IConfigurationManager configurationManager,
             IPolicyEnforcementService policyService,
             INotifyRepositoryService<CarePathwayDefinition> carePathwayRepository,
@@ -72,9 +72,9 @@ namespace SanteDB.Core.Services.Impl
             // Register the care planning job
             ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                if (!this.m_jobManager.IsJobRegistered(typeof(CareplanEnrolmentJob)))
+                if (!this.m_jobManager.IsJobRegistered(typeof(CareplanEnrollmentJob)))
                 {
-                    this.m_jobManager.RegisterJob(typeof(CareplanEnrolmentJob));
+                    this.m_jobManager.RegisterJob(typeof(CareplanEnrollmentJob));
                 }
             };
         }
@@ -85,7 +85,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 foreach (var cp in this.GetEligibleCarePaths(p))
                 {
-                    if (cp.EnrolmentMode == CarePathwayEnrolmentMode.Automatic)
+                    if (cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
                     {
                         this.m_tracer.TraceInfo("Patient {0} meets eligibility criteria for {1} - automatically enrolling", p, cp);
                         if (!e.Data.Item.OfType<CarePlan>().Any(c => c.CarePathwayKey == cp.Key))
@@ -123,9 +123,9 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void carePathwayRepositoryChange(object sender, Event.DataPersistedEventArgs<CarePathwayDefinition> e)
         {
-            if (e.Data.EnrolmentMode == CarePathwayEnrolmentMode.Automatic && this.m_configuration.EnableAutoEnrollment)
+            if (e.Data.EnrollmentMode == CarePathwayEnrollmentMode.Automatic && this.m_configuration.EnableAutoEnrollment)
             {
-                this.m_jobManager.StartJob(typeof(CareplanEnrolmentJob), new object[] { e.Data.Key.Value });
+                this.m_jobManager.StartJob(typeof(CareplanEnrollmentJob), new object[] { e.Data.Key.Value });
             }
             this.m_compiledExpressions.TryRemove(e.Data.Key.Value, out _);
         }
@@ -137,7 +137,7 @@ namespace SanteDB.Core.Services.Impl
         {
             foreach (var cp in this.GetEligibleCarePaths(e.Data))
             {
-                if (cp.EnrolmentMode == CarePathwayEnrolmentMode.Automatic)
+                if (cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
                 {
                     this.m_tracer.TraceInfo("Patient {0} meets eligibility criteria for {1} - automatically enrolling", e.Data, cp);
                     this.Enroll(e.Data, cp);
