@@ -16,7 +16,9 @@
  * the License.
  * 
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -90,6 +92,31 @@ namespace SanteDB.Core.Data
         /// <inheritdoc/>
         public IQueryResultSet GetRelations(Type relatedType, params Guid?[] sourceKey)
         {
+            return this.GetRelationsInternal(relatedType, nameof(ITargetedAssociation.SourceEntityKey), sourceKey);
+        }
+
+        public IQueryResultSet GetInverseRelations(Type relatedType, params Guid?[] targetKey)
+        {
+            if(typeof(ActParticipation).IsAssignableFrom(relatedType))
+            {
+                return this.GetRelationsInternal(relatedType, nameof(ActParticipation.PlayerEntityKey), targetKey);
+
+            }
+            else if(typeof(ITargetedAssociation).IsAssignableFrom(relatedType))
+            {
+                return this.GetRelationsInternal(relatedType, nameof(ITargetedAssociation.TargetEntityKey), targetKey);
+            }
+            else
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(ITargetedAssociation), relatedType.GetType()));
+            }
+        }
+
+        /// <summary>
+        /// Actually perform the loading of the relations
+        /// </summary>
+        private IQueryResultSet GetRelationsInternal(Type relatedType, string joinProperty, Guid?[] keys)
+        {
             var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(relatedType);
             var persistenceService = ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
             if (persistenceService == null)
@@ -99,14 +126,14 @@ namespace SanteDB.Core.Data
             var parm = Expression.Parameter(relatedType);
             var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
 
-            var memberRel = relatedType.GetProperty(nameof(ISimpleAssociation.SourceEntityKey));
+            var memberRel = relatedType.GetProperty(joinProperty);
             if (memberRel == null)
             {
                 return null;
             }
             else
             {
-                Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(sourceKey), Expression.MakeMemberAccess(parm, memberRel)), parm);
+                Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(keys), Expression.MakeMemberAccess(parm, memberRel)), parm);
                 var retVal = persistenceService.Query(expr);
                 return retVal;
             }
