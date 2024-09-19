@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Cdss;
 using SanteDB.Core.Configuration;
@@ -26,7 +24,9 @@ using SanteDB.Core.Http;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
@@ -479,13 +479,6 @@ namespace SanteDB.Core
         };
 
         /// <summary>
-        /// Gets an assembly qualified name without version information
-        /// </summary>
-        /// <param name="me"></param>
-        /// <returns></returns>
-        public static String AssemblyQualifiedNameWithoutVersion(this Type me) => $"{me.FullName}, {me.Assembly.GetName().Name}";
-
-        /// <summary>
         /// Try to resolve a reference
         /// </summary>
         /// <param name="repository">The repository to resolve on</param>
@@ -510,6 +503,7 @@ namespace SanteDB.Core
 
             return resolved != null;
         }
+
         /// <summary>
         /// Resolve the reference
         /// </summary>
@@ -523,5 +517,45 @@ namespace SanteDB.Core
             return retVal;
         }
 
+        /// <summary>
+        /// Scans the persistence provider to find the appropriate acts in <paramref name="carePlan"/> have been fulfilled
+        /// </summary>
+        public static CarePlan HarmonizeCarePlan(this CarePlan carePlan)
+        {
+
+            if (!carePlan.CarePathwayKey.HasValue || carePlan.VersionKey.HasValue) // Unless we're linked to a care pathway or the care plan is stored return
+            {
+                return carePlan;
+            }
+
+            var recordTargetId = carePlan.LoadProperty(o => o.Participations).Single(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget)?.PlayerEntityKey;
+            var storedCareplan = EntitySource.Current.Provider.Query<CarePlan>(o => o.CarePathwayKey == carePlan.CarePathwayKey && o.StatusConceptKey == StatusKeys.Active && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => r.PlayerEntityKey == recordTargetId)).FirstOrDefault();
+            if (storedCareplan == null)
+            {
+                return carePlan;
+            }
+
+            var storedProposals = EntitySource.Current.Provider.Query<Act>(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntityKey == storedCareplan.Key) && o.MoodConceptKey == ActMoodKeys.Propose) // direct proposals
+                .Union(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntity.Relationships.Where(r2 => r2.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r2 => r2.SourceEntityKey == storedCareplan.Key)) && o.MoodConceptKey == ActMoodKeys.Propose); // those in a proposed encounter
+            var myProposals = carePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent); // Direct proposals
+            myProposals = myProposals.Union(carePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.LoadProperty(p => p.TargetAct) is PatientEncounter).SelectMany(r => r.TargetAct.LoadProperty(p => p.Relationships).Where(p => p.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))).ToList(); // thos in a proposed encounter
+            // Set RefersTo relationships for the actual stored care plan
+            foreach (var itm in storedProposals)
+            {
+                var storedProtocols = itm.LoadProperty(o => o.Protocols);
+                var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
+                    p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
+                if (candidate == null && carePlan.Protocols.Any(p=>storedProtocols.Any(p2=>p2.ProtocolKey == p.ProtocolKey))) // Generated care plan may not have a stored instruction as it would be fulfilled
+                {
+                    carePlan.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, itm));
+                }
+                else if(candidate != null)
+                {
+                    candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
+                }
+            }
+
+            return carePlan;
+        }
     }
 }

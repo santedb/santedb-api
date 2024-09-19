@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Services;
 using System;
@@ -40,6 +38,7 @@ namespace SanteDB.Core.Queue
         /// Opens the specified queue name and enables subscriptions
         /// </summary>
         void Open(String queueName);
+
 
         /// <summary>
         /// Subscribes to <paramref name="queueName"/> using <paramref name="callback"/>

@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
@@ -60,7 +58,9 @@ namespace SanteDB.Core.Services.Impl
         /// <summary>
         /// DI constructor
         /// </summary>
-        public JwsResourcePointerService(IDataSigningService signingService, IApplicationIdentityProviderService applicationIdentityProviderService = null, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
+        public JwsResourcePointerService(IDataSigningService signingService, 
+            IApplicationIdentityProviderService applicationIdentityProviderService = null, 
+            IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_signingService = signingService;
             this.m_applicationIdService = applicationIdentityProviderService;
@@ -108,21 +108,29 @@ namespace SanteDB.Core.Services.Impl
                 data = entityData
             };
 
+
+            // 
+
             var signature = JsonWebSignature.Create(domainList, this.m_signingService)
                 .WithCompression(Http.Description.HttpCompressionAlgorithm.Deflate)
                 .WithType(SanteDBExtendedMimeTypes.VisualResourcePointer);
 
             // Allow a configured identity for SYSTEM (this system's certificate mapping)
-            var signingCertificate = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity);
-            if (signingCertificate?.Any() == true)
+            var platformCertManager = X509CertificateUtils.GetPlatformServiceOrDefault();
+            var signingCertificateEntries = this.m_dataSigningCertificateManagerService?.GetSigningCertificates(AuthenticationContext.SystemPrincipal.Identity)
+                .Select(o => platformCertManager.TryGetCertificate(System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint, o.Thumbprint, out var privateStore) ?
+                    privateStore : o);
+            if (signingCertificateEntries?.Any(k=>k.HasPrivateKey) == true)
             {
-                signature = signature.WithCertificate(signingCertificate.First());
+                signature = signature.WithCertificate(signingCertificateEntries.First(k=>k.HasPrivateKey));
             }
             else
             {
                 signature = signature.WithSystemKey("default");
+                
             }
 
+            //signature = signature.WithIssuer(ApplicationServiceContext.Current.NodeIdentifier);
             return signature.AsSigned().Token;
         }
 
@@ -148,7 +156,7 @@ namespace SanteDB.Core.Services.Impl
                         case JsonWebSignatureParseResult.MissingAlgorithm:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.algorithm", $"Token cannot be validated - missing algorithm", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.MissingKeyId:
-                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key identifier", DetectedIssueKeys.SecurityIssue));
+                            throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.key", $"Token cannot be validated - missing key for validation", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.SignatureMismatch:
                             throw new DetectedIssueException(new DetectedIssue(DetectedIssuePriorityType.Error, "jws.verification", "Barcode Tampered", DetectedIssueKeys.SecurityIssue));
                         case JsonWebSignatureParseResult.UnsupportedAlgorithm:

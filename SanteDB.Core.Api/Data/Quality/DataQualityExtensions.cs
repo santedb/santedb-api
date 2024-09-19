@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2024-2-22
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Quality.Configuration;

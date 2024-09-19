@@ -15,10 +15,10 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
+using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,41 +34,61 @@ namespace SanteDB.Core.Data.Initialization
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(FileSystemDatasetProvider));
+        private readonly FileSystemDatasetProviderConfigurationSection m_configuration;
+
+        /// <summary>
+        /// DI constructor to load the configuration
+        /// </summary>
+        public FileSystemDatasetProvider(IConfigurationManager configurationManager)
+        {
+            this.m_configuration = configurationManager.GetSection<FileSystemDatasetProviderConfigurationSection>() ??
+                new FileSystemDatasetProviderConfigurationSection()
+                {
+                    Sources = new List<string>() {
+                         Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "Data")
+                     }
+                };
+        }
 
         /// <summary>
         /// Get all datasets
         /// </summary>
         public IEnumerable<Dataset> GetDatasets()
         {
-            var dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "Data");
-            if (!Directory.Exists(dataPath)) // HACK: Might be on linux or have a lower case data file
+            foreach (var path in this.m_configuration.Sources)
             {
-                dataPath = Path.Combine(Path.GetDirectoryName(typeof(FileSystemDatasetProvider).Assembly.Location), "data");
-            }
-            if (Directory.Exists(dataPath))
-            {
-                return Directory.GetFiles(dataPath, "*.dataset").OrderBy(o => o).Select(o =>
+                var dataPath = path;
+                if (!Directory.Exists(dataPath)) // HACK: Might be on linux or have a lower case data file
                 {
-                    this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
-                    try
+                    dataPath = dataPath.ToLower();
+                }
+                if (Directory.Exists(dataPath))
+                {
+                    foreach(var ds in Directory.GetFiles(dataPath, "*.dataset").OrderBy(o => o).Select(o =>
                     {
-                        using (var fs = File.OpenRead(o))
+                        this.m_tracer.TraceVerbose("Loading {0}...", Path.GetFileName(o));
+                        try
                         {
-                            return Dataset.Load(fs);
+                            using (var fs = File.OpenRead(o))
+                            {
+                                return Dataset.Load(fs);
+                            }
                         }
-                    }
-                    catch (Exception e)
+                        catch (Exception e)
+                        {
+                            this.m_tracer.TraceError("Could not load {0} - {1}", o, e);
+                            return null;
+                        }
+                    }).OfType<Dataset>())
                     {
-                        this.m_tracer.TraceError("Could not load {0} - {1}", o, e);
-                        return null;
+                        yield return ds;
                     }
-                }).OfType<Dataset>();
+                }
+                else
+                {
+                    this.m_tracer.TraceWarning($"Directory {dataPath} does not exist! No file application of datasets will be performed");
+                }
             }
-            else
-            {
-                this.m_tracer.TraceWarning($"Directory {dataPath} does not exist! No file application of datasets will be performed");
-            }
-            return null;
         }
     }
 }

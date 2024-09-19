@@ -15,12 +15,11 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Http;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Model.Parameters;
 using System;
 using System.Linq.Expressions;
 using System.Security.Principal;
@@ -204,6 +203,15 @@ namespace SanteDB.Core.Services
         /// </summary>
         IPrincipal AuthenticateAsDevice(IPrincipal onBehalfOf = null);
 
+        /// <summary>
+        /// Invoke an operation on the remote service
+        /// </summary>
+        /// <param name="modelType">The binding model</param>
+        /// <param name="operation">The operation name</param>
+        /// <param name="parameters">The parameters for the operation</param>
+        /// <returns>The fetched value</returns>
+        object Invoke(Type modelType, String operation, ParameterCollection parameters);
     }
+
 
 }

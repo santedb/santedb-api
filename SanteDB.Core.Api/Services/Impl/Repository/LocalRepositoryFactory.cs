@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Acts;
@@ -56,9 +54,11 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(GenericLocalConceptRepository<ConceptSet>),
                 typeof(GenericLocalMetadataRepository<IdentityDomain>),
                 typeof(GenericLocalMetadataRepository<ExtensionType>),
+                typeof(LocalContainerRepository),
                 typeof(GenericLocalMetadataRepository<TemplateDefinition>),
                 typeof(LocalBatchRepository),
                 typeof(LocalMaterialRepository),
+                typeof(LocalCarePathwayDefinitionRepositoryService),
                 typeof(LocalManufacturedMaterialRepository),
                 typeof(LocalOrganizationRepository),
                 typeof(LocalPlaceRepository),
@@ -133,7 +133,8 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             // Is this service type in the services?
             var st = r_repositoryServices.FirstOrDefault(s => s == serviceType || serviceType.IsAssignableFrom(s));
-            if (st == null && (typeof(IRepositoryService).IsAssignableFrom(serviceType) || serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IRepositoryService<>)))
+            if (st == null && (typeof(IRepositoryService).IsAssignableFrom(serviceType) || 
+                serviceType.IsGenericType && typeof(IRepositoryService<>).MakeGenericType(serviceType.GetGenericArguments()[0]).IsAssignableFrom(serviceType)))
             {
                 if (serviceType.IsGenericType)
                 {

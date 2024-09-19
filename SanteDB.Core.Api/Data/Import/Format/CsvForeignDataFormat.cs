@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB;
 using SanteDB.Core.i18n;
@@ -221,11 +219,11 @@ namespace SanteDB.Core.Data.Import.Format
                 {
                     return bl;
                 }
-                else if (!csvValue.StartsWith("0") && long.TryParse(csvValue, out var lv))
+                else if (long.TryParse(csvValue, out var lv))
                 {
                     return lv;
                 }
-                else if (!csvValue.StartsWith("0") && double.TryParse(csvValue, out var dbl))
+                else if (double.TryParse(csvValue, out var dbl))
                 {
                     return dbl;
                 }

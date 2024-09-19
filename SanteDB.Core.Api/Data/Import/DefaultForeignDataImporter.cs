@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
@@ -203,7 +201,7 @@ namespace SanteDB.Core.Data.Import
                             }
                             if (existingRecord != null)
                             {
-                                mappedObject.BatchOperation = Model.DataTypes.BatchOperationType.Ignore;
+                                mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
                                 mappedObject.Key = existingRecord.Key;
                             }
                         }

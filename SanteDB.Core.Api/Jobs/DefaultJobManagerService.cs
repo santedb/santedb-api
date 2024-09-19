@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -336,11 +334,17 @@ namespace SanteDB.Core.Jobs
                     this.m_configuration = new JobConfigurationSection() { Jobs = new List<JobItemConfiguration>() };
                     this.m_configurationManager.Configuration.AddSection(this.m_configuration);
                 }
-                this.m_configuration.Jobs.Add(new JobItemConfiguration()
+
+                if (!this.m_configuration.Jobs.Any(j => j.Type == jobType))
                 {
-                    StartType = JobStartType.Never,
-                    Type = jobType
-                });
+                    this.m_configuration.Jobs.Add(new JobItemConfiguration()
+                    {
+                        StartType = JobStartType.Never,
+                        Type = jobType
+                    });
+                }
+
+
                 if (!this.m_configurationManager.IsReadonly)
                 {
                     ApplicationServiceContext.Current.GetService<IConfigurationManager>().SaveConfiguration();

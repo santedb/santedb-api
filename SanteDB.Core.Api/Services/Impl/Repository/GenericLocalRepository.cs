@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
@@ -45,6 +43,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         IValidatingRepositoryService<TEntity>,
         IRepositoryService<TEntity>,
         INotifyRepositoryService<TEntity>,
+        IRepositoryServiceEx<TEntity>,
         ISecuredRepositoryService,
         ILocalServiceProvider<IRepositoryService<TEntity>>
         where TEntity : IdentifiedData
@@ -550,6 +549,21 @@ namespace SanteDB.Core.Services.Impl.Repository
         IdentifiedData IRepositoryService.Delete(Guid key)
         {
             return this.Delete(key);
+        }
+
+        /// <summary>
+        /// Touch the specified object
+        /// </summary>
+        public void Touch(Guid key)
+        {
+            if (this.m_dataPersistenceService is IDataPersistenceServiceEx<TEntity> ide)
+            {
+                ide.Touch(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
         }
     }
 }

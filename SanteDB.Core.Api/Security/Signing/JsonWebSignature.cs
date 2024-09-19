@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Http.Compression;
@@ -107,6 +105,12 @@ namespace SanteDB.Core.Security.Signing
         /// </summary>
         [JsonProperty("cty")]
         public string ContentType { get; set; }
+
+        /// <summary>
+        /// Gets the issuer of the JWT
+        /// </summary>
+        [JsonProperty("iss")]
+        public string Issuer { get; set; }
     }
     /// <summary>
     /// Web signature data
@@ -198,10 +202,20 @@ namespace SanteDB.Core.Security.Signing
             byte[] headerBytes = jwsMatch.Groups[2].Value.ParseBase64UrlEncode(),
                 bodyBytes = jwsMatch.Groups[3].Value.ParseBase64UrlEncode(),
                 signatureBytes = jwsMatch.Groups[4].Value.ParseBase64UrlEncode();
-
+            
             // Now lets parse the JSON objects
             parsedWebSignature.Header = JsonConvert.DeserializeObject<JsonWebSignatureHeader>(Encoding.UTF8.GetString(headerBytes));
             parsedWebSignature.Signature = signatureBytes;
+
+            // Parse the data
+            using (var ms = new MemoryStream(bodyBytes))
+            using (var compressionStream = parsedWebSignature.GetJwsCompressor().CreateDecompressionStream(ms))
+            using (var textReader = new StreamReader(compressionStream))
+            using (var jsonReader = new JsonTextReader(textReader))
+            {
+                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize<ExpandoObject>(jsonReader);
+            }
+
             // First, validate the signature
             if (!dataSigningService.TryGetSignatureSettings(parsedWebSignature.Header, out var signatureSettings))
             {
@@ -225,15 +239,6 @@ namespace SanteDB.Core.Security.Signing
             else if (!dataSigningService.Verify(Encoding.UTF8.GetBytes(jwsMatch.Groups[1].Value), signatureBytes, signatureSettings))
             {
                 result = JsonWebSignatureParseResult.SignatureMismatch;
-            }
-
-            // Continue to parse the data
-            using (var ms = new MemoryStream(bodyBytes))
-            using (var compressionStream = parsedWebSignature.GetJwsCompressor().CreateDecompressionStream(ms))
-            using (var textReader = new StreamReader(compressionStream))
-            using (var jsonReader = new JsonTextReader(textReader))
-            {
-                parsedWebSignature.Payload = JsonSerializer.Create().Deserialize<ExpandoObject>(jsonReader);
             }
 
             return result;
@@ -346,6 +351,18 @@ namespace SanteDB.Core.Security.Signing
             if (String.IsNullOrEmpty(this.Header.ContentType))
             {
                 this.Header.ContentType = type;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Append the issuer information to the web signature
+        /// </summary>
+        public JsonWebSignature WithIssuer(String issuer)
+        {
+            if(String.IsNullOrEmpty(this.Header.Issuer))
+            {
+                this.Header.Issuer = issuer;
             }
             return this;
         }

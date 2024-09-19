@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Query;
@@ -137,7 +135,6 @@ namespace SanteDB.Core.Services
         /// <param name="conceptId">The identifier of the concept</param>
         /// <returns>All <see cref="ReferenceTerm"/> instances (and their relationship strength)</returns>
         IEnumerable<ConceptReferenceTerm> FindReferenceTermsByConcept(Guid conceptId, String codeSystem);
-
 
         /// <summary>
         /// Get the specified concept name

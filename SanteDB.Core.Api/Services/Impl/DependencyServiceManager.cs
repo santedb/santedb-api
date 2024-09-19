@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using RestSrvr;
 using SanteDB.Core.Configuration;
@@ -619,7 +617,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void ValidateServiceSignature(Type type)
         {
-            type.Assembly.ValidateCodeIsSigned(this.m_configuration?.AllowUnsignedAssemblies == true);
+            type.Assembly.ValidateCodeIsSigned(this.m_configuration?.AllowUnsignedAssemblies != false);
         }
 
         /// <summary>

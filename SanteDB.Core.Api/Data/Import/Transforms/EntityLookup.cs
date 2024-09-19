@@ -15,14 +15,13 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Model.Serialization;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,6 +69,10 @@ namespace SanteDB.Core.Data.Import.Transforms
                 var parmNo = i;
                 parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
             }
+            foreach(var kv in dataMapParameters)
+            {
+                parms.Add(kv.Key, () => kv.Value);
+            }
             parms.Add("input", () => input);
 
             var key = this.m_parmExtract.Replace($"lu.{args[0]}.{args[1]}?{input}", o =>
@@ -81,12 +84,13 @@ namespace SanteDB.Core.Data.Import.Transforms
                 return String.Empty;
             });
             var result = this.m_adhocCache?.Get<Guid?>(key);
-            if (result == null)
+            if (result.GetValueOrDefault() == Guid.Empty)
             {
 
 
                 var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
-                result = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector).SingleOrDefault();
+                var results = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, args[1].ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector);
+                result = results.SingleOrDefault();
                 this.m_adhocCache?.Add(key, result ?? Guid.Empty);
 
             }

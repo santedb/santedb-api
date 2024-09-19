@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2024-2-18
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Event;
@@ -196,7 +194,7 @@ namespace SanteDB.Core.Data.Management
         private IEnumerable<IdentifiedData> DoDataMatchingLogicInternal(TModel inputRecord)
         {
             // Detect any duplicates
-            var matches = m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => m_matchingService.Match(inputRecord, o.Id, this.GetIgnoredKeys(inputRecord.Key.GetValueOrDefault())));
+            var matches = m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => m_matchingService.Match(inputRecord, o.Id, this.GetIgnoredKeysInternal(inputRecord.Key.GetValueOrDefault(), inputRecord)));
             var groupedMatches = matches
                 .Where(o => o.Record.Key != inputRecord.Key && o.Classification != RecordMatchClassification.NonMatch)
                 .GroupBy(o => o.Classification)
@@ -257,7 +255,8 @@ namespace SanteDB.Core.Data.Management
                         {
                             SourceEntityKey = newRecord.Key,
                             NegationIndicator = false,
-                            BatchOperation = Model.DataTypes.BatchOperationType.Insert
+                            BatchOperation = Model.DataTypes.BatchOperationType.Insert,
+                            ClassificationKey = RelationshipClassKeys.AutomatedLink
                         };
                     }
                     break;
@@ -275,7 +274,8 @@ namespace SanteDB.Core.Data.Management
                             SourceEntityKey = newRecord.Key,
                             Strength = match.Strength,
                             NegationIndicator = false,
-                            BatchOperation = Model.DataTypes.BatchOperationType.Insert
+                            BatchOperation = Model.DataTypes.BatchOperationType.Insert,
+                            ClassificationKey = RelationshipClassKeys.AutomatedLink
                         };
                     }
                     break;
@@ -410,7 +410,8 @@ namespace SanteDB.Core.Data.Management
                     SourceEntityKey = o,
                     TargetActKey = masterKey,
                     RelationshipTypeKey = ActRelationshipTypeKeys.Duplicate,
-                    NegationIndicator = true
+                    NegationIndicator = true,
+                    ClassificationKey = RelationshipClassKeys.ConfirmedLink
                 }));
             }
             else
@@ -428,7 +429,8 @@ namespace SanteDB.Core.Data.Management
                     SourceEntityKey = o,
                     TargetEntityKey = masterKey,
                     RelationshipTypeKey = EntityRelationshipTypeKeys.Duplicate,
-                    NegationIndicator = true
+                    NegationIndicator = true,
+                    ClassificationKey = RelationshipClassKeys.ConfirmedLink
                 }));
             }
 
@@ -502,16 +504,29 @@ namespace SanteDB.Core.Data.Management
         /// <summary>
         /// Get the ignore list
         /// </summary>
-        public IEnumerable<Guid> GetIgnoredKeys(Guid masterKey)
+        public IEnumerable<Guid> GetIgnoredKeys(Guid masterKey) => this.GetIgnoredKeysInternal(masterKey, null);
+        
+        
+        /// <summary>
+        /// Get the ignore list including those ignored on the input model
+        /// </summary>
+        private IEnumerable<Guid> GetIgnoredKeysInternal(Guid masterKey, TModel inputModel)
         {
+            IEnumerable<Guid> retVal = new Guid[0];
+            if(inputModel is IHasRelationships ihr)
+            {
+                retVal = retVal.Union(ihr.Relationships.Where(r => r.AssociationTypeKey == EntityRelationshipTypeKeys.Duplicate && r.SourceEntityKey == masterKey && ((r is EntityRelationship er && er.NegationIndicator == true) || (r is ActRelationship ar && ar.NegationIndicator == true))).Select(o=>o.TargetEntityKey.Value));
+            }
+
             if (typeof(Act).IsAssignableFrom(typeof(TModel)))
             {
-                return this.m_actRelationshipService.Query(o => o.SourceEntityKey == masterKey && o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.Current.Principal).Select(o => o.TargetActKey.Value);
+                retVal = retVal.Union(this.m_actRelationshipService.Query(o => o.SourceEntityKey == masterKey && o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.Current.Principal).Select(o => o.TargetActKey.Value));
             }
             else
             {
-                return this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.Current.Principal).Select(o => o.TargetEntityKey.Value);
+                retVal = retVal.Union(this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.Current.Principal).Select(o => o.TargetEntityKey.Value));
             }
+            return retVal;
         }
 
         private IdentifiedData AddMatchScoreTag(IdentifiedData identifiedData)

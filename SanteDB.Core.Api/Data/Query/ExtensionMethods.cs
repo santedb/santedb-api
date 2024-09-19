@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2024-2-2
  */
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Security;

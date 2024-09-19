@@ -15,13 +15,12 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Services;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 
@@ -100,7 +99,8 @@ namespace SanteDB.Core.Configuration
             {
                 if (this.m_type == null && !String.IsNullOrEmpty(this.TypeXml))
                 {
-                    this.m_type = Type.GetType(this.TypeXml);
+                    this.m_type = Type.GetType(this.TypeXml) ??
+                        AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(o => o.AssemblyQualifiedNameWithoutVersion().Equals(this.TypeXml));
                     if (this.m_type == null)
                     {
                         throw new InvalidOperationException($"Type {this.TypeXml} not found");

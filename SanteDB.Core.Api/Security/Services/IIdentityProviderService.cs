@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Services;
@@ -189,12 +187,12 @@ namespace SanteDB.Core.Security.Services
         /// Authenticate the user creating an identity
         /// </summary>
         /// <returns></returns>
-        IPrincipal Authenticate(String userName, String password);
+        IPrincipal Authenticate(String userName, String password, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null);
 
         /// <summary>
         /// Authenticate the user using two factor authentication
         /// </summary>
-        IPrincipal Authenticate(String userName, String password, String tfaSecret);
+        IPrincipal Authenticate(String userName, String password, String tfaSecret, IEnumerable<IClaim> clientClaimAssertions = null, IEnumerable<String> demandedScopes = null);
 
         /// <summary>
         /// Recheck the authentication of an already authenticated <paramref name="principal"/>.

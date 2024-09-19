@@ -15,9 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
@@ -56,9 +55,6 @@ namespace SanteDB.Core.PubSub.Broker
         /// Queue name
         /// </summary>
         public const string QueueName = "sys.pubsub";
-
-        // Cached filter criteria
-        private ConcurrentDictionary<Guid, Func<Object, bool>> m_filterCriteria = new ConcurrentDictionary<Guid, Func<Object, bool>>();
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(PubSubBroker));
@@ -133,16 +129,17 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void NotificationQueued(DispatcherMessageEnqueuedInfo e)
         {
-            if (e.QueueName == QueueName)
+            if (e.QueueName.StartsWith(QueueName))
             {
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     Object queueObject = null;
-                    while ((queueObject = this.m_queueService.Dequeue(QueueName)) is DispatcherQueueEntry dq && dq.Body is PubSubNotifyQueueEntry evtData)
+                    while ((queueObject = this.m_queueService.Dequeue(e.QueueName)) is DispatcherQueueEntry dq && dq.Body is PubSubNotifyQueueEntry evtData)
                     {
                         try
                         {
-                            foreach (var dsptchr in this.GetDispatchers(evtData.EventType, evtData.Data))
+                            var dsptchr = this.GetDispatcher(e.QueueName);
+                            try
                             {
                                 switch (evtData.EventType)
                                 {
@@ -192,6 +189,13 @@ namespace SanteDB.Core.PubSub.Broker
                                         }
                                 }
                             }
+                            finally
+                            {
+                                if (dsptchr is IDisposable disp)
+                                {
+                                    disp.Dispose();
+                                }
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -206,64 +210,17 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Get all dispatchers and subscriptions
         /// </summary>
-        protected IEnumerable<IPubSubDispatcher> GetDispatchers(PubSubEventType eventType, Object data)
+        protected IPubSubDispatcher GetDispatcher(String originQueueName)
         {
-            if (data is ParameterCollection pc)
-            {
-                data = pc.Parameters.First().Value;
-            }
+           
+            var subName = originQueueName.Substring(QueueName.Length + 1);
 
             using (AuthenticationContext.EnterSystemContext())
             {
-                var resourceName = data.GetType().GetSerializationName();
-                var subscriptions = this.m_pubSubManager
-                        .FindSubscription(o => o.ResourceTypeName == resourceName && o.IsActive && (o.NotBefore == null || o.NotBefore < DateTimeOffset.Now) && (o.NotAfter == null || o.NotAfter > DateTimeOffset.Now))
-                        .ToList();
-                subscriptions = subscriptions
-                        .Where(o => o.Event.HasFlag(eventType))
-                        .Where(s =>
-                        {
-                            // Attempt to compile the filter criteria into an executable function
-                            if (!this.m_filterCriteria.TryGetValue(s.Key.Value, out Func<Object, bool> fn))
-                            {
-                                Expression dynFn = null;
-                                var parameter = Expression.Parameter(data.GetType());
-
-                                foreach (var itm in s.Filter)
-                                {
-                                    var fFn = QueryExpressionParser.BuildLinqExpression(data.GetType(), itm.ParseQueryString(), "p", forceLoad: true, lazyExpandVariables: true);
-                                    if (dynFn is LambdaExpression le)
-                                    {
-                                        dynFn = Expression.Lambda(
-                                            Expression.And(
-                                                Expression.Invoke(le, parameter),
-                                                Expression.Invoke(fFn, parameter)
-                                               ), parameter);
-                                    }
-                                    else
-                                    {
-                                        dynFn = fFn;
-                                    }
-                                }
-
-                                if (dynFn == null)
-                                {
-                                    dynFn = Expression.Lambda(Expression.Constant(true), parameter);
-                                }
-                                parameter = Expression.Parameter(typeof(object));
-                                fn = Expression.Lambda(Expression.Invoke(dynFn, Expression.Convert(parameter, data.GetType())), parameter).Compile() as Func<Object, bool>;
-                                this.m_filterCriteria.TryAdd(s.Key.Value, fn);
-                            }
-                            return fn(data);
-                        }).ToList();
-
-                // Now we want to filter by channel, since the channel is really what we're interested in
-                foreach (var chnl in subscriptions.GroupBy(o => o.ChannelKey))
-                {
-                    var channelDef = this.m_pubSubManager.GetChannel(chnl.Key);
-                    var factory = DispatcherFactoryUtil.FindDispatcherFactoryById(channelDef.DispatcherFactoryId);
-                    yield return factory.CreateDispatcher(chnl.Key, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
-                }
+                var subscription = this.m_pubSubManager.GetSubscriptionByName(subName);
+                var channelDef = this.m_pubSubManager.GetChannel(subscription.ChannelKey);
+                var factory = DispatcherFactoryUtil.FindDispatcherFactoryById(channelDef.DispatcherFactoryId);
+                return factory.CreateDispatcher(subscription.ChannelKey, new Uri(channelDef.Endpoint), channelDef.Settings.ToDictionary(o => o.Name, o => o.Value));
             }
         }
 
@@ -304,7 +261,6 @@ namespace SanteDB.Core.PubSub.Broker
                     foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
                     {
                         this.PubSubSubscribe(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
-                        bundleListener.AddSubscription(psd);
                     }
                 }
                 catch (Exception ex)
@@ -332,6 +288,10 @@ namespace SanteDB.Core.PubSub.Broker
                     var listener = this.m_repositoryListeners.FirstOrDefault(o => lt.Equals(o.GetType()));
                     listener.Dispose();
                     this.m_repositoryListeners.Remove(listener);
+
+                    // TODO: Clean up queues
+                    //this.m_queueService.Destroy($"{QueueName}.{e.Data.Name}");
+                    //this.m_queueService.Destroy($"{QueueName}.{e.Data.Name}.dead");
                 }
             }
         }

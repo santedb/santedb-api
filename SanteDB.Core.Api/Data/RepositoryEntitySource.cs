@@ -15,10 +15,10 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
@@ -105,6 +105,21 @@ namespace SanteDB.Core.Data
             return persistenceService?.Find(expr) ?? new MemoryQueryResultSet(new Object[0]);
         }
 
+        /// <inheritdoc/>
+        public IQueryResultSet GetInverseRelations(Type relatedType, params Guid?[] targetKey)
+        {
+            if(!typeof(ITargetedAssociation).IsAssignableFrom(relatedType))
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(ITargetedAssociation), relatedType.GetType()));
+            }
+
+            var persistenceService = ApplicationServiceContext.Current.GetService(typeof(IRepositoryService<>).MakeGenericType(relatedType)) as IRepositoryService;
+            var parm = Expression.Parameter(relatedType);
+            var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid?) }) as System.Reflection.MethodInfo;
+
+            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(targetKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ITargetedAssociation.TargetEntityKey)) ?? relatedType.GetProperty(nameof(ActParticipation.PlayerEntityKey)))), parm);
+            return persistenceService?.Find(expr) ?? new MemoryQueryResultSet(new Object[0]);
+        }
         /// <summary>
         /// Query the specified object
         /// </summary>

@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Services;
@@ -34,7 +32,7 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Get data quality rule set
         /// </summary>
-        IEnumerable<DataQualityRulesetConfiguration> GetRuleSets();
+        IEnumerable<DataQualityRulesetConfiguration> GetRuleSets(bool includeObsolete = false);
 
         /// <summary>
         /// Get the rule set 

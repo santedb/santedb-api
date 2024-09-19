@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Services;
@@ -211,7 +209,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         {
             foreach (var obj in data)
             {
-                this.WriteTrace(level, source, String.Format("{0} - {1}", message, JsonConvert.SerializeObject(obj)));
+                this.WriteTrace(level, source, String.Format("{0} - {1}", message, String.Join(",", obj)));
             }
         }
     }

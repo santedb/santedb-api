@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-9-14
  */
 using NUnit.Framework;
 using SanteDB.Core.Configuration.Http;

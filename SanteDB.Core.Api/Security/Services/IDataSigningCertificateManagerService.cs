@@ -15,12 +15,13 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-7-12
  */
+using SanteDB.Core.Model.Query;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq.Expressions;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 
@@ -55,6 +56,14 @@ namespace SanteDB.Core.Security.Services
         IEnumerable<X509Certificate2> GetSigningCertificates(IIdentity identity);
 
         /// <summary>
+        /// Get all the signing certificates that are registered for <paramref name="classOfIdentity"/>
+        /// </summary>
+        /// <param name="classOfIdentity">The classification of the identities for which certificates should be retrieved</param>
+        /// <param name="filter">The query expression to filter</param>
+        /// <returns>A query result set of all the signing certificates</returns>
+        IEnumerable<X509Certificate2> GetSigningCertificates(Type classOfIdentity, NameValueCollection filter);
+        
+        /// <summary>
         /// Get any configured signing certificate based on the thumbprint
         /// </summary>
         bool TryGetSigningCertificateByThumbprint(String x509Thumbprint, out X509Certificate2 certificate);
@@ -63,6 +72,13 @@ namespace SanteDB.Core.Security.Services
         /// Get configured certificate by hash
         /// </summary>
         bool TryGetSigningCertificateByHash(byte[] x509hash, out X509Certificate2 certificate);
+
+        /// <summary>
+        /// Get all associated identities for the provided <paramref name="certificate"/>
+        /// </summary>
+        /// <param name="certificate">The certificate for which there is an identity assigned</param>
+        /// <returns>The known identities for the certificate</returns>
+        IEnumerable<IIdentity> GetCertificateIdentities(X509Certificate2 certificate);
 
     }
 }

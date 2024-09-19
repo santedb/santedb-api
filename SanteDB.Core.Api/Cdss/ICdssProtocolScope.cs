@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-11-27
  */
 using SanteDB.Core.Model.Attributes;
 using System;
@@ -46,5 +44,10 @@ namespace SanteDB.Core.Cdss
         [QueryParameter("oid")]
         String Oid { get; }
 
+        /// <summary>
+        /// Gets the ID of the asset group
+        /// </summary>
+        [QueryParameter("id")]
+        String Id { get; }
     }
 }

@@ -15,8 +15,6 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
 using SanteDB.Core.Model.Interfaces;
 using System.IO;
@@ -37,7 +35,7 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Generate a barcode from the specified identifier
         /// </summary>
-        Stream Generate(IHasIdentifiers entity);
+        Stream Generate(IHasIdentifiers entity, params string[] identityDomains);
 
         /// <summary>
         /// Generate the barcode from raw data

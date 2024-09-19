@@ -15,9 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
@@ -51,14 +50,41 @@ namespace SanteDB.Core.Security
         private readonly SecurityConfigurationSection m_configuration;
         private readonly IDataSigningCertificateManagerService m_certificateManager;
         private readonly ConcurrentDictionary<String, SecuritySignatureConfiguration> m_usedForSignature = new ConcurrentDictionary<string, SecuritySignatureConfiguration>();
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultDataSigningService));
 
         /// <summary>
         /// Default data signing service DI constructor
         /// </summary>
-        public DefaultDataSigningService(IConfigurationManager configurationManager, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
+        public DefaultDataSigningService(IConfigurationManager configurationManager,  IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_certificateManager = dataSigningCertificateManagerService;
+
+            if (this.m_certificateManager != null)
+            {
+                this.InstallConfiguredCertificatesToManager();
+            }
+        }
+
+        /// <summary>
+        /// Install configured certificates into the certificate manager
+        /// </summary>
+        private void InstallConfiguredCertificatesToManager()
+        {
+            try
+            {
+                foreach(var certConfig in this.m_configuration.Signatures.Where(o=>o.Algorithm != SignatureAlgorithm.HS256))
+                {
+                    if(!this.m_certificateManager.GetCertificateIdentities(certConfig.Certificate).Any(i=>AuthenticationContext.SystemPrincipal.Identity.Name.Equals(i.Name)))
+                    {
+                        this.m_certificateManager.AddSigningCertificate(AuthenticationContext.SystemPrincipal.Identity, certConfig.Certificate, AuthenticationContext.SystemPrincipal);
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                this.m_tracer.TraceWarning("Could not install certificates to data signing repository");
+            }
         }
 
         /// <summary>
@@ -211,7 +237,7 @@ namespace SanteDB.Core.Security
             }
             else
             {
-                throw new KeyNotFoundException(ErrorMessages.CERTIFICATE_NOT_FOUND);
+                return null;
             }
         }
     }
