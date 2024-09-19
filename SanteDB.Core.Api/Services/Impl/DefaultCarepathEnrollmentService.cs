@@ -72,9 +72,16 @@ namespace SanteDB.Core.Services.Impl
             // Register the care planning job
             ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                if (!this.m_jobManager.IsJobRegistered(typeof(CareplanEnrollmentJob)))
+                try
                 {
-                    this.m_jobManager.RegisterJob(typeof(CareplanEnrollmentJob));
+                    if (!this.m_jobManager.IsJobRegistered(typeof(CareplanEnrollmentJob)))
+                    {
+                        this.m_jobManager.RegisterJob(typeof(CareplanEnrollmentJob));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceWarning("Error registering CarePlan Enrolment Job");
                 }
             };
         }
@@ -219,11 +226,11 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <inheritdoc/>
-        public IEnumerable<CarePlan> GetEnrolledCarePaths(Patient patient)
+        public IEnumerable<CarePathwayDefinition> GetEnrolledCarePaths(Patient patient)
         {
             // Get the care pathways
             var cpIds = this.m_carePathwayRepository.Find(o => o.ObsoletionTime == null).Select(o => o.Key.Value).ToArray();
-            return this.m_carePlanRepository.Find(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active && cpIds.Contains(o.CarePathwayKey.Value));
+            return this.m_carePlanRepository.Find(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active && cpIds.Contains(o.CarePathwayKey.Value)).ToList().Select(o=>o.LoadProperty(c=>c.CarePathway));
         }
 
         /// <inheritdoc/>
@@ -262,6 +269,24 @@ namespace SanteDB.Core.Services.Impl
             }
             carePlan = this.m_carePlanRepository.Find(o => o.CarePathwayKey == carePathway.Key && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active).FirstOrDefault();
             return carePlan != null;
+        }
+
+        /// <inheritdoc/>
+        public CarePlan Enroll(Patient patient, Guid carePathwayKey)
+        {
+            return this.Enroll(patient, this.m_carePathwayRepository.Get(carePathwayKey));
+        }
+
+        /// <inheritdoc/>
+        public CarePlan UnEnroll(Patient patient, Guid carePathwayKey)
+        {
+            return this.UnEnroll(patient, this.m_carePathwayRepository.Get(carePathwayKey));
+        }
+
+        /// <inheritdoc/>
+        public bool TryGetEnrollment(Patient patient, Guid carePathwayKey, out CarePlan carePlan)
+        {
+            return this.TryGetEnrollment(patient, this.m_carePathwayRepository.Get(carePathwayKey), out carePlan);
         }
     }
 }
