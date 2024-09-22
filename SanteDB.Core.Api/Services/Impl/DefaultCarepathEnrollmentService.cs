@@ -186,7 +186,7 @@ namespace SanteDB.Core.Services.Impl
             }
 
             this.m_pepService.Demand(PermissionPolicyIdentifiers.WriteClinicalData);
-            var cp = this.m_decisionSupportService.CreateCarePlan(patient, true, new Dictionary<String, object>() { { "pathway", carePathway.Mnemonic } });
+            var cp = this.m_decisionSupportService.CreateCarePlan(patient, true, new Dictionary<String, object>() { { "pathway", carePathway.Mnemonic }, { "_persistent", true } });
             cp.StatusConceptKey = StatusKeys.Active;
             cp.BatchOperation = Model.DataTypes.BatchOperationType.InsertOrUpdate;
 
