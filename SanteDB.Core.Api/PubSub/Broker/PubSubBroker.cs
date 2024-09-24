@@ -258,7 +258,7 @@ namespace SanteDB.Core.PubSub.Broker
                     this.m_repositoryListeners.Add(bundleListener);
 
                     // Hook up the listeners for existing
-                    foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true))
+                    foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true && x.ObsoletionTime == null))
                     {
                         this.PubSubSubscribe(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
                     }
