@@ -258,7 +258,7 @@ namespace SanteDB.Core.Cdss
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
 
                     // Filter
-                    if (parameters.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
+                    if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
                         (dateRaw is DateTime periodOutput || DateTime.TryParse(dateRaw?.ToString(), out periodOutput)))
                     {
                         protocolActs = protocolActs.Where(act =>
