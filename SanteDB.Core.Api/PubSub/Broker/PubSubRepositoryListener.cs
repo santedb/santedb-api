@@ -117,7 +117,7 @@ namespace SanteDB.Core.PubSub.Broker
     /// <summary>
     /// Represents a class which listens to a repository and notifies the various subscriptions
     /// </summary>
-    public class PubSubRepositoryListener<TModel> : IDisposable where TModel : IdentifiedData
+    public class PubSubRepositoryListener<TModel> :  IDisposable where TModel : IdentifiedData
     {
         // Tracer
         private Tracer m_tracer = Tracer.GetTracer(typeof(PubSubRepositoryListener<TModel>));
@@ -235,22 +235,26 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void EnqueueObject(IdentifiedData dataToQueue, PubSubEventType defaultEventType)
         {
+            PubSubNotifyQueueEntry queueMessage = null;
             switch (dataToQueue.BatchOperation)
             {
                 case Model.DataTypes.BatchOperationType.Update:
-                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, dataToQueue));
+                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, dataToQueue);
                     break;
                 case Model.DataTypes.BatchOperationType.Delete:
-                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, dataToQueue));
+                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, dataToQueue);
                     break;
                 case Model.DataTypes.BatchOperationType.Insert:
-                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, dataToQueue));
+                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, dataToQueue);
                     break;
                 case Model.DataTypes.BatchOperationType.InsertOrUpdate:
                 case Model.DataTypes.BatchOperationType.Auto:
-                    this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), defaultEventType, dataToQueue));
+                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), defaultEventType, dataToQueue);
                     break;
             }
+            var typeName = typeof(TModel).GetSerializationName();
+            this.m_pubSubManager.FindSubscription(o=>o.ResourceTypeName == typeName).
+                FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
         }
         /// <summary>
         /// Dispose of this
