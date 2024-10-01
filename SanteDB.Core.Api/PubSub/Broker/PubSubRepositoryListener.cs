@@ -23,6 +23,7 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Queue;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Linq;
@@ -235,26 +236,29 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void EnqueueObject(IdentifiedData dataToQueue, PubSubEventType defaultEventType)
         {
-            PubSubNotifyQueueEntry queueMessage = null;
-            switch (dataToQueue.BatchOperation)
+            using (AuthenticationContext.EnterSystemContext())
             {
-                case Model.DataTypes.BatchOperationType.Update:
-                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, dataToQueue);
-                    break;
-                case Model.DataTypes.BatchOperationType.Delete:
-                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, dataToQueue);
-                    break;
-                case Model.DataTypes.BatchOperationType.Insert:
-                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, dataToQueue);
-                    break;
-                case Model.DataTypes.BatchOperationType.InsertOrUpdate:
-                case Model.DataTypes.BatchOperationType.Auto:
-                    queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), defaultEventType, dataToQueue);
-                    break;
+                PubSubNotifyQueueEntry queueMessage = null;
+                switch (dataToQueue.BatchOperation)
+                {
+                    case Model.DataTypes.BatchOperationType.Update:
+                        queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Update, dataToQueue);
+                        break;
+                    case Model.DataTypes.BatchOperationType.Delete:
+                        queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Delete, dataToQueue);
+                        break;
+                    case Model.DataTypes.BatchOperationType.Insert:
+                        queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Create, dataToQueue);
+                        break;
+                    case Model.DataTypes.BatchOperationType.InsertOrUpdate:
+                    case Model.DataTypes.BatchOperationType.Auto:
+                        queueMessage = new PubSubNotifyQueueEntry(typeof(TModel), defaultEventType, dataToQueue);
+                        break;
+                }
+                var typeName = typeof(TModel).GetSerializationName();
+                this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == typeName).
+                    FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
             }
-            var typeName = typeof(TModel).GetSerializationName();
-            this.m_pubSubManager.FindSubscription(o=>o.ResourceTypeName == typeName).
-                FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
         }
         /// <summary>
         /// Dispose of this
