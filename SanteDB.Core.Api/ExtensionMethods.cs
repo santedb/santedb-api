@@ -545,11 +545,7 @@ namespace SanteDB.Core
                 var storedProtocols = itm.LoadProperty(o => o.Protocols);
                 var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
                     p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
-                if (candidate == null && carePlan.Protocols.Any(p=>storedProtocols.Any(p2=>p2.ProtocolKey == p.ProtocolKey))) // Generated care plan may not have a stored instruction as it would be fulfilled
-                {
-                    carePlan.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, itm));
-                }
-                else if(candidate != null)
+                if(candidate != null)
                 {
                     candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
                 }

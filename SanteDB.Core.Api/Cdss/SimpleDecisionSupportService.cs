@@ -221,9 +221,17 @@ namespace SanteDB.Core.Cdss
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     var appliedProtocols = new ConcurrentBag<ICdssProtocol>();
                     CarePathwayDefinition pathwayDef = null;
-                    if(parmDict.TryGetValue(CdssParameterNames.PATHWAY_SCOPE, out var pathway))
+                    if(parmDict.TryGetValue(CdssParameterNames.PATHWAY_SCOPE, out var pathway) && !String.IsNullOrEmpty(pathway?.ToString()))
                     {
-                        pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(pathway.ToString());
+                        if (Guid.TryParse(pathway.ToString(), out var pathwayUuid))
+                        {
+                            pathwayDef = this.m_carePathwayRepository.Get(pathwayUuid);
+                        }
+                        else
+                        {
+                            pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(pathway.ToString());
+                        }
+
                         if(pathwayDef == null)
                         {
                             throw new KeyNotFoundException(String.Format(ErrorMessages.CARE_PATHWAY_NOT_FOUND, pathway.ToString()));
