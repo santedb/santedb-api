@@ -359,97 +359,105 @@ namespace SanteDB.Core.Data.Import
                 // Apply the necessary instructions
                 foreach (var map in mapping.Maps)
                 {
-
-                    // Conditional mapping?
-                    if (map.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
+                    try
                     {
-                        continue;
-                    }
-
-                    if (String.IsNullOrEmpty(map.TargetHdsiPath?.Value))
-                    {
-                        throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING_TARGET));
-                    }
-
-                    object sourceValue = null;
-                    if (!String.IsNullOrEmpty(map.Source))
-                    {
-                        sourceValue = sourceReader[map.Source];
-                    }
-
-                    var isValueNull = sourceValue == null || sourceValue is String str && String.IsNullOrEmpty(str);
-                    if (map.SourceRequired && isValueNull)
-                    {
-                        issue = new DetectedIssue(DetectedIssuePriorityType.Warning, "required", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_MAP_REQUIRED_MISSING, new { row = sourceReader.RowNumber, field = map.Source }), DetectedIssueKeys.FormalConstraintIssue);
-                        return false;
-                    }
-                    else if (isValueNull && !String.IsNullOrEmpty(map.Source)) // no need to process
-                    {
-                        continue;
-                    }
-
-                    object targetValue = sourceValue;
-
-                    // What are the mappers
-                    if (map.ValueModifiers != null)
-                    {
-                        foreach (var modifier in map.ValueModifiers)
+                        // Conditional mapping?
+                        if (map.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
                         {
-                            if (String.IsNullOrEmpty(modifier.When) || sourceValue.ToString().Equals(modifier.When))
+                            continue;
+                        }
+
+                        if (String.IsNullOrEmpty(map.TargetHdsiPath?.Value))
+                        {
+                            throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_MISSING_TARGET));
+                        }
+
+                        object sourceValue = null;
+                        if (!String.IsNullOrEmpty(map.Source))
+                        {
+                            sourceValue = sourceReader[map.Source];
+                        }
+
+                        var isValueNull = sourceValue == null || sourceValue is String str && String.IsNullOrEmpty(str);
+                        if (map.SourceRequired && isValueNull)
+                        {
+                            issue = new DetectedIssue(DetectedIssuePriorityType.Warning, "required", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_MAP_REQUIRED_MISSING, new { row = sourceReader.RowNumber, field = map.Source }), DetectedIssueKeys.FormalConstraintIssue);
+                            return false;
+                        }
+                        else if (isValueNull && !String.IsNullOrEmpty(map.Source)) // no need to process
+                        {
+                            continue;
+                        }
+
+                        object targetValue = sourceValue;
+
+                        // What are the mappers
+                        if (map.ValueModifiers != null)
+                        {
+                            foreach (var modifier in map.ValueModifiers)
                             {
-                                switch (modifier)
+                                if (String.IsNullOrEmpty(modifier.When) || sourceValue.ToString().Equals(modifier.When))
                                 {
-                                    case ForeignDataTransformValueModifier tx:
-                                        if (!this.ApplyTransformer(tx, sourceReader, parameters, targetValue, out targetValue))
-                                        {
-                                            throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
-                                        }
-                                        break;
-                                    case ForeignDataFixedValueModifier fx:
-                                        targetValue = fx.FixedValue;
-                                        break;
-                                    case ForeignDataLookupValueModifier lx:
-                                        targetValue = sourceReader[lx.SourceColumn];
-                                        break;
-                                    case ForeignDataParameterValueModifier px:
-                                        if (!parameters.TryGetValue(px.ParameterName, out var value))
-                                        {
-                                            throw new MissingFieldException(px.ParameterName);
-                                        }
-                                        targetValue = value;
-                                        break;
-                                    case ForeignDataOutputReferenceModifier or:
-                                        if (or.ExternalResource != null)
-                                        {
-                                            targetValue = or.FindExtern(insertBundle.Item, sourceReader, targetValue);
-                                        }
-                                        else
-                                        {
-                                            targetValue = or.SelectValue(mappedObject);
-                                        }
-                                        break;
+                                    switch (modifier)
+                                    {
+                                        case ForeignDataTransformValueModifier tx:
+                                            if (!this.ApplyTransformer(tx, sourceReader, parameters, targetValue, out targetValue))
+                                            {
+                                                throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = tx.Transformer, row = sourceReader.RowNumber }));
+                                            }
+                                            break;
+                                        case ForeignDataFixedValueModifier fx:
+                                            targetValue = fx.FixedValue;
+                                            break;
+                                        case ForeignDataLookupValueModifier lx:
+                                            targetValue = sourceReader[lx.SourceColumn];
+                                            break;
+                                        case ForeignDataParameterValueModifier px:
+                                            if (!parameters.TryGetValue(px.ParameterName, out var value))
+                                            {
+                                                throw new MissingFieldException(px.ParameterName);
+                                            }
+                                            targetValue = value;
+                                            break;
+                                        case ForeignDataOutputReferenceModifier or:
+                                            if (or.ExternalResource != null)
+                                            {
+                                                targetValue = or.FindExtern(insertBundle.Item, sourceReader, targetValue);
+                                            }
+                                            else
+                                            {
+                                                targetValue = or.SelectValue(mappedObject);
+                                            }
+                                            break;
+                                    }
                                 }
                             }
                         }
-                    }
 
 
-                    if (targetValue == null && map.TargetMissingSpecified)
-                    {
-                        issue = new DetectedIssue(map.TargetMissing, "maperr", map.ErrorMessage ?? this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue, target = map.TargetHdsiPath }), DetectedIssueKeys.BusinessRuleViolationIssue);
-                        if (map.TargetMissing != DetectedIssuePriorityType.Information)
+                        if (targetValue == null && map.TargetMissingSpecified)
                         {
-                            return false;
+                            issue = new DetectedIssue(map.TargetMissing, "maperr", map.ErrorMessage ?? this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TARGET_MISSING, new { row = sourceReader.RowNumber, field = map.Source, value = sourceValue, target = map.TargetHdsiPath }), DetectedIssueKeys.BusinessRuleViolationIssue);
+                            if (map.TargetMissing != DetectedIssuePriorityType.Information)
+                            {
+                                return false;
+                            }
                         }
-                    }
 
-                    if (map.TargetHdsiPath.PreserveExisting)
+                        if (map.TargetHdsiPath.PreserveExisting)
+                        {
+                            var currentValue = mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value);
+                            if (currentValue != null) continue;
+                        }
+                        mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value, targetValue, replace: map.ReplaceExisting);
+
+                    }
+                    catch(Exception e)
                     {
-                        var currentValue = mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value);
-                        if (currentValue != null) continue;
+                        issue = new DetectedIssue(DetectedIssuePriorityType.Error, "err", this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_FLD_ERR, new { field = map.TargetHdsiPath.Value, row = sourceReader.RowNumber, ex = e.ToHumanReadableString() }), DetectedIssueKeys.OtherIssue);
+                        mappedObject = null;
+                        return false;
                     }
-                    mappedObject.GetOrSetValueAtPath(map.TargetHdsiPath.Value, targetValue, replace: map.ReplaceExisting);
-
                 }
 
                 issue = null;

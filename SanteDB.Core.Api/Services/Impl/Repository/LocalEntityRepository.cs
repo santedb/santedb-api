@@ -43,7 +43,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
         /// <inheritdoc/>
         /// <remarks>This is handled based on the return type</remarks>
-        protected override string WritePolicy => PermissionPolicyIdentifiers.Login;
+        protected override string WritePolicy => PermissionPolicyIdentifiers.LoginAsService;
 
         /// <inheritdoc/>
         /// <remarks>This is handled based on the return type</remarks>
@@ -51,7 +51,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
         /// <inheritdoc/>
         /// <remarks>This is handled based on the return type</remarks>
-        protected override string AlterPolicy => PermissionPolicyIdentifiers.Login;
+        protected override string AlterPolicy => PermissionPolicyIdentifiers.LoginAsService;
 
         /// <inheritdoc/>
         /// <remarks>This is handled based on the return type</remarks>
