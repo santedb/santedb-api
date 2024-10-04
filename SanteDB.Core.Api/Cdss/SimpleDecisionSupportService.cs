@@ -261,6 +261,14 @@ namespace SanteDB.Core.Cdss
                                 return new Act[0];
                             }
                         })
+                        .Select(o=>
+                        {
+                            if(o is Act a && !a.LoadProperty(p => p.Participations).Any(p=>p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
+                            {
+                                a.Participations.Add(new ActParticipation(ActParticipationKeys.RecordTarget, target.Key));
+                            }
+                            return o;
+                        })
                         .ToList();
 
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
