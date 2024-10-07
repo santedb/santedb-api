@@ -57,7 +57,11 @@ namespace SanteDB.Core.PubSub.Broker
                 subs = new List<PubSubSubscriptionDefinition>();
                 this.m_subscriptionTypes.TryAdd(pubSubSubscriptionDefinition.ResourceType, subs);
             }
-            subs.Add(pubSubSubscriptionDefinition);
+
+            if (!subs.Any(s => s.Key == pubSubSubscriptionDefinition.Key || s.Name == pubSubSubscriptionDefinition.Name))
+            {
+                subs.Add(pubSubSubscriptionDefinition);
+            }
         }
 
         /// <summary>

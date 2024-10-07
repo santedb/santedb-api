@@ -25,6 +25,21 @@ namespace SanteDB.Core.Data.Import.Transforms
     /// <summary>
     /// Trim transform for left trim
     /// </summary>
+    public class TrimTransform : IForeignDataElementTransform
+    {
+        /// <inheritdoc/>
+        public string Name => "Trim";
+
+        /// <inheritdoc/>
+        public object Transform(object input, IForeignDataRecord sourceRecord, IDictionary<string, string> dataMapParameters, params object[] args)
+        {
+            return input.ToString().Trim();
+        }
+    }
+
+    /// <summary>
+    /// Trim transform for left trim
+    /// </summary>
     public class LeftTrimTransform : IForeignDataElementTransform
     {
         /// <inheritdoc/>

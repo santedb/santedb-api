@@ -99,7 +99,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>
         /// </summary>
-        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<Model.Association<T>> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<ISimpleAssociation> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
 
         /// <summary>
@@ -545,11 +545,7 @@ namespace SanteDB.Core
                 var storedProtocols = itm.LoadProperty(o => o.Protocols);
                 var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
                     p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
-                if (candidate == null && carePlan.Protocols.Any(p=>storedProtocols.Any(p2=>p2.ProtocolKey == p.ProtocolKey))) // Generated care plan may not have a stored instruction as it would be fulfilled
-                {
-                    carePlan.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, itm));
-                }
-                else if(candidate != null)
+                if(candidate != null)
                 {
                     candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
                 }

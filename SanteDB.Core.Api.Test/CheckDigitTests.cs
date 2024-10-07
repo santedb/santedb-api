@@ -21,6 +21,7 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.DataTypes.CheckDigitAlgorithms;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -43,7 +44,7 @@ namespace SanteDB.Core.Api.Test
                 var cd = cda.GenerateCheckDigit(id);
                 Assert.IsTrue(cda.ValidateCheckDigit(id, cd));
                 Assert.IsTrue(idv.IsValid(new EntityIdentifier(Guid.Empty, id + cd)));
-                
+                Debug.WriteLine(id + cd);
             }
         }
 

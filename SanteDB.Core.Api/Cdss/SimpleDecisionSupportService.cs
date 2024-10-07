@@ -31,6 +31,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace SanteDB.Core.Cdss
 {
@@ -57,6 +58,7 @@ namespace SanteDB.Core.Cdss
     [ServiceProvider("Default Care Planning Service")]
     public class SimpleDecisionSupportService : IDecisionSupportService
     {
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -214,25 +216,34 @@ namespace SanteDB.Core.Cdss
 
                     // Initialize
                     var parmDict = new ParameterDictionary(parameters);
-                    parmDict.Add("runProtocols", libraries.Distinct());
+                    parmDict.Add(CdssParameterNames.PROTOCOL_IDS, libraries.Distinct());
 
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     var appliedProtocols = new ConcurrentBag<ICdssProtocol>();
                     CarePathwayDefinition pathwayDef = null;
-                    if(parmDict.TryGetValue("scope", out var scope) || parmDict.TryGetValue("pathway", out scope))
+                    if(parmDict.TryGetValue(CdssParameterNames.PATHWAY_SCOPE, out var pathway) && !String.IsNullOrEmpty(pathway?.ToString()))
                     {
-                        pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(scope.ToString());
+                        if (Guid.TryParse(pathway.ToString(), out var pathwayUuid))
+                        {
+                            pathwayDef = this.m_carePathwayRepository.Get(pathwayUuid);
+                        }
+                        else
+                        {
+                            pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(pathway.ToString());
+                        }
+
                         if(pathwayDef == null)
                         {
-                            throw new KeyNotFoundException(String.Format(ErrorMessages.CARE_PATHWAY_NOT_FOUND, scope.ToString()));
+                            throw new KeyNotFoundException(String.Format(ErrorMessages.CARE_PATHWAY_NOT_FOUND, pathway.ToString()));
                         }
                     }
+                    _ = parmDict.TryGetValue(CdssParameterNames.ENCOUNTER_SCOPE, out var encounterType);
 
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
-                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, scope?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic))
+                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic ?? encounterType?.ToString()))
                         .SelectMany(proto =>
                         {
                             try
@@ -250,9 +261,30 @@ namespace SanteDB.Core.Cdss
                                 return new Act[0];
                             }
                         })
+                        .Select(o=>
+                        {
+                            if(o is Act a && !a.LoadProperty(p => p.Participations).Any(p=>p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
+                            {
+                                a.Participations.Add(new ActParticipation(ActParticipationKeys.RecordTarget, target.Key));
+                            }
+                            return o;
+                        })
                         .ToList();
 
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
+
+                    // Filter
+                    if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
+                        (dateRaw is DateTime periodOutput || DateTime.TryParse(dateRaw?.ToString(), out periodOutput)))
+                    {
+                        protocolActs = protocolActs.Where(act =>
+                        {
+                            return (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
+                                (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
+                                (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) < 5);
+                        }).ToList();
+                    }
+
                     protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));
                     // Group these as appointments 
                     if (asEncounters)
