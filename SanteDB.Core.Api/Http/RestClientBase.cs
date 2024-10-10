@@ -659,7 +659,10 @@ namespace SanteDB.Core.Http
 
                 WebHeaderCollection requestHeaders = requestEventArgs.AdditionalHeaders ?? new WebHeaderCollection(),
                     responseHeaders = null;
-                requestHeaders[HttpRequestHeader.IfMatch] = ifMatch;
+                if (!String.IsNullOrEmpty(ifMatch))
+                {
+                    requestHeaders[HttpRequestHeader.IfMatch] = ifMatch;
+                }
 
                 // Invoke
                 this.InvokeInternal<TPatch, Object>("PATCH", url, contentType, requestHeaders, out responseHeaders, patch, null);
