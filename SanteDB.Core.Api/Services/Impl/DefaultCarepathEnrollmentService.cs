@@ -40,6 +40,7 @@ namespace SanteDB.Core.Services.Impl
         private readonly IJobManagerService m_jobManager;
         private readonly IDecisionSupportService m_decisionSupportService;
         private readonly ConcurrentDictionary<Guid, Func<Patient, bool>> m_compiledExpressions = new ConcurrentDictionary<Guid, Func<Patient, bool>>();
+        private readonly INotifyRepositoryService<Bundle> m_bundleRepository;
 
         /// <summary>DI constructor</summary>
         public DefaultCarepathEnrollmentService(
@@ -51,7 +52,7 @@ namespace SanteDB.Core.Services.Impl
             IPrivacyEnforcementService privacyService,
             INotifyRepositoryService<Patient> patientRepository,
             INotifyRepositoryService<Bundle> bundleRepository,
-            IRepositoryService<CarePlan> careplanRepository) 
+            IRepositoryService<CarePlan> careplanRepository)
         {
             this.m_configuration = configurationManager.GetSection<CarePathwayConfigurationSection>() ?? new CarePathwayConfigurationSection()
             {
@@ -66,6 +67,7 @@ namespace SanteDB.Core.Services.Impl
             // Monitor the patient registration subsystem
             this.m_patientRepository.Inserted += patientRepositoryChange;
             this.m_patientRepository.Saved += patientRepositoryChange;
+            this.m_bundleRepository = bundleRepository;
             this.m_carePathwayRepository.Inserted += carePathwayRepositoryChange;
             this.m_carePathwayRepository.Saved += carePathwayRepositoryChange;
             bundleRepository.Inserting += bundleRepositoryChange;
@@ -112,9 +114,9 @@ namespace SanteDB.Core.Services.Impl
             actRelationship.TargetActKey = actRelationship.TargetAct.Key = actRelationship.TargetAct.Key ?? Guid.NewGuid();
             var ta = actRelationship.TargetAct;
             actRelationship.TargetAct = null;
-            if(ta.Relationships?.Any() == true)
+            if (ta.Relationships?.Any() == true)
             {
-                foreach(var itm in ta.Relationships.SelectMany(o=>this.ExtractCarePlanObjects(o)))
+                foreach (var itm in ta.Relationships.SelectMany(o => this.ExtractCarePlanObjects(o)))
                 {
                     yield return itm;
                 }
@@ -231,7 +233,8 @@ namespace SanteDB.Core.Services.Impl
         {
             // Get the care pathways
             var cpIds = this.m_carePathwayRepository.Find(o => o.ObsoletionTime == null).Select(o => o.Key.Value).ToArray();
-            return this.m_carePlanRepository.Find(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active && cpIds.Contains(o.CarePathwayKey.Value)).ToList().Select(o=>o.LoadProperty(c=>c.CarePathway));
+            var carePlans = this.m_carePlanRepository.Find(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(p => p.PlayerEntityKey == patient.Key) && o.StatusConceptKey == StatusKeys.Active && cpIds.Contains(o.CarePathwayKey.Value)).ToList();
+            return carePlans.Select(o => o.LoadProperty(c => c.CarePathway));
         }
 
         /// <inheritdoc/>
@@ -249,11 +252,37 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.m_pepService.Demand(PermissionPolicyIdentifiers.WriteClinicalData);
                 carePlan.StatusConceptKey = StatusKeys.Cancelled;
-                return this.m_carePlanRepository.Save(carePlan);
+
+                // Cancel all un-fulfilled parts of the care-plan
+                var saveTransaction = new Bundle();
+                saveTransaction.AddRange(this.CascadeCancellation(carePlan));
+
+                saveTransaction = this.m_bundleRepository.Save(saveTransaction);
+                return saveTransaction.Item.OfType<CarePlan>().FirstOrDefault();
             }
             else
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, String.Format("{0} already enrolled in {1}", patient, carePathway)));
+            }
+        }
+
+        /// <summary>
+        /// Cascade the cancellation
+        /// </summary>
+        private IEnumerable<IdentifiedData> CascadeCancellation(Act actToCancel)
+        {
+            actToCancel.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+            actToCancel.StatusConceptKey = StatusKeys.Cancelled;
+            yield return actToCancel;
+            foreach(var act in actToCancel.LoadProperty(o=>o.Relationships).Where(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Select(r=>r.LoadProperty(o=>o.TargetAct)))
+            {
+                if(act.StatusConceptKey != StatusKeys.Completed && act.StatusConceptKey != StatusKeys.Active)
+                {
+                    foreach(var itm in this.CascadeCancellation(act))
+                    {
+                        yield return itm;
+                    }
+                }
             }
         }
 
