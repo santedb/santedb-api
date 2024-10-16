@@ -18,11 +18,15 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Principal;
+using static System.Collections.Specialized.BitVector32;
 
 #pragma warning disable CS0612
 namespace SanteDB.Core.Security
@@ -106,6 +110,70 @@ namespace SanteDB.Core.Security
         public bool SoftDemand(string policyId, IPrincipal principal)
         {
             return this.GetGrant(principal, policyId) == PolicyGrantType.Grant;
+        }
+
+        /// <inheritdoc/>
+        public void DemandAny(params string[] policyIds)
+        {
+            var principal = AuthenticationContext.Current.Principal;
+            var grants = policyIds.ToDictionary(o => o, o => this.GetGrant(principal, o));
+            var result = grants.Values.Max();
+
+            if (principal != AuthenticationContext.SystemPrincipal)
+            {
+                ApplicationServiceContext.Current.GetAuditService().Audit().WithAction(ActionType.Execute)
+                    .WithOutcome(result == PolicyGrantType.Grant ? OutcomeIndicator.Success : result == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail)
+                    .WithEventIdentifier(EventIdentifierType.SecurityAlert)
+                    .WithEventType(EventTypeCodes.AccessControlDecision)
+                    .WithLocalSource()
+                    .WithPrincipal(principal)
+                    .WithAuditableObjects(grants.Select(g=>new AuditableObject()
+                    {
+                        IDTypeCode = AuditableObjectIdType.Custom,
+                        CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicy,
+                        ObjectId = g.Key,
+                        Role = AuditableObjectRole.SecurityGranularityDefinition,
+                        Type = AuditableObjectType.SystemObject,
+                        ObjectData = new List<ObjectDataExtension>() { new ObjectDataExtension("G", g.Value.ToString()) }
+                    }));
+            }
+
+            if (result != PolicyGrantType.Grant)
+            {
+                throw new PolicyViolationException(principal, String.Join("|", policyIds), result);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void DemandAll(params string[] policyIds)
+        {
+            var principal = AuthenticationContext.Current.Principal;
+            var grants = policyIds.ToDictionary(o => o, o => this.GetGrant(principal, o));
+            var result = grants.Values.Min();
+
+            if (principal != AuthenticationContext.SystemPrincipal)
+            {
+                ApplicationServiceContext.Current.GetAuditService().Audit().WithAction(ActionType.Execute)
+                    .WithOutcome(result == PolicyGrantType.Grant ? OutcomeIndicator.Success : result == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail)
+                    .WithEventIdentifier(EventIdentifierType.SecurityAlert)
+                    .WithEventType(EventTypeCodes.AccessControlDecision)
+                    .WithLocalSource()
+                    .WithPrincipal(principal)
+                    .WithAuditableObjects(grants.Select(g => new AuditableObject()
+                    {
+                        IDTypeCode = AuditableObjectIdType.Custom,
+                        CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicy,
+                        ObjectId = g.Key,
+                        Role = AuditableObjectRole.SecurityGranularityDefinition,
+                        Type = AuditableObjectType.SystemObject,
+                        ObjectData = new List<ObjectDataExtension>() { new ObjectDataExtension("G", g.Value.ToString()) }
+                    }));
+            }
+
+            if (result != PolicyGrantType.Grant)
+            {
+                throw new PolicyViolationException(principal, String.Join("&", policyIds), result);
+            }
         }
     }
 }

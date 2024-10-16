@@ -69,7 +69,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Insert(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item)
+            foreach (var itm in data.Item.Where(i => i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
             {
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
@@ -97,7 +97,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Save(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item.Select(o => o.GetType()).Distinct())
+            foreach (var itm in data.Item.Where(i=>i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore).Select(o => o.GetType()).Distinct())
             {
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm);
                 var irsi = ApplicationServiceContext.Current.GetService(irst);

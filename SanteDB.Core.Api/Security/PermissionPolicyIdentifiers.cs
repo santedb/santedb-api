@@ -264,7 +264,6 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string RegisterSystemJob = UnrestrictedJobManagement + ".3";
 
-
         /// <summary>
         /// Policy identifier for allowance of login
         /// </summary>
@@ -424,6 +423,30 @@ namespace SanteDB.Core.Security
         /// </summary>
         public const string AccessClientAdministrativeFunction = UnrestrictedAll + ".10";
 
+        /// <summary>
+        /// Login to any facility 
+        /// </summary>
+        public const string LoginAnywhere = UnrestrictedAll + ".900";
+
         #endregion SanteDB Client Functions
+
+        #region Stock Policies
+
+        /// <summary>
+        /// Unrestricted editing of administrative (non PHI) actions
+        /// </summary>
+        public const string UnrestrictedAdministrativeActs = UnrestrictedClinicalData + ".6";
+
+        /// <summary>
+        /// Write non PHI acts
+        /// </summary>
+        public const string WriteAdministrativeActs = UnrestrictedAdministrativeActs + ".1";
+
+        /// <summary>
+        /// Read non PHI acts
+        /// </summary>
+        public const string ReadAdministrativeActs = UnrestrictedAdministrativeActs + ".2";
+
+        #endregion
     }
 }
