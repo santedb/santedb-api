@@ -218,7 +218,7 @@
   </ItemGroup>-->
   <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="SharpCompress" Version="0.33.0" />
+        <PackageReference Include="SharpCompress" Version="0.38.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <Choose>
@@ -250,7 +250,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DynamicExpresso.Core" Version="2.16.0" />
+    <PackageReference Include="DynamicExpresso.Core" Version="2.16.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
