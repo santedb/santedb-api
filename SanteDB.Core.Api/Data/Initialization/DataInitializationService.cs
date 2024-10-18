@@ -99,24 +99,27 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         public bool Start()
         {
-            try
+            ApplicationServiceContext.Current.Started += (o2, e2) =>
             {
-
-                using (AuthenticationContext.EnterSystemContext())
+                try
                 {
-                    m_traceSource.TraceInfo($"Enumerating datasets from {m_datasetProviders.Count} provider(s).");
-                    foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
+                    using (AuthenticationContext.EnterSystemContext())
                     {
-                        this.m_datasetInstaller.Install(dataset);
+                        m_traceSource.TraceInfo($"Enumerating datasets from {m_datasetProviders.Count} provider(s).");
+                        foreach (var dataset in this.m_datasetProviders.SelectMany(o => o.GetDatasets()))
+                        {
+                            this.m_datasetInstaller.Install(dataset);
+                        }
                     }
-                    return true;
                 }
-            }
-            catch (Exception e)
-            {
-                this.m_traceSource.TraceError("Error installing datasets: {0}", e);
-                throw new DataPersistenceException(ErrorMessages.CANNOT_INITIALIZE_APPLICATION, e);
-            }
+                catch (Exception e)
+                {
+                    this.m_traceSource.TraceError("Error installing datasets: {0}", e);
+                    throw new DataPersistenceException(ErrorMessages.CANNOT_INITIALIZE_APPLICATION, e);
+                }
+            };
+          return true;
+
         }
 
         /// <summary>
