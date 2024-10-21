@@ -187,7 +187,7 @@ namespace SanteDB.Core.Cdss
                     }
 
                     // We only want events which DID occur to be considered in the CDSS
-                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence);
+                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
 
                     patientCopy.Participations.OfType<ActParticipation>()
                             .AsParallel()
@@ -239,6 +239,7 @@ namespace SanteDB.Core.Cdss
                     }
                     _ = parmDict.TryGetValue(CdssParameterNames.ENCOUNTER_SCOPE, out var encounterType);
 
+   
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()
@@ -283,6 +284,11 @@ namespace SanteDB.Core.Cdss
                                 (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
                                 (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) < 5);
                         }).ToList();
+                    }
+                    if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
+                        (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
+                    {
+                        protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
                     }
 
                     protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));

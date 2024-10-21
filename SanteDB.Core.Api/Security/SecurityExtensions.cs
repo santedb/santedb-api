@@ -86,7 +86,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         public static IEnumerable<IPolicyInstance> GetGrantedPolicies(this IClaimsPrincipal me, IPolicyInformationService pip)
         {
-            return me.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => new ClaimsPolicyInstance(me, pip.GetPolicy(o.Value)));
+            return me.Claims.Where(o => o.Type == SanteDBClaimTypes.SanteDBGrantedPolicyClaim).Select(o => new ClaimsPolicyInstance(me, pip.GetPolicy(o.Value))).Where(o=>o.Policy != null);
         }
 
         /// <summary>

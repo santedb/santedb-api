@@ -54,5 +54,10 @@ namespace SanteDB.Core.Cdss
         /// The time for which the events must fall within to be emitted
         /// </summary>
         public const string PERIOD_OF_EVENTS = "period";
+        /// <summary>
+        /// Only return the first applicable action from each protocol
+        /// </summary>
+        public const string FIRST_APPLICAPLE = "firstOnly";
+
     }
 }
