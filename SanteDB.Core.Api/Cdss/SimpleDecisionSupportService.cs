@@ -296,29 +296,37 @@ namespace SanteDB.Core.Cdss
                     if (asEncounters)
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
-                        foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime))
+                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime));
+                        while(protocolStack.Any())
                         {
-                            act.StopTime = act.StopTime ?? act.ActTime;
+                            var act = protocolStack.Dequeue();
+
+                            DateTimeOffset periodStart =  (act.StartTime ?? act.ActTime ?? DateTime.MinValue).Date.EnsureWeekday(),
+                                periodEnd = (act.StopTime ?? act.ActTime ?? DateTime.MaxValue).Date.EnsureWeekday();
+
                             // Is there a candidate encounter which is bound by start/end
-                            var candidate = encounters.FirstOrDefault(e => (act.StartTime?.Date ?? DateTimeOffset.MinValue) <= (e.StopTime?.Date ?? DateTimeOffset.MaxValue)
-                                && (act.StopTime?.Date ?? DateTimeOffset.MaxValue) >= (e.StartTime?.Date ?? DateTimeOffset.MinValue)
+                            var candidate = encounters.FirstOrDefault(e => 
+                                periodStart <= e.StopTime
+                                && periodEnd >= e.StartTime
                             );
 
                             // Create candidate
                             if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
+                                candidate.ActTime = candidate.StartTime = periodStart;
+                                candidate.StopTime = periodEnd;
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
                             else
                             {
                                 TimeSpan[] overlap = {
-                            (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                            (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
-                            (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                            (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
-                        };
+                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
+                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
+                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
+                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
+                                };
                                 // find the minimum overlap
                                 var minOverlap = overlap.Min();
                                 var overlapMin = Array.IndexOf(overlap, minOverlap);
@@ -327,8 +335,7 @@ namespace SanteDB.Core.Cdss
                                 {
                                     candidate.StartTime = act.StartTime;
                                 }
-
-                                if (overlapMin > 1)
+                                else if (overlapMin > 1)
                                 {
                                     candidate.StopTime = act.StopTime;
                                 }
@@ -361,15 +368,7 @@ namespace SanteDB.Core.Cdss
                         }
                     }
 
-                    // TODO: Look up for the current schedule in the facility
-                    foreach (var itm in protocolActs)
-                    {
-                        while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
-                        {
-                            itm.ActTime = itm.ActTime?.AddDays(1);
-                        }
-                    }
-
+                    
 
                     return new CarePlan(patientCopy, protocolActs.ToList())
                     {

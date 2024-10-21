@@ -184,7 +184,7 @@ namespace SanteDB.Core
             // Are there week days specified
             if (me.Type == Configuration.JobScheduleType.Interval)
             {
-                retVal &=  (!lastRun.HasValue || refDate.Subtract(lastRun.Value) > me.Interval);
+                retVal &= (!lastRun.HasValue || refDate.Subtract(lastRun.Value) > me.Interval);
             }
             else if (me.Type == Configuration.JobScheduleType.Scheduled)
             {
@@ -352,7 +352,7 @@ namespace SanteDB.Core
         public static void ValidateCodeIsSigned(this Assembly asm, bool allowUnsignedAssemblies)
         {
 
-            if(ApplicationServiceContext.Current?.HostType == SanteDBHostType.Test)
+            if (ApplicationServiceContext.Current?.HostType == SanteDBHostType.Test)
             {
                 allowUnsignedAssemblies = true;
             }
@@ -545,13 +545,40 @@ namespace SanteDB.Core
                 var storedProtocols = itm.LoadProperty(o => o.Protocols);
                 var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
                     p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
-                if(candidate != null)
+                if (candidate != null)
                 {
                     candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
                 }
             }
 
             return carePlan;
+        }
+
+
+        /// <summary>
+        /// Returns the greater of two values (helper method)
+        /// </summary>
+        public static T GreaterOf<T>(this T me, T other)
+            where T : IComparable => me.CompareTo(other) > 0 ? me : other;
+
+        /// <summary>
+        /// Returns the lesser of two values (helper method)
+        /// </summary>
+        public static T LesserOf<T>(this T me, T other)
+            where T : IComparable => me.CompareTo(other) < 0 ? me : other;
+
+        /// <summary>
+        /// Ensure that the date appears on a weekday
+        /// </summary>
+        /// <param name="me"></param>
+        /// <returns></returns>
+        public static DateTime EnsureWeekday(this DateTime me)
+        {
+            while (me.DayOfWeek == DayOfWeek.Sunday || me.DayOfWeek == DayOfWeek.Saturday)
+            {
+                me = me.AddDays(1);
+            }
+            return me;
         }
     }
 }
