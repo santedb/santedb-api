@@ -580,5 +580,20 @@ namespace SanteDB.Core
             }
             return me;
         }
+
+        /// <summary>
+        /// Ensure that the date appears on a weekday
+        /// </summary>
+        /// <param name="me"></param>
+        /// <returns></returns>
+        public static DateTimeOffset EnsureWeekday(this DateTimeOffset me)
+        {
+            while (me.DayOfWeek == DayOfWeek.Sunday || me.DayOfWeek == DayOfWeek.Saturday)
+            {
+                me = me.AddDays(1);
+            }
+            return me;
+
+        }
     }
 }

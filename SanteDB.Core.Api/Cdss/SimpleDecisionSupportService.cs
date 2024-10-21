@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
 using SanteDB.Core.i18n;
@@ -296,13 +297,19 @@ namespace SanteDB.Core.Cdss
                     if (asEncounters)
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
-                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime));
+                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
                         while(protocolStack.Any())
                         {
                             var act = protocolStack.Dequeue();
 
-                            DateTimeOffset periodStart =  (act.StartTime ?? act.ActTime ?? DateTime.MinValue).Date.EnsureWeekday(),
-                                periodEnd = (act.StopTime ?? act.ActTime ?? DateTime.MaxValue).Date.EnsureWeekday();
+                            DateTimeOffset periodStart =  (act.ActTime ?? act.StartTime ?? DateTime.MinValue).Date.EnsureWeekday(),
+                                periodEnd = (act.StopTime ?? act.ActTime?.AddDays(5) ?? DateTime.MaxValue).Date.EnsureWeekday();
+
+                            // Place limit on recommendation
+                            if(periodEnd.Subtract(periodStart).TotalDays > 10)
+                            {
+                                periodEnd = periodStart.AddDays(10);
+                            }
 
                             // Is there a candidate encounter which is bound by start/end
                             var candidate = encounters.FirstOrDefault(e => 
@@ -333,11 +340,11 @@ namespace SanteDB.Core.Cdss
                                 // Adjust the dates based on the start / stop time
                                 if (overlapMin % 2 == 1)
                                 {
-                                    candidate.StartTime = act.StartTime;
+                                    candidate.StartTime = act.StartTime?.EnsureWeekday() ?? candidate.StartTime;
                                 }
                                 else if (overlapMin > 1)
                                 {
-                                    candidate.StopTime = act.StopTime;
+                                    candidate.StopTime = act.StopTime?.EnsureWeekday() ?? candidate.StopTime;
                                 }
 
                                 candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
@@ -370,7 +377,13 @@ namespace SanteDB.Core.Cdss
 
                     
 
-                    return new CarePlan(patientCopy, protocolActs.ToList())
+                    return new CarePlan(patientCopy, protocolActs.Select(o=>
+                    {
+                        o.ActTime = o.ActTime?.EnsureWeekday();
+                        o.StartTime = o.StartTime?.EnsureWeekday();
+                        o.StopTime = o.StopTime?.EnsureWeekday();
+                        return o;
+                    }).ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
