@@ -278,13 +278,20 @@ namespace SanteDB.Core.Cdss
 
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
 
+                    // Tag back entry?
+                    if(parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
+                           (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
+                    {
+                        protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                    }
                     // Filter
                     if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
                         (dateRaw is DateTime periodOutput || DateTime.TryParse(dateRaw?.ToString(), out periodOutput)))
                     {
                         protocolActs = protocolActs.Where(act =>
                         {
-                            return (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
+                            return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
+                                (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
                                 (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
                                 (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) < 5);
                         }).ToList();
