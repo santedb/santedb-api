@@ -158,7 +158,7 @@ namespace SanteDB.Core.Security.Privacy
                         .ToArray();
                 this.m_adhocCache?.Add(key, domainsToFilter, new TimeSpan(0, 0, 60));
             }
-            return domainsToFilter;
+            return domainsToFilter ?? new IdentityDomain[0];
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace SanteDB.Core.Security.Privacy
                         var r = 0;
                         if (result is Act act)
                         {
-                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
+                            foreach (var id in act.LoadProperty(o=>o.Identifiers).Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 act.Identifiers.Remove(id);
@@ -206,7 +206,7 @@ namespace SanteDB.Core.Security.Privacy
                         }
                         else if (result is Entity entity)
                         {
-                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
+                            foreach (var id in entity.LoadProperty(o => o.Identifiers).Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, this.m_hasher.ComputeHash(id.Value)));
                                 entity.Identifiers.Remove(id);
@@ -231,7 +231,7 @@ namespace SanteDB.Core.Security.Privacy
                         var r = 0;
                         if (result is Act act)
                         {
-                            foreach (var id in act.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
+                            foreach (var id in act.LoadProperty(o => o.Identifiers).Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 act.Identifiers.Add(new ActIdentifier(id.IdentityDomain, id.Value.Mask()));
                                 act.Identifiers.Remove(id);
@@ -240,7 +240,7 @@ namespace SanteDB.Core.Security.Privacy
                         }
                         else if (result is Entity entity)
                         {
-                            foreach (var id in entity.Identifiers.Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
+                            foreach (var id in entity.LoadProperty(o => o.Identifiers).Where(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey)).ToArray())
                             {
                                 entity.Identifiers.Add(new EntityIdentifier(id.IdentityDomain, id.Value.Mask()));
                                 entity.Identifiers.Remove(id);
