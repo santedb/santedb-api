@@ -261,13 +261,14 @@ namespace SanteDB.Core.Data.Management
                     }
                     break;
                 case Entity ent:
+                    var backMatches = this.m_entityRelationshipService.Query(o => o.TargetEntityKey == newRecord.Key && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal).Select(o=>o.SourceEntityKey).ToArray();
                     foreach (var itm in this.m_entityRelationshipService.Query(o => o.SourceEntityKey == newRecord.Key && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal))
                     {
                         itm.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
                         yield return itm;
                     }
 
-                    foreach (var match in matches)
+                    foreach (var match in matches.Where(m => !backMatches.Contains(m.Record.Key)))
                     {
                         yield return new EntityRelationship(EntityRelationshipTypeKeys.Duplicate, match.Record.Key)
                         {
@@ -417,8 +418,8 @@ namespace SanteDB.Core.Data.Management
             else
             {
                 // Remove all duplicate indicators
-                persistenceBundle.AddRange(this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && falsePositives.Contains(o.TargetEntityKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.SystemPrincipal)
-                    .Union(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && falsePositives.Contains(o.SourceEntityKey.Value) && o.TargetEntityKey == masterKey && o.NegationIndicator == true)
+                persistenceBundle.AddRange(this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && falsePositives.Contains(o.TargetEntityKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal)
+                    .Union(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && falsePositives.Contains(o.SourceEntityKey.Value) && o.TargetEntityKey == masterKey)
                     .ToArray().Select(o => new EntityRelationship()
                     {
                         Key = o.Key,
