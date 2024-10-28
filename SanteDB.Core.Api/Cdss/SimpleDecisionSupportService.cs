@@ -293,7 +293,7 @@ namespace SanteDB.Core.Cdss
                             return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
                                 (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
                                 (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
-                                (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) < 5);
+                                (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) <= 1);
                         }).ToList();
                     }
                     if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
