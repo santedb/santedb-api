@@ -31,6 +31,7 @@ using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
@@ -293,7 +294,7 @@ namespace SanteDB.Core.Cdss
                             return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
                                 (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
                                 (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
-                                (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) <= 1);
+                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.IsoWeek() == periodOutput.IsoWeek());
                         }).ToList();
                     }
                     if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&

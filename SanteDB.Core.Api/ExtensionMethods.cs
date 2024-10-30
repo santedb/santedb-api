@@ -582,6 +582,24 @@ namespace SanteDB.Core
         }
 
         /// <summary>
+        /// Week number
+        /// </summary>
+        public static int IsoWeek(this DateTime me)
+        {
+            // See: https://learn.microsoft.com/en-us/archive/blogs/shawnste/iso-8601-week-of-year-format-in-microsoft-net
+            if(me.DayOfWeek >= DayOfWeek.Monday && me.DayOfWeek <= DayOfWeek.Wednesday)
+            {
+                me = me.AddDays(3);
+            }
+            return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(me, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        }
+
+        /// <summary>
+        /// Week number
+        /// </summary>
+        public static int IsoWeek(this DateTimeOffset me) => me.DateTime.IsoWeek();
+
+        /// <summary>
         /// Ensure that the date appears on a weekday
         /// </summary>
         /// <param name="me"></param>
