@@ -185,6 +185,11 @@ namespace SanteDB.Core.Services
         void DetectMergeCandidates(Guid masterKey);
 
         /// <summary>
+        /// Provides a request to cancel the detection of merge candidates
+        /// </summary>
+        void CancelDetectGlobalMergeCandidates();
+
+        /// <summary>
         /// Reset the specified merge service data on the specified record
         /// </summary>
         void Reset(Guid masterKey, bool includeVerified, bool linksOnly);

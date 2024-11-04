@@ -22,6 +22,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 namespace SanteDB.Core.Data.Management
@@ -160,13 +161,14 @@ namespace SanteDB.Core.Data.Management
         /// <summary>
         /// Wait until all of the records are completed processing
         /// </summary>
+        /// <param name="msWait">The number of milliseconds to wait</param>
         public void WaitUntilFinished()
         {
             while (this.m_availableWorkers != this.m_maxWorkers || // still someone processing
                     !this.m_entityStack.IsEmpty && this.m_haltException == null)
             {
                 this.m_processEvent.Set();
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
         }
 

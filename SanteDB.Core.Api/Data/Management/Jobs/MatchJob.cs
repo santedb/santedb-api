@@ -37,6 +37,7 @@ namespace SanteDB.Core.Data.Management.Jobs
         // Guid
         private readonly Guid m_id;
 
+        private bool m_cancelRequested = false;
         // Merge service
         private IRecordMergingService<T> m_mergeService;
         private readonly IJobStateManagerService m_stateManager;
@@ -81,7 +82,7 @@ namespace SanteDB.Core.Data.Management.Jobs
         /// <summary>
         /// Can cancel the job?
         /// </summary>
-        public bool CanCancel => false;
+        public bool CanCancel => true;
 
         /// <summary>
         /// Gets the parameters for the job
@@ -96,7 +97,8 @@ namespace SanteDB.Core.Data.Management.Jobs
         /// </summary>
         public void Cancel()
         {
-            throw new NotSupportedException();
+            this.m_mergeService.CancelDetectGlobalMergeCandidates();
+            this.m_cancelRequested = true;
         }
 
         /// <summary>
@@ -108,6 +110,7 @@ namespace SanteDB.Core.Data.Management.Jobs
             {
                 using (AuthenticationContext.EnterSystemContext())
                 {
+                    this.m_cancelRequested = false;
                     this.m_stateManager.SetState(this, JobStateType.Running);
                     var clear = parameters.Length > 0 ? (bool?)parameters[0] : false;
                     this.m_tracer.TraceInfo("Starting batch run of Matching ");
@@ -125,7 +128,14 @@ namespace SanteDB.Core.Data.Management.Jobs
 
                     this.m_mergeService.DetectGlobalMergeCandidates();
 
-                    this.m_stateManager.SetState(this, JobStateType.Completed);
+                    if (this.m_cancelRequested)
+                    {
+                        this.m_stateManager.SetState(this, JobStateType.Cancelled);
+                    }
+                    else
+                    {
+                        this.m_stateManager.SetState(this, JobStateType.Completed);
+                    }
                 }
             }
             catch (Exception ex)
