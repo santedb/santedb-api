@@ -23,6 +23,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security;
@@ -375,18 +376,21 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
 
             // Bundles cascade
-            var bundle = p as Bundle;
-            if (bundle != null)
+            if (p is Bundle bundle)
             {
                 for (int i = 0; i < bundle.Item.Count; i++)
                 {
                     var itm = bundle.Item[i];
-                    var vrst = typeof(IValidatingRepositoryService<>).MakeGenericType(itm.GetType());
-                    var vrsi = ApplicationServiceContext.Current.GetService(vrst);
 
-                    if (vrsi != null)
+                    if (!(itm is IdentifiedDataReference))
                     {
-                        bundle.Item[i] = vrsi.GetType().GetMethod(nameof(Validate)).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
+                        var vrst = typeof(IValidatingRepositoryService<>).MakeGenericType(itm.GetType());
+                        var vrsi = ApplicationServiceContext.Current.GetService(vrst);
+
+                        if (vrsi != null)
+                        {
+                            bundle.Item[i] = vrsi.GetType().GetMethod(nameof(Validate)).Invoke(vrsi, new object[] { itm }) as IdentifiedData;
+                        }
                     }
                 }
             }
