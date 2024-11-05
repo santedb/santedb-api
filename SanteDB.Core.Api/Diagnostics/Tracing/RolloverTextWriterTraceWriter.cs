@@ -96,7 +96,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             }
 
             var assemblyname = Assembly.GetEntryAssembly()?.GetName();
-            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
+            base.TraceEvent(EventLevel.Informational, "SanteDB.Core", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
         }
 
         /// <summary>

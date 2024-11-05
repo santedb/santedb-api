@@ -135,6 +135,12 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the sources to filter on
+        /// </summary>
+        [XmlArray("sources"), XmlArrayItem("add"), JsonProperty("sources")]
+        public List<TraceSourceConfiguration> Sources { get; set; }
+
+        /// <summary>
         /// Gets or sets the source name
         /// </summary>
         [XmlAttribute("name"), JsonProperty("name")]
