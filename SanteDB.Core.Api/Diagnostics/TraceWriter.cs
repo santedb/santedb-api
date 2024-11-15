@@ -76,7 +76,7 @@ namespace SanteDB.Core.Diagnostics
 
                     if (String.IsNullOrEmpty(key.Key))
                     {
-                        sourceConfig = this.m_filter;
+                        sourceConfig = (EventLevel)(-1);
                     }
                     else
                     {

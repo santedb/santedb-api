@@ -35,7 +35,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// <seealso cref="Services.IRepositoryService{PatientEncounter}" />
     /// <seealso cref="Services.IRepositoryService{CodedObservation}" />
     /// <seealso cref="Services.IRepositoryService{TextObservation}" />
-    public class GenericLocalActRepository<TAct> : GenericLocalClinicalDataRepository<TAct>, ICancelRepositoryService<TAct>
+    public class GenericLocalActRepository<TAct> : GenericLocalRepositoryEx<TAct>, ICancelRepositoryService<TAct>
         where TAct : Act
     {
         /// <summary>
@@ -81,6 +81,66 @@ namespace SanteDB.Core.Services.Impl.Repository
                 }
             }
             return data;
+        }
+
+        /// <inheritdoc/>
+        public override void DemandWrite(object data) => this.DemandWritePermission(data.GetType());
+
+        /// <inheritdoc/>
+        public override void DemandAlter(object data) => this.DemandWritePermission(data.GetType());
+
+        /// <inheritdoc/>
+        public override void DemandQuery()
+        {
+            switch(typeof(TAct).GetResourceSensitivityClassification())
+            {
+                case Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.QueryClinicalData);
+                    break;
+                case Model.Attributes.ResourceSensitivityClassification.Administrative:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadAdministrativeActs);
+                    break;
+                default:
+                    base.DemandQuery();
+                    break;
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void DemandRead(Guid key)
+        {
+            switch (typeof(TAct).GetResourceSensitivityClassification())
+            {
+                case Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadAdministrativeActs);
+                    break;
+                case Model.Attributes.ResourceSensitivityClassification.Administrative:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadAdministrativeActs);
+                    break;
+                default:
+                    base.DemandQuery();
+                    break;
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void DemandDelete(Guid key) => DemandWritePermission(typeof(TAct));
+
+
+        private void DemandWritePermission(Type tAct)
+        {
+            switch (tAct.GetResourceSensitivityClassification())
+            {
+                case Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.WriteClinicalData);
+                    break;
+                case Model.Attributes.ResourceSensitivityClassification.Administrative:
+                    this.m_policyService.Demand(PermissionPolicyIdentifiers.WriteAdministrativeActs);
+                    break;
+                default:
+                    this.m_policyService.Demand(base.WritePolicy);
+                    break;
+            }
         }
     }
 }

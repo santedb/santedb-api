@@ -16,6 +16,7 @@
  * the License.
  * 
  */
+using SanteDB.Core.Event;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -46,5 +47,9 @@ namespace SanteDB.Core.Data.Initialization
         /// </summary>
         DateTimeOffset? GetInstallDate(String dataSetId);
 
+        /// <summary>
+        /// Fired after the dataset has been installed
+        /// </summary>
+        event EventHandler<DataPersistedEventArgs<Dataset>> Installed;
     }
 }

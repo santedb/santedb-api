@@ -17,6 +17,7 @@
  * 
  */
 using SanteDB.Core.Model.Collection;
+using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Security.Services;
 using SharpCompress;
@@ -69,11 +70,11 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Insert(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item)
+            foreach (var itm in data.Item.Where(i=>i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
             {
-                var irst = typeof(IRepositoryService<>).MakeGenericType(itm.GetType());
+                var irst = typeof(IRepositoryService<>).MakeGenericType(itm is IdentifiedDataReference idr ? idr.ReferencedType : itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
-                if (irsi is ISecuredRepositoryService isrs)
+                if (irsi is ISecuredRepositoryService isrs && !(itm is IdentifiedDataReference))
                 {
                     isrs.DemandWrite(itm);
                 }
@@ -97,13 +98,13 @@ namespace SanteDB.Core.Services.Impl.Repository
         public override Bundle Save(Bundle data)
         {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item.Select(o => o.GetType()).Distinct())
+            foreach (var itm in data.Item.Where(i => i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
             {
-                var irst = typeof(IRepositoryService<>).MakeGenericType(itm);
+                var irst = typeof(IRepositoryService<>).MakeGenericType(itm is IdentifiedDataReference idr ? idr.ReferencedType : itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
-                if (irsi is ISecuredRepositoryService)
+                if (irsi is ISecuredRepositoryService isrs && !(itm is IdentifiedDataReference))
                 {
-                    data.Item.Where(o => itm == o.GetType()).ForEach(i => (irsi as ISecuredRepositoryService).DemandAlter(i));
+                    isrs.DemandAlter(itm);
                 }
             }
 

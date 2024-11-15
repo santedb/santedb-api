@@ -41,7 +41,7 @@ namespace SanteDB.Core.Security.Privacy
         /// <summary>
         /// Creates a new instance with DI
         /// </summary>
-        public ExemptablePolicyFilterService(IConfigurationManager configManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IPolicyInformationService pipService, IDataCachingService dataCachingService, IAdhocCacheService adhocCache = null, ISubscriptionExecutor subscriptionExecutor = null)
+        public ExemptablePolicyFilterService(IConfigurationManager configManager, IPasswordHashingService passwordService, IPolicyDecisionService pdpService, IPolicyInformationService pipService, IDataCachingService dataCachingService, IAuditService auditService, IAdhocCacheService adhocCache = null, ISubscriptionExecutor subscriptionExecutor = null)
             : base(configManager, passwordService, pdpService, pipService, adhocCache)
         {
         }

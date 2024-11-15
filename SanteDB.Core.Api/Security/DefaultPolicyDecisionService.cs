@@ -210,7 +210,12 @@ namespace SanteDB.Core.Security
                 }
 
                 var allPolicies = pip.GetPolicies();
-                var activePoliciesForObject = pip.GetPolicies(principal).GroupBy(o => o.Policy.Oid).Select(o => o.OrderBy(p => p.Rule).FirstOrDefault());
+                var activePoliciesForObject = pip.GetPolicies(principal);
+                if (principal is IClaimsPrincipal icp && icp.HasClaim(o=>o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // PIP has no information so fallback to the granted policies on the pip
+                {
+                    activePoliciesForObject = activePoliciesForObject.Union(icp.GetGrantedPolicies(pip));
+                }
+                activePoliciesForObject = activePoliciesForObject.GroupBy(o => o.Policy.Oid).Select(o => o.OrderBy(p => p.Rule).FirstOrDefault());
 
                 // Create an effective policy list
                 result = allPolicies.Select(masterPolicy =>

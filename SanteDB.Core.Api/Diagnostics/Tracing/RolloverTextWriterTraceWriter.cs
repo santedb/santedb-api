@@ -69,7 +69,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             // Pass in the path of the logfile (ie. C:\Logs\MyAppLog.log)
             // The logfile will actually be created with a yyyymmdd format appended to the filename
             this.m_fileName = fileName;
-            if (!Path.IsPathRooted(fileName))
+            if (!Path.IsPathRooted(fileName) && !fileName.Contains(Path.DirectorySeparatorChar))
             {
                 this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.GetFileName(fileName));
             }
@@ -96,7 +96,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
             }
 
             var assemblyname = Assembly.GetEntryAssembly()?.GetName();
-            this.WriteTrace(EventLevel.Informational, "Startup", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
+            base.TraceEvent(EventLevel.Informational, "SanteDB.Core", "{0} Version: {1} logging at level [{2}]", assemblyname?.Name, assemblyname?.Version, filter);
         }
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
         {
             foreach (var obj in data)
             {
-                this.WriteTrace(level, source, String.Format("{0} - {1}", message, String.Join(",", obj)));
+                this.TraceEvent(level, source, String.Format("{0} - {1}", message, String.Join(",", obj)));
             }
         }
     }

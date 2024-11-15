@@ -39,6 +39,10 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         public const string EXCLUDE_OBSERVATIONS = "_excludeObservations";
         /// <summary>
+        /// Any historical data should also be included and tagged as back-entry
+        /// </summary>
+        public const string INCLUDE_BACKENTRY = "_includeBackentry";
+        /// <summary>
         /// True if the CDSS is being run in non-interactive mode
         /// </summary>
         public const string NON_INTERACTIVE = "isBackground";
@@ -54,5 +58,10 @@ namespace SanteDB.Core.Cdss
         /// The time for which the events must fall within to be emitted
         /// </summary>
         public const string PERIOD_OF_EVENTS = "period";
+        /// <summary>
+        /// Only return the first applicable action from each protocol
+        /// </summary>
+        public const string FIRST_APPLICAPLE = "firstOnly";
+
     }
 }

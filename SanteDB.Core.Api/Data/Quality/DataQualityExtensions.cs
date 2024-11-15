@@ -23,6 +23,7 @@ using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +40,7 @@ namespace SanteDB.Core.Data.Quality
 
         // Data quality configuration service
         private static IDataQualityConfigurationProviderService m_dataQualityConfigurationService = ApplicationServiceContext.Current.GetService<IDataQualityConfigurationProviderService>();
+        private static IServiceManager m_serviceManager = ApplicationServiceContext.Current.GetService<IServiceManager>();
 
         /// <summary>
         /// Tag the data quality issues on <paramref name="modelToTag"/> throwing an exception if <paramref name="throwOnError"/> is true
@@ -88,6 +90,14 @@ namespace SanteDB.Core.Data.Quality
             foreach (var itm in m_dataQualityConfigurationService.GetRulesForType(data.GetType()))
             {
                 foreach (var iss in data.Validate(itm))
+                {
+                    yield return iss;
+                }
+            }
+
+            foreach(var dqi in m_serviceManager.GetServices().OfType<IExtendedDataQualityValidationProvider>().Where(v=>v.SupportedTypes.Any(t=>t.IsAssignableFrom(data.GetType()))))
+            {
+                foreach(var iss in dqi.Validate(data))
                 {
                     yield return iss;
                 }

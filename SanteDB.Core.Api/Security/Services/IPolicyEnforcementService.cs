@@ -46,6 +46,20 @@ namespace SanteDB.Core.Security.Services
         void Demand(String policyId, IPrincipal principal);
 
         /// <summary>
+        /// Demand access to any of the permission policies listed or throw <see cref="PolicyViolationException"/>
+        /// </summary>
+        /// <param name="policyIds">The policy identifiers to be demanded</param>
+        /// <exception cref="PolicyViolationException">When <see cref="AuthenticationContext.Current"/> does not have permission to <paramref name="policyId"/></exception>
+        void DemandAny(params string[] policyIds);
+
+        /// <summary>
+        /// Demand access to all of the permission policies or throw <see cref="PolicyViolationException"/>
+        /// </summary>
+        /// <param name="policyIds">The policy identifiers to be demanded</param>
+        /// <exception cref="PolicyViolationException">When <see cref="AuthenticationContext.Current"/> does not have permission to <paramref name="policyId"/></exception>
+        void DemandAll(params string[] policyIds);
+
+        /// <summary>
         /// Demand the specified policy and return the result
         /// </summary>
         /// <remarks>This method differs from <see cref="Demand(string, IPrincipal)"/> in that:

@@ -75,5 +75,13 @@ namespace SanteDB.Core.Services
         /// <param name="carePlan">The care plan which is registered</param>
         /// <returns>True if <paramref name="patient"/> is enrolled in <paramref name="carePathwayKey"/></returns>
         bool TryGetEnrollment(Patient patient, Guid carePathwayKey, out CarePlan carePlan);
+
+        /// <summary>
+        /// Recompute the care plan for <paramref name="patient"/> in pathway <paramref name="pathwayId"/>
+        /// </summary>
+        /// <param name="patient">The patient for which the care pathway is to be re-computed</param>
+        /// <param name="pathwayId">The care pathways identifier to be re-computed</param>
+        /// <returns>The updated care plan</returns>
+        CarePlan RecomputeOrEnroll(Patient patient, Guid pathwayId);
     }
 }

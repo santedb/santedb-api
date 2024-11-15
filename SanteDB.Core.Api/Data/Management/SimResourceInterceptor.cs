@@ -34,6 +34,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace SanteDB.Core.Data.Management
 {
@@ -44,6 +45,12 @@ namespace SanteDB.Core.Data.Management
     internal class SimResourceInterceptor<TModel> : IRecordMergingService<TModel>, ISimResourceInterceptor, IReportProgressChanged
         where TModel : BaseEntityData, IHasState, IHasClassConcept, IVersionedData, new()
     {
+
+        /// <summary>
+        /// Cancelation signal
+        /// </summary>
+        private bool m_matchingCancelationRequested = false;
+
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(SimDataManagementService));
 
@@ -261,13 +268,14 @@ namespace SanteDB.Core.Data.Management
                     }
                     break;
                 case Entity ent:
+                    var backMatches = this.m_entityRelationshipService.Query(o => o.TargetEntityKey == newRecord.Key && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal).Select(o=>o.SourceEntityKey).ToArray();
                     foreach (var itm in this.m_entityRelationshipService.Query(o => o.SourceEntityKey == newRecord.Key && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal))
                     {
                         itm.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
                         yield return itm;
                     }
 
-                    foreach (var match in matches)
+                    foreach (var match in matches.Where(m => !backMatches.Contains(m.Record.Key)))
                     {
                         yield return new EntityRelationship(EntityRelationshipTypeKeys.Duplicate, match.Record.Key)
                         {
@@ -417,8 +425,8 @@ namespace SanteDB.Core.Data.Management
             else
             {
                 // Remove all duplicate indicators
-                persistenceBundle.AddRange(this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && falsePositives.Contains(o.TargetEntityKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && o.NegationIndicator == true, AuthenticationContext.SystemPrincipal)
-                    .Union(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && falsePositives.Contains(o.SourceEntityKey.Value) && o.TargetEntityKey == masterKey && o.NegationIndicator == true)
+                persistenceBundle.AddRange(this.m_entityRelationshipService.Query(o => o.SourceEntityKey == masterKey && falsePositives.Contains(o.TargetEntityKey.Value) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal)
+                    .Union(o => o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && falsePositives.Contains(o.SourceEntityKey.Value) && o.TargetEntityKey == masterKey)
                     .ToArray().Select(o => new EntityRelationship()
                     {
                         Key = o.Key,
@@ -601,6 +609,7 @@ namespace SanteDB.Core.Data.Management
             }
         }
 
+
         /// <summary>
         /// Re-run a global merge candidate scoring
         /// </summary>
@@ -620,8 +629,9 @@ namespace SanteDB.Core.Data.Management
                 // TODO: Make this a multi-threaded process
                 using (var matchContext = new BackgroundMatchContext<TModel>(maxWorkers, this))
                 {
+                    this.m_matchingCancelationRequested = false;
                     matchContext.Start();
-
+                    
                     // Matcher queue
                     this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DetectGlobalMergeCandidates), 0f, $"Gathering sources..."));
 
@@ -642,10 +652,15 @@ namespace SanteDB.Core.Data.Management
                                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DetectGlobalMergeCandidates), nRecordsLoaded++ / (float)totalRecords, $"Matching {matchContext.RecordsProcessed} recs @ {rps:#.#} r/s"));
                                 rps = 1000.0f * (float)matchContext.RecordsProcessed / (float)sw.ElapsedMilliseconds;
                                 matchContext.QueueLoadedRecord(itm);
+                                if(this.m_matchingCancelationRequested)
+                                {
+                                    break;
+                                }
                             }
                         }
 
                         sw.Stop();
+
                     }
                     catch (Exception e)
                     {
@@ -829,6 +844,12 @@ namespace SanteDB.Core.Data.Management
                 throw new Exception($"Error detecting merge candidates for {typeof(TModel).GetSerializationName()}/{masterKey}", e);
             }
 
+        }
+
+        /// <inheritdoc/>
+        public void CancelDetectGlobalMergeCandidates()
+        {
+            this.m_matchingCancelationRequested = true;
         }
     }
 

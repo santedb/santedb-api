@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
 using SanteDB.Core.i18n;
@@ -30,6 +31,7 @@ using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 
@@ -179,15 +181,18 @@ namespace SanteDB.Core.Cdss
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
                     var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    patientCopy.Participations = patientCopy.Participations?.ToList() ?? patientCopy.GetParticipations()?.ToList();
                     if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
                     {
                         patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence)
                             .ToList();
                     }
+                    else
+                    {
+                        patientCopy.Participations = patientCopy.Participations?.ToList() ?? patientCopy.GetParticipations()?.ToList();
+                    }
 
                     // We only want events which DID occur to be considered in the CDSS
-                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence);
+                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
 
                     patientCopy.Participations.OfType<ActParticipation>()
                             .AsParallel()
@@ -239,6 +244,7 @@ namespace SanteDB.Core.Cdss
                     }
                     _ = parmDict.TryGetValue(CdssParameterNames.ENCOUNTER_SCOPE, out var encounterType);
 
+   
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()
@@ -273,16 +279,28 @@ namespace SanteDB.Core.Cdss
 
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
 
+                    // Tag back entry?
+                    if(parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
+                           (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
+                    {
+                        protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                    }
                     // Filter
                     if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
                         (dateRaw is DateTime periodOutput || DateTime.TryParse(dateRaw?.ToString(), out periodOutput)))
                     {
                         protocolActs = protocolActs.Where(act =>
                         {
-                            return (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
+                            return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
+                                (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
                                 (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
-                                (Math.Abs(act.ActTime.Value.Subtract(periodOutput).TotalDays) < 5);
+                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.IsoWeek() == periodOutput.IsoWeek());
                         }).ToList();
+                    }
+                    if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
+                        (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
+                    {
+                        protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
                     }
 
                     protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));
@@ -290,41 +308,54 @@ namespace SanteDB.Core.Cdss
                     if (asEncounters)
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
-                        foreach (var act in new List<Act>(protocolActs).Where(o => o.StartTime.HasValue && o.StopTime.HasValue).OrderBy(o => o.StartTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - o.StartTime))
+                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
+                        while(protocolStack.Any())
                         {
-                            act.StopTime = act.StopTime ?? act.ActTime;
+                            var act = protocolStack.Dequeue();
+
+                            DateTimeOffset periodStart =  (act.ActTime ?? act.StartTime ?? DateTime.MinValue).Date.EnsureWeekday(),
+                                periodEnd = (act.StopTime ?? act.ActTime?.AddDays(5) ?? DateTime.MaxValue).Date.EnsureWeekday();
+
+                            // Place limit on recommendation
+                            if(periodEnd.Subtract(periodStart).TotalDays > 10)
+                            {
+                                periodEnd = periodStart.AddDays(10);
+                            }
+
                             // Is there a candidate encounter which is bound by start/end
-                            var candidate = encounters.FirstOrDefault(e => (act.StartTime?.Date ?? DateTimeOffset.MinValue) <= (e.StopTime?.Date ?? DateTimeOffset.MaxValue)
-                                && (act.StopTime?.Date ?? DateTimeOffset.MaxValue) >= (e.StartTime?.Date ?? DateTimeOffset.MinValue)
+                            var candidate = encounters.FirstOrDefault(e => 
+                                periodStart <= e.StopTime
+                                && periodEnd >= e.StartTime
                             );
 
                             // Create candidate
                             if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
+                                candidate.ActTime = candidate.StartTime = periodStart;
+                                candidate.StopTime = periodEnd;
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
                             else
                             {
                                 TimeSpan[] overlap = {
-                            (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                            (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
-                            (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                            (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
-                        };
+                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
+                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
+                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
+                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
+                                };
                                 // find the minimum overlap
                                 var minOverlap = overlap.Min();
                                 var overlapMin = Array.IndexOf(overlap, minOverlap);
                                 // Adjust the dates based on the start / stop time
                                 if (overlapMin % 2 == 1)
                                 {
-                                    candidate.StartTime = act.StartTime;
+                                    candidate.StartTime = act.StartTime?.EnsureWeekday() ?? candidate.StartTime;
                                 }
-
-                                if (overlapMin > 1)
+                                else if (overlapMin > 1)
                                 {
-                                    candidate.StopTime = act.StopTime;
+                                    candidate.StopTime = act.StopTime?.EnsureWeekday() ?? candidate.StopTime;
                                 }
 
                                 candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
@@ -355,17 +386,15 @@ namespace SanteDB.Core.Cdss
                         }
                     }
 
-                    // TODO: Look up for the current schedule in the facility
-                    foreach (var itm in protocolActs)
+                    
+
+                    return new CarePlan(patientCopy, protocolActs.Select(o=>
                     {
-                        while (itm.ActTime?.DayOfWeek == DayOfWeek.Sunday || itm.ActTime?.DayOfWeek == DayOfWeek.Saturday)
-                        {
-                            itm.ActTime = itm.ActTime?.AddDays(1);
-                        }
-                    }
-
-
-                    return new CarePlan(patientCopy, protocolActs.ToList())
+                        o.ActTime = o.ActTime?.EnsureWeekday();
+                        o.StartTime = o.StartTime?.EnsureWeekday();
+                        o.StopTime = o.StopTime?.EnsureWeekday();
+                        return o;
+                    }).ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
