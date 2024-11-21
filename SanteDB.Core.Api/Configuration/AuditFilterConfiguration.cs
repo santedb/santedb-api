@@ -17,6 +17,7 @@
  * 
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Audit;
 using System.ComponentModel;
 using System.Xml.Serialization;
@@ -53,6 +54,12 @@ namespace SanteDB.Core.Configuration
             this.InsertLocal = insertLocal;
             this.SendRemote = sendRemote;
         }
+
+        /// <summary>
+        /// Identifies the resource sensitivity filtering
+        /// </summary>
+        [XmlAttribute("sensitivity"), JsonProperty("sensitivity"), DisplayName("Sensitivity Filter")]
+        public ResourceSensitivityClassification Sensitivity { get; set; }
 
         /// <summary>
         /// Filter on action type
@@ -103,17 +110,26 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
         public bool OutcomeSpecified { get; set; }
+
+        /// <summary>
+        /// True if sensitivity is specified
+        /// </summary>
+        [XmlIgnore, JsonIgnore, EditorBrowsable(EditorBrowsableState.Never)]
+        public bool SensitivitySpecified { get; set; }
         #endregion
 
 
         /// <summary>
-        /// Get the compbined filter flags
+        /// Get the combined filter flags
         /// </summary>
-        public uint FilterFlags => (this.OutcomeSpecified ? (uint)this.Outcome : 0xFF) << 24 | (this.ActionSpecified ? (uint)this.Action : 0xFF) << 16 | (this.EventSpecified ? (uint)this.Event : 0xFFFF);
+        public ulong FilterFlags => (this.SensitivitySpecified ? (ulong)this.Sensitivity : 0xFF) << 32 | 
+            (this.OutcomeSpecified ? (ulong)this.Outcome : 0xFF) << 24 |
+            (this.ActionSpecified ? (ulong)this.Action : 0xFF) << 16 |
+            (this.EventSpecified ? (ulong)this.Event : 0xFFFF);
 
         /// <summary>
         /// Represent the filter as a stirng
         /// </summary>
-        public override string ToString() => $"ACT={(this.ActionSpecified ? this.Action : 0)};EVT={(this.EventSpecified ? this.Event : 0)};OUTC={(this.OutcomeSpecified ? this.Outcome : 0)}";
+        public override string ToString() => $"SENS={(this.SensitivitySpecified ? this.Sensitivity : 0)};ACT={(this.ActionSpecified ? this.Action : 0)};EVT={(this.EventSpecified ? this.Event : 0)};OUTC={(this.OutcomeSpecified ? this.Outcome : 0)}";
     }
 }

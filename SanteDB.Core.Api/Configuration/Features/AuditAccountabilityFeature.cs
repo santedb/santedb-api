@@ -74,7 +74,8 @@ namespace SanteDB.Core.Configuration.Features
                     {
                         new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.NetworkActivity | EventIdentifierType.SecurityAlert, OutcomeIndicator.Success, true, false),
                         new AuditFilterConfiguration(ActionType.Execute, EventIdentifierType.EmergencyOverrideStarted | EventIdentifierType.SecurityAlert, null, true, true),
-                        new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true)
+                        new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, true) { Sensitivity = Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation },
+                        new AuditFilterConfiguration(ActionType.Create | ActionType.Read | ActionType.Update | ActionType.Delete, null, null, true, false) { Sensitivity = Model.Attributes.ResourceSensitivityClassification.Administrative | Model.Attributes.ResourceSensitivityClassification.Metadata }
                     },
                     SourceInformation = new AuditSourceConfiguration()
                     {
