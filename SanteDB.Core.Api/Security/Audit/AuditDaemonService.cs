@@ -44,8 +44,19 @@ namespace SanteDB.Core.Security.Audit
         // Tracer class
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(AuditDaemonService));
 
-        private IAuditService _AuditService;
-        private IDispatcherQueueManagerService _QueueService;
+        private readonly IAuditService _AuditService;
+        private readonly ISessionProviderService _SessionProviderService;
+        private readonly IIdentityProviderService _IdentityService;
+        private readonly IDispatcherQueueManagerService _QueueService;
+
+        public AuditDaemonService(IDispatcherQueueManagerService queueManagerService, IAuditService auditService, ISessionProviderService sessionProviderService, IIdentityProviderService identityProviderService)
+        {
+            this._QueueService = queueManagerService;
+            this._AuditService = auditService;
+            this._SessionProviderService = sessionProviderService;
+            this._IdentityService = identityProviderService;
+
+        }
 
         /// <summary>
         ///  True if the service is running
@@ -126,45 +137,24 @@ namespace SanteDB.Core.Security.Audit
 
         private void StartListeningToServiceEvents()
         {
-            var idsvc = ApplicationServiceContext.Current.GetService<IIdentityProviderService>();
-            if (idsvc != null)
-            {
-                m_tracer.TraceVerbose($"Adding Event Listener for {nameof(IIdentityProviderService)}.{nameof(IIdentityProviderService.Authenticated)}");
-                idsvc.Authenticated += AuditIdentityProviderAuthenticated;
-            }
+            m_tracer.TraceVerbose($"Adding Event Listener for {nameof(IIdentityProviderService)}.{nameof(IIdentityProviderService.Authenticated)}");
+            _IdentityService.Authenticated += AuditIdentityProviderAuthenticated;
 
-            //var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
-
-            //if (sessprov != null)
-            //{
-            //    m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Established)}");
-            //    sessprov.Established += AuditSessionProviderEstablished;
-            //    m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Abandoned)}");
-            //    sessprov.Abandoned += AuditSessionProviderAbandoned;
-            //}
+            m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Established)}");
+            _SessionProviderService.Established += AuditSessionProviderEstablished;
+            m_tracer.TraceVerbose($"Adding Event Listener for {nameof(ISessionProviderService)}.{nameof(ISessionProviderService.Abandoned)}");
+            _SessionProviderService.Abandoned += AuditSessionProviderAbandoned;
         }
 
         private void StopListeningToServiceEvents()
         {
-            var idsvc = ApplicationServiceContext.Current.GetService<IIdentityProviderService>();
-            if (idsvc != null)
-            {
-                idsvc.Authenticated -= AuditIdentityProviderAuthenticated;
-            }
-
-            //var sessprov = ApplicationServiceContext.Current.GetService<ISessionProviderService>();
-
-            //if (sessprov != null)
-            //{
-            //    sessprov.Established -= AuditSessionProviderEstablished;
-            //    sessprov.Abandoned -= AuditSessionProviderAbandoned;
-            //}
+            _IdentityService.Authenticated -= AuditIdentityProviderAuthenticated;
+            _SessionProviderService.Established -= AuditSessionProviderEstablished;
+            _SessionProviderService.Abandoned -= AuditSessionProviderAbandoned;
         }
 
         private void StartAuditQueueSubscription()
         {
-            _QueueService = ApplicationServiceContext.Current.GetService<IDispatcherQueueManagerService>();
-
             if (null == _QueueService)
             {
                 m_tracer.TraceInfo("No {0} service is configured. No subscription will be configured.", nameof(IDispatcherQueueManagerService));
@@ -207,9 +197,6 @@ namespace SanteDB.Core.Security.Audit
             {
                 try
                 {
-                    m_tracer.TraceVerbose("Getting instance of audit service for events.");
-                    _AuditService = ApplicationServiceContext.Current.GetAuditService();
-
                     m_tracer.TraceInfo("Starting Audit Queue subscription.");
                     StartAuditQueueSubscription();
 
@@ -259,8 +246,6 @@ namespace SanteDB.Core.Security.Audit
                     .WithLocalSource()
                     .Send();
             };
-
-            _AuditService = null;
 
             return true;
         }
