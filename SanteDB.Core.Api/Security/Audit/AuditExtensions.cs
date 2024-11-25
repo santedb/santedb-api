@@ -21,6 +21,7 @@ using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Constants;
@@ -183,6 +184,18 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder WithTimestamp(this IAuditBuilder me, DateTimeOffset? timestamp = null)
         {
             me.Audit.Timestamp = timestamp ?? DateTimeOffset.Now;
+            return me;
+        }
+
+        /// <summary>
+        /// With sensitivty
+        /// </summary>
+        /// <param name="me"></param>
+        /// <param name="resourceSensitivity"></param>
+        /// <returns></returns>
+        public static IAuditBuilder WithSensitivity(this IAuditBuilder me, ResourceSensitivityClassification resourceSensitivity)
+        {
+            me.Audit.Sensitivity = resourceSensitivity;
             return me;
         }
 
@@ -732,6 +745,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithAction(ActionType.Execute)
                 .WithOutcome(action == PolicyGrantType.Grant ? OutcomeIndicator.Success : action == PolicyGrantType.Elevate ? OutcomeIndicator.MinorFail : OutcomeIndicator.SeriousFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventType(EventTypeCodes.AccessControlDecision)
                 .WithLocalSource()
                 .WithPrincipal(principal)
@@ -1011,6 +1025,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithRemoteDestination(RemoteEndpointUtil.Current.GetRemoteClient())
                 .WithLocalSource()
                 .WithPrincipal()
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.PersonalHealthInformation)
                 .WithAuditableObjects(
                     result.ToAuditableObject(AuditableObjectLifecycle.Disclosure),
                     decision.ToAuditableObject(AuditableObjectLifecycle.Verification),
@@ -1055,6 +1070,8 @@ namespace SanteDB.Core.Security.Audit
         public static IAuditBuilder ForApplicationStart(this IAuditBuilder builder)
             => builder
                 .WithAction(ActionType.Execute)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
+
                 .WithOutcome(OutcomeIndicator.Success)
                 .WithEventIdentifier(EventIdentifierType.ApplicationActivity)
                 .WithEventType(EventTypeCodes.ApplicationStart)
@@ -1069,6 +1086,7 @@ namespace SanteDB.Core.Security.Audit
             => builder
                 .WithAction(ActionType.Execute)
                 .WithOutcome(OutcomeIndicator.Success)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventIdentifier(EventIdentifierType.ApplicationActivity)
                 .WithEventType(EventTypeCodes.ApplicationStop)
                 .WithLocalSource()
@@ -1083,6 +1101,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithAction(ActionType.Execute)
                 .WithOutcome(successfulLogin, falseOutcome: OutcomeIndicator.SeriousFail)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventType(EventTypeCodes.Login)
                 .WithLocalDestination()
             .WithRemoteSource(RemoteEndpointUtil.Current.GetRemoteClient())
@@ -1206,9 +1225,11 @@ namespace SanteDB.Core.Security.Audit
         {
             builder.WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStarted)
                 .WithRemoteDestination(RemoteEndpointUtil.Current.GetRemoteClient())
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithLocalSource()
                 .WithPrincipal(principal);
 
@@ -1270,6 +1291,7 @@ namespace SanteDB.Core.Security.Audit
 
             builder.WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventIdentifier(EventIdentifierType.UserAuthentication)
                 .WithEventType(EventTypeCodes.SessionStopped)
                 .WithLocalDestination()
@@ -1354,7 +1376,7 @@ namespace SanteDB.Core.Security.Audit
                 OutcomeIndicator.Success,
                 null,
                 decision,
-                targetOfMasking);
+                targetOfMasking).WithSensitivity(ResourceSensitivityClassification.PersonalHealthInformation);
 
         /// <summary>
         /// Audit the creation of an object
@@ -1504,6 +1526,7 @@ namespace SanteDB.Core.Security.Audit
                 .WithAction(ActionType.Execute)
                 .WithOutcome(success, falseOutcome: OutcomeIndicator.EpicFail)
                 .WithEventIdentifier(EventIdentifierType.SecurityAlert)
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventType(EventTypeCodes.EmergencyOverrideStarted)
                 .WithAuditableObjects(
                     new AuditableObject()

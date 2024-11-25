@@ -228,6 +228,8 @@ namespace SanteDB.Core.Security
         private IAuditBuilder AuditCertificateInstallation(X509Certificate2 certificate)
             => ApplicationServiceContext.Current?.GetAuditService()?.Audit() // Prevents circular dependency in dCDR
                 .WithTimestamp()
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
+
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.Import)
                 .WithAction(Model.Audit.ActionType.Execute)
@@ -243,6 +245,7 @@ namespace SanteDB.Core.Security
         private IAuditBuilder AuditCertificateRemoval(X509Certificate2 certificate)
             => ApplicationServiceContext.Current?.GetAuditService()?.Audit()
                 .WithTimestamp()
+                .WithSensitivity(Core.Model.Attributes.ResourceSensitivityClassification.Administrative)
                 .WithEventType(EventTypeCodes.SecurityAlert)
                 .WithEventIdentifier(Model.Audit.EventIdentifierType.SecurityAlert)
                 .WithAction(Model.Audit.ActionType.Delete)

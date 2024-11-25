@@ -17,6 +17,7 @@
  * 
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Audit;
 using System;
 using System.Collections.Concurrent;
@@ -35,7 +36,7 @@ namespace SanteDB.Core.Configuration
     {
 
         // Filter dictionary
-        private IDictionary<uint, AuditFilterConfiguration> m_filterDictionary;
+        private IDictionary<ulong, AuditFilterConfiguration> m_filterDictionary;
 
         /// <summary>
         /// When set to true, enables complete audit trail
@@ -67,11 +68,12 @@ namespace SanteDB.Core.Configuration
         /// <param name="dispatchRemote">True if the audit should be dispatched</param>
         internal bool ApplyFilters(AuditEventData auditEventData, out bool saveLocal, out bool dispatchRemote)
         {
-            uint dictFlag = (uint)auditEventData.Outcome << 24 | (uint)auditEventData.ActionCode << 16 | (uint)auditEventData.EventIdentifier;
+            
+            ulong dictFlag = (ulong)auditEventData.Sensitivity << 32 | (ulong)auditEventData.Outcome << 24 | (ulong)auditEventData.ActionCode << 16 | (ulong)auditEventData.EventIdentifier;
 
             if (this.m_filterDictionary == null)
             {
-                this.m_filterDictionary = new ConcurrentDictionary<uint, AuditFilterConfiguration>();
+                this.m_filterDictionary = new ConcurrentDictionary<ulong, AuditFilterConfiguration>();
             }
 
             // Have we already encountered this exact filter?
