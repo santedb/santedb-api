@@ -272,6 +272,9 @@ namespace SanteDB.Core.Cdss
                             if(o is Act a && !a.LoadProperty(p => p.Participations).Any(p=>p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
                             {
                                 a.Participations.Add(new ActParticipation(ActParticipationKeys.RecordTarget, target.Key));
+                                a.StartTime = a.StartTime?.EnsureWeekday();
+                                a.StopTime = a.StopTime?.EnsureWeekday();
+                                a.ActTime = a.ActTime?.EnsureWeekday();
                             }
                             return o;
                         })
@@ -309,81 +312,50 @@ namespace SanteDB.Core.Cdss
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
                         Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
+                       
                         while(protocolStack.Any())
                         {
                             var act = protocolStack.Dequeue();
 
-                            DateTimeOffset periodStart =  (act.ActTime ?? act.StartTime ?? DateTime.MinValue).Date.EnsureWeekday(),
-                                periodEnd = (act.StopTime ?? act.ActTime?.AddDays(5) ?? DateTime.MaxValue).Date.EnsureWeekday();
+                            // First we want to find a candidate which has the same period properties
+                            var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
+                            var periodEnd = act.StopTime;
 
-                            // Place limit on recommendation
-                            if(periodEnd.Subtract(periodStart).TotalDays > 10)
+                            // If the period permits today - but the act time is not today then adjust
+                            if(periodStart <= DateTimeOffset.Now && periodEnd >= DateTimeOffset.Now && act.ActTime < DateTimeOffset.Now)
                             {
-                                periodEnd = periodStart.AddDays(10);
+                                act.ActTime = DateTimeOffset.Now.EnsureWeekday();
                             }
 
-                            // Is there a candidate encounter which is bound by start/end
-                            var candidate = encounters.FirstOrDefault(e => 
-                                periodStart <= e.StopTime
-                                && periodEnd >= e.StartTime
-                            );
+                            // Find a candidate bsed on the start and end time
+                            var candidate = encounters.Find(c =>
+                                periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
+                                (periodEnd ?? DateTimeOffset.MaxValue) >= c.StartTime);
 
-                            // Create candidate
-                            if (candidate == null)
+                            if(candidate?.StopTime == null && 
+                                Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(periodStart.Value).TotalDays ?? 0) > 28) // Don't allow multi-month suggestions
+                            {
+                                candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime ?? o.TargetAct.ActTime).Max()?.ClosestDay(DayOfWeek.Saturday);
+                                candidate = null;
+                            }
+
+                            if(candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
-                                candidate.ActTime = candidate.StartTime = periodStart;
-                                candidate.StopTime = periodEnd;
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
                             else
                             {
-                                TimeSpan[] overlap = {
-                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                                    (candidate.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue),
-                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (candidate.StartTime ?? DateTimeOffset.MinValue),
-                                    (act.StopTime ?? DateTimeOffset.MaxValue) - (act.StartTime ?? DateTimeOffset.MinValue)
-                                };
-                                // find the minimum overlap
-                                var minOverlap = overlap.Min();
-                                var overlapMin = Array.IndexOf(overlap, minOverlap);
-                                // Adjust the dates based on the start / stop time
-                                if (overlapMin % 2 == 1)
-                                {
-                                    candidate.StartTime = act.StartTime?.EnsureWeekday() ?? candidate.StartTime;
-                                }
-                                else if (overlapMin > 1)
-                                {
-                                    candidate.StopTime = act.StopTime?.EnsureWeekday() ?? candidate.StopTime;
-                                }
-
-                                candidate.ActTime = candidate.StartTime ?? candidate.ActTime;
+                                // Found the candidate - Does the stop time of this candidate act shorter than the current
+                                candidate.StopTime = candidate.StopTime.LesserOf(act.StopTime);
+                                candidate.StartTime = candidate.StartTime.GreaterOf(act.StartTime);
                             }
-
-                            // Add the protocol act
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
-
                             // Remove so we don't have duplicates
                             protocolActs.Remove(act);
                         }
 
-                        // for those acts which do not have a stop time, schedule them in the first appointment available
-                        foreach (var act in new List<Act>(protocolActs).Where(o => !o.StopTime.HasValue))
-                        {
-                            var candidate = encounters.OrderBy(o => o.StartTime).FirstOrDefault(e => e.StartTime >= act.StartTime);
-                            if (candidate == null)
-                            {
-                                candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
-                                encounters.Add(candidate);
-                                protocolActs.Add(candidate);
-                            }
-                            // Add the protocol act
-                            candidate.LoadProperty(o=>o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
-
-                            // Remove so we don't have duplicates
-                            protocolActs.Remove(act);
-                        }
                     }
 
                     
@@ -439,9 +411,9 @@ namespace SanteDB.Core.Cdss
                     new ActParticipation(ActParticipationKeys.RecordTarget, recordTarget.Key)
                 },
                 TemplateKey = templateKey,
-                ActTime = act.ActTime,
-                StartTime = act.StartTime,
-                StopTime = act.StopTime,
+                ActTime = act.ActTime?.EnsureWeekday(),
+                StartTime = act.StartTime?.EnsureWeekday() ?? act.ActTime?.ClosestDay(DayOfWeek.Monday),
+                StopTime = act.StopTime?.EnsureWeekday(),
                 MoodConceptKey = ActMoodKeys.Propose,
                 Key = Guid.NewGuid()
             };

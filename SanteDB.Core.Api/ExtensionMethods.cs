@@ -558,14 +558,14 @@ namespace SanteDB.Core
         /// <summary>
         /// Returns the greater of two values (helper method)
         /// </summary>
-        public static T GreaterOf<T>(this T me, T other)
-            where T : IComparable => me.CompareTo(other) > 0 ? me : other;
+        public static Nullable<T> GreaterOf<T>(this Nullable<T> me, Nullable<T> other)
+            where T : struct, IComparable => me.HasValue && me.Value.CompareTo(other ?? default(T)) > 0 ? me : other;
 
         /// <summary>
         /// Returns the lesser of two values (helper method)
         /// </summary>
-        public static T LesserOf<T>(this T me, T other)
-            where T : IComparable => me.CompareTo(other) < 0 ? me : other;
+        public static Nullable<T> LesserOf<T>(this Nullable<T> me, Nullable<T> other)
+            where T : struct, IComparable => me.HasValue && other.HasValue ? me.Value.CompareTo(other.Value) < 0 ? me : other : me.HasValue ? me : other;
 
         /// <summary>
         /// Ensure that the date appears on a weekday
@@ -611,7 +611,24 @@ namespace SanteDB.Core
                 me = me.AddDays(1);
             }
             return me;
+        }
 
+        /// <summary>
+        /// Find the closest day <paramref name="dayOfWeek"/> from <paramref name="me"/>
+        /// </summary>
+        /// <param name="me">The original date</param>
+        /// <param name="dayOfWeek">The day of the week</param>
+        /// <returns>The date/time adjusted to the closest day of week</returns>
+        public static DateTimeOffset ClosestDay(this DateTimeOffset me, DayOfWeek dayOfWeek)
+        {
+            if(me.DayOfWeek == dayOfWeek)
+            {
+                return me;
+            }
+            else
+            {
+                return me.AddDays(-((int)me.DayOfWeek - (int)dayOfWeek));
+            }
         }
     }
 }

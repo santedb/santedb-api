@@ -35,6 +35,14 @@ namespace SanteDB.Core.Configuration
     public class AuditAccountabilityConfigurationSection : IConfigurationSection
     {
 
+        /// <summary>
+        /// Default ctor
+        /// </summary>
+        public AuditAccountabilityConfigurationSection()
+        {
+            this.SourceInformation = new AuditSourceConfiguration();
+        }
+
         // Filter dictionary
         private IDictionary<ulong, AuditFilterConfiguration> m_filterDictionary;
 
