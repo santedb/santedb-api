@@ -43,6 +43,8 @@ namespace SanteDB.Core.Configuration.Features
             { SecurityPolicyIdentification.AbandonSessionAfterPasswordReset, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AllowCachingOfUserCredentials, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, () => ConfigurationOptionType.Boolean },
+            { SecurityPolicyIdentification.DefaultMfaMethod, () => ConfigurationOptionType.String },
+            { SecurityPolicyIdentification.AllowNonAssignedUsersToLogin, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AllowNonAssignedUsersToLogin, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AllowPublicBackups, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AuditRetentionTime, () => Enumerable.Range(15, 365).Where(o => o % 15 == 0).Select(o => new PolicyValueTimeSpan(new TimeSpan(o, 0, 0, 0))) },
