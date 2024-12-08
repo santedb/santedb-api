@@ -124,8 +124,11 @@ namespace SanteDB.Core.Configuration.Features
                 if (config != null)
                 {
                     config.ServiceProviders = config.ServiceProviders.OrderBy(r => this.m_backup.ServiceProviders.Any(b=>b.TypeXml == r.TypeXml) ? this.m_backup.ServiceProviders.FindIndex(b => r.TypeXml == b.TypeXml) : Int32.MaxValue).ToList();
-                    configuration.RemoveSection<ApplicationServiceContextConfigurationSection>();
-                    configuration.AddSection(config);
+                    //config.ServiceProviders.AddRange(this.m_backup.ServiceProviders.Where(d => !typeof(IServiceImplementation).IsAssignableFrom(d.Type)));
+                    this.m_backup.ServiceProviders = config.ServiceProviders;
+                    this.m_backup.InstanceName = config.InstanceName;
+                    this.m_backup.AppSettings = config.AppSettings;
+                    this.m_backup.AllowUnsignedAssemblies = config.AllowUnsignedAssemblies;
 
                 }
 
