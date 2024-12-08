@@ -123,7 +123,7 @@ namespace SanteDB.Core.Configuration.Features
                 var config = this.Feature.Configuration as ApplicationServiceContextConfigurationSection;
                 if (config != null)
                 {
-                    config.ServiceProviders = config.ServiceProviders.OrderBy(r => this.m_backup.ServiceProviders.FindIndex(b => r.TypeXml == b.TypeXml)).ToList();
+                    config.ServiceProviders = config.ServiceProviders.OrderBy(r => this.m_backup.ServiceProviders.Any(b=>b.TypeXml == r.TypeXml) ? this.m_backup.ServiceProviders.FindIndex(b => r.TypeXml == b.TypeXml) : Int32.MaxValue).ToList();
                     configuration.RemoveSection<ApplicationServiceContextConfigurationSection>();
                     configuration.AddSection(config);
 
