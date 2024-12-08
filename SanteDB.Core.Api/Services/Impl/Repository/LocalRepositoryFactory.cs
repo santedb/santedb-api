@@ -39,7 +39,7 @@ namespace SanteDB.Core.Services.Impl.Repository
     /// constructed by this service use the <see cref="AuthenticationContext"/> to establish "who" is performing the action.</para>
     /// </remarks>
     [ServiceProvider("Local (database) repository service", Dependencies = new Type[] { typeof(IDataPersistenceService) })]
-    public class LocalRepositoryFactory : IServiceFactory
+    public class LocalRepositoryFactory : IServiceFactory, IServiceImplementation
     {
         private readonly Type[] m_excludeServiceTypes = new Type[]
         {
