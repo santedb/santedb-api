@@ -175,6 +175,11 @@ namespace SanteDB.Core.Security
         public const string DeleteClinicalProtocolConfigurationDefinition = UnrestrictedClinicalProtocolConfiguration + ".2";
 
         /// <summary>
+        /// Permission to alter templates
+        /// </summary>
+        public const string AlterDataTemplates = AlterSystemConfiguration + ".3";
+
+        /// <summary>
         /// Manage all dispatcher / persistent queues
         /// </summary>
         public const string ManageDispatcherQueues = UnrestrictedAdministration + ".16";
