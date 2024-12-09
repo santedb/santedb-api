@@ -45,7 +45,6 @@ namespace SanteDB.Core.Configuration.Features
             { SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.DefaultMfaMethod, () => ConfigurationOptionType.String },
             { SecurityPolicyIdentification.AllowNonAssignedUsersToLogin, () => ConfigurationOptionType.Boolean },
-            { SecurityPolicyIdentification.AllowNonAssignedUsersToLogin, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AllowPublicBackups, () => ConfigurationOptionType.Boolean },
             { SecurityPolicyIdentification.AuditRetentionTime, () => Enumerable.Range(15, 365).Where(o => o % 15 == 0).Select(o => new PolicyValueTimeSpan(new TimeSpan(o, 0, 0, 0))) },
             { SecurityPolicyIdentification.DownstreamLocalSessionLength, () => Enumerable.Range(15, 180).Where(o => o % 15 == 0).Select(o => new PolicyValueTimeSpan(0, o, 0)) },
@@ -157,7 +156,7 @@ namespace SanteDB.Core.Configuration.Features
                 config.Options.Add(o.Key.ToString(), o.Value);
                 var opt = o.Value();
                 object defaultValue = null;
-                if(opt is ConfigurationOptionType cot)
+                if (opt is ConfigurationOptionType cot)
                 {
                     switch (cot)
                     {
@@ -173,7 +172,7 @@ namespace SanteDB.Core.Configuration.Features
                             break;
                     }
                 }
-                else if(opt is IEnumerable enumer)
+                else if (opt is IEnumerable enumer)
                 {
                     defaultValue = enumer.OfType<Object>().FirstOrDefault();
                 }
@@ -183,152 +182,152 @@ namespace SanteDB.Core.Configuration.Features
 
         }
 
-    /// <summary>
-    /// Install security certificates
-    /// </summary>
-    private class InstallCertificatesTask : IConfigurationTask
-    {
-
         /// <summary>
-        /// Create a new install certificates features
+        /// Install security certificates
         /// </summary>
-        public InstallCertificatesTask(IFeature feature)
-        {
-            this.Feature = feature;
-        }
-
-        /// <summary>
-        /// Description of the feature
-        /// </summary>
-        public string Description => "Install SanteDB's applet signing certificates into the machine's certificate store";
-
-        /// <summary>
-        /// The feature to be installed
-        /// </summary>
-        public IFeature Feature { get; }
-
-        /// <summary>
-        /// Gets the nameof the feature
-        /// </summary>
-        public string Name => "Install Certificates";
-
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
-        /// <summary>
-        /// Execute
-        /// </summary>
-        public bool Execute(SanteDBConfiguration configuration)
+        private class InstallCertificatesTask : IConfigurationTask
         {
 
-            SecurityExtensions.InstallCertsForChain();
-            this.ProgressChanged?.Invoke(this, new SanteDB.Core.Services.ProgressChangedEventArgs(nameof(InstallCertificatesTask), 1.0f, "Complete"));
-
-            return true;
-        }
-
-        /// <summary>
-        /// Rollback
-        /// </summary>
-        public bool Rollback(SanteDBConfiguration configuration)
-        {
-            return true;
-        }
-
-        /// <summary>
-        /// Verify state
-        /// </summary>
-        public bool VerifyState(SanteDBConfiguration configuration) => true;
-    }
-
-    /// <summary>
-    /// Install security services task
-    /// </summary>
-    private class InstallSecurityServicesTask : IConfigurationTask
-    {
-
-        // THe feature reference
-        private SecurityServicesFeature m_feature;
-
-        /// <summary>
-        /// Creates a new installation task
-        /// </summary>
-        public InstallSecurityServicesTask(SecurityServicesFeature feature)
-        {
-            this.m_feature = feature;
-        }
-
-        /// <summary>
-        /// Get the name of the service
-        /// </summary>
-        public string Name => "Save Security Configuration";
-
-        /// <summary>
-        /// Gets the description
-        /// </summary>
-        public string Description => "Installs and configures the core security services";
-
-        /// <summary>
-        /// Gets the feature
-        /// </summary>
-        public IFeature Feature => this.m_feature;
-
-        /// <summary>
-        /// Progress has changed
-        /// </summary>
-        public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
-
-        /// <summary>
-        /// Execute the 
-        /// </summary>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
-        public bool Execute(SanteDBConfiguration configuration)
-        {
-            var appServices = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
-            appServices.RemoveAll(t => typeof(IPasswordValidatorService).IsAssignableFrom(t.Type) ||
-                    typeof(IPasswordHashingService).IsAssignableFrom(t.Type) ||
-                    typeof(IPolicyDecisionService).IsAssignableFrom(t.Type));
-
-            // Now we want to read the configuration 
-            var config = this.m_feature.Configuration as GenericFeatureConfiguration;
-            if (config == null)
+            /// <summary>
+            /// Create a new install certificates features
+            /// </summary>
+            public InstallCertificatesTask(IFeature feature)
             {
-                this.m_feature.QueryState(configuration);
-                config = this.m_feature.Configuration as GenericFeatureConfiguration;
+                this.Feature = feature;
             }
 
-            configuration.RemoveSection<SanteDB.Core.Security.Configuration.SecurityConfigurationSection>();
-            var secSection = config.Values["Configuration"] as SanteDB.Core.Security.Configuration.SecurityConfigurationSection;
-            configuration.AddSection(secSection);
+            /// <summary>
+            /// Description of the feature
+            /// </summary>
+            public string Description => "Install SanteDB's applet signing certificates into the machine's certificate store";
 
-            // Now add the services
-            appServices.RemoveAll(t => t.Type == typeof(ExemptablePolicyFilterService));
-            appServices.Add(new TypeReferenceConfiguration(typeof(ExemptablePolicyFilterService)));
-            appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordHasher"] as Type));
-            appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordValidator"] as Type));
-            appServices.Add(new TypeReferenceConfiguration(config.Values["PolicyDecisionProvider"] as Type));
+            /// <summary>
+            /// The feature to be installed
+            /// </summary>
+            public IFeature Feature { get; }
 
-            var pipService = config.Values["PolicyInformationProvider"] as Type;
-            if (pipService == null)
+            /// <summary>
+            /// Gets the nameof the feature
+            /// </summary>
+            public string Name => "Install Certificates";
+
+            /// <summary>
+            /// Progress has changed
+            /// </summary>
+            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+            /// <summary>
+            /// Execute
+            /// </summary>
+            public bool Execute(SanteDBConfiguration configuration)
             {
-                pipService = appServices.Find(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type))?.Type;
-                if (pipService != null)
+
+                SecurityExtensions.InstallCertsForChain();
+                this.ProgressChanged?.Invoke(this, new SanteDB.Core.Services.ProgressChangedEventArgs(nameof(InstallCertificatesTask), 1.0f, "Complete"));
+
+                return true;
+            }
+
+            /// <summary>
+            /// Rollback
+            /// </summary>
+            public bool Rollback(SanteDBConfiguration configuration)
+            {
+                return true;
+            }
+
+            /// <summary>
+            /// Verify state
+            /// </summary>
+            public bool VerifyState(SanteDBConfiguration configuration) => true;
+        }
+
+        /// <summary>
+        /// Install security services task
+        /// </summary>
+        private class InstallSecurityServicesTask : IConfigurationTask
+        {
+
+            // THe feature reference
+            private SecurityServicesFeature m_feature;
+
+            /// <summary>
+            /// Creates a new installation task
+            /// </summary>
+            public InstallSecurityServicesTask(SecurityServicesFeature feature)
+            {
+                this.m_feature = feature;
+            }
+
+            /// <summary>
+            /// Get the name of the service
+            /// </summary>
+            public string Name => "Save Security Configuration";
+
+            /// <summary>
+            /// Gets the description
+            /// </summary>
+            public string Description => "Installs and configures the core security services";
+
+            /// <summary>
+            /// Gets the feature
+            /// </summary>
+            public IFeature Feature => this.m_feature;
+
+            /// <summary>
+            /// Progress has changed
+            /// </summary>
+            public event EventHandler<ProgressChangedEventArgs> ProgressChanged;
+
+            /// <summary>
+            /// Execute the 
+            /// </summary>
+            /// <param name="configuration"></param>
+            /// <returns></returns>
+            public bool Execute(SanteDBConfiguration configuration)
+            {
+                var appServices = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
+                appServices.RemoveAll(t => typeof(IPasswordValidatorService).IsAssignableFrom(t.Type) ||
+                        typeof(IPasswordHashingService).IsAssignableFrom(t.Type) ||
+                        typeof(IPolicyDecisionService).IsAssignableFrom(t.Type));
+
+                // Now we want to read the configuration 
+                var config = this.m_feature.Configuration as GenericFeatureConfiguration;
+                if (config == null)
                 {
-                    config.Values["PolicyInformationProvider"] = pipService;
+                    this.m_feature.QueryState(configuration);
+                    config = this.m_feature.Configuration as GenericFeatureConfiguration;
+                }
+
+                configuration.RemoveSection<SanteDB.Core.Security.Configuration.SecurityConfigurationSection>();
+                var secSection = config.Values["Configuration"] as SanteDB.Core.Security.Configuration.SecurityConfigurationSection;
+                configuration.AddSection(secSection);
+
+                // Now add the services
+                appServices.RemoveAll(t => t.Type == typeof(ExemptablePolicyFilterService));
+                appServices.Add(new TypeReferenceConfiguration(typeof(ExemptablePolicyFilterService)));
+                appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordHasher"] as Type));
+                appServices.Add(new TypeReferenceConfiguration(config.Values["PasswordValidator"] as Type));
+                appServices.Add(new TypeReferenceConfiguration(config.Values["PolicyDecisionProvider"] as Type));
+
+                var pipService = config.Values["PolicyInformationProvider"] as Type;
+                if (pipService == null)
+                {
+                    pipService = appServices.Find(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type))?.Type;
+                    if (pipService != null)
+                    {
+                        config.Values["PolicyInformationProvider"] = pipService;
+                    }
+                    else
+                    {
+                        Tracer.GetTracer(this.GetType()).TraceWarning("You should assign a PIP implementation!");
+                    }
                 }
                 else
                 {
-                    Tracer.GetTracer(this.GetType()).TraceWarning("You should assign a PIP implementation!");
+                    appServices.RemoveAll(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type));
+                    appServices.Add(new TypeReferenceConfiguration(pipService));
                 }
-            }
-            else
-            {
-                appServices.RemoveAll(o => typeof(IPolicyInformationService).IsAssignableFrom(o.Type));
-                appServices.Add(new TypeReferenceConfiguration(pipService));
-            }
 
                 // Now set the policy values
 
@@ -337,26 +336,26 @@ namespace SanteDB.Core.Configuration.Features
                 {
                     secSection.SetPolicy(o.Key, config.Values[o.Key.ToString()]);
                 });
-            this.ProgressChanged?.Invoke(this, new SanteDB.Core.Services.ProgressChangedEventArgs(nameof(InstallSecurityServicesTask), 1.0f, "Complete"));
+                this.ProgressChanged?.Invoke(this, new SanteDB.Core.Services.ProgressChangedEventArgs(nameof(InstallSecurityServicesTask), 1.0f, "Complete"));
 
-            return true;
-        }
+                return true;
+            }
 
-        /// <summary>
-        /// Rollback configuration
-        /// </summary>
-        public bool Rollback(SanteDBConfiguration configuration)
-        {
-            return true;
-        }
+            /// <summary>
+            /// Rollback configuration
+            /// </summary>
+            public bool Rollback(SanteDBConfiguration configuration)
+            {
+                return true;
+            }
 
-        /// <summary>
-        /// Verify state
-        /// </summary>
-        public bool VerifyState(SanteDBConfiguration configuration)
-        {
-            return true;
+            /// <summary>
+            /// Verify state
+            /// </summary>
+            public bool VerifyState(SanteDBConfiguration configuration)
+            {
+                return true;
+            }
         }
     }
-}
 }

@@ -81,6 +81,11 @@ namespace SanteDB.Core.Services.Impl
         private readonly IServiceManager m_serviceManager;
 
         /// <summary>
+        /// Service Factories
+        /// </summary>
+        public string ServiceName => "Default Service Factories";
+
+        /// <summary>
         /// DI constructor
         /// </summary>
         public DefaultServiceFactory(IServiceManager serviceManager)

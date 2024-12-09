@@ -23,7 +23,7 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a service factory which is capable of creating services
     /// </summary>
-    public interface IServiceFactory
+    public interface IServiceFactory : IServiceImplementation
     {
 
         /// <summary>
