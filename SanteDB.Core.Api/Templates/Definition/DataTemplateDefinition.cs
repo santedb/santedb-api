@@ -166,5 +166,8 @@ namespace SanteDB.Core.Templates.Definition
             }
 
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => $"Template: {this.Name}";
     }
 }
