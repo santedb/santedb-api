@@ -55,7 +55,7 @@ namespace SanteDB.Core.Templates.Definition
         /// <summary>
         /// True if the template is readonly
         /// </summary>
-        [XmlIgnore, JsonProperty("isReadonly")]
+        [XmlElement("isReadonly"), JsonProperty("isReadonly")]
         public bool Readonly { get; set; }
 
         /// <summary>
