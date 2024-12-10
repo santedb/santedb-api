@@ -16,7 +16,7 @@ namespace SanteDB.Core.Templates.Definition
         /// Gets or sets the version of the definition file
         /// </summary>
         [XmlElement("version"), JsonProperty("version")]
-        public string Version { get; set; }
+        public int Version { get; set; }
 
         /// <summary>
         /// Gets or sets the authors of the definition
@@ -25,7 +25,7 @@ namespace SanteDB.Core.Templates.Definition
         public List<string> Author { get; set; }
 
         /// <summary>
-        /// Gets or sets the icones
+        /// Gets or sets the icons
         /// </summary>
         [XmlElement("icon"), JsonProperty("icon")]
         public string Icon { get; set; }
@@ -40,6 +40,6 @@ namespace SanteDB.Core.Templates.Definition
         /// Get the last modified time
         /// </summary>
         [XmlElement("lastModified"), JsonProperty("lastModified")]
-        public DateTimeOffset LastUpdated { get; set; }
+        public DateTime LastUpdated { get; set; }
     }
 }
