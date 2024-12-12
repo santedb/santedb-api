@@ -335,7 +335,7 @@ namespace SanteDB.Core.Cdss
                             if(candidate != null &&
                                 (candidate?.StopTime == null && 
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(periodStart.Value).TotalDays ?? 0) > 28 ||
-                                (candidate?.StartTime ?? candidate.ActTime).Value.Month != periodStart.Value.Month)) // Don't allow multi-month suggestions
+                                (candidate.ActTime.GreaterOf(candidate.StartTime).Value.Month != periodStart.Value.Month))) // Don't allow multi-month suggestions
                             {
                                 candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime ?? o.TargetAct.ActTime).Max()?.ClosestDay(DayOfWeek.Saturday);
                                 candidate = null;
