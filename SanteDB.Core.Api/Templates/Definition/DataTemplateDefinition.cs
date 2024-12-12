@@ -2,6 +2,7 @@
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Templates.View;
@@ -20,11 +21,13 @@ namespace SanteDB.Core.Templates.Definition
     /// </summary>
     [XmlType(nameof(DataTemplateDefinition), Namespace = "http://santedb.org/model/template")]
     [XmlRoot(nameof(DataTemplateDefinition), Namespace = "http://santedb.org/model/template")]
+    [NonCached]
     public class DataTemplateDefinition : IdentifiedData
     {
         // XML serializer
         private static readonly XmlSerializer m_xsz;
         private static Regex m_bindingRegex = new Regex("{{\\s?\\$([A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
+        private bool m_saving;
 
         /// <summary>
         /// Static CTOR
@@ -42,6 +45,18 @@ namespace SanteDB.Core.Templates.Definition
         public Guid Uuid { get => this.Key.GetValueOrDefault(); set => this.Key = value; }
 
         /// <summary>
+        /// Gets or sets the version of the definition file
+        /// </summary>
+        [XmlElement("version"), JsonProperty("version")]
+        public int Version { get; set; }
+
+        /// <summary>
+        /// Don't serialize key
+        /// </summary>
+        /// <returns></returns>
+        public bool ShouldSerializeVersion() => !this.m_saving;
+
+        /// <summary>
         /// Don't serialize key
         /// </summary>
         /// <returns></returns>
@@ -50,13 +65,37 @@ namespace SanteDB.Core.Templates.Definition
         /// <summary>
         /// Modified on
         /// </summary>
-        public override DateTimeOffset ModifiedOn => this.Metadata?.LastUpdated ?? DateTimeOffset.MinValue;
+        public override DateTimeOffset ModifiedOn => this.LastUpdated;
 
         /// <summary>
         /// True if the template is readonly
         /// </summary>
         [XmlElement("isReadonly"), JsonProperty("isReadonly")]
         public bool Readonly { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authors of the definition
+        /// </summary>
+        [XmlElement("author"), JsonProperty("author")]
+        public List<string> Author { get; set; }
+
+        /// <summary>
+        /// Gets or sets the icons
+        /// </summary>
+        [XmlElement("icon"), JsonProperty("icon")]
+        public string Icon { get; set; }
+
+        /// <summary>
+        /// Get the last modified time
+        /// </summary>
+        [XmlElement("lastModified"), JsonProperty("lastModified")]
+        public DateTime LastUpdated { get; set; }
+
+        /// <inheritdoc/>
+        public bool ShouldSerializeReadonly() => !this.m_saving;
+
+        /// <inheritdoc/>
+        public bool ShouldSerializeLastUpdated() => !this.m_saving;
 
         /// <summary>
         /// True if the data template appears in lists
@@ -100,12 +139,9 @@ namespace SanteDB.Core.Templates.Definition
         [XmlArray("scopes"), XmlArrayItem("scope"), JsonProperty("scopes")]
         public List<String> Scopes { get; set; }
 
-        /// <summary>
-        /// Gets or sets the metadata of the template definition
-        /// </summary>
-        [XmlElement("meta"), JsonProperty("meta")]
-        public DataTemplateDefinitionMetadata Metadata { get; set; }
-
+        /// <inheritdoc/>
+        public bool ShouldSerializeScopes() => this.Scopes?.Any() == true;
+ 
         /// <summary>
         /// Gets or sets the json template
         /// </summary>
@@ -124,6 +160,10 @@ namespace SanteDB.Core.Templates.Definition
         [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
+        /// <inheritdoc/>
+        public bool ShouldSerializeIsActive() => !this.m_saving;
+
+
         /// <summary>
         /// Load a data template definition from <paramref name="stream"/>
         /// </summary>
@@ -140,7 +180,9 @@ namespace SanteDB.Core.Templates.Definition
         /// <param name="stream">The stream to which the data in this template definition should be written</param>
         public void Save(Stream stream)
         {
+            this.m_saving = true;
             m_xsz.Serialize(stream, this);
+            this.m_saving = false;
         }
 
         /// <summary>
