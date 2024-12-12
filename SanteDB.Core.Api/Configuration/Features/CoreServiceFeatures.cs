@@ -37,7 +37,7 @@ namespace SanteDB.Core.Configuration.Features
         public object Configuration { get; set; }
 
         /// <inheritdoc/>
-        public Type ConfigurationType => typeof(GenericFeatureConfiguration);
+        public Type ConfigurationType => typeof(ApplicationServiceContextConfigurationSection);
 
         /// <inheritdoc/>
         public IEnumerable<IConfigurationTask> CreateInstallTasks()
@@ -81,57 +81,18 @@ namespace SanteDB.Core.Configuration.Features
                 ))
             {
                 case 2:
-                    var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
-                    var types = AppDomain.CurrentDomain.GetAllTypes();
-                    var config = new GenericFeatureConfiguration();
-                    // Map configuration over to the features section
-                    foreach (var pvd in types.Where(t => t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
+                    var cs = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
+                    this.Configuration = new ApplicationServiceContextConfigurationSection()
                     {
-                        if (pvd.Name == "IDaemonService")
-                        {
-                            var daemons = types.Where(t => pvd.IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface && !t.ContainsGenericParameters);
-                            var daemonNames = daemons.Select(o => o.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? o.Name);
-                            config.Categories.Add("Daemons", daemonNames.ToArray());
-                            foreach (var itm in daemons)
-                            {
-                                config.Options.Add(itm.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? itm.Name, () => new String[] { "Active", "Disabled" });
-                                config.Values.Add(itm.GetCustomAttribute<ServiceProviderAttribute>()?.Name ?? itm.Name, sp.Any(t => t.Type == itm) ? "Active" : "Disabled");
-                            }
-                            continue;
-                        }
-                        else
-                        {
-                            var optionName = pvd.GetCustomAttribute<DescriptionAttribute>()?.Description ?? pvd.FullName;
-                            config.Options.Add(optionName, () => types.Where(t => !t.IsInterface && !t.IsAbstract && !t.ContainsGenericParameters && pvd.IsAssignableFrom(t)));
-                            config.Values.Add(optionName, sp.FirstOrDefault(o => pvd.IsAssignableFrom(o.Type))?.Type);
-                        }
-                    }
-
-                    var removeOptions = new List<string>();
-                    foreach (var o in config.Options)
-                    {
-                        if ((o.Value() as IEnumerable)?.OfType<object>().Count() == 0)
-                        {
-                            removeOptions.Add(o.Key);
-                        }
-                    }
-
-                    foreach (var itm in removeOptions)
-                    {
-                        config.Options.Remove(itm);
-                        config.Values.Remove(itm);
-                    }
-
-                    if (this.Configuration == null)
-                    {
-                        this.Configuration = config;
-                    }
-
+                        AllowUnsignedAssemblies = cs.AllowUnsignedAssemblies,
+                        AppSettings = new List<AppSettingKeyValuePair>(cs.AppSettings),
+                        InstanceName = cs.InstanceName,
+                        ServiceProviders = new List<TypeReferenceConfiguration>(cs.ServiceProviders),
+                        ThreadPoolSize = cs.ThreadPoolSize
+                    };
                     return FeatureInstallState.Installed;
-
                 case 1:
                     return FeatureInstallState.PartiallyInstalled;
-
                 case 0:
                 default:
                     return FeatureInstallState.NotInstalled;
@@ -159,27 +120,16 @@ namespace SanteDB.Core.Configuration.Features
                 this.m_backup = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
 
                 // Get the configuration
-                var config = this.Feature.Configuration as GenericFeatureConfiguration;
+                var config = this.Feature.Configuration as ApplicationServiceContextConfigurationSection;
                 if (config != null)
                 {
-                    var sp = configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders;
-                    var types = AppDomain.CurrentDomain.GetAllTypes();
-                    var appConfig = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
-                    // Map configuration over to the features section
-                    foreach (var pvd in types.Where(t => t.IsInterface && typeof(IServiceImplementation).IsAssignableFrom(t)).ToArray())
-                    {
-                        object value = null;
-                        if (config.Values.TryGetValue(pvd.Name, out value) &&
-                            value != null &&
-                            !sp.Any(t => value as Type == t.Type))
-                        {
-                            appConfig.ServiceProviders.Add(new TypeReferenceConfiguration(value as Type));
-                        }
-                    }
+                    config.ServiceProviders = config.ServiceProviders.OrderBy(r => this.m_backup.ServiceProviders.Any(b=>b.TypeXml == r.TypeXml) ? this.m_backup.ServiceProviders.FindIndex(b => r.TypeXml == b.TypeXml) : Int32.MaxValue).ToList();
+                    //config.ServiceProviders.AddRange(this.m_backup.ServiceProviders.Where(d => !typeof(IServiceImplementation).IsAssignableFrom(d.Type)));
+                    this.m_backup.ServiceProviders = config.ServiceProviders;
+                    this.m_backup.InstanceName = config.InstanceName;
+                    this.m_backup.AppSettings = config.AppSettings;
+                    this.m_backup.AllowUnsignedAssemblies = config.AllowUnsignedAssemblies;
 
-                    //// Remove any sp which aren't configured for any service impl
-                    //sp.RemoveAll(r => !config.Values.Any(v => v.Value == r.Type) && !typeof(IDaemonService).IsAssignableFrom(r.Type) &&
-                    //    typeof(IServiceImplementation).IsAssignableFrom(r.Type));
                 }
 
                 return true;

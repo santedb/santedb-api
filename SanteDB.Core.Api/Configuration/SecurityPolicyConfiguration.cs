@@ -280,5 +280,10 @@ namespace SanteDB.Core.Configuration
             }
         }
 
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{this.PolicyId}={this.PolicyValue}";
+        }
     }
 }
