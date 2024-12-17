@@ -40,6 +40,20 @@ namespace SanteDB.Core.Templates.Definition
         BackEntry
     }
 
+    ///Content choice
+    [XmlType(nameof(DataTemplateContentChoice), Namespace = "http://santedb.org/model/template")]
+    public enum DataTemplateContentChoice
+    {
+        [XmlEnum("http://www.w3.org/1999/xhtml:div")]
+        div,
+        [XmlEnum("http://santedb.org/model/template/view:fdl")]
+        fdl,
+        [XmlEnum("bin")]
+        bin,
+        [XmlEnum("ref")]
+        @ref
+    }
+
     /// <summary>
     /// Represents a single view for the template
     /// </summary>
@@ -55,11 +69,19 @@ namespace SanteDB.Core.Templates.Definition
         /// <summary>
         /// Gets or sets the content of the view
         /// </summary>
-        [XmlElement("div", Namespace = "http://www.w3.org/1999/xhtml", Type = typeof(XElement)),
+        [XmlChoiceIdentifier(nameof(ContentChoice)),
+            XmlElement("div", Namespace = "http://www.w3.org/1999/xhtml", Type = typeof(XElement)),
             XmlElement("fdl", Namespace = "http://santedb.org/model/template/view", Type = typeof(SimplifiedDataEntryView)),
             XmlElement("bin", Namespace = "http://santedb.org/model/template", Type = typeof(byte[])),
-            XmlElement("ref", Namespace = "http://santedb.org/model/template", Type = typeof(String))]
+            XmlElement("ref", Namespace = "http://santedb.org/model/template", Type = typeof(String)),
+            JsonProperty("content")]
         public object Content { get; set; }
+
+        /// <summary>
+        /// Gets or sets the content choice element
+        /// </summary>
+        [XmlIgnore, JsonProperty("contentType")]
+        public DataTemplateContentChoice ContentChoice { get; set; }
 
         /// <summary>
         /// Render the content to the <paramref name="toStream"/>
