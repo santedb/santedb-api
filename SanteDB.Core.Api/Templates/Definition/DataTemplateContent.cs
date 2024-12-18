@@ -23,7 +23,7 @@ namespace SanteDB.Core.Templates.Definition
         /// <summary>
         /// Gets or sets the JSON template
         /// </summary>
-        [XmlChoiceIdentifier(nameof(ContentType)), XmlElement("content"), XmlElement("reference"), JsonProperty("template")]
+        [XmlChoiceIdentifier(nameof(ContentType)), XmlElement("content"), XmlElement("reference"), JsonProperty("content")]
         public String Content { get; set; }
 
         /// <summary>
