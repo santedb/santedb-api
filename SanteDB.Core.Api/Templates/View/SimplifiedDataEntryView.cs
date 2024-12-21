@@ -23,5 +23,13 @@ namespace SanteDB.Core.Templates.View
             xw.WriteEndElement(); // div
         }
 
+        /// <summary>
+        /// Parse the view content definition
+        /// </summary>
+        public static SimplifiedDataEntryView Parse(string str)
+        {
+            return new SimplifiedDataEntryView();
+        }
+
     }
 }
