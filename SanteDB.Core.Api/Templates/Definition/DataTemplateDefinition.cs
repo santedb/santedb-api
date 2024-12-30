@@ -34,7 +34,7 @@ namespace SanteDB.Core.Templates.Definition
         /// </summary>
         static DataTemplateDefinition()
         {
-            var rt = AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(ISimplifiedInputControl).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract && t.HasCustomAttribute<XmlTypeAttribute>()).ToArray();
+            var rt = AppDomain.CurrentDomain.GetAllTypes().Where(t => typeof(SimplifiedViewComponent).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract && t.HasCustomAttribute<XmlTypeAttribute>()).ToArray();
             m_xsz = new XmlSerializer(typeof(DataTemplateDefinition), rt);
         }
 

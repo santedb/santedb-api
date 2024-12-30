@@ -46,8 +46,8 @@ namespace SanteDB.Core.Templates.Definition
     {
         [XmlEnum("http://www.w3.org/1999/xhtml:div")]
         div,
-        [XmlEnum("http://santedb.org/model/template/view:fdl")]
-        fdl,
+        [XmlEnum("http://santedb.org/model/template/view:svd")]
+        svd,
         [XmlEnum("bin")]
         bin,
         [XmlEnum("ref")]
@@ -70,6 +70,90 @@ namespace SanteDB.Core.Templates.Definition
         public DataTemplateViewType ViewType { get; set; }
 
         /// <summary>
+        /// Gets or sets the content of the view
+        /// </summary>
+        [XmlElement("div", Namespace = "http://www.w3.org/1999/xhtml", Type = typeof(XElement)),
+            XmlElement("svd", Namespace = "http://santedb.org/model/template/view", Type = typeof(SimplifiedViewDefinition)),
+            XmlElement("bin", Namespace = "http://santedb.org/model/template", Type = typeof(byte[])),
+            XmlElement("ref", Namespace = "http://santedb.org/model/template", Type = typeof(String)),
+            JsonIgnore]
+        public object Content { get; set; }
+
+
+        /// <summary>
+        /// Content helper for JSON
+        /// </summary>
+        [JsonProperty("content"), XmlIgnore]
+        public Object ContentJson {
+            get
+            {
+                switch (this.Content)
+                {
+                    case XElement xe:
+                        return xe.ToString();
+                    case SimplifiedViewDefinition se:
+                        using(var ms = new MemoryStream())
+                        {
+                            se.Save(ms);
+                            return Encoding.UTF8.GetString(ms.ToArray());
+                        }
+                    case String str:
+                        return str;
+                    case byte[] bin:
+                        return Convert.ToBase64String(bin);
+                    default:
+                        return null;
+                }
+            }
+            set
+            {
+                if(this.m_contentChoice.HasValue)
+                {
+                    switch(this.m_contentChoice.Value)
+                    {
+                        case DataTemplateContentChoice.bin:
+                            if (value is byte[] b)
+                            {
+                                this.Content = b;
+                            }
+                            else if(value is String binStr)
+                            {
+                                this.Content = Convert.FromBase64String(binStr);
+                            }
+                            break;
+                        case DataTemplateContentChoice.div:
+                            if(value is XElement xel)
+                            {
+                                this.Content = xel;
+                            }
+                            else if(value is String xmlStr)
+                            {
+                                this.Content = XElement.Parse(xmlStr);
+                            }
+                            break;
+                        case DataTemplateContentChoice.svd:
+                            if(value is SimplifiedViewDefinition sdv)
+                            {
+                                this.Content = sdv;
+                            }
+                            else if(value is String sdvStr)
+                            {
+                                this.Content = SimplifiedViewDefinition.Parse(sdvStr);
+                            }
+                            break;
+                        case DataTemplateContentChoice.@ref:
+                            this.Content = value.ToString();
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Content = value;
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the content choice element
         /// </summary>
         [XmlIgnore, JsonProperty("contentType")]
@@ -77,15 +161,15 @@ namespace SanteDB.Core.Templates.Definition
         {
             get
             {
-                if(!this.m_contentChoice.HasValue)
+                if (!this.m_contentChoice.HasValue)
                 {
-                    switch(this.Content)
+                    switch (this.Content)
                     {
                         case XElement x:
                             this.m_contentChoice = DataTemplateContentChoice.div;
                             break;
-                        case SimplifiedDataEntryView s:
-                            this.m_contentChoice = DataTemplateContentChoice.fdl;
+                        case SimplifiedViewDefinition s:
+                            this.m_contentChoice = DataTemplateContentChoice.svd;
                             break;
                         case byte[] b:
                             this.m_contentChoice = DataTemplateContentChoice.bin;
@@ -95,48 +179,41 @@ namespace SanteDB.Core.Templates.Definition
                             break;
                     }
                 }
-                return this.m_contentChoice.Value;
+                return this.m_contentChoice.GetValueOrDefault();
             }
-            set => this.m_contentChoice = value;
-        }
-
-        /// <summary>
-        /// Gets or sets the content of the view
-        /// </summary>
-        [XmlElement("div", Namespace = "http://www.w3.org/1999/xhtml", Type = typeof(XElement)),
-            XmlElement("fdl", Namespace = "http://santedb.org/model/template/view", Type = typeof(SimplifiedDataEntryView)),
-            XmlElement("bin", Namespace = "http://santedb.org/model/template", Type = typeof(byte[])),
-            XmlElement("ref", Namespace = "http://santedb.org/model/template", Type = typeof(String)),
-            JsonIgnore]
-        public object Content { get; set; }
-
-        /// <summary>
-        /// Gets or sets the content for JSON serialization
-        /// </summary>
-        [XmlIgnore, JsonProperty("content")]
-        public string ContentJson
-        {
-            get => this.Content?.ToString();
             set
             {
-                // Correct the view types 
-                switch (this.ContentChoice)
+                this.m_contentChoice = value;
+                switch(value)
                 {
-                    case DataTemplateContentChoice.div:
-                        this.Content = XElement.Parse(value);
+                    case DataTemplateContentChoice.bin:
+                        if(this.Content is String binStr)
+                        {
+                            this.Content = Convert.FromBase64String(binStr);
+                        }
                         break;
-                    case DataTemplateContentChoice.fdl:
-                        this.Content = SimplifiedDataEntryView.Parse(value);
+                    case DataTemplateContentChoice.div:
+                        if(this.Content is String xmlStr)
+                        {
+                            this.Content = XElement.Parse(xmlStr);
+                        }
+                        break;
+                    case DataTemplateContentChoice.svd:
+                        if(this.Content is String fdlStr)
+                        {
+                            this.Content = SimplifiedViewDefinition.Parse(fdlStr);
+                        }
+                        else if(this.Content is XElement fdlXml)
+                        {
+                            this.Content = SimplifiedViewDefinition.Parse(fdlXml.ToString());
+                        }
                         break;
                     case DataTemplateContentChoice.@ref:
-                        this.Content = value;
-                        break;
-                    case DataTemplateContentChoice.bin:
-                        this.Content = Convert.FromBase64String(value);
                         break;
                 }
             }
         }
+
 
         /// <summary>
         /// Render the content to the <paramref name="toStream"/>
@@ -149,7 +226,7 @@ namespace SanteDB.Core.Templates.Definition
                     var buf = Encoding.UTF8.GetBytes(xe.ToString());
                     toStream.Write(buf, 0, buf.Length);
                     break;
-                case SimplifiedDataEntryView sv:
+                case SimplifiedViewDefinition sv:
                     using (var xw = XmlWriter.Create(toStream, new XmlWriterSettings()
                     {
                         CloseOutput = false,
