@@ -62,7 +62,7 @@ namespace SanteDB.Core.Templates.View
         /// </summary>
         protected override string GetCssClasses(SimplifiedViewRenderContext renderContext)
         {
-            var cssClasses = "d-flex justify-content-left";
+            var cssClasses = "d-flex justify-content-left m-auto";
             switch(this.Type) {
                 case SimplifiedInfoBlockType.Danger:
                     cssClasses += " alert alert-danger";
