@@ -28,7 +28,7 @@ namespace SanteDB.Core.Templates.View
             XmlElement("html", typeof(XElement), Namespace = NS_XHTML),
             XmlElement("span", typeof(SimplifiedViewTextBlock)),
             XmlElement("list", typeof(SimplifiedViewListBlock)),
-            XmlElement("hint", typeof(SimplifiedViewInfoBlock)),
+            XmlElement("hint", typeof(SimplifiedViewHintComponent)),
             XmlElement("component", typeof(SimplifiedViewComponent))]
         public List<object> Content { get; set; }
 

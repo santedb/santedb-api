@@ -32,8 +32,8 @@ namespace SanteDB.Core.Templates.View
     /// <summary>
     /// An information block which can be used to show instructions, alerts, notes, etc.
     /// </summary>
-    [XmlType(nameof(SimplifiedViewInfoBlock), Namespace = "http://santedb.org/model/template/view")]
-    public class SimplifiedViewInfoBlock : SimplifiedViewComponent
+    [XmlType(nameof(SimplifiedViewHintComponent), Namespace = "http://santedb.org/model/template/view")]
+    public class SimplifiedViewHintComponent : SimplifiedViewComponent
     {
 
         /// <summary>
