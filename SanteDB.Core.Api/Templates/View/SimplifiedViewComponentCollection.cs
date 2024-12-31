@@ -17,6 +17,7 @@ namespace SanteDB.Core.Templates.View
         /// Gets or sets the content
         /// </summary>
         [JsonProperty("content"),
+            XmlElement("accordion", typeof(SimplifiedViewAccordionPane)),
             XmlElement("label", typeof(SimplifiedViewLabel)),
             XmlElement("input", typeof(SimplifiedViewInput)),
             XmlElement("select", typeof(SimplifiedViewSelect)),
