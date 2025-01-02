@@ -83,7 +83,7 @@ namespace SanteDB.Core.Security.Tfa
                 var secret = this.m_tfaSecretManager.GetSharedSecret(ci);
 
                 // HACK: Get the secret for sharing
-                return $"otpauth://totp/{user.Name}?secret={secret.Base32Encode()}&issuer=SanteDB on {Environment.MachineName}";
+                return $"otpauth://totp/{user.Name}?secret={secret.Base32Encode()}&issuer={ApplicationServiceContext.Current.ApplicationName ?? "SanteDB"} on {Environment.MachineName}";
             }
             else
             {
