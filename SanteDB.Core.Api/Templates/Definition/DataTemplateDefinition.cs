@@ -22,7 +22,7 @@ namespace SanteDB.Core.Templates.Definition
     [XmlType(nameof(DataTemplateDefinition), Namespace = "http://santedb.org/model/template")]
     [XmlRoot(nameof(DataTemplateDefinition), Namespace = "http://santedb.org/model/template")]
     [NonCached]
-    public class DataTemplateDefinition : IdentifiedData
+    public class DataTemplateDefinition : NonVersionedEntityData
     {
         // XML serializer
         private static readonly XmlSerializer m_xsz;
@@ -59,8 +59,38 @@ namespace SanteDB.Core.Templates.Definition
         /// <summary>
         /// Don't serialize key
         /// </summary>
+        public new bool ShouldSerializeKey() => false;
+
+        /// <summary>
+        /// Don't serialize obs time
+        /// </summary>
+        public bool ShouldSerializeObsoletionTime() => !this.m_saving;
+
+        /// <summary>
+        /// Don't serialize create time
+        /// </summary>
+        public bool ShouldSerializeCreationTime() => !this.m_saving;
+
+        /// <summary>
+        /// Don't serialize created by key
+        /// </summary>
+        public new bool ShouldSerializeCreatedByKey() => !this.m_saving;
+
+        /// <summary>
+        /// Don't serialize obs key
+        /// </summary>
         /// <returns></returns>
-        public bool ShouldSerializeKey() => false;
+        public new bool ShouldSerializeObsoletedByKey() => !this.m_saving;
+
+        /// <summary>
+        /// Don't serialize updated time
+        /// </summary>
+        public bool ShouldSerializeUpdatedTime() => !this.m_saving;
+
+        /// <summary>
+        /// Dont' serialize updated by key
+        /// </summary>
+        public new bool ShouldSerializeUpdatedByKey() => !this.m_saving;
 
         /// <summary>
         /// Modified on
