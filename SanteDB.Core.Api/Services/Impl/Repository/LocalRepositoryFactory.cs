@@ -22,6 +22,8 @@ using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using System;
 using System.Linq;
 
@@ -43,7 +45,9 @@ namespace SanteDB.Core.Services.Impl.Repository
     {
         private readonly Type[] m_excludeServiceTypes = new Type[]
         {
-            typeof(ISubscriptionRepository)
+            typeof(ISubscriptionRepository),
+            typeof(IDataTemplateManagementService),
+            typeof(IRepositoryService<DataTemplateDefinition>)
         };
 
         // Repository services
@@ -79,8 +83,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 typeof(LocalAuditRepository),
                 typeof(LocalProviderRepository),
                 typeof(LocalConceptRepository),
-                typeof(LocalTemplateDefinitionRepositoryService),
-                typeof(LocalTemplateDefinitionRepositoryService),
+                typeof(LocalTemplateDefinitionRepositoryService)
             };
 
         /// <summary>

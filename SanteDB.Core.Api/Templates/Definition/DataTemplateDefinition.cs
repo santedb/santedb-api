@@ -208,9 +208,9 @@ namespace SanteDB.Core.Templates.Definition
         /// Save the data template definition to <paramref name="stream"/>
         /// </summary>
         /// <param name="stream">The stream to which the data in this template definition should be written</param>
-        public void Save(Stream stream)
+        public void Save(Stream stream, bool includeMetadata = false)
         {
-            this.m_saving = true;
+            this.m_saving = !includeMetadata;
             m_xsz.Serialize(stream, this);
             this.m_saving = false;
         }

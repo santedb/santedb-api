@@ -20,7 +20,7 @@ namespace SanteDB.Core.Templates
     ///     - Back Entry
     ///     - Entry
     /// </remarks>
-    public interface IDataTemplateManagementService : IServiceImplementation
+    public interface IDataTemplateManagementService : IServiceImplementation, IRepositoryService<DataTemplateDefinition>, IRepositoryService
     {
 
         /// <summary>
