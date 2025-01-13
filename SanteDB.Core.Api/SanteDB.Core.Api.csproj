@@ -250,7 +250,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DynamicExpresso.Core" Version="2.16.1" />
+    <PackageReference Include="DynamicExpresso.Core" Version="2.17.2" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>

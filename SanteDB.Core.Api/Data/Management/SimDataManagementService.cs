@@ -42,6 +42,7 @@ namespace SanteDB.Core.Data.Management
     ///     <item>Unmerge is not possible</item>
     /// </list>
     /// </remarks>
+    [ServiceProvider("SIM Data Repository")]
     public class SimDataManagementService : IDaemonService, IDataManagementPattern
     {
 

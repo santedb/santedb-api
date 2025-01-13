@@ -20,6 +20,7 @@ using Newtonsoft.Json;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Services;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -138,6 +139,16 @@ namespace SanteDB.Core.Configuration
             {
                 this.AppSettings.Add(new AppSettingKeyValuePair(vkey, value));
             }
+        }
+
+        /// <summary>
+        /// Get app setting
+        /// </summary>
+        /// <param name="name">The name of the application setting</param>
+        /// <returns>The application setting if present, null if not</returns>
+        public string GetAppSetting(string name)
+        {
+            return this.AppSettings.FirstOrDefault(o => o.Key == name)?.Value;
         }
     }
 
