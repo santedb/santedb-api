@@ -263,10 +263,10 @@
     <None Update="Schema\Dataset.xsd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Schema\ForeignDataMap.xsd">
+    <None Update="Schema\ForeignData.xsd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Schema\SanteDBIssues.xsd">
+    <None Update="Schema\DetectedIssue.xsd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

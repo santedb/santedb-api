@@ -70,7 +70,9 @@ namespace SanteDB.Core.Services.Impl.Repository
                     }
                 }
             }
-            base.DemandAlter(data);
+            else {
+                base.DemandAlter(data);
+            }
         }
 
     }

@@ -81,8 +81,21 @@ namespace SanteDB.Core
         /// <summary>
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
         /// </summary>
+        public static IdentifiedData ResolveManagedRecord(this IdentifiedData forSource) =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveManagedRecord(forSource) ?? forSource;
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
+        /// </summary>
         public static T ResolveManagedRecord<T>(this T forSource) where T : IdentifiedData =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveManagedRecord(forSource) ?? forSource;
+
+        /// <summary>
+        /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
+        /// </summary>
+        public static IdentifiedData ResolveGoldenRecord(this IdentifiedData forSource) =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveGoldenRecord(forSource) ?? forSource;
+
 
         /// <summary>
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveOwnedRecord(T, IPrincipal)"/>
@@ -99,8 +112,15 @@ namespace SanteDB.Core
         /// <summary>
         /// Get managed reference links wrapper for <see cref="IDataManagedLinkProvider{T}.FilterManagedReferenceLinks(IEnumerable{ITargetedAssociation})"/>
         /// </summary>
-        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<ISimpleAssociation> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks<T>(this IEnumerable<ITargetedAssociation> forRelationships) where T : IdentifiedData, IHasClassConcept, IHasTypeConcept, IAnnotatedResource, IHasRelationships, new() =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.FilterManagedReferenceLinks(forRelationships.OfType<ITargetedAssociation>()) ?? forRelationships.Where(o => false).OfType<ITargetedAssociation>();
+
+        /// <summary>
+        /// Get managed reference links 
+        /// </summary>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(this IHasRelationships forSource)  =>
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.FilterManagedReferenceLinks(forSource.Relationships) ?? forSource.Relationships.Where(o => false).OfType<ITargetedAssociation>();
+
 
         /// <summary>
         /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>

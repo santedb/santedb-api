@@ -46,7 +46,7 @@ namespace SanteDB.Core.PubSub
                     .Where(t => typeof(IPubSubDispatcherFactory).IsAssignableFrom(t) && !t.IsAbstract && !t.IsAbstract)
                     .Select(t => serviceManager.CreateInjected(t))
                     .OfType<IPubSubDispatcherFactory>()
-                    .ToDictionary(k => k.Id, f => f);
+                    .ToDictionaryIgnoringDuplicates(k => k.Id, f => f);
         }
 
         /// <summary>

@@ -74,6 +74,20 @@ namespace SanteDB.Core.Data
         /// <param name="ownerPrincipal">The owner principal which the method should return</param>
         /// <returns>The resolved record under management which is owned by <paramref name="ownerPrincipal"/></returns>
         IdentifiedData ResolveOwnedRecord(IdentifiedData forTarget, IPrincipal ownerPrincipal);
+
+        /// <summary>
+        /// Get the managed reference links for the collection of relationships
+        /// </summary>
+        /// <param name="forRelationships">The relationship collection on the object</param>
+        /// <returns>The reference links on the object</returns>
+        IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(IEnumerable<ITargetedAssociation> forRelationships);
+
+        /// <summary>
+        /// Resolve the golden record for the <paramref name="forSource"/> or if <paramref name="forSource"/> is the golden record return it back
+        /// </summary>
+        /// <param name="forSource">The record to be resolved</param>
+        /// <returns>The golden record as determined by the data management pattern</returns>
+        IdentifiedData ResolveGoldenRecord(IdentifiedData forSource);
     }
 
     /// <summary>
@@ -117,12 +131,6 @@ namespace SanteDB.Core.Data
         /// <returns>The resolved record under management which is owned by <paramref name="ownerPrincipal"/></returns>
         T ResolveOwnedRecord(T forTarget, IPrincipal ownerPrincipal);
 
-        /// <summary>
-        /// Get the managed reference links for the collection of relationships
-        /// </summary>
-        /// <param name="forRelationships">The relationship collection on the object</param>
-        /// <returns>The reference links on the object</returns>
-        IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(IEnumerable<ITargetedAssociation> forRelationships);
 
         /// <summary>
         /// Add a managed reference link between <paramref name="sourceObject"/> and <paramref name="targetObject"/>
