@@ -64,9 +64,12 @@ namespace SanteDB.Core.Services.Impl.Repository
                 {
                     // TODO: Allow for the classification of a facility administrative user
                     var thisUser = this.m_securityRepository.GetCdrEntity(AuthenticationContext.Current.Principal);
-                    if (thisUser?.LoadProperty(o => o.Relationships).Any(r => r.RelationshipTypeKey == EntityRelationshipTypeKeys.MaintainedEntity && r.TargetEntityKey == containedFacilityRel.SourceEntityKey) != true)
+                    if (thisUser?.HasDirectOrParentRelationshipWith(EntityRelationshipTypeKeys.MaintainedEntity, containedFacilityRel.SourceEntityKey) != true)
                     {
-                        this.m_pepService.Demand(PermissionPolicyIdentifiers.WriteMaterials);
+                        if(!this.m_pepService.SoftDemand(PermissionPolicyIdentifiers.WriteMaterials, AuthenticationContext.Current.Principal))
+                        {
+                            throw new PolicyViolationException(AuthenticationContext.Current.Principal, PermissionPolicyIdentifiers.WriteMaterials, Model.Security.PolicyGrantType.Deny, ErrorMessages.NOT_A_MANAGER_ROLE);
+                        }
                     }
                 }
             }
