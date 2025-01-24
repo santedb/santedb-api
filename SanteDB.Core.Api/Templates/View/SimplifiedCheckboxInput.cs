@@ -94,6 +94,11 @@ namespace SanteDB.Core.Templates.View
             {
                 base.RenderValidationError(renderContext.HtmlWriter, "required");
             }
+            if (this.CdssCallback)
+            {
+                this.RenderValidationError(renderContext.HtmlWriter, "cdss");
+            }
+
             renderContext.HtmlWriter.WriteEndElement(); // div
         }
     }

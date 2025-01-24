@@ -58,13 +58,29 @@ namespace SanteDB.Core.Templates.View
             htmlWriter.WriteAttributeString("class", "text-danger");
             htmlWriter.WriteAttributeString("ng-if", $"(ownerForm || $parent.ownerForm || $parent.$parent.ownerForm).{this.Name}.$error.{errorType}");
 
-            htmlWriter.WriteStartElement("i", NS_XHTML);
-            htmlWriter.WriteAttributeString("class", "fas fa-fw fa-exclamation-triangle");
-            htmlWriter.WriteRaw(" ");
-            htmlWriter.WriteEndElement(); // i
-
-            htmlWriter.WriteString($"{{{{ 'ui.error.{errorType}' | i18n }}}}");
-
+            if (!String.Equals(errorType, "cdss", StringComparison.CurrentCultureIgnoreCase))
+            {
+                htmlWriter.WriteStartElement("i", NS_XHTML);
+                htmlWriter.WriteAttributeString("class", "fas fa-fw fa-exclamation-triangle");
+                htmlWriter.WriteRaw(" ");
+                htmlWriter.WriteEndElement(); // i
+                htmlWriter.WriteString($"{{{{ 'ui.error.{errorType}' | i18n }}}}");
+            }
+            else
+            {
+                htmlWriter.WriteStartElement("ul", NS_XHTML);
+                htmlWriter.WriteAttributeString("class", "list-unstyled");
+                htmlWriter.WriteStartElement("li", NS_XHTML);
+                htmlWriter.WriteAttributeString("ng-repeat", $"issue in (ownerForm || $parent.ownerForm || $parent.$parent.ownerForm).{this.Name}.$cdss track by $index");
+                htmlWriter.WriteAttributeString("ng-class", "{ 'text-danger' : issue.priority == 'Error', 'text-warning' : issue.priority == 'Warning', 'text-info' : issue.priority == 'Information' }");
+                htmlWriter.WriteStartElement("i", NS_XHTML);
+                htmlWriter.WriteAttributeString("class", "fas fa-fw");
+                htmlWriter.WriteAttributeString("ng-class", "{ 'fa-exclamation-triangle' : issue.priority == 'Error', 'fa-info-circle' : issue.priority == 'Warning' || issue.priority == 'Information' }");
+                htmlWriter.WriteEndElement();// i
+                htmlWriter.WriteString("{{ issue.text }}");
+                htmlWriter.WriteEndElement(); // li
+                htmlWriter.WriteEndElement(); // ul
+            }
             htmlWriter.WriteEndElement(); // div
         }
     }

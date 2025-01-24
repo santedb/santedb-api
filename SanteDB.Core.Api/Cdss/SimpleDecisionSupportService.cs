@@ -249,7 +249,7 @@ namespace SanteDB.Core.Cdss
                     var protocolOutput = libraries
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
-                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic ?? encounterType?.ToString()))
+                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic, encounterType?.ToString()))
                         .SelectMany(proto =>
                         {
                             try
@@ -429,7 +429,7 @@ namespace SanteDB.Core.Cdss
 
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
+        public IEnumerable<ICdssResult> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
         {
             if(librariesToApply.Length == 0 )
             {
@@ -446,7 +446,7 @@ namespace SanteDB.Core.Cdss
         }
 
         /// <inheritdoc/>
-        public IEnumerable<DetectedIssue> AnalyzeGlobal(Act collectedData)
+        public IEnumerable<ICdssResult> AnalyzeGlobal(Act collectedData)
         {
             return this.Analyze(collectedData, this.m_cdssLibraryRepository.Find(o => true).ToArray());
         }
