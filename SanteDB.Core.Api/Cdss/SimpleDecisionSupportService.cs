@@ -337,7 +337,7 @@ namespace SanteDB.Core.Cdss
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(periodStart.Value).TotalDays ?? 0) > 28 ||
                                 (candidate.ActTime.GreaterOf(candidate.StartTime).Value.Month != periodStart.Value.Month))) // Don't allow multi-month suggestions
                             {
-                                candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime ?? o.TargetAct.ActTime).Max()?.ClosestDay(DayOfWeek.Saturday);
+                                candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);
                                 candidate = null;
                             }
 
@@ -350,8 +350,8 @@ namespace SanteDB.Core.Cdss
                             else
                             {
                                 // Found the candidate - Does the stop time of this candidate act shorter than the current
-                                candidate.StopTime = candidate.StopTime.LesserOf(act.StopTime);
-                                candidate.StartTime = candidate.StartTime.GreaterOf(act.StartTime);
+                                candidate.StopTime = candidate.StopTime.LesserOf(periodEnd);
+                                candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
                             }
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
                             // Remove so we don't have duplicates
@@ -368,7 +368,7 @@ namespace SanteDB.Core.Cdss
                         o.StartTime = o.StartTime?.EnsureWeekday();
                         o.StopTime = o.StopTime?.EnsureWeekday();
                         return o;
-                    }).ToList())
+                    }).OrderBy(o=>o.ActTime).ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
@@ -414,7 +414,7 @@ namespace SanteDB.Core.Cdss
                 },
                 TemplateKey = templateKey,
                 ActTime = act.ActTime?.EnsureWeekday(),
-                StartTime = act.StartTime?.EnsureWeekday() ?? act.ActTime?.ClosestDay(DayOfWeek.Monday),
+                StartTime = (act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime)?.EnsureWeekday(),
                 StopTime = act.StopTime?.EnsureWeekday(),
                 MoodConceptKey = ActMoodKeys.Propose,
                 Key = Guid.NewGuid()
