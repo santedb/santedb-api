@@ -39,6 +39,15 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         public const string EXCLUDE_OBSERVATIONS = "_excludeObservations";
         /// <summary>
+        /// Exclude all proposals
+        /// </summary>
+        public const string EXCLUDE_PROPOSALS = "_excludePropose";
+        
+        /// <summary>
+        /// Exclude all issues
+        /// </summary>
+        public const string EXCLUDE_ISSUES = "_excludeIssue";
+        /// <summary>
         /// Any historical data should also be included and tagged as back-entry
         /// </summary>
         public const string INCLUDE_BACKENTRY = "_includeBackentry";
@@ -63,5 +72,9 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         public const string FIRST_APPLICAPLE = "firstOnly";
 
+        /// <summary>
+        /// The execution mode
+        /// </summary>
+        public const string EXECUTION_MODE = "_mode";
     }
 }

@@ -104,11 +104,11 @@ namespace SanteDB.Core.Services.Impl
                 }
 
                 // First, test that we're updating the right object
-                retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}id", existing.Key));
+                retVal.Add(new PatchOperation(PatchOperationType.TestEqual, $"{path}id", existing.Key));
 
                 if (existing is IVersionedData ivd)
                 {
-                    retVal.Add(new PatchOperation(PatchOperationType.Test, $"{path}version", ivd.VersionKey));
+                    retVal.Add(new PatchOperation(PatchOperationType.TestEqual, $"{path}version", ivd.VersionKey));
                 }
 
                 // Iterate through properties and determine changes
@@ -259,15 +259,15 @@ namespace SanteDB.Core.Services.Impl
             {
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.version", ivd.VersionKey),
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ivd.Key)
+                    new PatchOperation(PatchOperationType.TestEqual, $"{path}.version", ivd.VersionKey),
+                    new PatchOperation(PatchOperationType.TestEqual, $"{path}.id", ivd.Key)
                 };
             }
             else if (existingValue is IAnnotatedResource ide)
             {
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, $"{path}.id", ide.Key)
+                    new PatchOperation(PatchOperationType.TestEqual, $"{path}.id", ide.Key)
                 };
             }
             else if ((existingValue as IList)?.IsNullOrEmpty() == false && typeof(IdentifiedData).IsAssignableFrom(existingValue.GetType().StripGeneric()))
@@ -285,7 +285,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 return new PatchOperation[]
                 {
-                    new PatchOperation(PatchOperationType.Test, path, existingValue)
+                    new PatchOperation(PatchOperationType.TestEqual, path, existingValue)
                 };
             }
         }
@@ -441,7 +441,9 @@ namespace SanteDB.Core.Services.Impl
 
                             break;
                         }
-                    case PatchOperationType.Test:
+                    case PatchOperationType.TestNotEqual:
+                    case PatchOperationType.TestEqual:
+                        bool invert = op.OperationType == PatchOperationType.TestNotEqual;
                         if (force)
                         {
                             continue;
@@ -453,28 +455,27 @@ namespace SanteDB.Core.Services.Impl
                             op.Value = res;
                         }
 
-                        // We test the value! Also pretty cool
-                        if (applyTo is IdentifiedData && !(applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData))
+                        if (applyTo is IdentifiedData idd && idd.SemanticEquals(op.Value as IdentifiedData) == invert)
                         {
                             throw new PatchAssertionException(op.Value, applyTo, op);
                         }
-                        else if (applyTo is IList)
+                        else if (applyTo is IList applyList)
                         {
                             // Identified data
                             if (typeof(IdentifiedData).IsAssignableFrom(property.PropertyType.StripGeneric()))
                             {
-                                var result = this.ExecuteLambda("Any", applyTo, property, pathName, op);
-                                if (!(bool)result)
+                                var result = (bool)this.ExecuteLambda("Any", applyTo, property, pathName, op);
+                                if (result == invert)
                                 {
                                     throw new PatchAssertionException($"Could not find instance matching {op.Path.Replace(pathName, "")} = {op.Value} in collection {applyTo} at {op}");
                                 }
                             }
-                            else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
+                            else if (applyList.OfType<Object>().Any(o => o.Equals(op.Value)) == invert)
                             {
                                 throw new PatchAssertionException($"Assertion failed: {op.Value} could not be found in list {applyTo} at {op}");
                             }
                         }
-                        else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
+                        else if (applyTo?.Equals(op.Value) == invert && applyTo != op.Value)
                         {
                             throw new PatchAssertionException(op.Value, applyTo, op);
                         }
@@ -584,7 +585,7 @@ namespace SanteDB.Core.Services.Impl
                 switch (op.OperationType)
                 {
                     case PatchOperationType.Remove:
-                        // We add the value!!! Yay!
+                        // We add the value!!!
                         if (applyTo is IList)
                         {
                             var instance = this.ExecuteLambda("FirstOrDefault", applyTo, property, pathName, op);
@@ -592,29 +593,30 @@ namespace SanteDB.Core.Services.Impl
                         }
                         break;
 
-                    case PatchOperationType.Test:
-                        // We test the value! Also pretty cool
-                        if (applyTo is IdentifiedData && !(applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData))
+                    case PatchOperationType.TestNotEqual:
+                    case PatchOperationType.TestEqual:
+                        var invert = op.OperationType == PatchOperationType.TestNotEqual;
+                        if (applyTo is IdentifiedData && (applyTo as IdentifiedData).SemanticEquals(op.Value as IdentifiedData) == invert)
                         {
                             retVal = false;
                         }
-                        else if (applyTo is IList)
+                        else if (applyTo is IList appList)
                         {
                             // Identified data
                             if (typeof(IdentifiedData).IsAssignableFrom(property.PropertyType.StripGeneric()))
                             {
-                                var result = this.ExecuteLambda("Any", applyTo, property, pathName, op);
-                                if (!(bool)result)
+                                var result = (bool)this.ExecuteLambda("Any", applyTo, property, pathName, op);
+                                if (result == invert)
                                 {
                                     retVal = false;
                                 }
                             }
-                            else if (!(applyTo as IList).OfType<Object>().Any(o => o.Equals(op.Value)))
+                            else if (appList.OfType<Object>().Any(o => o.Equals(op.Value)) == invert)
                             {
                                 retVal = false;
                             }
                         }
-                        else if (applyTo?.Equals(op.Value) == false && applyTo != op.Value)
+                        else if (applyTo?.Equals(op.Value) == invert && applyTo != op.Value)
                         {
                             retVal = false;
                         }

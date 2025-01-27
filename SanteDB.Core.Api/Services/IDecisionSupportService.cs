@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Cdss;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
@@ -122,20 +123,22 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="collectedData">The collected data from the end user</param>
         /// <param name="librariesToApply">The protocol(s) which should be used to evaluate or analyze the data</param>
+        /// <param name="parameters">The parameters to apply to the CDSS library</param>
         /// <remarks>
         /// If the <paramref name="librariesToApply"/> parameter is omitted, then the <see cref="Act.Protocols"/> from the <paramref name="collectedData" /> is used
         /// as the list of protocols to be analyzed. A global analysis of the provided data can be requested using the <see cref="AnalyzeGlobal(Act)"/> 
         /// </remarks>
         /// <returns>The detected issues analyzed in the data</returns>
-        IEnumerable<ICdssResult> Analyze(Act collectedData,params ICdssLibrary[] librariesToApply);
+        IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply);
 
         /// <summary>
         /// Instructs the implementation to analyze the data provided in <paramref name="collectedData"/> using every registered clinical protocol in the 
         /// SanteDB instance.
         /// </summary>
         /// <param name="collectedData">The collected data which is to be analyzed</param>
+        /// <param name="parameters">The parameters to apply to the CDSS library</param>
         /// <returns>The detected issues in the analyzed data</returns>
         /// <remarks>This method, while more computationally intensive, allows the CDSS planner to analyze the data elements for all possible protocols which apply to <paramref name="collectedData"/></remarks>
-        IEnumerable<ICdssResult> AnalyzeGlobal(Act collectedData);
+        IEnumerable<ICdssResult> AnalyzeGlobal(IdentifiedData collectedData, IDictionary<String, Object> parameters);
     }
 }

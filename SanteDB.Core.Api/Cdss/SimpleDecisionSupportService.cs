@@ -22,6 +22,7 @@ using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Extensions;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
@@ -429,7 +430,7 @@ namespace SanteDB.Core.Cdss
 
 
         /// <inheritdoc/>
-        public IEnumerable<ICdssResult> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply)
+        public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
             if(librariesToApply.Length == 0 )
             {
@@ -438,7 +439,7 @@ namespace SanteDB.Core.Cdss
 
             foreach (var lib in librariesToApply)
             {
-                foreach (var iss in lib.Analyze(collectedData))
+                foreach (var iss in lib.Analyze(collectedData, parameters))
                 {
                     yield return iss;
                 }
@@ -446,9 +447,9 @@ namespace SanteDB.Core.Cdss
         }
 
         /// <inheritdoc/>
-        public IEnumerable<ICdssResult> AnalyzeGlobal(Act collectedData)
+        public IEnumerable<ICdssResult> AnalyzeGlobal(IdentifiedData collectedData, IDictionary<String, Object> parameters)
         {
-            return this.Analyze(collectedData, this.m_cdssLibraryRepository.Find(o => true).ToArray());
+            return this.Analyze(collectedData, parameters, this.m_cdssLibraryRepository.Find(o => true).ToArray());
         }
     }
 }
