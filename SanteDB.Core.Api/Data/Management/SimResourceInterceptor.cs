@@ -128,7 +128,7 @@ namespace SanteDB.Core.Data.Management
         private void DoSimDataManagementInternal(DataPersistingEventArgs<TModel> e)
         {
             var transactionBundle = new Bundle();
-            e.Data.Key = e.Data.Key ?? Guid.NewGuid();
+            transactionBundle.Key = transactionBundle.CorrelationKey = e.Data.Key = e.Data.Key ?? Guid.NewGuid();
             transactionBundle.AddRange(this.DoDataMatchingLogicInternal(e.Data));
             if (transactionBundle.Count == 0)
             {
@@ -360,7 +360,11 @@ namespace SanteDB.Core.Data.Management
                 throw new KeyNotFoundException($"{typeof(TModel).GetSerializationName()}/{survivorKey}");
             }
 
-            Bundle persistenceBundle = new Bundle();
+            Bundle persistenceBundle = new Bundle()
+            {
+                Key = Guid.NewGuid(),
+                CorrelationKey = survivorKey
+            };
             foreach (var l in linkedDuplicates)
             {
                 var local = this.m_persistenceService.Get(l, null, AuthenticationContext.Current.Principal);
@@ -402,7 +406,7 @@ namespace SanteDB.Core.Data.Management
 
             master.BatchOperation = Model.DataTypes.BatchOperationType.InsertOrUpdate;
             // Remove all the existing links
-            var persistenceBundle = new Bundle() { Item = new List<IdentifiedData>() { master } };
+            var persistenceBundle = new Bundle() { Item = new List<IdentifiedData>() { master }, CorrelationKey = masterKey };
             // Remove all duplicate indicators
             if (typeof(Act).IsAssignableFrom(typeof(TModel)))
             {
@@ -461,7 +465,7 @@ namespace SanteDB.Core.Data.Management
 
             master.BatchOperation = Model.DataTypes.BatchOperationType.InsertOrUpdate;
             // Remove all the existing links
-            var persistenceBundle = new Bundle() { Item = new List<IdentifiedData>() { master } };
+            var persistenceBundle = new Bundle() { Item = new List<IdentifiedData>() { master }, CorrelationKey = masterKey };
             // Remove all duplicate indicators
             if (typeof(Act).IsAssignableFrom(typeof(TModel)))
             {

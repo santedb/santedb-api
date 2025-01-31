@@ -29,10 +29,10 @@ namespace SanteDB.Core.Templates.View
         [XmlEnum("underline")]
         Underline = 0x4,
         /// <summary>
-        /// Font should be strikethrough
+        /// Light
         /// </summary>
-        [XmlEnum("strikethrough")]
-        Strikethrough = 0x8
+        [XmlEnum("light")]
+        Light = 0x8
     }
 
     /// <summary>
@@ -127,9 +127,9 @@ namespace SanteDB.Core.Templates.View
         };
 
         private static readonly IDictionary<SimplifiedTextStyle, String> m_styleClassMap = new Dictionary<SimplifiedTextStyle, String>() {
-            { SimplifiedTextStyle.Bold, "font-bold" },
-            { SimplifiedTextStyle.Italic, "text-italic" },
-            { SimplifiedTextStyle.Strikethrough, "text-strikethrough" },
+            { SimplifiedTextStyle.Bold, "font-weight-bold" },
+            { SimplifiedTextStyle.Italic, "font-italic" },
+            { SimplifiedTextStyle.Light, "font-weight-light" },
             { SimplifiedTextStyle.Underline, "text-underline"  }
         };
 

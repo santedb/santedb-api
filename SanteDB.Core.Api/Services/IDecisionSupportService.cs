@@ -59,6 +59,22 @@ namespace SanteDB.Core.Services
         /// The proposed action
         /// </summary>
         public Act ProposedAction { get; }
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => this.ProposedAction.GetHashCode();
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            if (obj is CdssProposeResult cpr)
+            {
+                return cpr.ProposedAction.Equals(this.ProposedAction);
+            }
+            else
+            {
+                return base.Equals(obj);
+            }
+        }
     }
     /// <summary>
     /// CDSS Detected issue
@@ -77,6 +93,29 @@ namespace SanteDB.Core.Services
         /// Gets the issue
         /// </summary>
         public DetectedIssue Issue { get; }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return (this.Issue.Id?.GetHashCode() ?? 0) ^ (this.Issue.Text?.GetHashCode() ?? 0) ^
+                this.Issue.TypeKey.ToString().GetHashCode() ^ this.Issue.Priority.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            if(obj is CdssDetectedIssueResult cdir)
+            {
+                return cdir.Issue.Id == this.Issue.Id &&
+                    cdir.Issue.Priority == this.Issue.Priority &&
+                    cdir.Issue.Text == this.Issue.Text &&
+                    cdir.Issue.TypeKey == this.Issue.TypeKey;
+            }
+            else
+            {
+                return base.Equals(obj);
+            }
+        }
     }
 
     /// <summary>

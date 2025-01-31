@@ -106,7 +106,12 @@ namespace SanteDB.Core.Data.Management
             {
                 e.Data.Item.RemoveAll(itm => itm is EntityRelationship er && er.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !er.NegationIndicator.GetValueOrDefault() ||
                     itm is ActRelationship ar && ar.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && !ar.NegationIndicator.GetValueOrDefault());
-                var persistenceBundle = new Bundle();
+                var persistenceBundle = new Bundle()
+                {
+                    CorrelationKey = e.Data.CorrelationKey,
+                    CorrelationSequence = e.Data.CorrelationSequence,
+                    FocalObjects = e.Data.FocalObjects
+                };
                 foreach (var itm in e.Data.Item)
                 {
                     var handler = this.GetResourceInterceptor(itm);
@@ -137,7 +142,12 @@ namespace SanteDB.Core.Data.Management
         /// </summary>
         protected void OnDeleted(object sender, DataPersistedEventArgs<Bundle> e)
         {
-            var deletionBundle = new Bundle();
+            var deletionBundle = new Bundle()
+            {
+                CorrelationKey = e.Data.CorrelationKey,
+                CorrelationSequence = e.Data.CorrelationSequence
+            };
+
             foreach (var itm in e.Data.Item.Where(i => i.BatchOperation == Model.DataTypes.BatchOperationType.Delete))
             {
                 var handler = this.GetResourceInterceptor(itm);
