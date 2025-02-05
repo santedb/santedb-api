@@ -43,6 +43,7 @@ namespace SanteDB.Core.Management
         private readonly INotificationTemplateRepository m_notificationTemplateRepository;
         private readonly INetworkInformationService m_networkInformationService;
         private readonly INotifyIdentityProviderService m_notifyIdentityService;
+        private readonly INotifyDeviceIdentityProviderService m_notifyDeviceIdentityProviderService;
 
 
         /// <summary>
@@ -52,13 +53,15 @@ namespace SanteDB.Core.Management
             INotificationService notificationService, 
             INetworkInformationService networkInformationService, 
             INotificationTemplateRepository notificationTemplateRepository,
-            INotifyIdentityProviderService notifyIdentityProvider = null)
+            INotifyIdentityProviderService notifyIdentityProvider = null,
+            INotifyDeviceIdentityProviderService notifiyDeviceIdentityProvider = null)
         {
             this.m_configuration = configurationManager.GetSection<ServerMonitorConfigurationSection>();
             this.m_notificationService = notificationService;
             this.m_notificationTemplateRepository = notificationTemplateRepository;
             this.m_networkInformationService = networkInformationService;
             this.m_notifyIdentityService = notifyIdentityProvider;
+            this.m_notifyDeviceIdentityProviderService = notifiyDeviceIdentityProvider;
         }
 
         #region Notification Handlers 
@@ -69,6 +72,12 @@ namespace SanteDB.Core.Management
         private void OnIdentityDeleted(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.UserDeleted, sender, e);
         private void OnIdentityChanged(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.UserAlter, sender, e);
         private void OnIdentityClaimChanged(object sender, IdentityClaimEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.UserAlter, sender, e);
+        private void OnDeviceUnlocked(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.DeviceUnlocked, sender, e);
+        private void OnDeviceLocked(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.DeviceLocked, sender, e);
+        private void OnIdentityUnLocked(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.UserUnlocked, sender, e);
+        private void OnIdentityLocked(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.UserLocked, sender, e);
+        private void OnDeviceDeleted(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.DeviceDeleted, sender, e);
+        private void OnDeviceCreated(object sender, IdentityEventArgs e) => this.NotifyEvent(ServerMonitorEventSubscriptionEvent.DeviceCreated, sender, e);
         #endregion 
 
         /// <summary>
@@ -176,10 +185,16 @@ namespace SanteDB.Core.Management
             this.m_notifyIdentityService.ClaimRemoved += this.OnIdentityClaimChanged;
             this.m_notifyIdentityService.Created += this.OnIdentityCreated;
             this.m_notifyIdentityService.Deleted += this.OnIdentityDeleted;
-
+            this.m_notifyDeviceIdentityProviderService.Created += this.OnDeviceCreated;
+            this.m_notifyDeviceIdentityProviderService.Deleted += this.OnDeviceDeleted;
+            this.m_notifyDeviceIdentityProviderService.Locked += this.OnIdentityLocked;
+            this.m_notifyDeviceIdentityProviderService.Unlocked += this.OnIdentityUnLocked;
+            this.m_notifyDeviceIdentityProviderService.Locked += this.OnDeviceLocked;
+            this.m_notifyDeviceIdentityProviderService.Unlocked += this.OnDeviceUnlocked;
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }
+
 
         /// <summary>
         /// Stop this service
