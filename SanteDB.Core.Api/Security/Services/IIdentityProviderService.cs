@@ -261,6 +261,98 @@ namespace SanteDB.Core.Security.Services
         void ExpirePassword(string userName, IPrincipal principal);
     }
 
+    /// <summary>
+    /// Identity based event arguments
+    /// </summary>
+    public class IdentityEventArgs : EventArgs
+    {
+
+        /// <summary>
+        /// Create a new identity event args
+        /// </summary>
+        /// <param name="target">The target of the event</param>
+        /// <param name="user">The user which triggered the event</param>
+        public IdentityEventArgs(IIdentity target, IPrincipal user)
+        {
+            this.Identity = target;
+            this.UserPrincipal = user;
+        }
+
+        /// <summary>
+        /// Gets the identity to which the event applies
+        /// </summary>
+        public IIdentity Identity { get; }
+
+        /// <summary>
+        /// Gets the user principal which triggered the event
+        /// </summary>
+        public IPrincipal UserPrincipal { get; }
+    }
+
+    /// <summary>
+    /// Identity event args based on a claim
+    /// </summary>
+    public class IdentityClaimEventArgs : IdentityEventArgs
+    {
+
+        /// <summary>
+        /// Create a new claim event arg
+        /// </summary>
+        /// <param name="identity">The identity to which the claim was added or removed</param>
+        /// <param name="userPrincipal">The user principal which added or removed the claim</param>
+        /// <param name="claim">The claim that was added or removed</param>
+        public IdentityClaimEventArgs(IIdentity identity, IPrincipal userPrincipal, IClaim claim) : base(identity, userPrincipal)
+        {
+            this.Claim = claim;
+        }
+
+        /// <summary>
+        /// Gets the claim that was involved in this event
+        /// </summary>
+        public IClaim Claim { get; }
+    }
+
+    /// <summary>
+    /// Implementation of the <see cref="IIdentityProviderService"/> which notifies on events
+    /// </summary>
+    public interface INotifyIdentityProviderService : IIdentityProviderService
+    {
+
+        /// <summary>
+        /// Fired when an identity is locked
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Locked;
+
+        /// <summary>
+        /// Fired when an identity is unlocked
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Unlocked;
+
+        /// <summary>
+        /// Fired when an identity is changed
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Changed;
+
+        /// <summary>
+        /// Fired when an identity is created
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Created;
+
+        /// <summary>
+        /// Fired when an identity is deleted
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Deleted;
+
+        /// <summary>
+        /// Fired when an identity has a claim added
+        /// </summary>
+        event EventHandler<IdentityClaimEventArgs> ClaimAdded;
+
+        /// <summary>
+        /// Fired when an identity has a claim removed
+        /// </summary>
+        event EventHandler<IdentityClaimEventArgs> ClaimRemoved;
+    }
 
 }
 

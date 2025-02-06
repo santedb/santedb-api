@@ -157,4 +157,45 @@ namespace SanteDB.Core.Security.Services
         void RemoveClaim(String deviceName, String claimType, IPrincipal principal);
     }
 
+    /// <summary>
+    /// Notify identity provider for device idp
+    /// </summary>
+    public interface INotifyDeviceIdentityProviderService : IDeviceIdentityProviderService
+    {
+        /// <summary>
+        /// Fired when an identity is locked
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Locked;
+
+        /// <summary>
+        /// Fired when an identity is unlocked
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Unlocked;
+
+        /// <summary>
+        /// Fired when an identity is changed
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Changed;
+
+        /// <summary>
+        /// Fired when an identity is created
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Created;
+
+        /// <summary>
+        /// Fired when an identity is deleted
+        /// </summary>
+        event EventHandler<IdentityEventArgs> Deleted;
+
+        /// <summary>
+        /// Fired when an identity has a claim added
+        /// </summary>
+        event EventHandler<IdentityClaimEventArgs> ClaimAdded;
+
+        /// <summary>
+        /// Fired when an identity has a claim removed
+        /// </summary>
+        event EventHandler<IdentityClaimEventArgs> ClaimRemoved;
+    }
+
 }

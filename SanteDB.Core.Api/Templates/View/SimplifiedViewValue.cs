@@ -99,7 +99,7 @@ namespace SanteDB.Core.Templates.View
 
             if (this.FilterSpecified)
             {
-                renderContext.HtmlWriter.WriteString($"{{{{ act.{this.BindingPath} }} | { this.MapFilter()} }}}}");
+                renderContext.HtmlWriter.WriteString($"{{{{ act.{this.BindingPath} | { this.MapFilter()} }}}}");
 
             }
             else

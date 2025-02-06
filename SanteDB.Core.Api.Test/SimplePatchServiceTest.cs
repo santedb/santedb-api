@@ -125,8 +125,8 @@ namespace SanteDB.Core.Api.Test
             Assert.AreEqual(5, patch.Operation.Count);
 
             // Assert test
-            Assert.AreEqual(PatchOperationType.Test, patch.Operation[0].OperationType);
-            Assert.AreEqual(PatchOperationType.Test, patch.Operation[1].OperationType);
+            Assert.AreEqual(PatchOperationType.TestEqual, patch.Operation[0].OperationType);
+            Assert.AreEqual(PatchOperationType.TestEqual, patch.Operation[1].OperationType);
             Assert.AreEqual("email", patch.Operation[1].Path);
             Assert.AreEqual("pepe@acme.com", patch.Operation[1].Value);
 

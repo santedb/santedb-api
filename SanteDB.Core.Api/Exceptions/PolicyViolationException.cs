@@ -34,6 +34,19 @@ namespace SanteDB.Core.Exceptions
 
         // Policy name
         private string m_policyName;
+        private string m_detail;
+
+        /// <summary>
+        /// Create a new <see cref="PolicyViolationException"/> with additional details
+        /// </summary>
+        /// <param name="principal">The principal</param>
+        /// <param name="policyId">The policy identifier</param>
+        /// <param name="outcome">The outcome of the policy violation</param>
+        /// <param name="additionalDetail">Additional details </param>
+        public PolicyViolationException(IPrincipal principal, string policyId, PolicyGrantType outcome, String additionalDetail) : this(principal, policyId, outcome)
+        {
+            this.Data.Add("detail", additionalDetail);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
@@ -66,6 +79,7 @@ namespace SanteDB.Core.Exceptions
             this.Principal = principal;
             this.m_policyName = policy.Name;
         }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyViolationException"/> class.
         /// </summary>

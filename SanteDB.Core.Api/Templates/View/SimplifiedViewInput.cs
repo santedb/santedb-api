@@ -162,6 +162,10 @@ namespace SanteDB.Core.Templates.View
             {
                 this.RenderValidationError(renderContext.HtmlWriter, "max");
             }
+            if (this.CdssCallback)
+            {
+                this.RenderValidationError(renderContext.HtmlWriter, "cdss");
+            }
 
             renderContext.HtmlWriter.WriteEndElement(); // div
         }

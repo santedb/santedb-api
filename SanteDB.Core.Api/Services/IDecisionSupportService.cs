@@ -18,13 +18,105 @@
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Cdss;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Roles;
 using System;
 using System.Collections.Generic;
 
 namespace SanteDB.Core.Services
 {
+
+    /// <summary>
+    /// Marker interface for analysis results
+    /// </summary>
+    public interface ICdssResult
+    {
+    }
+
+    /// <summary>
+    /// CDSS proposal analysis result
+    /// </summary>
+    public class CdssProposeResult : ICdssResult
+    {
+        /// <summary>
+        /// Create a new proposal result
+        /// </summary>
+        public CdssProposeResult(Act proposal, Guid? derivedFrom = null)
+        {
+            this.ProposedAction = proposal;
+
+            if(proposal != null && derivedFrom.HasValue)
+            {
+                proposal.Relationships = proposal.Relationships ?? new List<ActRelationship>();
+                proposal.Relationships.Add(new ActRelationship(ActRelationshipTypeKeys.IsDerivedFrom, derivedFrom.Value));
+            }
+
+        }
+
+        /// <summary>
+        /// The proposed action
+        /// </summary>
+        public Act ProposedAction { get; }
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => this.ProposedAction.GetHashCode();
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            if (obj is CdssProposeResult cpr)
+            {
+                return cpr.ProposedAction.Equals(this.ProposedAction);
+            }
+            else
+            {
+                return base.Equals(obj);
+            }
+        }
+    }
+    /// <summary>
+    /// CDSS Detected issue
+    /// </summary>
+    public class CdssDetectedIssueResult : ICdssResult
+    {
+        /// <summary>
+        /// Creates a new detected issue result
+        /// </summary>
+        public CdssDetectedIssueResult(DetectedIssue issue)
+        {
+            this.Issue = issue;
+        }
+
+        /// <summary>
+        /// Gets the issue
+        /// </summary>
+        public DetectedIssue Issue { get; }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return (this.Issue.Id?.GetHashCode() ?? 0) ^ (this.Issue.Text?.GetHashCode() ?? 0) ^
+                this.Issue.TypeKey.ToString().GetHashCode() ^ this.Issue.Priority.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object obj)
+        {
+            if(obj is CdssDetectedIssueResult cdir)
+            {
+                return cdir.Issue.Id == this.Issue.Id &&
+                    cdir.Issue.Priority == this.Issue.Priority &&
+                    cdir.Issue.Text == this.Issue.Text &&
+                    cdir.Issue.TypeKey == this.Issue.TypeKey;
+            }
+            else
+            {
+                return base.Equals(obj);
+            }
+        }
+    }
 
     /// <summary>
     /// Service contract for service implementations which generate <see cref="CarePlan"/> instances
@@ -70,20 +162,22 @@ namespace SanteDB.Core.Services
         /// </summary>
         /// <param name="collectedData">The collected data from the end user</param>
         /// <param name="librariesToApply">The protocol(s) which should be used to evaluate or analyze the data</param>
+        /// <param name="parameters">The parameters to apply to the CDSS library</param>
         /// <remarks>
         /// If the <paramref name="librariesToApply"/> parameter is omitted, then the <see cref="Act.Protocols"/> from the <paramref name="collectedData" /> is used
         /// as the list of protocols to be analyzed. A global analysis of the provided data can be requested using the <see cref="AnalyzeGlobal(Act)"/> 
         /// </remarks>
         /// <returns>The detected issues analyzed in the data</returns>
-        IEnumerable<DetectedIssue> Analyze(Act collectedData, params ICdssLibrary[] librariesToApply);
+        IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply);
 
         /// <summary>
         /// Instructs the implementation to analyze the data provided in <paramref name="collectedData"/> using every registered clinical protocol in the 
         /// SanteDB instance.
         /// </summary>
         /// <param name="collectedData">The collected data which is to be analyzed</param>
+        /// <param name="parameters">The parameters to apply to the CDSS library</param>
         /// <returns>The detected issues in the analyzed data</returns>
         /// <remarks>This method, while more computationally intensive, allows the CDSS planner to analyze the data elements for all possible protocols which apply to <paramref name="collectedData"/></remarks>
-        IEnumerable<DetectedIssue> AnalyzeGlobal(Act collectedData);
+        IEnumerable<ICdssResult> AnalyzeGlobal(IdentifiedData collectedData, IDictionary<String, Object> parameters);
     }
 }

@@ -22,6 +22,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -55,7 +56,7 @@ namespace SanteDB.Core.Cdss
         /// <para>Some decision logic may update the properties in <paramref name="target"/>, so calling this repeatedly may have different results. It is recommended 
         /// if callers do not want <paramref name="target"/> to be modified, that they use <see cref="ICanDeepCopy.DeepCopy"/></para>
         /// </remarks>
-        IEnumerable<DetectedIssue> Analyze(IdentifiedData analysisTarget, IDictionary<String, object> parameters = null);
+        IEnumerable<ICdssResult> Analyze(IdentifiedData analysisTarget, IDictionary<String, object> parameters = null);
 
         /// <summary>
         /// Execute all applicable decision logic for <paramref name="target"/> and emit all of the proposed objects and raised issues
@@ -65,7 +66,7 @@ namespace SanteDB.Core.Cdss
         /// <returns>The decision logic target</returns>
         /// <remarks>Some decision logic may update the properties in <paramref name="target"/>, so calling this repeatedly may have different results. It is recommended 
         /// if callers do not want <paramref name="target"/> to be modified, that they use <see cref="ICanDeepCopy.DeepCopy"/></remarks>
-        IEnumerable<Object> Execute(IdentifiedData target, IDictionary<String, object> parameters = null);
+        IEnumerable<ICdssResult> Execute(IdentifiedData target, IDictionary<String, object> parameters = null);
 
         /// <summary>
         /// Load the protocl definition to <paramref name="definitionStream"/>
