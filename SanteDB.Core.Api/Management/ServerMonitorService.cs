@@ -142,15 +142,17 @@ namespace SanteDB.Core.Management
         /// <summary>
         /// Convert to a dictionary
         /// </summary>
-        private dynamic ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
+        private IDictionary<string, object> ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
         {
-            IDictionary<String, Object> retVal = new ExpandoObject();
-            retVal.Add("type", args.GetType().Name);
-            retVal.Add("event", eventType);
-            retVal.Add("sender", sender);
-            retVal.Add("sourceHost", this.m_networkInformationService.GetHostName());
-            retVal.Add("sourceMachine", this.m_networkInformationService.GetMachineName());
-            retVal.Add("summary", args.ToString());
+            IDictionary<String, Object> retVal = new Dictionary<string, object>
+            {
+                { "type", args.GetType().Name },
+                { "event", eventType },
+                { "sender", sender },
+                { "sourceHost", this.m_networkInformationService.GetHostName() },
+                { "sourceMachine", this.m_networkInformationService.GetMachineName() },
+                { "summary", args.ToString() }
+            };
             foreach (var p in args.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 var value = p.GetValue(args);

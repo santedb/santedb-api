@@ -69,6 +69,6 @@ namespace SanteDB.Core.Notifications
         /// <param name="ccAdmins">True to also send the notification to the defined administrators in the configuration.</param>
         /// <param name="attachments">Zero or more attachments to include with the notification.</param>
         /// <returns>An array of identifiers that correspond to the notifications.</returns>
-        Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
+        Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, IDictionary<string, object> templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
     }
 }
