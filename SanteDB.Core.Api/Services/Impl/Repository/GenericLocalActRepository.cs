@@ -46,7 +46,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         }
 
         /// <summary>
-        /// Insert or update the specified act
+        /// INSERT OR IGNORE the specified act
         /// </summary>
         public TAct Cancel(Guid id)
         {

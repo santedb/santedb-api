@@ -296,7 +296,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         }
 
         /// <summary>
-        /// Save the specified entity (insert or update)
+        /// Save the specified entity (INSERT OR IGNORE)
         /// </summary>
         public virtual TEntity Save(TEntity data)
         {

@@ -27,6 +27,7 @@ namespace SanteDB.Core.Templates.Definition
         // XML serializer
         private static readonly XmlSerializer m_xsz;
         private static Regex m_bindingRegex = new Regex("{{\\s?\\$([A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
+        private static Regex m_repeatRegex = new Regex(@"[#""]for\s+\$(\w+)\s+in\s+\@(\w+)(?:"",)?(.*?)(?:,.*?""|#)end""?", RegexOptions.Compiled | RegexOptions.Singleline);
         private bool m_saving;
 
         /// <summary>
@@ -223,20 +224,29 @@ namespace SanteDB.Core.Templates.Definition
             parameters = parameters ?? new Dictionary<String, String>();
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
-            if (this.JsonTemplate.ContentType == DataTemplateContentType.content)
-            {
-                return m_bindingRegex.Replace(this.JsonTemplate.Content, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString()); 
-            }
-            else if(referenceResolver != null)
-            {
-                return m_bindingRegex.Replace(referenceResolver(this.JsonTemplate.Content), (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString());
 
-            }
-            else
-            {
-                throw new InvalidOperationException(this.JsonTemplate.ContentType.ToString());
-            }
+            var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
 
+            // Perform repeat instructions
+            jsonContentRaw = m_repeatRegex.Replace(jsonContentRaw, (m) =>
+            {
+                var variableName = m.Groups[1].Value;
+                var sourceArrayName = m.Groups[2].Value;
+                var contents = m.Groups[3].Value;
+                if(parameters.TryGetValue(sourceArrayName, out string sourceArray))
+                {
+                    // Repeat
+                    return String.Join(",", sourceArray.Split(',').Select(c =>
+                        m_bindingRegex.Replace(contents, (m2) => m2.Groups[1].Value.Equals(variableName, StringComparison.OrdinalIgnoreCase) ? c : m2.Value)
+                    ));
+                }
+                else
+                {
+                    return ""; // No repeat
+                }
+            });
+            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString());
+            return jsonContentRaw;
         }
 
         /// <inheritdoc/>
