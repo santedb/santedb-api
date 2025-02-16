@@ -92,7 +92,7 @@ namespace SanteDB.Core.Notifications
         }
 
         /// <inheritdoc />
-        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, IDictionary<string, object> templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
             NotificationTemplate template = m_notificationTemplateFiller.FillTemplate(templateId, templateLanguage, templateModel);
 

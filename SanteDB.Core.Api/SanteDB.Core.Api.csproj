@@ -27,10 +27,6 @@
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
     <RootNamespace>SanteDB.Core</RootNamespace>
   </PropertyGroup>
-    
-  <ItemGroup>
-    <Compile Remove="Notifications\Templating\RazorNotificationTemplateFiller.cs" />
-  </ItemGroup>
   <!--<ItemGroup>
     <Compile Include="Attributes\PluginAttribute.cs" />
     <Compile Include="Attributes\PluginDependencyAttribute.cs" />
@@ -244,7 +240,6 @@
       <Link>SanteDB.licenseheader</Link>
     </None>
     <None Include="app.config" />
-    <None Include="Notifications\Templating\RazorNotificationTemplateFiller.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
