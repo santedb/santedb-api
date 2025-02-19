@@ -351,7 +351,7 @@ namespace SanteDB.Core.Cdss
                             else
                             {
                                 // Found the candidate - Does the stop time of this candidate act shorter than the current
-                                candidate.StopTime = candidate.StopTime.LesserOf(periodEnd);
+                                candidate.StopTime = (candidate.StopTime ?? candidate.StartTime?.AddDays(10)).LesserOf(periodEnd);
                                 candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
                             }
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
