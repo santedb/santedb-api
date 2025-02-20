@@ -27,6 +27,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -47,6 +48,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public static IModelExtension TagDataQualityIssues<TModel>(this TModel modelToTag, bool throwOnError = true)
         {
+
             var ruleViolations = modelToTag.Validate().ToList();
             // Rule violations
             foreach (var rv in ruleViolations)

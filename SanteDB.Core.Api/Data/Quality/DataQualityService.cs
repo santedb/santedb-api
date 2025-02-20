@@ -139,7 +139,6 @@ namespace SanteDB.Core.Data.Quality
             {
                 ApplicationServiceContext.Current.GetService<IServiceManager>().RemoveServiceProvider(itm.GetType());
             }
-
             this.Stopped?.Invoke(this, EventArgs.Empty);
             return true;
         }

@@ -361,8 +361,6 @@ namespace SanteDB.Core.Cdss
 
                     }
 
-                    
-
                     return new CarePlan(patientCopy, protocolActs.Select(o=>
                     {
                         o.ActTime = o.ActTime?.EnsureWeekday();

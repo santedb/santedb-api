@@ -18,6 +18,7 @@
  */
 using SanteDB.Core.Configuration;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Quality.Configuration
@@ -34,6 +35,13 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// </summary>
         [XmlElement("ruleSet")]
         public List<DataQualityRulesetConfiguration> RuleSets { get; set; }
+
+        /// <summary>
+        /// When true indicates that data quality issues should be tagged on objects. 
+        /// </summary>
+        [DisplayName("Tag Issues"), Description("When set to true, instructs the data quality rule service to tag objects with a data quality extension. This may increase bandwidth and storage requirements")]
+        [XmlAttribute("tagIssues")]
+        public bool TagDataQualityIssues { get; set; }
 
     }
 }
