@@ -33,7 +33,6 @@ namespace SanteDB.Core.Data.Import.Transforms
         /// <inheritdoc/>
         public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
         {
-
             // create an interpreter and execute
             var interpreter = new Interpreter(InterpreterOptions.Default)
                         .Reference(typeof(Guid))

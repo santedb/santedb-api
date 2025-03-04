@@ -17,7 +17,9 @@
  * 
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -29,17 +31,11 @@ namespace SanteDB.Core.Notifications
     [XmlType(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
     [JsonObject]
-    public class NotificationTemplate
+    public class NotificationTemplate : NonVersionedEntityData
     {
 
         // Serializer for notification
         private static XmlSerializer s_xsz = new XmlSerializer(typeof(NotificationTemplate));
-
-        /// <summary>
-        /// Gets or sets the language of the template
-        /// </summary>
-        [XmlAttribute("lang"), JsonProperty("lang")]
-        public String Language { get; set; }
 
         /// <summary>
         /// Gets or sets the identifier
@@ -48,16 +44,10 @@ namespace SanteDB.Core.Notifications
         public String Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the subject
+        /// Notification template content
         /// </summary>
-        [XmlElement("subject"), JsonProperty("subject")]
-        public String Subject { get; set; }
-
-        /// <summary>
-        /// Gets or sets the body of the templates
-        /// </summary>
-        [XmlText, JsonProperty("text")]
-        public String Body { get; set; }
+        [XmlElement("content"), JsonProperty("content")]
+        public List<NotificationTemplateContents> Contents { get; set; }
 
         /// <summary>
         /// Load the specified object

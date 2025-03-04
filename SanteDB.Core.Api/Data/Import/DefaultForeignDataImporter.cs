@@ -16,6 +16,7 @@
  * the License.
  * 
  */
+using DynamicExpresso;
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Import.Definition;
 using SanteDB.Core.Data.Initialization;
@@ -29,6 +30,7 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 
@@ -101,143 +103,176 @@ namespace SanteDB.Core.Data.Import
                 throw new ArgumentNullException(nameof(rejectWriter));
             }
 
-            // Now we want to map a map of our services
-            var persistenceServices = foreignDataObjectMap.Resource.GroupBy(o => o.TypeXml).ToDictionary(o => o.Key, o =>
+            // Computation of columns
+            try
             {
-                var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.First().Type);
-                return ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
-            });
-            var duplicateCheckParms = new Dictionary<String, Func<Object>>();
-            for (int i = 0; i < sourceReader.ColumnCount; i++)
-            {
-                var parmNo = i;
-                duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
-            }
-            foreach (var dbck in parameters)
-            {
-                if (!duplicateCheckParms.ContainsKey(dbck.Key))
+                foreach (var itm in foreignDataObjectMap.ComputedColumns)
                 {
-                    duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                    var computationFunc = this.CreateFunc(itm.FunctionText);
+                    sourceReader.AddComputedColumn(itm.ColumnName, computationFunc);
                 }
-            }
 
-            IdentifiedData mappedObject = null;
-            duplicateCheckParms.Add("output", () => mappedObject);
-
-            int records = 0;
-            var sw = new Stopwatch();
-            sw.Start();
-            using (DataPersistenceControlContext.Create(loadMode: LoadMode.QuickLoad, autoInsert: true, autoUpdate: true))
-            {
-                while (sourceReader.MoveNext())
+                // Now we want to map a map of our services
+                var persistenceServices = foreignDataObjectMap.Resource.GroupBy(o => o.TypeXml).ToDictionary(o => o.Key, o =>
                 {
+                    var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.First().Type);
+                    return ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
+                });
+                var duplicateCheckParms = new Dictionary<String, Func<Object>>();
+                for (int i = 0; i < sourceReader.ColumnCount; i++)
+                {
+                    var parmNo = i;
+                    duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+                }
+                foreach (var dbck in parameters)
+                {
+                    if (!duplicateCheckParms.ContainsKey(dbck.Key))
+                    {
+                        duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                    }
+                }
 
-                    var skipProcessing = false;
-                    var insertBundle = new Bundle();
-                    foreach (var resourceMap in foreignDataObjectMap.Resource)
+                IdentifiedData mappedObject = null;
+                duplicateCheckParms.Add("output", () => mappedObject);
+
+                int records = 0;
+                var sw = new Stopwatch();
+                sw.Start();
+                using (DataPersistenceControlContext.Create(loadMode: LoadMode.QuickLoad, autoInsert: true, autoUpdate: true))
+                {
+                    while (sourceReader.MoveNext())
                     {
 
-                        // Conditional mapping?
-                        if (resourceMap.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
+                        var skipProcessing = false;
+                        var insertBundle = new Bundle();
+                        foreach (var resourceMap in foreignDataObjectMap.Resource)
                         {
-                            continue;
-                        }
 
-                        mappedObject = null;
-                        var persistenceService = persistenceServices[resourceMap.TypeXml];
-
-                        // Is there a duplicate check? If so map them
-                        var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms, lazyExpandVariables: false)).ToList();
-
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultForeignDataImporter), 0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
-                        if (duplicateChecks.Any())
-                        {
-                            mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
-                            mappedObject = mappedObject?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
-                            if (mappedObject != null)
+                            // Conditional mapping?
+                            if (resourceMap.OnlyWhen?.All(s => this.CheckWhenCondition(s, sourceReader)) == false)
                             {
-                                mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
+                                continue;
                             }
-                        }
 
-                        if (resourceMap.Transform != null) // Pass it to the transform
-                        {
-                            if (this.ApplyTransformer(resourceMap.Transform, sourceReader, parameters, sourceReader, out var result) && result is IdentifiedData id)
+                            mappedObject = null;
+                            var persistenceService = persistenceServices[resourceMap.TypeXml];
+
+                            // Is there a duplicate check? If so map them
+                            var duplicateChecks = resourceMap.DuplicateCheck?.Where(o => !o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms, lazyExpandVariables: false)).ToList();
+
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultForeignDataImporter), 0.5f, String.Format(UserMessages.IMPORTING, sourceReader.RowNumber, 1000.0f * (float)sourceReader.RowNumber / (float)sw.ElapsedMilliseconds)));
+                            if (duplicateChecks.Any())
                             {
-                                mappedObject = id;
+                                mappedObject = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
+                                mappedObject = mappedObject?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
+                                if (mappedObject != null)
+                                {
+                                    mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
+                                }
                             }
-                            else
+
+                            if (resourceMap.Transform != null) // Pass it to the transform
+                            {
+                                if (this.ApplyTransformer(resourceMap.Transform, sourceReader, parameters, sourceReader, out var result) && result is IdentifiedData id)
+                                {
+                                    mappedObject = id;
+                                }
+                                else
+                                {
+                                    var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
+                                    var description = this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = resourceMap.Transform.Transformer });
+                                    currentRecord["import_error"] = description;
+                                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", description, DetectedIssueKeys.OtherIssue);
+                                    rejectWriter.WriteRecord(currentRecord);
+                                    skipProcessing = true;
+                                    break;
+                                }
+                            }
+                            else if (!this.ApplyMapping(resourceMap, parameters, sourceReader, insertBundle, ref mappedObject, out var issue))
                             {
                                 var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
-                                var description = this.m_localizationService.GetString(ErrorMessageStrings.FOREIGN_DATA_TRANSFORM_ERROR, new { name = resourceMap.Transform.Transformer });
-                                currentRecord["import_error"] = description;
-                                yield return new DetectedIssue(DetectedIssuePriorityType.Error, "txf", description, DetectedIssueKeys.OtherIssue);
+                                currentRecord["import_error"] = issue.Text;
+                                yield return issue;
                                 rejectWriter.WriteRecord(currentRecord);
                                 skipProcessing = true;
                                 break;
                             }
+
+
+                            if (mappedObject.BatchOperation != Model.DataTypes.BatchOperationType.Update &&
+                                resourceMap.DuplicateCheck?.Any(o => o.Contains("$output")) == true)
+                            {
+                                duplicateChecks = resourceMap.DuplicateCheck?.Where(o => o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
+
+                                var existingRecord = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
+                                existingRecord = existingRecord?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
+                                if (existingRecord == null)
+                                {
+                                    existingRecord = duplicateChecks.Select(o => insertBundle.Item.Where(i => resourceMap.Type == i.GetType()).FirstOrDefault(c => o.Compile().DynamicInvoke(c).Equals(true)))?.FirstOrDefault() as IdentifiedData;
+                                }
+                                if (existingRecord != null)
+                                {
+                                    mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
+                                    mappedObject.Key = existingRecord.Key;
+                                }
+                            }
+                            insertBundle.Add(mappedObject);
                         }
-                        else if (!this.ApplyMapping(resourceMap, parameters, sourceReader, insertBundle, ref mappedObject, out var issue))
+
+                        // Issue processing so don't process
+                        if (skipProcessing)
                         {
+                            continue;
+                        }
+
+                        DetectedIssue errorIssue = null;
+                        try
+                        {
+                            this.m_bundleService?.Save(insertBundle);
+                        }
+                        catch (DetectedIssueException ex)
+                        {
+                            errorIssue = ex.Issues.First();
+                        }
+                        catch (Exception ex)
+                        {
+                            errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", ex.ToHumanReadableString(), Guid.Empty);
+                            this.m_tracer.TraceWarning("Could not persist import record - {0}", ex);
+                        }
+                        if (errorIssue != null)
+                        {
+                            yield return errorIssue;
                             var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
-                            currentRecord["import_error"] = issue.Text;
-                            yield return issue;
+                            currentRecord["import_error"] = errorIssue.Text;
                             rejectWriter.WriteRecord(currentRecord);
-                            skipProcessing = true;
-                            break;
                         }
-
-
-                        if (mappedObject.BatchOperation != Model.DataTypes.BatchOperationType.Update &&
-                            resourceMap.DuplicateCheck?.Any(o => o.Contains("$output")) == true)
-                        {
-                            duplicateChecks = resourceMap.DuplicateCheck?.Where(o => o.Contains("$output")).Select(o => QueryExpressionParser.BuildLinqExpression(resourceMap.Type, o.ParseQueryString(), "o", variables: duplicateCheckParms)).ToList();
-
-                            var existingRecord = duplicateChecks.Select(o => persistenceService.Query(o).FirstOrDefault())?.FirstOrDefault() as IdentifiedData;
-                            existingRecord = existingRecord?.ResolveOwnedRecord(AuthenticationContext.Current.Principal);
-                            if (existingRecord == null)
-                            {
-                                existingRecord = duplicateChecks.Select(o => insertBundle.Item.Where(i => resourceMap.Type == i.GetType()).FirstOrDefault(c => o.Compile().DynamicInvoke(c).Equals(true)))?.FirstOrDefault() as IdentifiedData;
-                            }
-                            if (existingRecord != null)
-                            {
-                                mappedObject.BatchOperation = resourceMap.PreserveExisting ? Model.DataTypes.BatchOperationType.Ignore : Model.DataTypes.BatchOperationType.Update;
-                                mappedObject.Key = existingRecord.Key;
-                            }
-                        }
-                        insertBundle.Add(mappedObject);
-                    }
-
-                    // Issue processing so don't process
-                    if (skipProcessing)
-                    {
-                        continue;
-                    }
-
-                    DetectedIssue errorIssue = null;
-                    try
-                    {
-                        this.m_bundleService?.Save(insertBundle);
-                    }
-                    catch (DetectedIssueException ex)
-                    {
-                        errorIssue = ex.Issues.First();
-                    }
-                    catch (Exception ex)
-                    {
-                        errorIssue = new DetectedIssue(DetectedIssuePriorityType.Error, "persistence", ex.ToHumanReadableString(), Guid.Empty);
-                        this.m_tracer.TraceWarning("Could not persist import record - {0}", ex);
-                    }
-                    if (errorIssue != null)
-                    {
-                        yield return errorIssue;
-                        var currentRecord = new GenericForeignDataRecord(sourceReader, "import_error");
-                        currentRecord["import_error"] = errorIssue.Text;
-                        rejectWriter.WriteRecord(currentRecord);
                     }
                 }
             }
+            finally
+            {
+                sourceReader.ClearComputedColumns();
+            }
 
+        }
+
+        /// <summary>
+        /// Create a function for extracting a computed column value
+        /// </summary>
+        /// <param name="functionText">The function contents to extract</param>
+        /// <returns>The compiled function</returns>
+        private Func<IForeignDataReader, object> CreateFunc(string functionText)
+        {
+            // create an interpreter and execute
+            var interpreter = new Interpreter(InterpreterOptions.Default)
+                        .Reference(typeof(Guid))
+                        .Reference(typeof(TimeSpan))
+                        .EnableReflection();
+            var arguments = new Parameter[]
+            {
+                new Parameter("source", typeof(IForeignDataReader))
+            };
+            return interpreter.Parse(functionText, arguments).Compile<Func<IForeignDataReader, object>>();
         }
 
         /// <summary>
@@ -276,67 +311,95 @@ namespace SanteDB.Core.Data.Import
                 throw new ArgumentNullException(nameof(sourceReader));
             }
 
-            // Validate the map itself
-            foreach (var val in foreignDataObjectMap.Validate())
+            try
             {
-                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "mapIssue", val.Message, Guid.Empty);
+                // Computed columns
+                foreach(var col in foreignDataObjectMap.ComputedColumns)
+                {
+                    DetectedIssue dte = null;
+                    try
+                    {
+                        var expr = this.CreateFunc(col.FunctionText);
+                        sourceReader.AddComputedColumn(col.ColumnName, expr);
+                    }
+                    catch(Exception ex)
+                    {
+                        dte = new DetectedIssue(DetectedIssuePriorityType.Error, "expressionError", ex.Message, Guid.Empty);
+                    }
+
+                    if(dte != null)
+                    {
+                        yield return dte;
+                    }
+                }
+
+
+                // Validate the map itself
+                foreach (var val in foreignDataObjectMap.Validate())
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "mapIssue", val.Message, Guid.Empty);
+                }
+
+                // Validate the map against the source
+                if (foreignDataObjectMap.Resource?.Any() == true)
+                {
+                    var duplicateCheckParms = new Dictionary<String, Func<Object>>();
+                    for (int i = 0; i < sourceReader.ColumnCount; i++)
+                    {
+                        var parmNo = i;
+                        duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
+                    }
+                    foreach (var dbck in parameters)
+                    {
+                        if (!duplicateCheckParms.ContainsKey(dbck.Key))
+                        {
+                            duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
+                        }
+                    }
+                    IdentifiedData outputFake = null;
+                    duplicateCheckParms.Add("output", () => outputFake);
+
+                    foreach (var res in foreignDataObjectMap.Resource.Where(o => !o.Type.IsAbstract))
+                    {
+                        outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
+                        foreach (var itm in res.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))
+                        {
+                            if (sourceReader.IndexOf(itm.Source) < 0 && !sourceReader.HasComputedColumn(itm.Source))
+                            {
+                                yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {itm.Source}", Guid.Empty);
+                            }
+                        }
+
+                        foreach (var wh in res.OnlyWhen)
+                        {
+                            if (sourceReader.IndexOf(wh.Source) < 0 && !sourceReader.HasComputedColumn(wh.Source))
+                            {
+                                yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {wh.Source}", Guid.Empty);
+                            }
+                        }
+
+                        foreach (var dc in res.DuplicateCheck)
+                        {
+                            DetectedIssue issue = null;
+                            try
+                            {
+                                QueryExpressionParser.BuildLinqExpression(res.Type, dc.ParseQueryString(), "p", variables: duplicateCheckParms);
+                            }
+                            catch (Exception e)
+                            {
+                                issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {e.ToHumanReadableString()}", Guid.Empty);
+                            }
+                            if (issue != null)
+                            {
+                                yield return issue;
+                            }
+                        }
+                    }
+                }
             }
-
-            // Validate the map against the source
-            if (foreignDataObjectMap.Resource?.Any() == true)
+            finally
             {
-                var duplicateCheckParms = new Dictionary<String, Func<Object>>();
-                for (int i = 0; i < sourceReader.ColumnCount; i++)
-                {
-                    var parmNo = i;
-                    duplicateCheckParms.Add(sourceReader.GetName(i), () => sourceReader[parmNo]);
-                }
-                foreach (var dbck in parameters)
-                {
-                    if (!duplicateCheckParms.ContainsKey(dbck.Key))
-                    {
-                        duplicateCheckParms.Add(dbck.Key, () => parameters[dbck.Key]);
-                    }
-                }
-                IdentifiedData outputFake = null;
-                duplicateCheckParms.Add("output", () => outputFake);
-
-                foreach (var res in foreignDataObjectMap.Resource.Where(o => !o.Type.IsAbstract))
-                {
-                    outputFake = Activator.CreateInstance(res.Type) as IdentifiedData;
-                    foreach (var itm in res.Maps.Where(o => !String.IsNullOrEmpty(o.Source)))
-                    {
-                        if (sourceReader.IndexOf(itm.Source) < 0)
-                        {
-                            yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {itm.Source}", Guid.Empty);
-                        }
-                    }
-
-                    foreach (var wh in res.OnlyWhen)
-                    {
-                        if (sourceReader.IndexOf(wh.Source) < 0)
-                        {
-                            yield return new DetectedIssue(DetectedIssuePriorityType.Error, "missingField", $"Source is missing field {wh.Source}", Guid.Empty);
-                        }
-                    }
-
-                    foreach (var dc in res.DuplicateCheck)
-                    {
-                        DetectedIssue issue = null;
-                        try
-                        {
-                            QueryExpressionParser.BuildLinqExpression(res.Type, dc.ParseQueryString(), "p", variables: duplicateCheckParms);
-                        }
-                        catch (Exception e)
-                        {
-                            issue = new DetectedIssue(DetectedIssuePriorityType.Error, "checkExpression", $"Could not process duplicate check on {res.TypeXml} - {e.ToHumanReadableString()}", Guid.Empty);
-                        }
-                        if (issue != null)
-                        {
-                            yield return issue;
-                        }
-                    }
-                }
+                sourceReader.ClearComputedColumns();
             }
         }
 

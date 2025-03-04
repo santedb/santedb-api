@@ -38,6 +38,25 @@ namespace SanteDB.Core.Data.Import
         bool MoveNext();
 
         /// <summary>
+        /// Add a computed column to the reader
+        /// </summary>
+        /// <param name="columnName">The name of the computed column</param>
+        /// <param name="computation">The computation for the column</param>
+        void AddComputedColumn(string columnName, Func<IForeignDataReader, Object> computation);
+
+        /// <summary>
+        /// Clear computed columns
+        /// </summary>
+        void ClearComputedColumns();
+
+        /// <summary>
+        /// True if the source reader has a computed column
+        /// </summary>
+        /// <param name="columnName">The column name</param>
+        /// <returns>True if the source reader has the computed column</returns>
+        bool HasComputedColumn(string columnName);
+
+        /// <summary>
         /// Set the value of the current record for the field
         /// </summary>
         /// <param name="name">The name of the field</param>

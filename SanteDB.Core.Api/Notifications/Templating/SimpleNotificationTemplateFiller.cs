@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Notifications.Templating
@@ -76,11 +77,12 @@ namespace SanteDB.Core.Notifications.Templating
         //}
 
         ///<inheritdoc />
-        public NotificationTemplate FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model)
+        public NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model)
         {
-            var template = m_notificationTemplateRepository.Get(templateId, templateLanguage);
+            var template = m_notificationTemplateRepository.Get(templateId);
+            var templateContent = template.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
 
-            if (null == template)
+            if (null == template || null == templateContent)
             {
                 throw new KeyNotFoundException($"Could not find template id: \"{templateId}\" and language {templateLanguage}.");
             }
@@ -98,12 +100,11 @@ namespace SanteDB.Core.Notifications.Templating
                     return null;
             };
 
-            return new NotificationTemplate()
+            return new NotificationTemplateContents()
             {
-                Id = template.Id,
-                Body = m_parmRegex.Replace(template.Body, replacer),
-                Subject = m_parmRegex.Replace(template.Subject, replacer),
-                Language = template.Language
+                Body = m_parmRegex.Replace(templateContent.Body, replacer),
+                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+                Language = templateContent.Language
             };
         }
     }

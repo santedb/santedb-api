@@ -17,39 +17,28 @@
  * 
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model.Map;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Import.Definition
 {
 
     /// <summary>
-    /// Foreign data map definition that maps a complex object into a SanteDB
+    /// Computed column from the foreign data element column
     /// </summary>
-    [XmlType(nameof(ForeignDataObjectMap), Namespace = "http://santedb.org/import")]
-    public class ForeignDataObjectMap : ForeignDataMapBase
+    [XmlType(nameof(ForeignDataComputedColumn), Namespace = "http://santedb.org/import")]
+    public class ForeignDataComputedColumn
     {
 
         /// <summary>
-        /// Computed columns
+        /// Column name
         /// </summary>
-        [XmlArray("computedColumns"), XmlArrayItem("column"), JsonProperty("computedColumns")]
-        public List<ForeignDataComputedColumn> ComputedColumns { get; set; }
+        [XmlAttribute("name"), JsonProperty("name")]
+        public string ColumnName { get; set; }
 
         /// <summary>
-        /// The SanteDB resource which should be mapped
+        /// Function text
         /// </summary>
-        [XmlElement("resource"), JsonProperty("resource")]
-        public List<ForeignDataElementResourceMap> Resource { get; set; }
-
-        /// <summary>
-        /// Validate this transform
-        /// </summary>
-        internal IEnumerable<ValidationResultDetail> Validate()
-        {
-            return this.Resource?.SelectMany(o => o.Validate(this.Source));
-        }
+        [XmlText, JsonProperty("compute")]
+        public string FunctionText { get; set; }
     }
 }

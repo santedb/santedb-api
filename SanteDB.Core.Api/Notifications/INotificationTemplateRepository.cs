@@ -44,7 +44,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets the specified template
         /// </summary>
-        NotificationTemplate Get(String id, String lang);
+        NotificationTemplate Get(String id);
 
         /// <summary>
         /// Find the specified template

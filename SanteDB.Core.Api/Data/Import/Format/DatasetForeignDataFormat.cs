@@ -109,6 +109,15 @@ namespace SanteDB.Core.Data.Import.Format
             /// </summary>
             /// <returns></returns>
             public Dataset ReadAsDataset() => this.m_dataset;
+
+            public void AddComputedColumn(string columnName, Func<IForeignDataReader, object> computation)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void ClearComputedColumns() { }
+
+            public bool HasComputedColumn(string columnName) => false;
         }
 
         /// <summary>

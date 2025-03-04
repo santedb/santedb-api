@@ -122,7 +122,7 @@ namespace SanteDB.Core.Management
                     try
                     {
                         // Is there a special template for this notification
-                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId, String.Empty) != null)
+                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId) != null)
                         {
                             this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), o.TemplateId, String.Empty, this.ToDictionary(eventType, sender, args));
                         }

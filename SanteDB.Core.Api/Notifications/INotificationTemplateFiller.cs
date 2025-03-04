@@ -16,6 +16,7 @@
  * the License.
  * 
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
@@ -35,6 +36,7 @@ namespace SanteDB.Core.Notifications
         /// <param name="templateLanguage">The language of the template from the repository. The language should match the language preference of the entity which will receive the notification.</param>
         /// <param name="model">A key/value pair dictionary of values to use for insertion into the notification.</param>
         /// <returns>An instance of <see cref="NotificationTemplate"/> which has been filled in using the <paramref name="model"/> provided.</returns>
-        NotificationTemplate FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model);
+        NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model);
+
     }
 }

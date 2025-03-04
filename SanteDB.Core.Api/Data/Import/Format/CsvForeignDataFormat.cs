@@ -47,6 +47,7 @@ namespace SanteDB.Core.Data.Import.Format
             private bool m_isDisposed = false;
             private string[] m_columnNames;
             private object[] m_values;
+            private IDictionary<String, Func<IForeignDataReader, Object>> m_computedFields = new Dictionary<String, Func<IForeignDataReader, Object>>();
 
             /// <inheritdoc/>
             public string SubsetName => String.Empty;
@@ -86,6 +87,23 @@ namespace SanteDB.Core.Data.Import.Format
             }
 
             /// <inheritdoc/>
+            public void AddComputedColumn(string columnName, Func<IForeignDataReader, Object> computation)
+            {
+                this.ReadSchema();
+                if(this.m_columnNames.Contains(columnName) || this.m_computedFields.ContainsKey(columnName))
+                {
+                    throw new ArgumentException(String.Format(ErrorMessages.DUPLICATE_OBJECT, columnName));
+                }
+                this.m_computedFields.Add(columnName, computation);
+            }
+
+            /// <inheritdoc/>
+            public void ClearComputedColumns() => this.m_computedFields.Clear();
+
+            /// <inheritdoc/>
+            public bool HasComputedColumn(string columnName) => this.m_computedFields.ContainsKey(columnName);
+
+            /// <inheritdoc/>
             public object this[string name]
             {
                 get
@@ -95,6 +113,10 @@ namespace SanteDB.Core.Data.Import.Format
                     var colIndex = IndexOf(name);
                     if (colIndex == -1)
                     {
+                        if(this.m_computedFields.TryGetValue(name, out var compute))
+                        {
+                            return compute(this);
+                        }
                         throw new MissingFieldException(name);
                     }
                     return m_values[colIndex];

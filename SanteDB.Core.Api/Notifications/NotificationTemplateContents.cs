@@ -17,39 +17,37 @@
  * 
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model.Map;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Serialization;
+using System;
 
-namespace SanteDB.Core.Data.Import.Definition
+namespace SanteDB.Core.Notifications
 {
-
     /// <summary>
-    /// Foreign data map definition that maps a complex object into a SanteDB
+    /// Notification contents
     /// </summary>
-    [XmlType(nameof(ForeignDataObjectMap), Namespace = "http://santedb.org/import")]
-    public class ForeignDataObjectMap : ForeignDataMapBase
+    [XmlType(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
+    [XmlRoot(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
+    [JsonObject]
+    public class NotificationTemplateContents
     {
 
         /// <summary>
-        /// Computed columns
+        /// Gets or sets the language of the template
         /// </summary>
-        [XmlArray("computedColumns"), XmlArrayItem("column"), JsonProperty("computedColumns")]
-        public List<ForeignDataComputedColumn> ComputedColumns { get; set; }
+        [XmlAttribute("lang"), JsonProperty("lang")]
+        public String Language { get; set; }
 
         /// <summary>
-        /// The SanteDB resource which should be mapped
+        /// Gets or sets the subject
         /// </summary>
-        [XmlElement("resource"), JsonProperty("resource")]
-        public List<ForeignDataElementResourceMap> Resource { get; set; }
+        [XmlElement("subject"), JsonProperty("subject")]
+        public String Subject { get; set; }
 
         /// <summary>
-        /// Validate this transform
+        /// Gets or sets the body of the templates
         /// </summary>
-        internal IEnumerable<ValidationResultDetail> Validate()
-        {
-            return this.Resource?.SelectMany(o => o.Validate(this.Source));
-        }
+        [XmlText, JsonProperty("text")]
+        public String Body { get; set; }
+
     }
 }

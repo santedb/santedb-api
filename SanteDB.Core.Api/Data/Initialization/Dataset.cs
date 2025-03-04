@@ -81,6 +81,13 @@ namespace SanteDB.Core.Data.Initialization
         public List<DataExecuteAction> SqlExec { get; set; }
 
         /// <summary>
+        /// Execute SQL before 
+        /// </summary>
+        [XmlArray("prepare")]
+        [XmlArrayItem("exec")]
+        public List<DataExecuteAction> PreSqlExec { get; set; }
+
+        /// <summary>
         /// Execute a service action on install
         /// </summary>
         [XmlArray("exec")]
