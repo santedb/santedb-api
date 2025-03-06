@@ -180,6 +180,7 @@ namespace SanteDB.Core.Data.Initialization
         [XmlElement("EntityRelationship", typeof(EntityRelationship), Namespace = "http://santedb.org/model")]
         [XmlElement("Concept", typeof(Concept), Namespace = "http://santedb.org/model")]
         [XmlElement("ConceptSet", typeof(ConceptSet), Namespace = "http://santedb.org/model")]
+        [XmlElement("ConceptSetComposition", typeof(ConceptSetComposition), Namespace = "http://santedb.org/model")]
         [XmlElement("ConceptRelationship", typeof(ConceptRelationship), Namespace = "http://santedb.org/model")]
         [XmlElement("AssigningAuthority", typeof(AssigningAuthority), Namespace = "http://santedb.org/model")]
         [XmlElement("IdentityDomain", typeof(IdentityDomain), Namespace = "http://santedb.org/model")]
