@@ -17,6 +17,7 @@
  * 
  */
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Net;
 
@@ -25,7 +26,7 @@ namespace SanteDB.Core.Http
     /// <summary>
     /// Rest client exception.
     /// </summary>
-    public class RestClientException<TResult> : System.Net.WebException
+    public class RestClientException<TResult> : System.Net.WebException, IHasToDisplay
     {
         /// <summary>
         /// The result
@@ -44,6 +45,9 @@ namespace SanteDB.Core.Http
         {
             get;
         }
+
+        /// <inheritdoc/>
+        public String ToDisplay() => this.Result is IHasToDisplay ihd ? ihd.ToDisplay() : this.Result.ToString();
 
         /// <summary>
         /// Create a new rest client exception
