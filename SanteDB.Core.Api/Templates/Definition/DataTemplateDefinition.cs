@@ -245,7 +245,7 @@ namespace SanteDB.Core.Templates.Definition
                     return ""; // No repeat
                 }
             });
-            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString());
+            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : "");
             return jsonContentRaw;
         }
 
