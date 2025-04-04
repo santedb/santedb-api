@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.Interfaces;
@@ -29,10 +30,10 @@ namespace SanteDB.Core.Notifications
     // <summary>
     /// Represents a notification resource
     /// </summary>
-    [XmlType(nameof(Notification), Namespace = "http://santedb.org/notification")]
-    [XmlRoot(nameof(Notification), Namespace = "http://santedb.org/notification")]
+    [XmlType(nameof(NotificationInstance), Namespace = "http://santedb.org/notification")]
+    [XmlRoot(nameof(NotificationInstance), Namespace = "http://santedb.org/notification")]
     [JsonObject]
-    public class Notification : IIdentifiedResource
+    public class NotificationInstance : NonVersionedEntityData
     {
         /// <summary>
         /// Gets or set the identifier
