@@ -46,8 +46,14 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Notification template content
         /// </summary>
-        [XmlElement("content"), JsonProperty("content")]
+        [XmlElement("contents"), JsonProperty("contents")]
         public List<NotificationTemplateContents> Contents { get; set; }
+
+        /// <summary>
+        /// Notification template parameters
+        /// </summary>
+        [XmlElement("parameters"), JsonProperty("parameters")]
+        public List<NotificationTemplateParameter> Parameters { get; set; }
 
         /// <summary>
         /// Load the specified object
