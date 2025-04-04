@@ -17,6 +17,7 @@
  * 
  */
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
 using SanteDB.Core.Model.DataTypes;
@@ -104,6 +105,12 @@ namespace SanteDB.Core.Notifications
         /// </summary>
         [XmlAttribute("tag"), JsonProperty("tag")]
         public string Tag { get; }
+
+        /// <summary>
+        /// Gets or sets the instance parameters
+        /// </summary>
+        [XmlElement("instanceParameters"), JsonProperty("instanceParameters")]
+        public List<NotificationInstanceParameter> InstanceParameters { get; set; }
 
         /// <summary>
         /// Gets or sets the modified on datetime of the notification
