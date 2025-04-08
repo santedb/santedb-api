@@ -22,7 +22,7 @@ using System.Xml.Serialization;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Notification parameter
+    /// Notification instance parameter
     /// </summary>
     [XmlType(nameof(NotificationInstanceParameter), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationInstanceParameter), Namespace = "http://santedb.org/notification")]
@@ -40,7 +40,7 @@ namespace SanteDB.Core.Notifications
         /// Gets or sets the notification
         /// </summary>
         [XmlAttribute("notification"), JsonProperty("notification")]
-        public Notification Notification { get; set; }
+        public NotificationInstance NotificationInstance { get; set; }
 
         /// <summary>
         /// Gets or sets the parameter

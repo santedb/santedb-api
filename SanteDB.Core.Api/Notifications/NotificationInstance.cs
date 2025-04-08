@@ -96,12 +96,6 @@ namespace SanteDB.Core.Notifications
         public String Target { get; set; }
 
         /// <summary>
-        /// Gets or sets the key of the notification
-        /// </summary>
-        [XmlAttribute("key"), JsonProperty("key")]
-        public Guid? Key { get; set; }
-
-        /// <summary>
         /// Gets or sets the tag of the notification
         /// </summary>
         [XmlAttribute("tag"), JsonProperty("tag")]
@@ -112,11 +106,5 @@ namespace SanteDB.Core.Notifications
         /// </summary>
         [XmlElement("instanceParameters"), JsonProperty("instanceParameters")]
         public List<NotificationInstanceParameter> InstanceParameters { get; set; }
-
-        /// <summary>
-        /// Gets or sets the modified on datetime of the notification
-        /// </summary>
-        [XmlAttribute("modifiedOn"), JsonProperty("modifiedOn")]
-        public DateTimeOffset ModifiedOn { get; }
     }
 }
