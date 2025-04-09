@@ -34,7 +34,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the language of the template
         /// </summary>
-        [XmlAttribute("lang"), JsonProperty("lang")]
+        [XmlElement("lang"), JsonProperty("lang")]
         public String Language { get; set; }
 
         /// <summary>

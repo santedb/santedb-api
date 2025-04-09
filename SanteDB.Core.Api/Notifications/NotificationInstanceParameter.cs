@@ -39,19 +39,19 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the notification
         /// </summary>
-        [XmlAttribute("notification"), JsonProperty("notification")]
+        [XmlElement("notification"), JsonProperty("notification")]
         public NotificationInstance NotificationInstance { get; set; }
 
         /// <summary>
         /// Gets or sets the parameter
         /// </summary>
-        [XmlAttribute("parameter"), JsonProperty("parameter")]
+        [XmlElement("parameter"), JsonProperty("parameter")]
         public NotificationTemplateParameter Parameter { get; set; }
 
         /// <summary>
         /// Gets or sets the expression
         /// </summary>
-        [XmlAttribute("expression"), JsonProperty("expression")]
+        [XmlElement("expression"), JsonProperty("expression")]
         public string Expression { get; set; }
 
     }

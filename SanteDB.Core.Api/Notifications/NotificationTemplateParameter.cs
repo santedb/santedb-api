@@ -41,13 +41,13 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the template
         /// </summary>
-        [XmlAttribute("template"), JsonProperty("template")]
+        [XmlElement("template"), JsonProperty("template")]
         public NotificationTemplate Template { get; set; }
 
         /// <summary>
         /// Gets or sets the name
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlElement("name"), JsonProperty("name")]
         public string Name { get; set; }
 
         /// <summary>

@@ -44,61 +44,61 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the template
         /// </summary>
-        [XmlAttribute("template"), JsonProperty("template")]
+        [XmlElement("template"), JsonProperty("template")]
         public NotificationTemplate Template { get; set; }
 
         /// <summary>
         /// Gets or sets the entity type for notification
         /// </summary>
-        [XmlAttribute("entityType"), JsonProperty("entityType")]
+        [XmlElement("entityType"), JsonProperty("entityType")]
         public Entity EntityType { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the notification
         /// </summary>
-        [XmlAttribute("name"), JsonProperty("name")]
+        [XmlElement("name"), JsonProperty("name")]
         public String Name { get; set; }
 
         /// <summary>
         /// Gets or sets the mnemonic of the notification
         /// </summary>
-        [XmlAttribute("mnemonic"), JsonProperty("mnemonic")]
+        [XmlElement("mnemonic"), JsonProperty("mnemonic")]
         public String Mnemonic { get; set; }
 
         /// <summary>
         /// Gets or sets the state of the notification
         /// </summary>
-        [XmlAttribute("state"), JsonProperty("state")]
+        [XmlElement("state"), JsonProperty("state")]
         public Concept State { get; set; }
 
         /// <summary>
         /// Gets or sets the description of the notification
         /// </summary>
-        [XmlAttribute("description"), JsonProperty("description")]
+        [XmlElement("description"), JsonProperty("description")]
         public String Description { get; set; }
 
         /// <summary>
         /// Gets or sets the filter for the notification
         /// </summary>
-        [XmlAttribute("filter"), JsonProperty("filter")]
+        [XmlElement("filter"), JsonProperty("filter")]
         public String Filter { get; set; }
 
         /// <summary>
         /// Gets or sets the trigger for the notification
         /// </summary>
-        [XmlAttribute("trigger"), JsonProperty("trigger")]
+        [XmlElement("trigger"), JsonProperty("trigger")]
         public String Trigger { get; set; }
 
         /// <summary>
         /// Gets or sets the trigger for the notification
         /// </summary>
-        [XmlAttribute("target"), JsonProperty("target")]
+        [XmlElement("target"), JsonProperty("target")]
         public String Target { get; set; }
 
         /// <summary>
         /// Gets or sets the tag of the notification
         /// </summary>
-        [XmlAttribute("tag"), JsonProperty("tag")]
+        [XmlElement("tag"), JsonProperty("tag")]
         public string Tag { get; }
 
         /// <summary>
