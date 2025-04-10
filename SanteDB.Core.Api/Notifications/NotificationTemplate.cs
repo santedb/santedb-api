@@ -44,6 +44,30 @@ namespace SanteDB.Core.Notifications
         public String Id { get; set; }
 
         /// <summary>
+        /// Gets or sets the template status
+        /// </summary>
+        [XmlElement("status"), JsonProperty("status")]
+        public Guid Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template mnemonic
+        /// </summary>
+        [XmlElement("mnemonic"), JsonProperty("mnemonic")]
+        public String Mnemonic { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template name
+        /// </summary>
+        [XmlElement("name"), JsonProperty("name")]
+        public String Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tags
+        /// </summary>
+        [XmlElement("tags"), JsonProperty("tags")]
+        public String Tags { get; set; }
+
+        /// <summary>
         /// Notification template content
         /// </summary>
         [XmlElement("contents"), JsonProperty("contents")]
