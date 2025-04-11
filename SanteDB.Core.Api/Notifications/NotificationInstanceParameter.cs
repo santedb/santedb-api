@@ -17,6 +17,7 @@
  * 
  */
 using Newtonsoft.Json;
+using System;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Notifications
@@ -40,13 +41,13 @@ namespace SanteDB.Core.Notifications
         /// Gets or sets the notification
         /// </summary>
         [XmlElement("notification"), JsonProperty("notification")]
-        public NotificationInstance NotificationInstance { get; set; }
+        public Guid NotificationInstance { get; set; }
 
         /// <summary>
         /// Gets or sets the parameter
         /// </summary>
         [XmlElement("parameter"), JsonProperty("parameter")]
-        public NotificationTemplateParameter Parameter { get; set; }
+        public Guid TemplateParameter { get; set; }
 
         /// <summary>
         /// Gets or sets the expression
