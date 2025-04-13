@@ -529,6 +529,7 @@ namespace SanteDB.Core.Security.Privacy
             {
                 var property = result.GetType().GetQueryProperty(itm.Property);
                 var value = property?.GetValue(result);
+                result.SetLoaded(property.Name);
                 if (value == null)
                 {
                     continue;

@@ -834,6 +834,11 @@ namespace SanteDB.Core.Security.Audit
 
         private static AuditableObject ToAuditableObject<TData>(this TData obj, AuditableObjectLifecycle? lifecycle = null)
         {
+            if(obj is ICanDeepCopy icd)
+            {
+                obj = (TData)icd.DeepCopy();
+            }
+
             var retVal = new AuditableObject();
 
             switch (obj)

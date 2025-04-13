@@ -378,7 +378,7 @@ namespace SanteDB.Core.Jobs
         /// </summary>
         public bool IsJobRegistered(Type jobObject)
         {
-            return this.m_jobs.Any(o => o.Job.GetType() == jobObject);
+            return this.m_jobs.Any(o => o.Job.GetType() == jobObject) || this.m_configuration?.Jobs.Any(j=>j.Type == jobObject) == true;
         }
 
         /// <summary>
