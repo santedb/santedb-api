@@ -20,6 +20,8 @@ using Newtonsoft.Json;
 using System.Xml.Serialization;
 using System;
 using System.Collections.Generic;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 
 namespace SanteDB.Core.Notifications
 {
@@ -39,9 +41,15 @@ namespace SanteDB.Core.Notifications
         public string Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the template
+        /// Gets or sets the notification template key
         /// </summary>
-        [XmlElement("template"), JsonProperty("template")]
+        [XmlElement("templateId"), JsonProperty("templateId")]
+        public Guid NotificationTemplateKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the notification template
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationTemplateKey))]
         public NotificationTemplate Template { get; set; }
 
         /// <summary>

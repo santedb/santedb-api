@@ -18,6 +18,9 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -44,10 +47,16 @@ namespace SanteDB.Core.Notifications
         public String Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the template status
+        /// Gets or sets the status key
         /// </summary>
-        [XmlElement("status"), JsonProperty("status")]
-        public Guid Status { get; set; }
+        [XmlElement("statusId"), JsonProperty("statusId")]
+        public Guid StatusKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the status
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(StatusKey))]
+        public Concept Status { get; set; }
 
         /// <summary>
         /// Gets or sets the template mnemonic

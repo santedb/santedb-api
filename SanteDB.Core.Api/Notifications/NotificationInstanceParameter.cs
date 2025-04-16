@@ -17,6 +17,8 @@
  * 
  */
 using Newtonsoft.Json;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
 using System;
 using System.Xml.Serialization;
 
@@ -35,19 +37,31 @@ namespace SanteDB.Core.Notifications
         /// Gets or sets the identifier
         /// </summary>
         [XmlAttribute("id"), JsonProperty("id")]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the notification
+        /// Gets or sets the notification instance key
         /// </summary>
-        [XmlElement("notification"), JsonProperty("notification")]
-        public Guid NotificationInstance { get; set; }
+        [XmlElement("notificationId"), JsonProperty("notificationId")]
+        public Guid NotificationInstanceKey { get; set; }
 
         /// <summary>
-        /// Gets or sets the parameter
+        /// Gets or sets the notification instance
         /// </summary>
-        [XmlElement("parameter"), JsonProperty("parameter")]
-        public Guid TemplateParameter { get; set; }
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationInstanceKey))]
+        public NotificationInstance NotificationInstance { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template parameter key
+        /// </summary>
+        [XmlElement("parameterId"), JsonProperty("parameterId")]
+        public Guid TemplateParameterKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template parameter
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(TemplateParameterKey))]
+        public NotificationTemplateParameter TemplateParameter { get; set; }
 
         /// <summary>
         /// Gets or sets the expression
