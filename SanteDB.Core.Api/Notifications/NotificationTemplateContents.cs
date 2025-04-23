@@ -19,6 +19,9 @@
 using Newtonsoft.Json;
 using System.Xml.Serialization;
 using System;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.Core.Notifications
 {
@@ -28,9 +31,13 @@ namespace SanteDB.Core.Notifications
     [XmlType(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
     [JsonObject]
-    public class NotificationTemplateContents
+    public class NotificationTemplateContents : NonVersionedEntityData, ISimpleAssociation
     {
+        [XmlElement("template"), JsonProperty("template")]
+        public Guid NotificationTemplateKey { get; set; }
 
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationTemplateKey))]
+        public NotificationTemplate NotificationTemplate { get; set; }
         /// <summary>
         /// Gets or sets the language of the template
         /// </summary>
@@ -49,5 +56,22 @@ namespace SanteDB.Core.Notifications
         [XmlText, JsonProperty("text")]
         public String Body { get; set; }
 
+        /// <summary>
+        /// Gets the source type
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Type SourceType => typeof(NotificationTemplate);
+
+        /// <summary>
+        /// Gets and sets the source entity key
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Guid? SourceEntityKey { get => NotificationTemplateKey; set => NotificationTemplateKey = (Guid)value; }
+
+        /// <summary>
+        /// gets and sets the source entity
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public object SourceEntity { get => NotificationTemplate; set => NotificationTemplate = (NotificationTemplate)value; }
     }
 }
