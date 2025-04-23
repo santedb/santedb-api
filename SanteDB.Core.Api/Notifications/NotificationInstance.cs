@@ -41,15 +41,9 @@ namespace SanteDB.Core.Notifications
         private static XmlSerializer s_xsz = new XmlSerializer(typeof(NotificationInstance));
 
         /// <summary>
-        /// Gets or set the identifier
-        /// </summary>
-        [XmlAttribute("id"), JsonProperty("id")]
-        public Guid Id { get; set; }
-
-        /// <summary>
         /// Gets or sets the notification template key
         /// </summary>
-        [XmlElement("templateId"), JsonProperty("templateId")]
+        [XmlElement("notificationTemplate"), JsonProperty("notificationTemplate")]
         public Guid NotificationTemplateKey { get; set; }
 
         /// <summary>
@@ -61,7 +55,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the entity type key
         /// </summary>
-        [XmlElement("entityTypeId"), JsonProperty("entityTypeId")]
+        [XmlElement("entityType"), JsonProperty("entityType")]
         public Guid EntityTypeKey { get; set; }
 
         /// <summary>
@@ -85,7 +79,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the state key of the notification
         /// </summary>
-        [XmlElement("stateId"), JsonProperty("stateId")]
+        [XmlElement("state"), JsonProperty("state")]
         public Guid StateKey { get; set; }
 
 
@@ -122,7 +116,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the instance parameters
         /// </summary>
-        [XmlElement("instanceParameters"), JsonProperty("instanceParameters")]
+        [XmlElement("instanceParameter"), JsonProperty("instanceParameter")]
         public List<NotificationInstanceParameter> InstanceParameters { get; set; }
 
         /// <summary>
