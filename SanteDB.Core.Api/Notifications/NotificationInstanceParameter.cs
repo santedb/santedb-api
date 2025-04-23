@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Xml.Serialization;
 
@@ -30,19 +31,13 @@ namespace SanteDB.Core.Notifications
     [XmlType(nameof(NotificationInstanceParameter), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationInstanceParameter), Namespace = "http://santedb.org/notification")]
     [JsonObject]
-    public class NotificationInstanceParameter
+    public class NotificationInstanceParameter : NonVersionedEntityData, ISimpleAssociation
     {
-
-        /// <summary>
-        /// Gets or sets the identifier
-        /// </summary>
-        [XmlAttribute("id"), JsonProperty("id")]
-        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the notification instance key
         /// </summary>
-        [XmlElement("notificationId"), JsonProperty("notificationId")]
+        [XmlElement("notificationInstance"), JsonProperty("notificationInstance")]
         public Guid NotificationInstanceKey { get; set; }
 
         /// <summary>
@@ -54,7 +49,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the template parameter key
         /// </summary>
-        [XmlElement("parameterId"), JsonProperty("parameterId")]
+        [XmlElement("templateParameter"), JsonProperty("templateParameter")]
         public Guid TemplateParameterKey { get; set; }
 
         /// <summary>
@@ -69,5 +64,13 @@ namespace SanteDB.Core.Notifications
         [XmlElement("expression"), JsonProperty("expression")]
         public string Expression { get; set; }
 
+        [XmlIgnore, JsonIgnore]
+        public Type SourceType => typeof(NotificationInstance);
+
+        [XmlIgnore, JsonIgnore]
+        public Guid? SourceEntityKey { get => NotificationInstanceKey; set => NotificationInstanceKey = (Guid)value; }
+
+        [XmlIgnore, JsonIgnore]
+        public object SourceEntity { get => NotificationInstance; set => NotificationInstance = (NotificationInstance)value; }
     }
 }
