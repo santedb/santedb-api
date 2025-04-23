@@ -49,7 +49,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the status key
         /// </summary>
-        [XmlElement("statusId"), JsonProperty("statusId")]
+        [XmlElement("status"), JsonProperty("status")]
         public Guid StatusKey { get; set; }
 
         /// <summary>
