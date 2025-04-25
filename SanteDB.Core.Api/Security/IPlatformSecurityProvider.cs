@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using System;
 using System.Collections.Generic;
@@ -72,8 +74,9 @@ namespace SanteDB.Core.Security
         /// <param name="findType">The search type to perform.</param>
         /// <param name="findValue">The search term to use to find the certificate.</param>
         /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <param name="validOnly">True if only valid certificates should be returned</param>
         /// <returns>True if a certificate was found, False otherwise.</returns>
-        bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate, bool validOnly = false);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
@@ -81,11 +84,12 @@ namespace SanteDB.Core.Security
         /// <param name="findValue">The search term to use to find the certificate.</param>
         /// <param name="storeName">The store name to search for the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
         /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <param name="validOnly">True if only valid certificates should be returned</param>
         /// <returns>True if a certificate was found, False otherwise.</returns>
         /// <remarks>
         ///     <paramref name="storeName"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
         /// </remarks>
-        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate, bool validOnly = false);
         /// <summary>
         /// Find a certificate using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
@@ -94,11 +98,12 @@ namespace SanteDB.Core.Security
         /// <param name="storeName">The store name to search for the certificate in. Defaults to <see cref="StoreName.My"/>.</param>
         /// <param name="storeLocation">The store location to search for the certificate in. Defaults to <see cref="StoreLocation.CurrentUser"/>.</param>
         /// <param name="certificate">When a certificate is found, it will be returned with this parameter and the result is <c>True</c>. This parameter is set to null if the result is <c>False</c>.</param>
+        /// <param name="validOnly">True if only valid certificates should be returned</param>
         /// <returns>True if a certificate was found, False otherwise.</returns>
         /// <remarks>
         ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
         /// </remarks>
-        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate);
+        bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate, bool validOnly = false);
         /// <summary>
         /// Find all certificates using <paramref name="findType"/> and <paramref name="findValue"/>.
         /// </summary>
