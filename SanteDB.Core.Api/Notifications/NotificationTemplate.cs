@@ -41,12 +41,6 @@ namespace SanteDB.Core.Notifications
         private static XmlSerializer s_xsz = new XmlSerializer(typeof(NotificationTemplate));
 
         /// <summary>
-        /// Gets or sets the identifier
-        /// </summary>
-        [XmlAttribute("id"), JsonProperty("id")]
-        public String Id { get; set; }
-
-        /// <summary>
         /// Gets or sets the status key
         /// </summary>
         [XmlElement("status"), JsonProperty("status")]
