@@ -37,7 +37,7 @@ namespace SanteDB.Core.Notifications
         /// <summary>
         /// Gets or sets the notification template key
         /// </summary>
-        [XmlElement("notificationTemplate"), JsonProperty("notificationTemplate")]
+        [XmlElement("template"), JsonProperty("template")]
         public Guid NotificationTemplateKey { get; set; }
 
         /// <summary>
