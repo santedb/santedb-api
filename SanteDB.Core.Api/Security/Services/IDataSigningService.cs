@@ -75,7 +75,7 @@ namespace SanteDB.Core.Security.Services
             {
                 return null;
             }
-            else if(configuration.Certificate.NotAfter < DateTimeOffset.Now || configuration.Certificate.NotBefore > DateTimeOffset.Now)
+            else if(configuration.Certificate?.NotAfter < DateTimeOffset.Now || configuration.Certificate?.NotBefore > DateTimeOffset.Now)
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.CERTIFICATE_TIME_CONSTRAINT, configuration.Certificate));
             }

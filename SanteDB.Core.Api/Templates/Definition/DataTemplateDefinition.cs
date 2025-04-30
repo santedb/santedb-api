@@ -26,6 +26,7 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Templates.View;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -46,8 +47,8 @@ namespace SanteDB.Core.Templates.Definition
     {
         // XML serializer
         private static readonly XmlSerializer m_xsz;
-        private static Regex m_bindingRegex = new Regex("{{\\s?\\$([A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
-        private static Regex m_repeatRegex = new Regex(@"[#""]for\s+\$(\w+)\s+in\s+\@(\w+)(?:"",)?(.*?)(?:,.*?""|#)end""?", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static Regex m_bindingRegex = new Regex("{{\\s?(\\$[A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
+        private static Regex m_repeatRegex = new Regex(@"[#""]for\s+(?:(\$\w+)|\(((?:\$\w+:?){1,})\))\s+in\s+\@(\w+)(?:"",)?(.*?)(?:,.*?""|#)end""?", RegexOptions.Compiled | RegexOptions.Singleline);
         private bool m_saving;
 
         /// <summary>
@@ -250,22 +251,34 @@ namespace SanteDB.Core.Templates.Definition
             // Perform repeat instructions
             jsonContentRaw = m_repeatRegex.Replace(jsonContentRaw, (m) =>
             {
-                var variableName = m.Groups[1].Value;
-                var sourceArrayName = m.Groups[2].Value;
-                var contents = m.Groups[3].Value;
+                var variableNameRaw = !String.IsNullOrEmpty(m.Groups[1].Value) ? m.Groups[1].Value : m.Groups[2].Value;
+                var sourceArrayName = m.Groups[3].Value;
+                var contents = m.Groups[4].Value;
                 if(parameters.TryGetValue(sourceArrayName, out string sourceArray))
                 {
                     // Repeat
-                    return String.Join(",", sourceArray.Split(',').Select(c =>
-                        m_bindingRegex.Replace(contents, (m2) => m2.Groups[1].Value.Equals(variableName, StringComparison.OrdinalIgnoreCase) ? c : m2.Value)
-                    ));
+                    return String.Join(",", sourceArray.Split(',').Select(parmValueSource =>
+                        m_bindingRegex.Replace(contents, (m2) => {
+                            var variableValues = parmValueSource.Split(':');
+                            var variableNames = variableNameRaw.Split(':');
+                            var varIdx = Array.FindIndex<String>(variableNames, o => o.Equals(m2.Groups[1].Value, StringComparison.OrdinalIgnoreCase));
+                            if(varIdx != -1 && varIdx < variableValues.Length)
+                            {
+                                return variableValues[varIdx];
+                            }
+                            else
+                            {
+                                return String.Empty;
+                            }
+                        }
+                    )));
                 }
                 else
                 {
                     return ""; // No repeat
                 }
             });
-            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : "");
+            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value.Substring(1), out string v) ? v : "");
             return jsonContentRaw;
         }
 
