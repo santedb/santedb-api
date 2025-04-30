@@ -97,6 +97,7 @@ namespace SanteDB.Core.Data
             return this.GetRelationsInternal(relatedType, nameof(ITargetedAssociation.SourceEntityKey), sourceKey);
         }
 
+        /// <inheritdoc/>
         public IQueryResultSet GetInverseRelations(Type relatedType, params Guid?[] targetKey)
         {
             if(typeof(ActParticipation).IsAssignableFrom(relatedType))
