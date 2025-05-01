@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Services;
 using System;
@@ -69,6 +71,6 @@ namespace SanteDB.Core.Notifications
         /// <param name="ccAdmins">True to also send the notification to the defined administrators in the configuration.</param>
         /// <param name="attachments">Zero or more attachments to include with the notification.</param>
         /// <returns>An array of identifiers that correspond to the notifications.</returns>
-        Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
+        Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, IDictionary<string, object> templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments);
     }
 }

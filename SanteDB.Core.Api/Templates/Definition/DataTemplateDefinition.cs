@@ -1,4 +1,24 @@
-﻿using Newtonsoft.Json;
+﻿/*
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
+ * the License.
+ * 
+ * User: fyfej
+ * Date: 2024-12-12
+ */
+using Newtonsoft.Json;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -6,6 +26,7 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Templates.View;
+using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +47,8 @@ namespace SanteDB.Core.Templates.Definition
     {
         // XML serializer
         private static readonly XmlSerializer m_xsz;
-        private static Regex m_bindingRegex = new Regex("{{\\s?\\$([A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
+        private static Regex m_bindingRegex = new Regex("{{\\s?(\\$[A-Za-z0-9_]*?)\\s?}}", RegexOptions.Compiled);
+        private static Regex m_repeatRegex = new Regex(@"[#""]for\s+(?:(\$\w+)|\(((?:\$\w+:?){1,})\))\s+in\s+\@(\w+)(?:"",)?(.*?)(?:,.*?""|#)end""?", RegexOptions.Compiled | RegexOptions.Singleline);
         private bool m_saving;
 
         /// <summary>
@@ -223,20 +245,41 @@ namespace SanteDB.Core.Templates.Definition
             parameters = parameters ?? new Dictionary<String, String>();
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
-            if (this.JsonTemplate.ContentType == DataTemplateContentType.content)
-            {
-                return m_bindingRegex.Replace(this.JsonTemplate.Content, (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString()); 
-            }
-            else if(referenceResolver != null)
-            {
-                return m_bindingRegex.Replace(referenceResolver(this.JsonTemplate.Content), (m) => parameters.TryGetValue(m.Groups[1].Value, out string v) ? v : m.ToString());
 
-            }
-            else
-            {
-                throw new InvalidOperationException(this.JsonTemplate.ContentType.ToString());
-            }
+            var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
 
+            // Perform repeat instructions
+            jsonContentRaw = m_repeatRegex.Replace(jsonContentRaw, (m) =>
+            {
+                var variableNameRaw = !String.IsNullOrEmpty(m.Groups[1].Value) ? m.Groups[1].Value : m.Groups[2].Value;
+                var sourceArrayName = m.Groups[3].Value;
+                var contents = m.Groups[4].Value;
+                if(parameters.TryGetValue(sourceArrayName, out string sourceArray))
+                {
+                    // Repeat
+                    return String.Join(",", sourceArray.Split(',').Select(parmValueSource =>
+                        m_bindingRegex.Replace(contents, (m2) => {
+                            var variableValues = parmValueSource.Split(':');
+                            var variableNames = variableNameRaw.Split(':');
+                            var varIdx = Array.FindIndex<String>(variableNames, o => o.Equals(m2.Groups[1].Value, StringComparison.OrdinalIgnoreCase));
+                            if(varIdx != -1 && varIdx < variableValues.Length)
+                            {
+                                return variableValues[varIdx];
+                            }
+                            else
+                            {
+                                return String.Empty;
+                            }
+                        }
+                    )));
+                }
+                else
+                {
+                    return ""; // No repeat
+                }
+            });
+            jsonContentRaw = m_bindingRegex.Replace(jsonContentRaw, (m) => parameters.TryGetValue(m.Groups[1].Value.Substring(1), out string v) ? v : "");
+            return jsonContentRaw;
         }
 
         /// <inheritdoc/>

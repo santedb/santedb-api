@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
@@ -92,9 +94,9 @@ namespace SanteDB.Core.Notifications
         }
 
         /// <inheritdoc />
-        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, dynamic templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
+        public Guid[] SendTemplatedNotification(string[] to, string templateId, string templateLanguage, IDictionary<string, object> templateModel, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
-            NotificationTemplate template = m_notificationTemplateFiller.FillTemplate(templateId, templateLanguage, templateModel);
+            var template = m_notificationTemplateFiller.FillTemplate(templateId, templateLanguage, templateModel);
 
             return SendNotification(to, template.Subject, template.Body, scheduleDelivery, ccAdmins, attachments);
         }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,8 +15,11 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.BusinessRules;
+using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Interfaces;
@@ -39,6 +42,7 @@ namespace SanteDB.Core.Data.Quality
     {
         // Configuration provider
         private IDataQualityConfigurationProviderService m_configurationProvider;
+        private readonly DataQualityConfigurationSection m_configuration;
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DataQualityBusinessRule<TModel>));
@@ -46,10 +50,11 @@ namespace SanteDB.Core.Data.Quality
         /// <summary>
         /// Creates a new data quality business rule
         /// </summary>
-        public DataQualityBusinessRule(IDataQualityConfigurationProviderService dataQualityConfigurationProviderService)
+        public DataQualityBusinessRule(IDataQualityConfigurationProviderService dataQualityConfigurationProviderService, IConfigurationManager configurationManager)
         {
             this.m_tracer.TraceVerbose("Business rule service for {0} created", typeof(TModel).Name);
             this.m_configurationProvider = dataQualityConfigurationProviderService;
+            this.m_configuration = configurationManager.GetSection<DataQualityConfigurationSection>();
         }
 
         /// <summary>
@@ -57,7 +62,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public override TModel BeforeInsert(TModel data)
         {
-            if (data is IExtendable extendable)
+            if (data is IExtendable extendable && this.m_configuration.TagDataQualityIssues)
             {
                 extendable.TagDataQualityIssues();
             }
@@ -69,7 +74,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public override TModel BeforeUpdate(TModel data)
         {
-            if (data is IExtendable extendable)
+            if (data is IExtendable extendable && this.m_configuration.TagDataQualityIssues)
             {
                 extendable.TagDataQualityIssues();
             }

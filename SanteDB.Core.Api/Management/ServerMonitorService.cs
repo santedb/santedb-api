@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
@@ -122,7 +124,7 @@ namespace SanteDB.Core.Management
                     try
                     {
                         // Is there a special template for this notification
-                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId, String.Empty) != null)
+                        if (!String.IsNullOrEmpty(o.TemplateId) && this.m_notificationTemplateRepository.Get(o.TemplateId) != null)
                         {
                             this.m_notificationService.SendTemplatedNotification(o.Notify.ToArray(), o.TemplateId, String.Empty, this.ToDictionary(eventType, sender, args));
                         }
@@ -142,15 +144,17 @@ namespace SanteDB.Core.Management
         /// <summary>
         /// Convert to a dictionary
         /// </summary>
-        private dynamic ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
+        private IDictionary<string, object> ToDictionary(ServerMonitorEventSubscriptionEvent eventType, Object sender, EventArgs args)
         {
-            IDictionary<String, Object> retVal = new ExpandoObject();
-            retVal.Add("type", args.GetType().Name);
-            retVal.Add("event", eventType);
-            retVal.Add("sender", sender);
-            retVal.Add("sourceHost", this.m_networkInformationService.GetHostName());
-            retVal.Add("sourceMachine", this.m_networkInformationService.GetMachineName());
-            retVal.Add("summary", args.ToString());
+            IDictionary<String, Object> retVal = new Dictionary<string, object>
+            {
+                { "type", args.GetType().Name },
+                { "event", eventType },
+                { "sender", sender },
+                { "sourceHost", this.m_networkInformationService.GetHostName() },
+                { "sourceMachine", this.m_networkInformationService.GetMachineName() },
+                { "summary", args.ToString() }
+            };
             foreach (var p in args.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
             {
                 var value = p.GetValue(args);

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,9 +15,13 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Services;
 using System;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Notifications
 {
@@ -27,14 +31,14 @@ namespace SanteDB.Core.Notifications
     [System.ComponentModel.Description("User Notification Template Filler")]
     public interface INotificationTemplateFiller : IServiceImplementation
     {
-
         /// <summary>
-        /// Fill the template
+        /// Retrieves a template from the repository using <paramref name="templateId"/> and <paramref name="templateLanguage"/> and fills it with key/value pairs provided in <paramref name="model"/>.
         /// </summary>
-        /// <param name="id">The id of the template to be filled</param>
-        /// <param name="lang">The language to fill</param>
-        /// <param name="model">The model to use to fill</param>
-        /// <returns>The filled template</returns>
-        NotificationTemplate FillTemplate(String id, String lang, dynamic model);
+        /// <param name="templateId">The id of the template in the repository.</param>
+        /// <param name="templateLanguage">The language of the template from the repository. The language should match the language preference of the entity which will receive the notification.</param>
+        /// <param name="model">A key/value pair dictionary of values to use for insertion into the notification.</param>
+        /// <returns>An instance of <see cref="NotificationTemplate"/> which has been filled in using the <paramref name="model"/> provided.</returns>
+        NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model);
+
     }
 }

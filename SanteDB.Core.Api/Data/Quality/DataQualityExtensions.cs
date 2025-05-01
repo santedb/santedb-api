@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2024-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Data.Quality.Configuration;
@@ -27,6 +29,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core.Data.Quality
 {
@@ -47,6 +50,7 @@ namespace SanteDB.Core.Data.Quality
         /// </summary>
         public static IModelExtension TagDataQualityIssues<TModel>(this TModel modelToTag, bool throwOnError = true)
         {
+
             var ruleViolations = modelToTag.Validate().ToList();
             // Rule violations
             foreach (var rv in ruleViolations)

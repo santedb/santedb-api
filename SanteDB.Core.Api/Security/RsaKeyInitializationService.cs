@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Security.Certs;
@@ -57,7 +59,7 @@ namespace SanteDB.Core.Security
                     {
                         var keySubject = $"CN=SanteDB {k.KeyName}, OID.2.5.6.11={ApplicationServiceContext.Current.ApplicationName}, DC={k.KeyName}";
 
-                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate))
+                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate, true))
                         {
                         }
                         else if (certificateAuthorityService != null) // generate and sign

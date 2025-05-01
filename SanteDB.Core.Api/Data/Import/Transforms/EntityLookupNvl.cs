@@ -1,0 +1,113 @@
+﻿/*
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
+ * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you 
+ * may not use this file except in compliance with the License. You may 
+ * obtain a copy of the License at 
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
+ * License for the specific language governing permissions and limitations under 
+ * the License.
+ * 
+ * User: fyfej
+ * Date: 2025-3-2
+ */
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Services;
+using SharpCompress;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace SanteDB.Core.Data.Import.Transforms
+{
+    /// <summary>
+    /// Entity lookup - looks for the first non-null entity matching any of the argument expressions
+    /// </summary>
+    public class EntityLookupNvl : IForeignDataElementTransform
+    {
+
+        // Serialization binder
+        private readonly Regex m_parmExtract = new Regex(@"\$(\w*?)[&\.\?]", RegexOptions.Compiled);
+        private readonly ModelSerializationBinder m_serialization = new ModelSerializationBinder();
+        private readonly IAdhocCacheService m_adhocCache;
+
+        /// <summary>
+        /// DI constructor
+        /// </summary>
+        public EntityLookupNvl(IAdhocCacheService adhocCache = null)
+        {
+            this.m_adhocCache = adhocCache;
+        }
+
+        /// <summary>
+        /// Entity lookup transform
+        /// </summary>
+        public string Name => "EntityLookupNvl";
+
+        /// <inheritdoc/>
+        public object Transform(object input, IForeignDataRecord sourceRecord, System.Collections.Generic.IDictionary<string, string> dataMapParameters, params object[] args)
+        {
+            if (args.Length < 2)
+            {
+                throw new ArgumentOutOfRangeException("arg2", "Missing arguments");
+            }
+
+            var modelType = this.m_serialization.BindToType(typeof(Person).Assembly.FullName, args[0].ToString());
+            var lookupRepoType = typeof(IRepositoryService<>).MakeGenericType(modelType);
+            var lookupRepo = ApplicationServiceContext.Current.GetService(lookupRepoType) as IRepositoryService;
+            var parms = new Dictionary<String, Func<Object>>();
+            for (int i = 0; i < sourceRecord.ColumnCount; i++)
+            {
+                var parmNo = i;
+                parms.Add(sourceRecord.GetName(i), () => sourceRecord[parmNo]);
+            }
+            foreach(var kv in dataMapParameters)
+            {
+                parms.Add(kv.Key, () => kv.Value);
+            }
+            parms.Add("input", () => input);
+
+            foreach (var arg in args.Skip(1))
+            {
+                var key = this.m_parmExtract.Replace($"lu.{args[0]}.{arg}?{input}", o =>
+                {
+                    if (parms.TryGetValue(o.Groups[1].Value, out var fn))
+                    {
+                        return fn().ToString();
+                    }
+                    return String.Empty;
+                });
+                var result = this.m_adhocCache?.Get<Guid?>(key);
+                if (result.GetValueOrDefault() == Guid.Empty)
+                {
+
+
+                    var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, "id", false, typeof(Guid?));
+                    var results = lookupRepo.Find(QueryExpressionParser.BuildLinqExpression(modelType, arg.ToString().ParseQueryString(), "o", parms, lazyExpandVariables: false)).Select<Guid?>(keySelector);
+                    result = results.SingleOrDefault();
+                    this.m_adhocCache?.Add(key, result ?? Guid.Empty);
+                }
+
+
+                if (result != null && result.GetValueOrDefault() != Guid.Empty)
+                {
+                    return result;
+                }
+            }
+
+
+            return null;
+        }
+    }
+}

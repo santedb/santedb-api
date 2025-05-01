@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,9 +15,12 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Configuration;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Data.Quality.Configuration
@@ -34,6 +37,13 @@ namespace SanteDB.Core.Data.Quality.Configuration
         /// </summary>
         [XmlElement("ruleSet")]
         public List<DataQualityRulesetConfiguration> RuleSets { get; set; }
+
+        /// <summary>
+        /// When true indicates that data quality issues should be tagged on objects. 
+        /// </summary>
+        [DisplayName("Tag Issues"), Description("When set to true, instructs the data quality rule service to tag objects with a data quality extension. This may increase bandwidth and storage requirements")]
+        [XmlAttribute("tagIssues")]
+        public bool TagDataQualityIssues { get; set; }
 
     }
 }

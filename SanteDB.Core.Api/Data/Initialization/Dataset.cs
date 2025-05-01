@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -79,6 +81,13 @@ namespace SanteDB.Core.Data.Initialization
         [XmlArray("sql")]
         [XmlArrayItem("exec")]
         public List<DataExecuteAction> SqlExec { get; set; }
+
+        /// <summary>
+        /// Execute SQL before 
+        /// </summary>
+        [XmlArray("prepare")]
+        [XmlArrayItem("exec")]
+        public List<DataExecuteAction> PreSqlExec { get; set; }
 
         /// <summary>
         /// Execute a service action on install
@@ -173,6 +182,7 @@ namespace SanteDB.Core.Data.Initialization
         [XmlElement("EntityRelationship", typeof(EntityRelationship), Namespace = "http://santedb.org/model")]
         [XmlElement("Concept", typeof(Concept), Namespace = "http://santedb.org/model")]
         [XmlElement("ConceptSet", typeof(ConceptSet), Namespace = "http://santedb.org/model")]
+        [XmlElement("ConceptSetComposition", typeof(ConceptSetComposition), Namespace = "http://santedb.org/model")]
         [XmlElement("ConceptRelationship", typeof(ConceptRelationship), Namespace = "http://santedb.org/model")]
         [XmlElement("AssigningAuthority", typeof(AssigningAuthority), Namespace = "http://santedb.org/model")]
         [XmlElement("IdentityDomain", typeof(IdentityDomain), Namespace = "http://santedb.org/model")]

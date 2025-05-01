@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2024-6-21
  */
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Diagnostics;
@@ -351,7 +353,7 @@ namespace SanteDB.Core.Cdss
                             else
                             {
                                 // Found the candidate - Does the stop time of this candidate act shorter than the current
-                                candidate.StopTime = candidate.StopTime.LesserOf(periodEnd);
+                                candidate.StopTime = (candidate.StopTime ?? candidate.StartTime?.AddDays(10)).LesserOf(periodEnd);
                                 candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
                             }
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
@@ -360,8 +362,6 @@ namespace SanteDB.Core.Cdss
                         }
 
                     }
-
-                    
 
                     return new CarePlan(patientCopy, protocolActs.Select(o=>
                     {

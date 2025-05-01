@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,10 +15,13 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace SanteDB.Core.Notifications.Templating
@@ -29,7 +32,7 @@ namespace SanteDB.Core.Notifications.Templating
     public class SimpleNotificationTemplateFiller : INotificationTemplateFiller
     {
         private readonly INotificationTemplateRepository m_notificationTemplateRepository;
-        private static readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex m_parmRegex = new Regex(@"\$\{([\w_][\-\d\w\._]*?)\}", RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromMilliseconds(250));
 
         /// <summary>
         /// Get the service name
@@ -44,25 +47,66 @@ namespace SanteDB.Core.Notifications.Templating
             this.m_notificationTemplateRepository = notificationTemplateRepository;
         }
 
-        /// <summary>
-        /// Fill the specified template based on identifier
-        /// </summary>
-        public NotificationTemplate FillTemplate(string id, string lang, dynamic model)
+        ///// <summary>
+        ///// Fill the specified template based on identifier
+        ///// </summary>
+        //public NotificationTemplate FillTemplate(string id, string lang, dynamic model)
+        //{
+        //    if (model is IReadOnlyDictionary<string, object> dict)
+        //        return FillTemplate(id, lang, dict);
+
+        //    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(model.GetType());
+        //    var modelDict = model as IDictionary<String, Object>;
+        //    var template = this.m_notificationTemplateRepository.Get(id, lang);
+        //    if (template == null)
+        //    {
+        //        throw new KeyNotFoundException(id);
+        //    }
+
+        //    string match_evaluator(Match o)
+        //    {
+        //        return properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null);
+        //    }
+        //    ;
+
+        //    return new NotificationTemplate()
+        //    {
+        //        Id = template.Id,
+        //        Body = m_parmRegex.Replace(template.Body, match_evaluator),
+        //        Subject = m_parmRegex.Replace(template.Subject, match_evaluator),
+        //        Language = template.Language
+        //    };
+        //}
+
+        ///<inheritdoc />
+        public NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model)
         {
-            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(model.GetType());
-            var modelDict = model as IDictionary<String, Object>;
-            var template = this.m_notificationTemplateRepository.Get(id, lang);
-            if (template == null)
+            var template = m_notificationTemplateRepository.Get(templateId);
+            var templateContent = template.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
+
+            if (null == template || null == templateContent)
             {
-                throw new KeyNotFoundException(id);
+                throw new KeyNotFoundException($"Could not find template id: \"{templateId}\" and language {templateLanguage}.");
             }
 
-            return new NotificationTemplate()
+            string replacer(Match match)
             {
-                Id = template.Id,
-                Body = m_parmRegex.Replace(template.Body, o => properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null)),
-                Subject = m_parmRegex.Replace(template.Subject, o => properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null)),
-                Language = template.Language
+                var namegroup = match.Groups[1];
+
+                if (namegroup.Success != true || string.IsNullOrWhiteSpace(namegroup.Value))
+                    return null;
+
+                if (model.TryGetValue(namegroup.Value, out var val))
+                    return val?.ToString() ?? null;
+                else
+                    return null;
+            };
+
+            return new NotificationTemplateContents()
+            {
+                Body = m_parmRegex.Replace(templateContent.Body, replacer),
+                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+                Language = templateContent.Language
             };
         }
     }

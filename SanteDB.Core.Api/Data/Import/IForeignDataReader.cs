@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using System;
 
@@ -36,6 +38,25 @@ namespace SanteDB.Core.Data.Import
         /// </summary>
         /// <returns>True if the next record was read from the reader</returns>
         bool MoveNext();
+
+        /// <summary>
+        /// Add a computed column to the reader
+        /// </summary>
+        /// <param name="columnName">The name of the computed column</param>
+        /// <param name="computation">The computation for the column</param>
+        void AddComputedColumn(string columnName, Func<IForeignDataReader, Object> computation);
+
+        /// <summary>
+        /// Clear computed columns
+        /// </summary>
+        void ClearComputedColumns();
+
+        /// <summary>
+        /// True if the source reader has a computed column
+        /// </summary>
+        /// <param name="columnName">The column name</param>
+        /// <returns>True if the source reader has the computed column</returns>
+        bool HasComputedColumn(string columnName);
 
         /// <summary>
         /// Set the value of the current record for the field

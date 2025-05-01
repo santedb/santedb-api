@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Map;
@@ -31,6 +33,12 @@ namespace SanteDB.Core.Data.Import.Definition
     [XmlType(nameof(ForeignDataObjectMap), Namespace = "http://santedb.org/import")]
     public class ForeignDataObjectMap : ForeignDataMapBase
     {
+
+        /// <summary>
+        /// Computed columns
+        /// </summary>
+        [XmlArray("computedColumns"), XmlArrayItem("column"), JsonProperty("computedColumns")]
+        public List<ForeignDataComputedColumn> ComputedColumns { get; set; }
 
         /// <summary>
         /// The SanteDB resource which should be mapped
