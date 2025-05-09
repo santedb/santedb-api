@@ -18,6 +18,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
@@ -112,6 +113,43 @@ namespace SanteDB.Core.Notifications
         /// </summary>
         [XmlElement("target"), JsonProperty("target")]
         public String TargetExpression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time the notification instance was last sent
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(LastSentAtXml))]
+        public DateTimeOffset? LastSentAt { get; set; }
+
+        /// <summary>
+        /// ISO formatted time the notification instance was last sent
+        /// </summary>
+        /// <seealso cref="LastSentAt"/>
+        /// <exception cref="FormatException">When the format of the provided string does not conform to ISO date format</exception>
+        [XmlElement("lastSentAt"), JsonProperty("lastSentAt"), SerializationMetadata]
+        public String LastSentAtXml
+        {
+            get { return this.LastSentAt?.ToString("o", CultureInfo.InvariantCulture); }
+            set
+            {
+                DateTimeOffset val = default(DateTimeOffset);
+                if (value != null)
+                {
+                    if (DateTimeOffset.TryParseExact(value, "o", CultureInfo.InvariantCulture, DateTimeStyles.None, out val) ||
+                        DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out val))
+                    {
+                        this.LastSentAt = val;
+                    }
+                    else
+                    {
+                        throw new FormatException($"Date {value} was not recognized as a valid date format");
+                    }
+                }
+                else
+                {
+                    this.LastSentAt = null;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the instance parameters
