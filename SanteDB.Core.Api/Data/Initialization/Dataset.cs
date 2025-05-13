@@ -213,6 +213,7 @@ namespace SanteDB.Core.Data.Initialization
         [XmlElement("EntityIdentifier", typeof(EntityIdentifier), Namespace = "http://santedb.org/model")]
         [XmlElement("TextObservation", typeof(TextObservation), Namespace = "http://santedb.org/model")]
         [XmlElement("PatientEncounter", typeof(PatientEncounter), Namespace = "http://santedb.org/model")]
+        [XmlElement("RelationshipValidationRule", typeof(RelationshipValidationRule), Namespace = "http://santedb.org/model")]
         public IdentifiedData Element { get; set; }
 
         /// <summary>
