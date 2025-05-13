@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
+ * User: fyfej
+ * Date: 2023-6-21
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Audit;
@@ -77,19 +79,19 @@ namespace SanteDB.Core.Security
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate, bool validOnly = false)
         {
-            return TryGetCertificate(findType, findValue, StoreName.My, StoreLocation.CurrentUser, out certificate);
+            return TryGetCertificate(findType, findValue, StoreName.My, StoreLocation.CurrentUser, out certificate, validOnly);
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate, bool validOnly = false)
         {
-            return TryGetCertificate(findType, findValue, storeName, StoreLocation.CurrentUser, out certificate);
+            return TryGetCertificate(findType, findValue, storeName, StoreLocation.CurrentUser, out certificate, validOnly);
         }
 
         ///<inheritdoc />
-        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate)
+        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate, bool validOnly = false)
         {
             if (findValue == null)
             {
@@ -102,7 +104,7 @@ namespace SanteDB.Core.Security
                 {
                     store.Open(OpenFlags.ReadOnly);
 
-                    var certs = store.Certificates.Find(findType, findValue, validOnly: false); // since the user is asking for a specific certificate allow for searching of invalid certificates
+                    var certs = store.Certificates.Find(findType, findValue, validOnly: validOnly); // since the user is asking for a specific certificate allow for searching of invalid certificates
 
                     if (certs.Count == 0)
                     {
