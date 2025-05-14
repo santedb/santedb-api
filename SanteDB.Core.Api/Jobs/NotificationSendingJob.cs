@@ -16,17 +16,28 @@
  * the License.
  * 
  */
+using Newtonsoft.Json;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Query;
 using SanteDB.Core.Notifications;
+using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace SanteDB.Core.Jobs
 {
+    class RapidProData
+    {
+        public Guid Contact { get; set; }
+        public string Text { get; set; }
+    }
+
     /// <summary>
     /// </summary>
     public class NotificationSendingJob : IJob
@@ -83,6 +94,24 @@ namespace SanteDB.Core.Jobs
 
         }
 
+        static async Task PostAsync(HttpClient httpClient)
+        {
+            var data = new RapidProData
+            {
+                Contact = Guid.Empty,
+                Text = "test"
+            };
+
+            var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await httpClient.PostAsync(
+                "https://app.rapidpro.io/api/v2/messages.json",
+                content);
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"{jsonResponse}\n");
+        }
+
         /// <inheritdoc/>
         public void Run(object sender, EventArgs e, object[] parameters)
         {
@@ -91,17 +120,22 @@ namespace SanteDB.Core.Jobs
                 this.m_jobStateManager.SetState(this, JobStateType.Running);
                 this.m_cancelRequested = false;
                 this.LastStarted = DateTime.Now;
+                var httpClient = new HttpClient();
 
-                var enabledNotifications = this.m_repositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
-  
-                enabledNotifications.ForEach(notification =>
+                using (AuthenticationContext.EnterSystemContext())
                 {
-                    // Send if notification is due
-                    if (!this.m_cancelRequested)
+                    var enabledNotifications = this.m_repositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
+
+                    enabledNotifications.ForEach(notification =>
                     {
-                        Console.WriteLine("Notification Sent");
-                    }
-                });
+                        // Send if notification is due
+                        if (!this.m_cancelRequested)
+                        {
+                            PostAsync(httpClient).GetAwaiter().GetResult();
+                            Console.WriteLine("Notification Sent");
+                        }
+                    });
+                }
 
                 if (this.m_cancelRequested)
                 {
