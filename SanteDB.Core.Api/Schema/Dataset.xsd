@@ -79,7 +79,7 @@
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q33="http://santedb.org/model" name="EntityIdentifier" type="q33:EntityIdentifier" />
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q34="http://santedb.org/model" ref="q34:TextObservation" />
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q35="http://santedb.org/model" ref="q35:PatientEncounter" />
-        <xs:element minOccurs="0" maxOccurs="1" xmlns:q36="http://santedb.org/model" ref="q36:RelationshipValidationRule" />
+        		<xs:element minOccurs="0" maxOccurs="1" xmlns:q36="http://santedb.org/model" ref="q36:RelationshipValidationRule" />
 			</xs:choice>
 			<xs:element minOccurs="0" maxOccurs="unbounded" name="associate" type="tns:DataAssociation" />
 		</xs:sequence>
