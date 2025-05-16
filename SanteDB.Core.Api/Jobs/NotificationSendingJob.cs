@@ -19,6 +19,8 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -125,14 +127,32 @@ namespace SanteDB.Core.Jobs
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     var enabledNotifications = this.m_repositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
-
                     enabledNotifications.ForEach(notification =>
                     {
-                        // Send if notification is due
                         if (!this.m_cancelRequested)
                         {
-                            PostAsync(httpClient).GetAwaiter().GetResult();
-                            Console.WriteLine("Notification Sent");
+                            var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
+                            var triggermethod = triggerExpression.Compile();
+
+                            var isNotificationDue = triggermethod(notification);
+                            if (isNotificationDue)
+                            {
+                                var entityType = notification.EntityType;
+                                var entityRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
+
+                                var filterExpression = QueryExpressionParser.BuildLinqExpression<SecurityUser>(notification.FilterExpression);
+                                var filterMethod = filterExpression.Compile();
+
+                                var entities = entityRepository.Find(entity => true).ToArray();
+                                entities.ForEach(entity =>
+                                {
+                                    if (filterMethod(entity))
+                                    {
+                                        // PostAsync(httpClient).GetAwaiter().GetResult();
+                                        Console.WriteLine("Notification Sent");
+                                    }
+                                });
+                            }
                         }
                     });
                 }
