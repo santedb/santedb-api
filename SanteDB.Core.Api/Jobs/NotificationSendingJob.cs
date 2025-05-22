@@ -48,7 +48,7 @@ namespace SanteDB.Core.Jobs
 
         private readonly IJobStateManagerService m_jobStateManager;
 
-        private readonly IRepositoryService<NotificationInstance> m_repositoryService;
+        private readonly IRepositoryService<NotificationInstance> m_notificationRepositoryService;
 
         private bool m_cancelRequested = false;
 
@@ -81,11 +81,11 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Dependency injected constructor
         /// </summary>
-        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> repositoryService)
+        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> notificationRepositoryService)
         {
             this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
-            this.m_repositoryService = repositoryService;
+            this.m_notificationRepositoryService = notificationRepositoryService;
         }
 
         /// <inheritdoc/>
@@ -126,7 +126,7 @@ namespace SanteDB.Core.Jobs
 
                 using (AuthenticationContext.EnterSystemContext())
                 {
-                    var enabledNotifications = this.m_repositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
+                    var enabledNotifications = this.m_notificationRepositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
                     enabledNotifications.ForEach(notification =>
                     {
                         if (!this.m_cancelRequested)
@@ -144,6 +144,7 @@ namespace SanteDB.Core.Jobs
                                 var filterMethod = filterExpression.Compile();
 
                                 notification.LastSentAt = DateTime.Now;
+                                m_notificationRepositoryService.Save(notification);
 
                                 var entities = entityRepository.Find(entity => true).ToArray();
                                 entities.ForEach(entity =>
@@ -151,7 +152,7 @@ namespace SanteDB.Core.Jobs
                                     if (filterMethod(entity))
                                     {
                                         // PostAsync(httpClient).GetAwaiter().GetResult();
-                                        Console.WriteLine("Notification Sent");
+                                        Console.WriteLine($"Notification Sent for {entity.Type}: {entity.Key}");
                                     }
                                 });
                             }
