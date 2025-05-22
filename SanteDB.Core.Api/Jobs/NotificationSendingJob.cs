@@ -132,16 +132,18 @@ namespace SanteDB.Core.Jobs
                         if (!this.m_cancelRequested)
                         {
                             var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
-                            var triggermethod = triggerExpression.Compile();
+                            var triggerMethod = triggerExpression.Compile();
 
-                            var isNotificationDue = triggermethod(notification);
+                            var isNotificationDue = triggerMethod(notification);
                             if (isNotificationDue)
                             {
                                 var entityType = notification.EntityType;
-                                var entityRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<SecurityUser>>();
+                                var entityRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<Patient>>();
 
-                                var filterExpression = QueryExpressionParser.BuildLinqExpression<SecurityUser>(notification.FilterExpression);
+                                var filterExpression = QueryExpressionParser.BuildLinqExpression<Patient>(notification.FilterExpression);
                                 var filterMethod = filterExpression.Compile();
+
+                                notification.LastSentAt = DateTime.Now;
 
                                 var entities = entityRepository.Find(entity => true).ToArray();
                                 entities.ForEach(entity =>
