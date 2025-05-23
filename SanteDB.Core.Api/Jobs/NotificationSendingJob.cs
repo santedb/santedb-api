@@ -29,8 +29,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using SanteDB.Core.Notifications.Email;
 
 namespace SanteDB.Core.Jobs
 {
@@ -38,6 +41,8 @@ namespace SanteDB.Core.Jobs
     {
         public Guid Contact { get; set; }
         public string Text { get; set; }
+
+        private readonly string RAPID_PRO_API_KEY = "";
     }
 
     /// <summary>
@@ -49,6 +54,8 @@ namespace SanteDB.Core.Jobs
         private readonly IJobStateManagerService m_jobStateManager;
 
         private readonly IRepositoryService<NotificationInstance> m_notificationRepositoryService;
+
+        private readonly IEmailService m_emailService;
 
         private bool m_cancelRequested = false;
 
@@ -81,11 +88,12 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Dependency injected constructor
         /// </summary>
-        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> notificationRepositoryService)
+        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> repositoryService, IEmailService emailService)
         {
             this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
-            this.m_notificationRepositoryService = notificationRepositoryService;
+            this.m_notificationRepositoryService = repositoryService;
+            m_emailService = emailService;
         }
 
         /// <inheritdoc/>
@@ -96,22 +104,48 @@ namespace SanteDB.Core.Jobs
 
         }
 
-        static async Task PostAsync(HttpClient httpClient)
+        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance)
         {
-            var data = new RapidProData
+            // retrieve tags for channel types
+            var channelTypes = notificationInstance.NotificationTemplate.Tags.Split(',');
+
+            foreach (var channel in channelTypes)
             {
-                Contact = Guid.Empty,
-                Text = "test"
-            };
+                switch (channel)
+                {
+                    case "email":
+                        var emailMessage = new EmailMessage()
+                        {
+                            ToAddresses = new List<string>(),
+                            FromAddress = "example@example.com",
+                            Subject = notificationInstance.NotificationTemplate.Contents[0].Subject,
+                            Body = notificationInstance.NotificationTemplate.Contents[0].Body
+                        };
+                        this.m_emailService.SendEmail(emailMessage);
+                        Console.WriteLine("email sent");
+                        Console.WriteLine(emailMessage.Body);
+                        break;
+                    case "sms":
+                        Console.WriteLine("send a text message");
+                        break;
+                    case "facebook":
+                        var data = new RapidProData
+                        {
+                            Contact = new Guid(""),
+                            Text = notificationInstance.NotificationTemplate.Contents[0].Body
+                        }; 
+                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
 
-            var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        HttpResponseMessage response = await httpClient.PostAsync( "https://app.rapidpro.io/api/v2/messages.json", content);
 
-            HttpResponseMessage response = await httpClient.PostAsync(
-                "https://app.rapidpro.io/api/v2/messages.json",
-                content);
-
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"{jsonResponse}\n");
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"{jsonResponse}\n");
+                        break;
+                    default:
+                        Console.WriteLine("unknown channel");
+                        break;
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -127,10 +161,16 @@ namespace SanteDB.Core.Jobs
                 using (AuthenticationContext.EnterSystemContext())
                 {
                     var enabledNotifications = this.m_notificationRepositoryService.Find(i => i.StateKey != Guid.Parse("1E029E45-734E-4514-9CA4-E1E487883562")).ToArray();
-                    enabledNotifications.ForEach(notification =>
+                    enabledNotifications.ForEach(async notification =>
                     {
                         if (!this.m_cancelRequested)
                         {
+                            // retrieve all contacts
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", "CLHM2PFCZS4873C4YLAFARGB4XAJCWDSJHLZSEXH");
+                            httpClient.DefaultRequestHeaders.Host = "app.rapidpro.io";
+                            var contactList =  httpClient.GetAsync("https://app.rapidpro.io/api/v2/contacts.json").GetAwaiter().GetResult();
+                            var channelTypes =  httpClient.GetAsync(" https://app.rapidpro.io/api/v2/channels.json").GetAwaiter().GetResult();
+
                             var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
                             var triggerMethod = triggerExpression.Compile();
 
@@ -151,7 +191,7 @@ namespace SanteDB.Core.Jobs
                                 {
                                     if (filterMethod(entity))
                                     {
-                                        // PostAsync(httpClient).GetAwaiter().GetResult();
+                                        PostAsync(httpClient, notification).GetAwaiter().GetResult();
                                         Console.WriteLine($"Notification Sent for {entity.Type}: {entity.Key}");
                                     }
                                 });
