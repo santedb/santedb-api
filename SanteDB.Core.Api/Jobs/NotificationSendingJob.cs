@@ -17,10 +17,7 @@
  * 
  */
 using Newtonsoft.Json;
-using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Query;
-using SanteDB.Core.Model.Roles;
-using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
@@ -30,10 +27,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using SanteDB.Core.Notifications.Email;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model;
+using System.Reflection;
+using SanteDB.Core.Model.Entities;
 
 namespace SanteDB.Core.Jobs
 {
@@ -177,23 +178,20 @@ namespace SanteDB.Core.Jobs
                             var isNotificationDue = triggerMethod(notification);
                             if (isNotificationDue)
                             {
-                                var entityType = notification.EntityType;
-                                var entityRepository = ApplicationServiceContext.Current.GetService<IRepositoryService<Patient>>();
+                                var entityTypeConcept = ApplicationServiceContext.Current.GetService<IRepositoryService<Concept>>().Get(notification.EntityTypeKey);
+                                var type = typeof(IdentifiedData).Assembly.ExportedTypes.FirstOrDefault(c => c.GetCustomAttributes<ClassConceptKeyAttribute>().Any(x => x.ClassConcept == entityTypeConcept.Key.ToString()));
 
-                                var filterExpression = QueryExpressionParser.BuildLinqExpression<Patient>(notification.FilterExpression);
-                                var filterMethod = filterExpression.Compile();
+                                var entityRepositoryService = ApplicationServiceContext.Current.GetService(typeof(IRepositoryService<>).MakeGenericType(type)) as IRepositoryService;
+                                var filterExpression = QueryExpressionParser.BuildLinqExpression(type, notification.FilterExpression.ParseQueryString());
+                                var filteredEntities = entityRepositoryService.Find(filterExpression).Cast<Entity>().ToArray();
 
                                 notification.LastSentAt = DateTime.Now;
-                                m_notificationRepositoryService.Save(notification);
+                                this.m_notificationRepositoryService.Save(notification);
 
-                                var entities = entityRepository.Find(entity => true).ToArray();
-                                entities.ForEach(entity =>
+                                filteredEntities.ForEach(entity =>
                                 {
-                                    if (filterMethod(entity))
-                                    {
-                                        PostAsync(httpClient, notification).GetAwaiter().GetResult();
-                                        Console.WriteLine($"Notification Sent for {entity.Type}: {entity.Key}");
-                                    }
+                                    PostAsync(httpClient, notification).GetAwaiter().GetResult();
+                                    Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
                                 });
                             }
                         }
