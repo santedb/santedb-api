@@ -203,7 +203,7 @@ namespace SanteDB.Core.Jobs
                                 var filterExpression = QueryExpressionParser.BuildLinqExpression(type, notification.FilterExpression.ParseQueryString());
                                 var filteredEntities = entityRepositoryService.Find(filterExpression).Cast<Entity>().ToArray();
 
-                                notification.LastSentAt = DateTime.Now;
+                                notification.LastSentAt = DateTimeOffset.Now;
                                 this.m_notificationRepositoryService.Save(notification);
 
                                 filteredEntities.ForEach(entity =>
