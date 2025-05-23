@@ -107,5 +107,35 @@ namespace SanteDB.Core.Notifications.Templating
                 Language = templateContent.Language
             };
         }
+
+        public NotificationTemplateContents FillTemplate(NotificationInstance template, string templateLanguage, IDictionary<string, object> model)
+        {
+            var templateContent = template.NotificationTemplate.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
+
+            if (null == template || null == templateContent)
+            {
+                throw new KeyNotFoundException($"Could not find template id: \"{template.NotificationTemplate.Key}\" and language {templateLanguage}.");
+            }
+
+            string replacer(Match match)
+            {
+                var namegroup = match.Groups[1];
+
+                if (namegroup.Success != true || string.IsNullOrWhiteSpace(namegroup.Value))
+                    return null;
+
+                if (model.TryGetValue(namegroup.Value, out var val))
+                    return val?.ToString() ?? null;
+                else
+                    return null;
+            };
+
+            return new NotificationTemplateContents()
+            {
+                Body = m_parmRegex.Replace(templateContent.Body, replacer),
+                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+                Language = templateContent.Language
+            };
+        }
     }
 }

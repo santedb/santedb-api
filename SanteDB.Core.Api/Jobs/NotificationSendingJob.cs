@@ -55,8 +55,12 @@ namespace SanteDB.Core.Jobs
         private readonly IJobStateManagerService m_jobStateManager;
 
         private readonly IRepositoryService<NotificationInstance> m_notificationRepositoryService;
+        private readonly IRepositoryService<NotificationTemplate> m_notificationTemplateService;
+        private readonly IRepositoryService<NotificationTemplateParameter> m_notificationTemplateParametersService;
 
         private readonly IEmailService m_emailService;
+
+        private readonly INotificationTemplateFiller m_notificationTemplateFiller;
 
         private bool m_cancelRequested = false;
 
@@ -89,12 +93,15 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Dependency injected constructor
         /// </summary>
-        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> repositoryService, IEmailService emailService)
+        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> repositoryService, IEmailService emailService, INotificationTemplateFiller notificationTemplateFiller, IRepositoryService<NotificationTemplate> notificationTemplateService, IRepositoryService<NotificationTemplateParameter> notificationTemplateParametersService)
         {
             this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
             this.m_notificationRepositoryService = repositoryService;
             m_emailService = emailService;
+            m_notificationTemplateFiller = notificationTemplateFiller;
+            this.m_notificationTemplateService = notificationTemplateService;
+            m_notificationTemplateParametersService = notificationTemplateParametersService;
         }
 
         /// <inheritdoc/>
@@ -108,7 +115,17 @@ namespace SanteDB.Core.Jobs
         public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance)
         {
             // retrieve tags for channel types
-            var channelTypes = notificationInstance.NotificationTemplate.Tags.Split(',');
+            var template =  this.m_notificationTemplateService.Get(notificationInstance.NotificationTemplateKey);
+            notificationInstance.NotificationTemplate = template;
+            var channelTypes = template.Tags.Split(',');
+            var model = new Dictionary<string, object>();
+            foreach (var parameter in notificationInstance.InstanceParameters)
+            {
+                var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
+                model.Add(paramName.Name, parameter.Expression);
+            }
+            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, "en", model);
+
 
             foreach (var channel in channelTypes)
             {
@@ -119,8 +136,8 @@ namespace SanteDB.Core.Jobs
                         {
                             ToAddresses = new List<string>(),
                             FromAddress = "example@example.com",
-                            Subject = notificationInstance.NotificationTemplate.Contents[0].Subject,
-                            Body = notificationInstance.NotificationTemplate.Contents[0].Body
+                            Subject = filledTemplate.Body,
+                            Body = filledTemplate.Subject
                         };
                         this.m_emailService.SendEmail(emailMessage);
                         Console.WriteLine("email sent");
@@ -130,17 +147,18 @@ namespace SanteDB.Core.Jobs
                         Console.WriteLine("send a text message");
                         break;
                     case "facebook":
-                        var data = new RapidProData
-                        {
-                            Contact = new Guid(""),
-                            Text = notificationInstance.NotificationTemplate.Contents[0].Body
-                        }; 
-                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        //var data = new RapidProData
+                        //{
+                        //    Contact = new Guid(),
+                        //    Text = filledTemplate.Body
+                        //}; 
+                        //var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
 
-                        HttpResponseMessage response = await httpClient.PostAsync( "https://app.rapidpro.io/api/v2/messages.json", content);
+                        //HttpResponseMessage response = await httpClient.PostAsync( "https://app.rapidpro.io/api/v2/messages.json", content);
 
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"{jsonResponse}\n");
+                        //var jsonResponse = await response.Content.ReadAsStringAsync();
+                        //Console.WriteLine($"{jsonResponse}\n");
+                        Console.WriteLine("facebook via RapidPro");
                         break;
                     default:
                         Console.WriteLine("unknown channel");
@@ -190,10 +208,11 @@ namespace SanteDB.Core.Jobs
 
                                 filteredEntities.ForEach(entity =>
                                 {
-                                    PostAsync(httpClient, notification).GetAwaiter().GetResult();
+                                    //PostAsync(httpClient, notification).GetAwaiter().GetResult();
                                     Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
                                 });
                             }
+                            PostAsync(httpClient, notification).GetAwaiter().GetResult();
                         }
                     });
                 }
