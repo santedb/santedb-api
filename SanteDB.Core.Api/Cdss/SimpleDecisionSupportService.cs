@@ -299,8 +299,8 @@ namespace SanteDB.Core.Cdss
                         {
                             return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
                                 (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
-                                (act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
-                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.IsoWeek() == periodOutput.IsoWeek());
+                                ((act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
+                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek()));
                         }).ToList();
                     }
                     if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
@@ -322,22 +322,16 @@ namespace SanteDB.Core.Cdss
 
                             // First we want to find a candidate which has the same period properties
                             var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
-                            var periodEnd = act.StopTime;
+                            var periodEnd = act.StopTime ?? act.ActTime.Value.AddDays(7);
 
-                            // If the period permits today - but the act time is not today then adjust
-                            if(periodStart <= DateTimeOffset.Now && periodEnd >= DateTimeOffset.Now && act.ActTime < DateTimeOffset.Now)
-                            {
-                                act.ActTime = DateTimeOffset.Now.EnsureWeekday();
-                            }
-
-                            // Find a candidate bsed on the start and end time
+                            // Find a candidate based on the start and end time
                             var candidate = encounters.Find(c =>
                                 periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
-                                (periodEnd ?? DateTimeOffset.MaxValue) >= c.StartTime);
+                                periodEnd >= c.StartTime);
 
                             if(candidate != null &&
                                 (candidate?.StopTime == null && 
-                                Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(periodStart.Value).TotalDays ?? 0) > 28 ||
+                                Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(candidate.StartTime.Value).TotalDays ?? 0) > 28 ||
                                 (candidate.ActTime.GreaterOf(candidate.StartTime).Value.Month != periodStart.Value.Month))) // Don't allow multi-month suggestions
                             {
                                 candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);

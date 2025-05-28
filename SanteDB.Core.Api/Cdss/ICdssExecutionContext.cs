@@ -41,5 +41,9 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         IdentifiedData Target { get; }
 
+        /// <summary>
+        /// Gets the type of target which the context is set for
+        /// </summary>
+        Type TargetType { get; }
     }
 }
