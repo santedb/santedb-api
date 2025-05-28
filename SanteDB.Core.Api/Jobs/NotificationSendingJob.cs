@@ -34,18 +34,13 @@ using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.DataTypes;
 using SanteDB.Core.Model;
 using System.Reflection;
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
+using SanteDB.Core.Notifications.RapidPro;
+using System.Globalization;
 
 namespace SanteDB.Core.Jobs
 {
-    class RapidProData
-    {
-        public Guid Contact { get; set; }
-        public string Text { get; set; }
-
-        private readonly string RAPID_PRO_API_KEY = "";
-    }
-
     /// <summary>
     /// </summary>
     public class NotificationSendingJob : IJob
@@ -68,6 +63,17 @@ namespace SanteDB.Core.Jobs
         /// Job Id
         /// </summary>
         public static readonly Guid JOB_ID = Guid.Parse("A5C97883-A21E-4C33-B428-E69002B7A453");
+
+        /// <summary>
+        /// API KEY to be moved to the configuration
+        /// </summary>
+        public static readonly string RAPIDPRO_API_KEY = "CLHM2PFCZS4873C4YLAFARGB4XAJCWDSJHLZSEXH";
+
+        /// <summary>
+        /// Endpoints for the RapidPro API
+        /// </summary>
+        public static readonly string RAPIDPRO_CONTACTS_ENDPOINT = "https://app.rapidpro.io/api/v2/contacts.json";
+        public static readonly string RAPIDPRO_MESSAGE_ENDPOINT = "https://app.rapidpro.io/api/v2/messages.json";
 
         /// <inheritdoc/>
         public Guid Id => JOB_ID;
@@ -98,10 +104,10 @@ namespace SanteDB.Core.Jobs
             this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
             this.m_notificationRepositoryService = repositoryService;
-            m_emailService = emailService;
-            m_notificationTemplateFiller = notificationTemplateFiller;
+            this.m_emailService = emailService;
+            this.m_notificationTemplateFiller = notificationTemplateFiller;
             this.m_notificationTemplateService = notificationTemplateService;
-            m_notificationTemplateParametersService = notificationTemplateParametersService;
+            this.m_notificationTemplateParametersService = notificationTemplateParametersService;
         }
 
         /// <inheritdoc/>
@@ -112,56 +118,47 @@ namespace SanteDB.Core.Jobs
 
         }
 
-        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance)
+        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance, Object contactList, Entity notificationEntity)
         {
-            // retrieve tags for channel types
+            // retrieve template data
             var template =  this.m_notificationTemplateService.Get(notificationInstance.NotificationTemplateKey);
             notificationInstance.NotificationTemplate = template;
+
+            // retrieve tags for channel types
             var channelTypes = template.Tags.Split(',');
+
+            // fill in the template
             var model = new Dictionary<string, object>();
             foreach (var parameter in notificationInstance.InstanceParameters)
             {
                 var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
                 model.Add(paramName.Name, parameter.Expression);
             }
-            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, "en", model);
+            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
 
 
             foreach (var channel in channelTypes)
             {
                 switch (channel)
                 {
-                    case "email":
-                        var emailMessage = new EmailMessage()
-                        {
-                            ToAddresses = new List<string>(),
-                            FromAddress = "example@example.com",
-                            Subject = filledTemplate.Body,
-                            Body = filledTemplate.Subject
-                        };
-                        this.m_emailService.SendEmail(emailMessage);
-                        Console.WriteLine("email sent");
-                        Console.WriteLine(emailMessage.Body);
-                        break;
-                    case "sms":
-                        Console.WriteLine("send a text message");
-                        break;
                     case "facebook":
-                        //var data = new RapidProData
-                        //{
-                        //    Contact = new Guid(),
-                        //    Text = filledTemplate.Body
-                        //}; 
-                        //var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        //find a contact by the name
+                        //var computedName = notificationEntity.Names
+                        //var selectedEntity = contactList.Find(entity => entity.name.Contains(computedName));
 
-                        //HttpResponseMessage response = await httpClient.PostAsync( "https://app.rapidpro.io/api/v2/messages.json", content);
+                        var data = new
+                        {
+                            Contact = new Guid("fafb5336-a706-4765-9025-0c83ccae6b3e"),
+                            Text = filledTemplate.Body
+                        };
+                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
 
-                        //var jsonResponse = await response.Content.ReadAsStringAsync();
-                        //Console.WriteLine($"{jsonResponse}\n");
-                        Console.WriteLine("facebook via RapidPro");
+                        HttpResponseMessage response = await httpClient.PostAsync(RAPIDPRO_MESSAGE_ENDPOINT, content);
+
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"{jsonResponse}\n");
                         break;
                     default:
-                        Console.WriteLine("unknown channel");
                         break;
                 }
             }
@@ -184,11 +181,15 @@ namespace SanteDB.Core.Jobs
                     {
                         if (!this.m_cancelRequested)
                         {
-                            // retrieve all contacts
-                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", "CLHM2PFCZS4873C4YLAFARGB4XAJCWDSJHLZSEXH");
-                            httpClient.DefaultRequestHeaders.Host = "app.rapidpro.io";
-                            var contactList =  httpClient.GetAsync("https://app.rapidpro.io/api/v2/contacts.json").GetAwaiter().GetResult();
-                            var channelTypes =  httpClient.GetAsync(" https://app.rapidpro.io/api/v2/channels.json").GetAwaiter().GetResult();
+                            httpClient.DefaultRequestHeaders.Clear();
+                            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", RAPIDPRO_API_KEY);
+                            //HACK SOLUTION: The Rapid Pro API returns 403 to any request if UserAgent Header is empty
+                            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Fiddler");
+                            
+                            var contactList = httpClient.GetAsync(RAPIDPRO_CONTACTS_ENDPOINT).GetAwaiter().GetResult();
+                            var contacts = contactList.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                            var contactsJson = JsonConvert.DeserializeObject<RapidProContact>(contacts);
+                            Console.WriteLine(contactsJson);
 
                             var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
                             var triggerMethod = triggerExpression.Compile();
@@ -208,11 +209,10 @@ namespace SanteDB.Core.Jobs
 
                                 filteredEntities.ForEach(entity =>
                                 {
-                                    //PostAsync(httpClient, notification).GetAwaiter().GetResult();
+                                    PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
                                     Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
                                 });
                             }
-                            PostAsync(httpClient, notification).GetAwaiter().GetResult();
                         }
                     });
                 }
