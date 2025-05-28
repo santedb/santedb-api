@@ -60,6 +60,8 @@ namespace SanteDB.Core.Jobs
 
         private bool m_cancelRequested = false;
 
+        private static readonly HttpClient httpClient = new HttpClient();
+
         /// <summary>
         /// Job Id
         /// </summary>
@@ -119,7 +121,7 @@ namespace SanteDB.Core.Jobs
 
         }
 
-        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance, List<RapidProContact> contactList, Entity notificationEntity)
+        private async Task PostAsync(NotificationInstance notificationInstance, List<RapidProContact> contactList, Entity notificationEntity)
         {
             // retrieve template data
             var template =  this.m_notificationTemplateService.Get(notificationInstance.NotificationTemplateKey);
@@ -130,13 +132,14 @@ namespace SanteDB.Core.Jobs
 
             // fill in the template
             var model = new Dictionary<string, object>();
+
             foreach (var parameter in notificationInstance.InstanceParameters)
             {
                 var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
                 model.Add(paramName.Name, parameter.Expression);
             }
-            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
 
+            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
 
             foreach (var channel in channelTypes)
             {
@@ -152,14 +155,12 @@ namespace SanteDB.Core.Jobs
                             Contact = new Guid("fafb5336-a706-4765-9025-0c83ccae6b3e"),
                             Text = filledTemplate.Body
                         };
+
                         var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
 
-                        HttpResponseMessage response = await httpClient.PostAsync(RAPIDPRO_MESSAGE_ENDPOINT, content);
+                        var response = await httpClient.PostAsync(RAPIDPRO_MESSAGE_ENDPOINT, content);
 
                         var jsonResponse = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"{jsonResponse}\n");
-                        break;
-                    default:
                         break;
                 }
             }
@@ -173,7 +174,6 @@ namespace SanteDB.Core.Jobs
                 this.m_jobStateManager.SetState(this, JobStateType.Running);
                 this.m_cancelRequested = false;
                 this.LastStarted = DateTime.Now;
-                var httpClient = new HttpClient();
 
                 using (AuthenticationContext.EnterSystemContext())
                 {
@@ -195,6 +195,7 @@ namespace SanteDB.Core.Jobs
                             var triggerMethod = triggerExpression.Compile();
 
                             var isNotificationDue = triggerMethod(notification);
+                            
                             if (isNotificationDue)
                             {
                                 // HACK: Currently, we only have a reference to the entity key, but no reliable way to determine the Class Concept of that entity. As such, we retrieve the entity, then find the matching Class Concept bound to the entity, in order to determine the correct type to use when constructing the IRepositoryService instance as well as constructing the LINQ expression.
@@ -212,12 +213,11 @@ namespace SanteDB.Core.Jobs
                                 {
                                     try
                                     {
-                                        PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
-                                        Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
+                                        PostAsync( notification, contactsObject, entity).GetAwaiter().GetResult();
                                     }
                                     catch (Exception ex)
                                     {
-                                        throw new Exception("Error sending notification", ex);
+                                        // inject jogger
                                     }
                                 });
                             }
