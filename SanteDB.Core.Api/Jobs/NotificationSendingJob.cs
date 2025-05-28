@@ -210,8 +210,15 @@ namespace SanteDB.Core.Jobs
 
                                 filteredEntities.ForEach(entity =>
                                 {
-                                    PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
-                                    Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
+                                    try
+                                    {
+                                        PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
+                                        Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        throw new Exception("Error sending notification", ex);
+                                    }
                                 });
                             }
                         }
