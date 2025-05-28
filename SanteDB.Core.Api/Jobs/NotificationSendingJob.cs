@@ -197,6 +197,7 @@ namespace SanteDB.Core.Jobs
                             var isNotificationDue = triggerMethod(notification);
                             if (isNotificationDue)
                             {
+                                // HACK: Currently, we only have a reference to the entity key, but no reliable way to determine the Class Concept of that entity. As such, we retrieve the entity, then find the matching Class Concept bound to the entity, in order to determine the correct type to use when constructing the IRepositoryService instance as well as constructing the LINQ expression.
                                 var entityTypeConcept = ApplicationServiceContext.Current.GetService<IRepositoryService<Concept>>().Get(notification.EntityTypeKey);
                                 var type = typeof(IdentifiedData).Assembly.ExportedTypes.FirstOrDefault(c => c.GetCustomAttributes<ClassConceptKeyAttribute>().Any(x => x.ClassConcept == entityTypeConcept.Key.ToString()));
 
@@ -209,7 +210,15 @@ namespace SanteDB.Core.Jobs
 
                                 filteredEntities.ForEach(entity =>
                                 {
-                                    PostAsync(httpClient, notification, contactsObject, entity).GetAwaiter().GetResult();
+                                    try
+                                    {
+                                        PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
+                                        Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        throw new Exception("Error sending notification", ex);
+                                    }
                                 });
                             }
                         }
