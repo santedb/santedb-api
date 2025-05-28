@@ -64,12 +64,21 @@ namespace SanteDB.Core.Notifications
         [XmlElement("expression"), JsonProperty("expression")]
         public string Expression { get; set; }
 
+        /// <summary>
+        /// Gets and sets the source type
+        /// </summary>
         [XmlIgnore, JsonIgnore]
         public Type SourceType => typeof(NotificationInstance);
 
+        /// <summary>
+        /// Gets and sets the source entity key
+        /// </summary>
         [XmlIgnore, JsonIgnore]
         public Guid? SourceEntityKey { get => NotificationInstanceKey; set => NotificationInstanceKey = (Guid)value; }
 
+        /// <summary>
+        /// Gets and sets the source entity
+        /// </summary>
         [XmlIgnore, JsonIgnore]
         public object SourceEntity { get => NotificationInstance; set => NotificationInstance = (NotificationInstance)value; }
     }

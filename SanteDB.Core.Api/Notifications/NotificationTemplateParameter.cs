@@ -44,7 +44,7 @@ namespace SanteDB.Core.Notifications
         /// Gets or sets the notification template
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationTemplateKey))]
-        public NotificationTemplate NotificationTemplate{ get; set; }
+        public NotificationTemplate NotificationTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets the name

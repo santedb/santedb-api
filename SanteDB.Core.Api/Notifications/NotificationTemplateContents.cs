@@ -33,11 +33,18 @@ namespace SanteDB.Core.Notifications
     [JsonObject]
     public class NotificationTemplateContents : NonVersionedEntityData, ISimpleAssociation
     {
+        /// <summary>
+        /// Gets or sets the notification template key
+        /// </summary>
         [XmlElement("template"), JsonProperty("template")]
         public Guid NotificationTemplateKey { get; set; }
 
+        /// <summary>
+        /// Gets or sets the notification template
+        /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationTemplateKey))]
         public NotificationTemplate NotificationTemplate { get; set; }
+
         /// <summary>
         /// Gets or sets the language of the template
         /// </summary>

@@ -30,7 +30,7 @@ using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.Core.Notifications
 {
-    // <summary>
+    /// <summary>
     /// Represents a notification resource
     /// </summary>
     [XmlType(nameof(NotificationInstance), Namespace = "http://santedb.org/notification")]
@@ -83,7 +83,6 @@ namespace SanteDB.Core.Notifications
         [XmlElement("state"), JsonProperty("state")]
         public Guid StateKey { get; set; }
 
-
         /// <summary>
         /// Gets or sets the state of the notification
         /// </summary>
@@ -128,10 +127,11 @@ namespace SanteDB.Core.Notifications
         [XmlElement("lastSentAt"), JsonProperty("lastSentAt"), SerializationMetadata]
         public String LastSentAtXml
         {
-            get { return this.LastSentAt?.ToString("o", CultureInfo.InvariantCulture); }
+            get => this.LastSentAt?.ToString("o", CultureInfo.InvariantCulture);
             set
             {
-                DateTimeOffset val = default(DateTimeOffset);
+                var val = default(DateTimeOffset);
+
                 if (value != null)
                 {
                     if (DateTimeOffset.TryParseExact(value, "o", CultureInfo.InvariantCulture, DateTimeStyles.None, out val) ||
