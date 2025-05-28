@@ -38,6 +38,7 @@ using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Notifications.RapidPro;
 using System.Globalization;
+using Newtonsoft.Json.Linq;
 
 namespace SanteDB.Core.Jobs
 {
@@ -118,7 +119,7 @@ namespace SanteDB.Core.Jobs
 
         }
 
-        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance, Object contactList, Entity notificationEntity)
+        public async Task PostAsync(HttpClient httpClient, NotificationInstance notificationInstance, List<RapidProContact> contactList, Entity notificationEntity)
         {
             // retrieve template data
             var template =  this.m_notificationTemplateService.Get(notificationInstance.NotificationTemplateKey);
@@ -143,7 +144,7 @@ namespace SanteDB.Core.Jobs
                 {
                     case "facebook":
                         //find a contact by the name
-                        //var computedName = notificationEntity.Names
+                        var computedName = notificationEntity.Names;
                         //var selectedEntity = contactList.Find(entity => entity.name.Contains(computedName));
 
                         var data = new
@@ -188,8 +189,7 @@ namespace SanteDB.Core.Jobs
                             
                             var contactList = httpClient.GetAsync(RAPIDPRO_CONTACTS_ENDPOINT).GetAwaiter().GetResult();
                             var contacts = contactList.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                            var contactsJson = JsonConvert.DeserializeObject<RapidProContact>(contacts);
-                            Console.WriteLine(contactsJson);
+                            var contactsObject = JsonConvert.DeserializeObject<List<RapidProContact>>(JObject.Parse(contacts)["results"].ToString());
 
                             var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
                             var triggerMethod = triggerExpression.Compile();
@@ -209,8 +209,7 @@ namespace SanteDB.Core.Jobs
 
                                 filteredEntities.ForEach(entity =>
                                 {
-                                    PostAsync(httpClient, notification, contactList, entity).GetAwaiter().GetResult();
-                                    Console.WriteLine($"Notification Sent for Entity: {entity.Key}");
+                                    PostAsync(httpClient, notification, contactsObject, entity).GetAwaiter().GetResult();
                                 });
                             }
                         }
