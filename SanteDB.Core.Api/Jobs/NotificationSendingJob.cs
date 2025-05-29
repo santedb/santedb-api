@@ -39,6 +39,9 @@ using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Notifications.RapidPro;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
+using SanteDB.Core.Model.Constants;
+using SharpCompress.Common;
+using SanteDB.Core.Diagnostics;
 
 namespace SanteDB.Core.Jobs
 {
@@ -46,21 +49,20 @@ namespace SanteDB.Core.Jobs
     /// </summary>
     public class NotificationSendingJob : IJob
     {
-        private readonly IJobManagerService m_jobManager;
-
         private readonly IJobStateManagerService m_jobStateManager;
 
         private readonly IRepositoryService<NotificationInstance> m_notificationRepositoryService;
         private readonly IRepositoryService<NotificationTemplate> m_notificationTemplateService;
         private readonly IRepositoryService<NotificationTemplateParameter> m_notificationTemplateParametersService;
+        private readonly IRepositoryService<EntityTelecomAddress> m_entityTelecomAddressRepositoryService;
 
-        private readonly IEmailService m_emailService;
+        private readonly Tracer m_tracer;
 
         private readonly INotificationTemplateFiller m_notificationTemplateFiller;
 
-        private bool m_cancelRequested = false;
+        private readonly INotificationService m_notificationService;
 
-        private static readonly HttpClient httpClient = new HttpClient();
+        private bool m_cancelRequested = false;
 
         /// <summary>
         /// Job Id
@@ -68,15 +70,14 @@ namespace SanteDB.Core.Jobs
         public static readonly Guid JOB_ID = Guid.Parse("A5C97883-A21E-4C33-B428-E69002B7A453");
 
         /// <summary>
-        /// API KEY to be moved to the configuration
+        /// Completed successfully state key
         /// </summary>
-        public static readonly string RAPIDPRO_API_KEY = "CLHM2PFCZS4873C4YLAFARGB4XAJCWDSJHLZSEXH";
+        private static readonly Guid COMPLETED_SUCCESSFULLY_STATE_KEY = Guid.Parse("2726BC79-A55A-4FEA-BE2C-627265872DB5");
 
         /// <summary>
-        /// Endpoints for the RapidPro API
+        /// Completed with errors state key
         /// </summary>
-        public static readonly string RAPIDPRO_CONTACTS_ENDPOINT = "https://app.rapidpro.io/api/v2/contacts.json";
-        public static readonly string RAPIDPRO_MESSAGE_ENDPOINT = "https://app.rapidpro.io/api/v2/messages.json";
+        private static readonly Guid COMPLETED_WITH_ERRORS_STATE_KEY = Guid.Parse("92455ACD-ECC2-4E89-9227-94B77B27420D");
 
         /// <inheritdoc/>
         public Guid Id => JOB_ID;
@@ -102,15 +103,16 @@ namespace SanteDB.Core.Jobs
         /// <summary>
         /// Dependency injected constructor
         /// </summary>
-        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IJobManagerService jobManagerService, IRepositoryService<NotificationInstance> repositoryService, IEmailService emailService, INotificationTemplateFiller notificationTemplateFiller, IRepositoryService<NotificationTemplate> notificationTemplateService, IRepositoryService<NotificationTemplateParameter> notificationTemplateParametersService)
+        public NotificationSendingJob(IJobStateManagerService jobStateManagerService, IRepositoryService<NotificationInstance> repositoryService, INotificationTemplateFiller notificationTemplateFiller, IRepositoryService<NotificationTemplate> notificationTemplateService, IRepositoryService<NotificationTemplateParameter> notificationTemplateParametersService, INotificationService notificationService, IRepositoryService<EntityTelecomAddress> entityTelecomAddressRepositoryService)
         {
-            this.m_jobManager = jobManagerService;
             this.m_jobStateManager = jobStateManagerService;
             this.m_notificationRepositoryService = repositoryService;
-            this.m_emailService = emailService;
             this.m_notificationTemplateFiller = notificationTemplateFiller;
             this.m_notificationTemplateService = notificationTemplateService;
             this.m_notificationTemplateParametersService = notificationTemplateParametersService;
+            this.m_notificationService = notificationService;
+            this.m_entityTelecomAddressRepositoryService = entityTelecomAddressRepositoryService;
+            this.m_tracer = Tracer.GetTracer(this.GetType());
         }
 
         /// <inheritdoc/>
@@ -119,51 +121,6 @@ namespace SanteDB.Core.Jobs
             this.m_cancelRequested = true;
             this.m_jobStateManager.SetState(this, JobStateType.Cancelled);
 
-        }
-
-        private async Task PostAsync(NotificationInstance notificationInstance, List<RapidProContact> contactList, Entity notificationEntity)
-        {
-            // retrieve template data
-            var template =  this.m_notificationTemplateService.Get(notificationInstance.NotificationTemplateKey);
-            notificationInstance.NotificationTemplate = template;
-
-            // retrieve tags for channel types
-            var channelTypes = template.Tags.Split(',');
-
-            // fill in the template
-            var model = new Dictionary<string, object>();
-
-            foreach (var parameter in notificationInstance.InstanceParameters)
-            {
-                var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
-                model.Add(paramName.Name, parameter.Expression);
-            }
-
-            var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notificationInstance, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
-
-            foreach (var channel in channelTypes)
-            {
-                switch (channel)
-                {
-                    case "facebook":
-                        //find a contact by the name
-                        var computedName = notificationEntity.Names;
-                        //var selectedEntity = contactList.Find(entity => entity.name.Contains(computedName));
-
-                        var data = new
-                        {
-                            Contact = new Guid("fafb5336-a706-4765-9025-0c83ccae6b3e"),
-                            Text = filledTemplate.Body
-                        };
-
-                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-
-                        var response = await httpClient.PostAsync(RAPIDPRO_MESSAGE_ENDPOINT, content);
-
-                        var jsonResponse = await response.Content.ReadAsStringAsync();
-                        break;
-                }
-            }
         }
 
         /// <inheritdoc/>
@@ -182,15 +139,6 @@ namespace SanteDB.Core.Jobs
                     {
                         if (!this.m_cancelRequested)
                         {
-                            httpClient.DefaultRequestHeaders.Clear();
-                            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", RAPIDPRO_API_KEY);
-                            //HACK SOLUTION: The Rapid Pro API returns 403 to any request if UserAgent Header is empty
-                            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Fiddler");
-                            
-                            var contactList = httpClient.GetAsync(RAPIDPRO_CONTACTS_ENDPOINT).GetAwaiter().GetResult();
-                            var contacts = contactList.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                            var contactsObject = JsonConvert.DeserializeObject<List<RapidProContact>>(JObject.Parse(contacts)["results"].ToString());
-
                             var triggerExpression = QueryExpressionParser.BuildLinqExpression<NotificationInstance>(notification.TriggerExpression);
                             var triggerMethod = triggerExpression.Compile();
 
@@ -207,19 +155,42 @@ namespace SanteDB.Core.Jobs
                                 var filteredEntities = entityRepositoryService.Find(filterExpression).Cast<Entity>().ToArray();
 
                                 notification.LastSentAt = DateTimeOffset.Now;
-                                this.m_notificationRepositoryService.Save(notification);
+
+                                notification.StateKey = COMPLETED_SUCCESSFULLY_STATE_KEY;
 
                                 filteredEntities.ForEach(entity =>
                                 {
                                     try
                                     {
-                                        PostAsync( notification, contactsObject, entity).GetAwaiter().GetResult();
+                                        // retrieve template data
+                                        var template = this.m_notificationTemplateService.Get(notification.NotificationTemplateKey);
+                                        notification.NotificationTemplate = template;
+
+                                        var targetExpression = QueryExpressionParser.BuildLinqExpression<EntityTelecomAddress>(notification.TargetExpression);
+
+                                        var telecomAddress = this.m_entityTelecomAddressRepositoryService.Find(targetExpression).FirstOrDefault()?.IETFValue;
+
+                                        // fill in the template
+                                        var model = new Dictionary<string, object>();
+
+                                        foreach (var parameter in notification.InstanceParameters)
+                                        {
+                                            var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
+                                            model.Add(paramName.Name, parameter.Expression);
+                                        }
+
+                                        var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notification, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
+
+                                        this.m_notificationService.SendNotification(new[] { telecomAddress }, filledTemplate.Subject, filledTemplate.Body);
                                     }
                                     catch (Exception ex)
                                     {
-                                        // inject jogger
+                                        notification.StateKey = COMPLETED_WITH_ERRORS_STATE_KEY;
+                                        this.m_tracer.TraceError("Error sending notification for entity {0}: {1}", entity.Key, ex.ToHumanReadableString());
                                     }
                                 });
+
+                                this.m_notificationRepositoryService.Save(notification);
                             }
                         }
                     });
