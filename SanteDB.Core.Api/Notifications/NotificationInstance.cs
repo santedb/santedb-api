@@ -31,7 +31,7 @@ using SanteDB.Core.Model.Interfaces;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Represents a notification resource
+    /// Represents a notification instance resource
     /// </summary>
     [XmlType(nameof(NotificationInstance), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationInstance), Namespace = "http://santedb.org/notification")]
@@ -66,49 +66,49 @@ namespace SanteDB.Core.Notifications
         public Concept EntityType { get; set; }
 
         /// <summary>
-        /// Gets or sets the mnemonic of the notification
+        /// Gets or sets the mnemonic of the notification instance
         /// </summary>
         [XmlElement("mnemonic"), JsonProperty("mnemonic")]
         public String Mnemonic { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the notification
+        /// Gets or sets the name of the notification instance
         /// </summary>
         [XmlElement("name"), JsonProperty("name")]
         public String Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the state key of the notification
+        /// Gets or sets the state key of the notification instance
         /// </summary>
         [XmlElement("state"), JsonProperty("state")]
         public Guid StateKey { get; set; }
 
         /// <summary>
-        /// Gets or sets the state of the notification
+        /// Gets or sets the state of the notification instance
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(StateKey))]
         public Concept State { get; set; }
 
         /// <summary>
-        /// Gets or sets the description of the notification
+        /// Gets or sets the description of the notification instance
         /// </summary>
         [XmlElement("description"), JsonProperty("description")]
         public String Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the filter for the notification
+        /// Gets or sets the filter for the notification instance
         /// </summary>
         [XmlElement("filter"), JsonProperty("filter")]
         public String FilterExpression { get; set; }
 
         /// <summary>
-        /// Gets or sets the trigger for the notification
+        /// Gets or sets the trigger for the notification instance
         /// </summary>
         [XmlElement("trigger"), JsonProperty("trigger")]
         public String TriggerExpression { get; set; }
 
         /// <summary>
-        /// Gets or sets the trigger for the notification
+        /// Gets or sets the target for the notification instance
         /// </summary>
         [XmlElement("target"), JsonProperty("target")]
         public String TargetExpression { get; set; }

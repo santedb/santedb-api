@@ -28,7 +28,7 @@ using System.Xml.Serialization;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Represents a notification template source
+    /// Represents a notification template resource
     /// </summary>
     [XmlType(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
@@ -36,7 +36,7 @@ namespace SanteDB.Core.Notifications
     public class NotificationTemplate : NonVersionedEntityData
     {
 
-        // Serializer for notification
+        // Serializer for notification template
         private static XmlSerializer s_xsz = new XmlSerializer(typeof(NotificationTemplate));
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace SanteDB.Core.Notifications
         public List<NotificationTemplateParameter> Parameters { get; set; }
 
         /// <summary>
-        /// Load the specified object
+        /// Load the notification template
         /// </summary>
         public static NotificationTemplate Load(Stream s)
         {
@@ -90,7 +90,7 @@ namespace SanteDB.Core.Notifications
         }
 
         /// <summary>
-        /// Notification template
+        /// Save the notification template
         /// </summary>
         public NotificationTemplate Save(Stream s)
         {

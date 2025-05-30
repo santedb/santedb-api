@@ -27,7 +27,7 @@ using SanteDB.Core.Model.Interfaces;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Notification parameter
+    /// Notification template parameter
     /// </summary>
     [XmlType(nameof(NotificationTemplateParameter), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplateParameter), Namespace = "http://santedb.org/notification")]

@@ -26,7 +26,7 @@ using SanteDB.Core.Model.Interfaces;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Notification contents
+    /// Notification template contents
     /// </summary>
     [XmlType(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
@@ -46,19 +46,19 @@ namespace SanteDB.Core.Notifications
         public NotificationTemplate NotificationTemplate { get; set; }
 
         /// <summary>
-        /// Gets or sets the language of the template
+        /// Gets or sets the language of the template contents
         /// </summary>
         [XmlElement("lang"), JsonProperty("lang")]
         public String Language { get; set; }
 
         /// <summary>
-        /// Gets or sets the subject
+        /// Gets or sets the subject of the template contents
         /// </summary>
         [XmlElement("subject"), JsonProperty("subject")]
         public String Subject { get; set; }
 
         /// <summary>
-        /// Gets or sets the body of the templates
+        /// Gets or sets the body of the template contents
         /// </summary>
         [XmlText, JsonProperty("text")]
         public String Body { get; set; }
@@ -76,7 +76,7 @@ namespace SanteDB.Core.Notifications
         public Guid? SourceEntityKey { get => NotificationTemplateKey; set => NotificationTemplateKey = (Guid)value; }
 
         /// <summary>
-        /// gets and sets the source entity
+        /// Gets and sets the source entity
         /// </summary>
         [XmlIgnore, JsonIgnore]
         public object SourceEntity { get => NotificationTemplate; set => NotificationTemplate = (NotificationTemplate)value; }
