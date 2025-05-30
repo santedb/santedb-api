@@ -47,37 +47,6 @@ namespace SanteDB.Core.Notifications.Templating
             this.m_notificationTemplateRepository = notificationTemplateRepository;
         }
 
-        ///// <summary>
-        ///// Fill the specified template based on identifier
-        ///// </summary>
-        //public NotificationTemplate FillTemplate(string id, string lang, dynamic model)
-        //{
-        //    if (model is IReadOnlyDictionary<string, object> dict)
-        //        return FillTemplate(id, lang, dict);
-
-        //    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(model.GetType());
-        //    var modelDict = model as IDictionary<String, Object>;
-        //    var template = this.m_notificationTemplateRepository.Get(id, lang);
-        //    if (template == null)
-        //    {
-        //        throw new KeyNotFoundException(id);
-        //    }
-
-        //    string match_evaluator(Match o)
-        //    {
-        //        return properties[o.Groups[1].Value]?.GetValue(model)?.ToString() ?? (modelDict.TryGetValue(o.Groups[1].Value, out var v) ? v?.ToString() : null);
-        //    }
-        //    ;
-
-        //    return new NotificationTemplate()
-        //    {
-        //        Id = template.Id,
-        //        Body = m_parmRegex.Replace(template.Body, match_evaluator),
-        //        Subject = m_parmRegex.Replace(template.Subject, match_evaluator),
-        //        Language = template.Language
-        //    };
-        //}
-
         ///<inheritdoc />
         public NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model)
         {
@@ -91,15 +60,45 @@ namespace SanteDB.Core.Notifications.Templating
 
             string replacer(Match match)
             {
-                var namegroup = match.Groups[1];
+                var nameGroup = match.Groups[1];
 
-                if (namegroup.Success != true || string.IsNullOrWhiteSpace(namegroup.Value))
+                if (nameGroup.Success != true || string.IsNullOrWhiteSpace(nameGroup.Value))
                     return null;
 
-                if (model.TryGetValue(namegroup.Value, out var val))
-                    return val?.ToString() ?? null;
-                else
+                if (model.TryGetValue(nameGroup.Value, out var val))
+                    return val?.ToString();
+                
+                return null;
+            };
+
+            return new NotificationTemplateContents()
+            {
+                Body = m_parmRegex.Replace(templateContent.Body, replacer),
+                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+                Language = templateContent.Language
+            };
+        }
+
+        public NotificationTemplateContents FillTemplate(NotificationInstance template, string templateLanguage, IDictionary<string, object> model)
+        {
+            var templateContent = template.NotificationTemplate.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
+
+            if (null == template || null == templateContent)
+            {
+                throw new KeyNotFoundException($"Could not find template id: \"{template.NotificationTemplate.Key}\" and language {templateLanguage}.");
+            }
+
+            string replacer(Match match)
+            {
+                var nameGroup = match.Groups[1];
+
+                if (nameGroup.Success != true || string.IsNullOrWhiteSpace(nameGroup.Value))
                     return null;
+
+                if (model.TryGetValue(nameGroup.Value, out var val))
+                    return val?.ToString();
+                
+                return null;
             };
 
             return new NotificationTemplateContents()

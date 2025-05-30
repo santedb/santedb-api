@@ -40,5 +40,6 @@ namespace SanteDB.Core.Notifications
         /// <returns>An instance of <see cref="NotificationTemplate"/> which has been filled in using the <paramref name="model"/> provided.</returns>
         NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model);
 
+        NotificationTemplateContents FillTemplate(NotificationInstance template, string templateLanguage, IDictionary<string, object> model);
     }
 }
