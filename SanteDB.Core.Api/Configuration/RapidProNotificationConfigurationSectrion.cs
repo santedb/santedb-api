@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,33 +16,31 @@
  * the License.
  * 
  */
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
 {
     /// <summary>
-    /// Configuration for the e-mail notification
+    /// Configuration for the RapidPro notification service.
     /// </summary>
     [XmlType(nameof(RapidProNotificationConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class RapidProNotificationConfigurationSection : IConfigurationSection
     {
         /// <summary>
-        /// Twilio Auth Token. This value is found in the Twilio Console under the Account Info section.
+        /// RapidPro API key used to authenticate with the RapidPro API.
         /// </summary>
         [XmlAttribute("apiKey")]
         public String ApiKey { get; set; }
 
         /// <summary>
-        /// E164 phone number to send text messages or place calls from.
+        /// The base address of the RapidPro API.
         /// </summary>
         [XmlAttribute("baseAddress")]
         public String BaseAddress { get; set; }
 
         /// <summary>
-        /// Twilio Account SID. This value is found in the Twilio Console under the Account Info section.
+        /// The user agent to use when making requests to the RapidPro API.
         /// </summary>
         [XmlAttribute("userAgent")]
         public String UserAgent { get; set; }
