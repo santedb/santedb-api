@@ -232,4 +232,9 @@
     <xs:attribute name="value" type="xs:string" />
     <xs:attribute name="provider" type="xs:string" />
   </xs:complexType>
+  <xs:complexType name="RapidProNotificationConfigurationSection">
+    <xs:attribute name="apiKey" type="xs:string" />
+    <xs:attribute name="baseAddress" type="xs:string" />
+    <xs:attribute name="userAgent" type="xs:string" />
+  </xs:complexType>
 </xs:schema>
