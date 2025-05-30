@@ -322,7 +322,7 @@ namespace SanteDB.Core.Cdss
 
                             // First we want to find a candidate which has the same period properties
                             var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
-                            var periodEnd = act.StopTime ?? act.ActTime.Value.AddDays(7);
+                            var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(DateTimeOffset.Now.AddDays(7));
 
                             // Find a candidate based on the start and end time
                             var candidate = encounters.Find(c =>
