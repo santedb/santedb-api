@@ -119,7 +119,7 @@ namespace SanteDB.Core.Data.Import.Format
                         {
                             return compute(this);
                         }
-                        throw new MissingFieldException(name);
+                        throw new MissingFieldException(String.Format(ErrorMessages.FIELD_NOT_FOUND, name));
                     }
                     return m_values[colIndex];
                 }
