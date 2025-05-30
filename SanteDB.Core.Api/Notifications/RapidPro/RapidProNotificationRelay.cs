@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2024, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -16,7 +16,6 @@
  * the License.
  * 
  */
-
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Services;
@@ -28,7 +27,7 @@ using System.Net.Http.Headers;
 namespace SanteDB.Core.Notifications.RapidPro
 {
     /// <summary>
-    /// Notification relay that sends e-mails
+    /// Notification relay that sends notifications through RapidPro
     /// </summary>
     public class RapidProNotificationRelay : INotificationRelay
     {
@@ -50,7 +49,7 @@ namespace SanteDB.Core.Notifications.RapidPro
         public IEnumerable<string> SupportedSchemes => new[] { "rapidPro" };
 
         /// <summary>
-        /// Send the specified e-mail
+        /// Send the specified notification through RapidPro
         /// </summary>
         public Guid Send(string[] toAddress, string subject, string body, DateTimeOffset? scheduleDelivery = null, bool ccAdmins = false, params NotificationAttachment[] attachments)
         {
