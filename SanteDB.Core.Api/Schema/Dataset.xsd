@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
- - Copyright 2021-2024 SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ - Copyright 2021-2025 SanteSuite Contributors (See NOTICE.md for full copyright notices)
  - Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  - Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  - 
@@ -15,6 +15,9 @@
  - WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the 
  - License for the specific language governing permissions and limitations under 
  - the License.
+ - 
+ - User: fyfej
+ - Date: 2023-6-21
  -->
 <xs:schema xmlns:tns="http://santedb.org/data" elementFormDefault="qualified" targetNamespace="http://santedb.org/data" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:import namespace="http://santedb.org/model" schemaLocation="Model.xsd" />
@@ -76,6 +79,7 @@
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q33="http://santedb.org/model" name="EntityIdentifier" type="q33:EntityIdentifier" />
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q34="http://santedb.org/model" ref="q34:TextObservation" />
 				<xs:element minOccurs="0" maxOccurs="1" xmlns:q35="http://santedb.org/model" ref="q35:PatientEncounter" />
+        		<xs:element minOccurs="0" maxOccurs="1" xmlns:q36="http://santedb.org/model" ref="q36:RelationshipValidationRule" />
 			</xs:choice>
 			<xs:element minOccurs="0" maxOccurs="unbounded" name="associate" type="tns:DataAssociation" />
 		</xs:sequence>
