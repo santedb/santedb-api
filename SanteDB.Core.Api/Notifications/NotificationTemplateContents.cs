@@ -21,35 +21,66 @@
 using Newtonsoft.Json;
 using System.Xml.Serialization;
 using System;
+using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.Interfaces;
 
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Notification contents
+    /// Notification template contents
     /// </summary>
     [XmlType(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplateContents), Namespace = "http://santedb.org/notification")]
     [JsonObject]
-    public class NotificationTemplateContents
+    public class NotificationTemplateContents : NonVersionedEntityData, ISimpleAssociation
     {
+        /// <summary>
+        /// Gets or sets the notification template key
+        /// </summary>
+        [XmlElement("template"), JsonProperty("template")]
+        public Guid NotificationTemplateKey { get; set; }
 
         /// <summary>
-        /// Gets or sets the language of the template
+        /// Gets or sets the notification template
         /// </summary>
-        [XmlAttribute("lang"), JsonProperty("lang")]
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(NotificationTemplateKey))]
+        public NotificationTemplate NotificationTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the language of the template contents
+        /// </summary>
+        [XmlElement("lang"), JsonProperty("lang")]
         public String Language { get; set; }
 
         /// <summary>
-        /// Gets or sets the subject
+        /// Gets or sets the subject of the template contents
         /// </summary>
         [XmlElement("subject"), JsonProperty("subject")]
         public String Subject { get; set; }
 
         /// <summary>
-        /// Gets or sets the body of the templates
+        /// Gets or sets the body of the template contents
         /// </summary>
         [XmlText, JsonProperty("text")]
         public String Body { get; set; }
 
+        /// <summary>
+        /// Gets the source type
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Type SourceType => typeof(NotificationTemplate);
+
+        /// <summary>
+        /// Gets and sets the source entity key
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public Guid? SourceEntityKey { get => NotificationTemplateKey; set => NotificationTemplateKey = (Guid)value; }
+
+        /// <summary>
+        /// Gets and sets the source entity
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        public object SourceEntity { get => NotificationTemplate; set => NotificationTemplate = (NotificationTemplate)value; }
     }
 }
