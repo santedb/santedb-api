@@ -56,7 +56,8 @@ namespace SanteDB.Core.Security.Services
         /// <summary>
         /// Clear the policy cache for the specified principal
         /// </summary>
-        void ClearCache(String principalName);
+        void ClearCache<TPrincipalInterface>(String principalName);
+
 
     }
 }

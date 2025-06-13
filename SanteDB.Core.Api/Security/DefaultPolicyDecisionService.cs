@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -193,6 +194,25 @@ namespace SanteDB.Core.Security
             this.m_adhocCacheService?.Remove(cacheKey);
         }
 
+        /// <inheritdoc/>
+        public void ClearCache<TIdentityType>(String principalName)
+        {
+            switch (typeof(TIdentityType).Name)
+            {
+                case nameof(IDeviceIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.dev.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                case nameof(IApplicationIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.app.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                case nameof(IIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.usr.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(TIdentityType));
+            }
+        }
+
         /// <summary>
         /// Get the effective policies (most restrictive of set)
         /// </summary>
@@ -213,7 +233,7 @@ namespace SanteDB.Core.Security
 
                 var allPolicies = pip.GetPolicies();
                 var activePoliciesForObject = pip.GetPolicies(principal);
-                if (principal is IClaimsPrincipal icp && icp.HasClaim(o=>o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // PIP has no information so fallback to the granted policies on the pip
+                if (principal is IClaimsPrincipal icp && icp.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // PIP has no information so fallback to the granted policies on the pip
                 {
                     activePoliciesForObject = activePoliciesForObject.Union(icp.GetGrantedPolicies(pip));
                 }
@@ -246,18 +266,20 @@ namespace SanteDB.Core.Security
         /// </summary>
         protected string ComputeCacheKey(IPrincipal principal)
         {
-            if (principal is IClaimsPrincipal cp)
+            if (principal is IClaimsPrincipal cp && cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
             {
-                if (cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
-                {
-                    return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
-                }
-                else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
-                {
-                    return $"pdp.{this.m_hasher.ComputeHash(nameId)}";
-                }
+                return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
             }
-            return $"pdp.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+
+            switch (principal.Identity)
+            {
+                case IDeviceIdentity id:
+                    return $"pdp.dev.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+                case IApplicationIdentity ia:
+                    return $"pdp.app.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+                default:
+                    return $"pdp.usr.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+            }
         }
 
         /// <summary>
@@ -381,12 +403,5 @@ namespace SanteDB.Core.Security
             }
         }
 
-        /// <summary>
-        /// Clear cache by principal name
-        /// </summary>
-        public void ClearCache(string principalName)
-        {
-            this.m_adhocCacheService?.Remove($"pdp.{this.m_hasher.ComputeHash(principalName)}");
-        }
     }
 }
