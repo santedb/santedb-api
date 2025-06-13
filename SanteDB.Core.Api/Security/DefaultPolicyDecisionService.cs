@@ -195,7 +195,11 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
-        public void ClearCache<TIdentityType>(String principalName)
+        [Obsolete]
+        public void ClearCache(String principalName) => this.ClearCacheByName<IIdentity>(principalName);
+
+        /// <inheritdoc/>
+        public void ClearCacheByName<TIdentityType>(String principalName)
         {
             switch (typeof(TIdentityType).Name)
             {
