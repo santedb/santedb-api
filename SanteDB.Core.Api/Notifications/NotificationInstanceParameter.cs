@@ -47,6 +47,13 @@ namespace SanteDB.Core.Notifications
         public NotificationInstance NotificationInstance { get; set; }
 
         /// <summary>
+        /// Gets or sets the parameter name which this instance references in the template.
+        /// </summary>
+        [XmlElement("templateParameter"), JsonProperty("templateParameter")]
+        public string ParameterName { get; set; }
+
+        /*
+        /// <summary>
         /// Gets or sets the template parameter key
         /// </summary>
         [XmlElement("templateParameter"), JsonProperty("templateParameter")]
@@ -57,6 +64,7 @@ namespace SanteDB.Core.Notifications
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(TemplateParameterKey))]
         public NotificationTemplateParameter TemplateParameter { get; set; }
+        */
 
         /// <summary>
         /// Gets or sets the expression

@@ -173,8 +173,7 @@ namespace SanteDB.Core.Jobs
 
                                         foreach (var parameter in notification.InstanceParameters)
                                         {
-                                            var paramName = this.m_notificationTemplateParametersService.Get(parameter.TemplateParameterKey);
-                                            model.Add(paramName.Name, parameter.Expression);
+                                            model.Add(parameter.ParameterName, parameter.Expression);
                                         }
 
                                         var filledTemplate = this.m_notificationTemplateFiller.FillTemplate(notification, CultureInfo.CurrentCulture.TwoLetterISOLanguageName, model);
