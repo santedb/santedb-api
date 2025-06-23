@@ -273,7 +273,6 @@ namespace SanteDB.Core.Configuration
             var namespaces = this.Sections.OfType<IConfigurationSection>().Select(o => o.GetType().GetCustomAttribute<XmlTypeAttribute>()?.Namespace).OfType<String>().Where(o => o.StartsWith("http://santedb.org/configuration/")).Distinct().Select(o => new XmlQualifiedName(o.Replace("http://santedb.org/configuration/", ""), o)).ToArray();
             XmlSerializerNamespaces xmlns = new XmlSerializerNamespaces(namespaces);
             xmlns.Add("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-            var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.OfType<TypeReferenceConfiguration>().Select(o => o.Type).Where(o => o != null).ToArray());
 
             // Any protected sections we need to encrypt using the configured key
             if (this.ProtectedSectionKey != null)
@@ -309,13 +308,32 @@ namespace SanteDB.Core.Configuration
                         }
 #endif
                     }).ToList();
-                    xsz.Serialize(dataStream, cryptoConfig, xmlns);
+                    
+                    this.SaveInternal(dataStream, cryptoConfig, xmlns);
 
                 }
             }
             else
             {
-                xsz.Serialize(dataStream, this, xmlns);
+                this.SaveInternal(dataStream, this, xmlns);
+            }
+        }
+
+        /// <summary>
+        /// Save the configuration with attribution 
+        /// </summary>
+        private void SaveInternal(Stream dataStream, SanteDBConfiguration santeDBConfiguration, XmlSerializerNamespaces xmlns)
+        {
+            using(var xw = XmlWriter.Create(dataStream,  new XmlWriterSettings() { Indent = true }))
+            {
+                xw.WriteComment($"SanteDB CDR Configuration File");
+                xw.WriteComment($"Created By: {Environment.UserName}");
+                xw.WriteComment($"Host Application: {Assembly.GetEntryAssembly()?.FullName}");
+                xw.WriteComment($"Machine: {Environment.MachineName}");
+                xw.WriteComment($"Timestamp: {DateTimeOffset.Now:o}");
+
+                var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.OfType<TypeReferenceConfiguration>().Select(o => o.Type).Where(o => o != null).ToArray());
+                xsz.Serialize(xw, santeDBConfiguration, xmlns);
             }
         }
 

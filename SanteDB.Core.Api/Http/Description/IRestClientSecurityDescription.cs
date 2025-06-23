@@ -58,6 +58,11 @@ namespace SanteDB.Core.Http.Description
         /// When true instructs the client to pre-emptively authenticate itself
         /// </summary>
         bool PreemptiveAuthentication { get; set; }
+
+        /// <summary>
+        /// Gets the certificate validator
+        /// </summary>
+        ICertificateValidator CertificateValidator { get;  }
     }
 
     /// <summary>
