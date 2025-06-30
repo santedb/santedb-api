@@ -386,6 +386,10 @@ namespace SanteDB.Core
             {
                 tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
             }
+            else if(!File.Exists(asmFile))
+            {
+                tracer.TraceWarning("Cannot verify {0} - no assembly file exists at path", asmFile);
+            }
             else if (!allowUnsignedAssemblies)
             {
                 // Verified assembly?
@@ -395,7 +399,6 @@ namespace SanteDB.Core
                     {
                         var extraCerts = new X509Certificate2Collection();
                         extraCerts.Import(asmFile);
-
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
                         var asmTimestamp = new FileInfo(asmFile).CreationTime;
                         tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
