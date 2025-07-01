@@ -22,6 +22,7 @@ using SanteDB.Core.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core
 {
@@ -64,7 +65,10 @@ namespace SanteDB.Core
         /// </summary>
         public static void Stop()
         {
-            ApplicationServiceContext.Current?.Stop();
+            if (ApplicationServiceContext.Current?.IsRunning == true)
+            {
+                ApplicationServiceContext.Current?.Stop();
+            }
             Tracer.DisposeWriters();
         }
 

@@ -67,6 +67,10 @@ namespace SanteDB.Core.Security.Configuration
     public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection
     {
         /// <summary>
+        /// Require RSA digital siganture certs
+        /// </summary>
+        public const string RequireRsaSignaturesName = "sec.rsaSig.required";
+        /// <summary>
         /// If MFA is required
         /// </summary>
         public const string RequireMfaName = "auth.mfa.required";

@@ -141,8 +141,12 @@ namespace SanteDB.Core.Configuration
         /// True if public backups are permitted
         /// </summary>
         [XmlEnum("backup.public")]
-        AllowPublicBackups
-
+        AllowPublicBackups,
+        /// <summary>
+        /// True if all dCDRS MUST use RSA digital signature certs
+        /// </summary>
+        [XmlEnum("sec.rsaSig.required")]
+        RequireRsaCerts
     }
 
     /// <summary>
