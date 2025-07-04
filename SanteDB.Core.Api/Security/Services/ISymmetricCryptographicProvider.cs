@@ -29,6 +29,10 @@ namespace SanteDB.Core.Security.Services
     [System.ComponentModel.Description("Symmetric Encryption Provider")]
     public interface ISymmetricCryptographicProvider : IServiceImplementation
     {
+        /// <summary>
+        /// Gets the size of the IV this algorithm uses
+        /// </summary>
+        int IVSize { get; }
 
         /// <summary>
         /// Gets the context key

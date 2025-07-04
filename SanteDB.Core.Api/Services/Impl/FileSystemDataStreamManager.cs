@@ -89,7 +89,7 @@ namespace SanteDB.Core.Services.Impl
             var ms = new MemoryStream();
             using (var fs = File.OpenRead(fileName))
             {
-                var iv = new byte[16];
+                var iv = new byte[this.m_symmetricCryptographicProvider.IVSize];
                 fs.Read(iv, 0, iv.Length);
                 using (var cs = this.m_symmetricCryptographicProvider.CreateDecryptingStream(fs, this.m_symmetricCryptographicProvider.GetContextKey(), iv))
                 {
