@@ -53,6 +53,10 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
+        /// <remarks>This is not required on Windows or Linux</remarks>
+        public bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission) => true;
+
+        /// <inheritdoc/>
         public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
         {
             using (var store = new X509Store(storeName, storeLocation))

@@ -44,6 +44,7 @@ namespace SanteDB.Core.Data.Backup
         private readonly IServiceManager m_serviceManager;
         private readonly IPolicyEnforcementService m_pepService;
         private ILocalizationService m_localizationService;
+        private readonly IPlatformSecurityProvider m_platformSecurity;
         private IDictionary<Guid, IRestoreBackupAssets> m_backupAssetClasses;
 
         internal const string BACKUP_EXTENSION = "sdbk";
@@ -63,14 +64,15 @@ namespace SanteDB.Core.Data.Backup
         public DefaultBackupManager(IConfigurationManager configurationManager,
             IServiceManager serviceManager,
             IPolicyEnforcementService pepService,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            IPlatformSecurityProvider platformSecurityProvider)
         {
             this.m_configuration = configurationManager.GetSection<BackupConfigurationSection>();
             this.m_allowPublicBackups = configurationManager.GetSection<SecurityConfigurationSection>().GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false);
             this.m_serviceManager = serviceManager;
             this.m_pepService = pepService;
             this.m_localizationService = localizationService;
-
+            this.m_platformSecurity = platformSecurityProvider;
             this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
 
         }
@@ -93,7 +95,7 @@ namespace SanteDB.Core.Data.Backup
                     // Now fetch the backup services that in the context for restoration which may not be in our configured
                     this.m_serviceManager.CreateInjectedOfAll<IRestoreBackupAssets>()
                         .ForEach(irba =>
-                            irba.AssetClassIdentifiers.Where(c=>!this.m_backupAssetClasses.ContainsKey(c)).ForEach(a=>this.m_backupAssetClasses.Add(a, irba))
+                            irba.AssetClassIdentifiers.Where(c => !this.m_backupAssetClasses.ContainsKey(c)).ForEach(a => this.m_backupAssetClasses.Add(a, irba))
                         );
 
 
@@ -112,7 +114,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
-            else if ((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
+            else if ((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && (!this.m_allowPublicBackups || !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia)))
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.POLICY_PREVENTS_ACTION, SecurityPolicyIdentification.AllowPublicBackups));
             }
@@ -182,11 +184,19 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-            else if (!Directory.Exists(backupPath))
+            else if (media == BackupMedia.Private || this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
             {
-                Directory.CreateDirectory(backupPath);
+                if (!Directory.Exists(backupPath))
+                {
+                    Directory.CreateDirectory(backupPath);
+                }
+                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => new FileBackupDescriptor(new FileInfo(o)));
             }
-            return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => new FileBackupDescriptor(new FileInfo(o)));
+            else
+            {
+                this.m_tracer.TraceWarning("Application does not have permission");
+                return new IBackupDescriptor[0];
+            }
         }
 
         /// <inheritdoc/>
@@ -227,6 +237,10 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
+            else if (media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
+            {
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
+            }
 
             var backupFile = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
             if (!File.Exists(backupFile))
@@ -257,16 +271,20 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-
-            try
+            else if(media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
             {
-                File.Delete(Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION)));
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
             }
-            catch (Exception e)
-            {
-                throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_GEN_ERR), e);
 
-            }
+                try
+                {
+                    File.Delete(Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION)));
+                }
+                catch (Exception e)
+                {
+                    throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_GEN_ERR), e);
+
+                }
 
         }
 
@@ -284,8 +302,12 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
+            else if(media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
+            {
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
+            }
 
-            backupFile = Path.Combine(backupFile, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
+                backupFile = Path.Combine(backupFile, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
             if (!File.Exists(backupFile))
             {
                 throw new FileNotFoundException(backupFile);
