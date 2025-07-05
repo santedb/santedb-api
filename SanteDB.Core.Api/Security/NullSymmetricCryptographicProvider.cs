@@ -15,7 +15,7 @@ namespace SanteDB.Core.Security
     {
 
         /// <inheritdoc/>
-        public int IVSize => 16;
+        public int IVSize => 0;
 
         /// <inheritdoc/>
         public string ServiceName => "NULL Symmetric Encryption Scheme";
@@ -45,7 +45,7 @@ namespace SanteDB.Core.Security
         public string Encrypt(string data) => data;
 
         /// <inheritdoc/>
-        public byte[] GenerateIV() => new byte[16]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public byte[] GenerateIV() => new byte[0];
 
         /// <inheritdoc/>
         public byte[] GenerateKey() => new byte[0];

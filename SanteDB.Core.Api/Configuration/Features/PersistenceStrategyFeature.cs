@@ -191,7 +191,7 @@ namespace SanteDB.Core.Configuration.Features
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
 
             appSection.ServiceProviders.RemoveAll(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
-            appSection.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME] as Type));
+            appSection.AddService(new TypeReferenceConfiguration(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME] as Type));
             configuration.RemoveSection<ResourceManagementConfigurationSection>();
             configuration.AddSection(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MERGE_CONFIG]);
             return true;

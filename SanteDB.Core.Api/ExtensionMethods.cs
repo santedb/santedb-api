@@ -386,7 +386,7 @@ namespace SanteDB.Core
             {
                 tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
             }
-            else if(!File.Exists(asmFile) && ApplicationServiceContext.Current?.HostType != SanteDBHostType.Client)
+            else if(!File.Exists(asmFile))
             {
                 tracer.TraceWarning("Cannot verify {0} - no assembly file exists at path", asmFile);
             }

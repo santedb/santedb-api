@@ -167,7 +167,7 @@ namespace SanteDB.Core.Configuration.Features
 
                 // Look for service type in the services
                 configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.RemoveAll(o => o.Type == serviceType);
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(serviceType));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(serviceType));
 
                 this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(taskidentifier, 0.5f, $"Configuring Service {this.Feature.Name}..."));
                 // Now configure the object

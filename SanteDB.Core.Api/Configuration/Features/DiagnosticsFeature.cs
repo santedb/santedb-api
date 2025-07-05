@@ -189,7 +189,7 @@ namespace SanteDB.Core.Configuration.Features
                     var appSect = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
                     if (!appSect.ServiceProviders.Any(p => p.Type == typeof(RolloverLogManagerService)))
                     {
-                        appSect.ServiceProviders.Add(new TypeReferenceConfiguration(typeof(RolloverLogManagerService)));
+                        appSect.AddService(new TypeReferenceConfiguration(typeof(RolloverLogManagerService)));
                     }
                 }
                 return true;
