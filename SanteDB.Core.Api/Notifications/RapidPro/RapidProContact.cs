@@ -15,54 +15,52 @@
  * License for the specific language governing permissions and limitations under 
  * the License.
  * 
- * User: fyfej
- * Date: 2023-6-21
  */
-using SanteDB.Core.Model.Security;
-using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Security.Principal;
+using Newtonsoft.Json;
 
-namespace SanteDB.Core.Security.Services
+namespace SanteDB.Core.Notifications.RapidPro
 {
     /// <summary>
-    /// Represents a policy decision service
+    /// Represents a contact in RapidPro
     /// </summary>
-    [System.ComponentModel.Description("Policy Decision Provider (PDP)")]
-    public interface IPolicyDecisionService : IServiceImplementation
+    public class RapidProContact
     {
+        /// <summary>
+        /// Gets or sets the name
+        /// </summary>
+        [JsonProperty("name")]
+        public string Name { get; set; }
 
         /// <summary>
-        /// Get all active policies for the specified securable type
+        /// Gets or sets the language
         /// </summary>
-        IEnumerable<IPolicyInstance> GetEffectivePolicySet(IPrincipal securable);
+        [JsonProperty("language")]
+        public string Language { get; set; }
 
         /// <summary>
-        /// Make a simple policy decision for a specific securable
+        /// Gets or sets the phone number
         /// </summary>
-        PolicyDecision GetPolicyDecision(IPrincipal principal, Object securable);
+        [JsonProperty("phone")]
+        public string Phone { get; set; }
 
         /// <summary>
-        /// Get a policy decision outcome (i.e. make a policy decision)
+        /// Gets or sets the email address
         /// </summary>
-        PolicyGrantType GetPolicyOutcome(IPrincipal principal, string policyId);
+        [JsonProperty("email")]
+        public string Email { get; set; }
 
         /// <summary>
-        /// Clear the policy cache for the specified principal
+        /// Gets or sets the uuid
         /// </summary>
-        void ClearCache(IPrincipal principal);
+        [JsonProperty("uuid")]
+        public Guid Uuid { get; set; }
 
         /// <summary>
-        /// Clear the policy cache for the specified principal
+        /// Gets or sets the urns
         /// </summary>
-        void ClearCacheByName<TPrincipalInterface>(String principalName);
-
-        /// <summary>
-        /// Clear the cache for the specified principal
-        /// </summary>
-        [Obsolete()]
-        void ClearCache(String principalName);
+        [JsonProperty("urns")]
+        public List<string> Urns { get; set; }
     }
 }
-

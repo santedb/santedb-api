@@ -255,7 +255,7 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         public void SaveConfiguration(bool restart = true)
         {
-            if (this.IsReadonly)
+            if (this.IsReadonly && AuthenticationContext.Current?.Principal != AuthenticationContext.SystemPrincipal)
             {
                 throw new InvalidOperationException(ErrorMessages.OBJECT_READONLY);
             }

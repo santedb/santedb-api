@@ -22,6 +22,7 @@ using SanteDB.Core.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SanteDB.Core
 {
@@ -37,7 +38,7 @@ namespace SanteDB.Core
         public static void Start(Guid activityId, IApplicationServiceContext applicationServiceContext)
         {
             Trace.CorrelationManager.ActivityId = activityId;
-            Trace.TraceInformation("Starting host context on Console Presentation System at {0}", DateTime.Now);
+            Trace.TraceInformation("Starting host context on Presentation System at {0}", DateTime.Now);
 
             // Do this because loading stuff is tricky ;)
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(CurrentDomain_AssemblyResolve);
@@ -64,7 +65,10 @@ namespace SanteDB.Core
         /// </summary>
         public static void Stop()
         {
-            ApplicationServiceContext.Current?.Stop();
+            if (ApplicationServiceContext.Current?.IsRunning == true)
+            {
+                ApplicationServiceContext.Current?.Stop();
+            }
             Tracer.DisposeWriters();
         }
 

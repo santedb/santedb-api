@@ -65,6 +65,11 @@ namespace SanteDB.Core.Security
         private String ComputePass(String targetFileName) =>
             SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(targetFileName)).HexEncode();
 
+
+        /// <inheritdoc/>
+        /// <remarks>This is not required on Windows or Linux</remarks>
+        public bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission) => true;
+
         /// <summary>
         /// Initialize the mono keystore
         /// </summary>

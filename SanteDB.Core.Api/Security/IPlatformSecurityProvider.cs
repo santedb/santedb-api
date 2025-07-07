@@ -117,5 +117,13 @@ namespace SanteDB.Core.Security
         ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
         /// </remarks>
         IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true);
+
+        /// <summary>
+        /// Determines whether the current application context has the specified <paramref name="platformServicePermission"/>
+        /// </summary>
+        /// <param name="platformServicePermission">The permission to check</param>
+        /// <returns>True if the application has the specified permission</returns>
+        bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission);
+
     }
 }

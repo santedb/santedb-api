@@ -42,6 +42,10 @@ namespace SanteDB.Core.Security
 
         internal const int IV_SIZE = 16;
 
+        /// <inheritdoc/>
+        public int IVSize => IV_SIZE;
+
+
         // Context key
         private byte[] m_contextKey;
 

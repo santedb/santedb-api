@@ -549,7 +549,7 @@ namespace SanteDB.Core.Services.Impl
                         .Select(s => s.serviceType))
                     {
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, UserMessages.STARTING_CONTEXT));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, $"{UserMessages.STARTING_CONTEXT} - {svc.Type.Name}"));
 
                         if (svc.Type == null)
                         {
@@ -575,7 +575,7 @@ namespace SanteDB.Core.Services.Impl
                         var singletonServices = this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).ToArray();
                         foreach (var svc in singletonServices)
                         {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / singletonServices.Length) * 0.3f + 0.3f, $"{UserMessages.INITIALIZE_SINGLETONS} - {svc.ServiceImplementer.Name}"));
                             this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }

@@ -59,7 +59,7 @@ namespace SanteDB.Core.Security
                     {
                         var keySubject = $"CN=SanteDB {k.KeyName}, OID.2.5.6.11={ApplicationServiceContext.Current.ApplicationName}, DC={k.KeyName}";
 
-                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate, true))
+                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate, false) && certificate.NotAfter > DateTimeOffset.Now)
                         {
                         }
                         else if (certificateAuthorityService != null) // generate and sign

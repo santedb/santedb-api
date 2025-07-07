@@ -271,7 +271,7 @@ namespace SanteDB.Core.Configuration.Features
             appService.ServiceProviders.RemoveAll(o => this.m_alternateOptions.Contains(o.Type));
 
             // Then we add our own service
-            appService.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_cacheType));
+            appService.AddService(new TypeReferenceConfiguration(this.m_cacheType));
 
             // Next remove the old configuration section
             var configType = typeConfiguration?.Type.GetCustomAttribute<ServiceProviderAttribute>()?.Configuration;

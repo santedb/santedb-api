@@ -39,6 +39,10 @@ namespace SanteDB.Core.Configuration.Http
     [XmlType(nameof(RestClientSecurityConfiguration), Namespace = "http://santedb.org/configuration")]
     public class RestClientSecurityConfiguration : IRestClientSecurityDescription
     {
+
+        // Certificate validator
+        private ICertificateValidator m_certificateValidator;
+
         /// <summary>
         /// Default ctor
         /// </summary>
@@ -69,7 +73,8 @@ namespace SanteDB.Core.Configuration.Http
         [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(ICertificateValidator))]
         public TypeReferenceConfiguration CertificateValidatorXml
         {
-            get; set;
+            get;
+            set;
         }
 
         /// <summary>
@@ -139,6 +144,21 @@ namespace SanteDB.Core.Configuration.Http
         /// </summary>
         [XmlAttribute("mode"), JsonProperty("mode")]
         public SecurityScheme Mode { get; set; }
+
+        /// <summary>
+        /// Get the certificate validator
+        /// </summary>
+        [XmlIgnore, JsonIgnore]
+        ICertificateValidator IRestClientSecurityDescription.CertificateValidator {
+            get
+            {
+                if(this.m_certificateValidator == null && this.CertificateValidatorXml != null)
+                {
+                    this.m_certificateValidator = this.CertificateValidatorXml.Type.CreateInjected() as ICertificateValidator;
+                }
+                return this.m_certificateValidator;
+            }
+        }
     }
 
 }
