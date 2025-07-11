@@ -121,7 +121,7 @@ namespace SanteDB.Core.Http
             webrequest.UserAgent = s_UserAgent;
 
             webrequest.AllowAutoRedirect = false;
-
+            webrequest.ServicePoint.Expect100Continue = false;
             // Are we forwarding this request?
             SetRequestRemoteData(webrequest);
 
