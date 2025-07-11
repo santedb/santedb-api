@@ -170,7 +170,10 @@ namespace SanteDB.Core.Security
             }
             finally
             {
-                audit?.Send();
+                if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+                {
+                    audit?.Send();
+                }
             }
 #pragma warning restore CS0168 // Variable is declared but never used
         }
