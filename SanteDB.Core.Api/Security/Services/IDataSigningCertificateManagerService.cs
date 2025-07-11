@@ -83,4 +83,19 @@ namespace SanteDB.Core.Security.Services
         IEnumerable<IIdentity> GetCertificateIdentities(X509Certificate2 certificate);
 
     }
+
+    /// <summary>
+    /// Data signing certificate manager service that provides extended functions
+    /// </summary>
+    public interface IDataSigningCertificateManagerServiceEx : IDataSigningCertificateManagerService
+    {
+        /// <summary>
+        /// Adds multiple signing certificates to the identity
+        /// </summary>
+        /// <param name="identity">The identity to add signing credentials for</param>
+        /// <param name="x509Certificates">The certificates to add to the identity</param>
+        /// <param name="principal">The principal performing the operation</param>
+        void AddSigningCertificates(IIdentity identity, IEnumerable<X509Certificate2> x509Certificates, IPrincipal principal);
+
+    }
 }
