@@ -99,6 +99,10 @@ namespace SanteDB.Core.Security
             {
                 ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
             }
+            else // HACK: Remove this before production - Diagnosing Android Issues
+            {
+                return;
+            }
 
             if (result != PolicyGrantType.Grant)
             {
