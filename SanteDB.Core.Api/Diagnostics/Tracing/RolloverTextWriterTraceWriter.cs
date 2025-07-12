@@ -76,11 +76,6 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.GetFileName(fileName));
             }
 
-            // Create the directory?
-            if (!Directory.Exists(Path.GetDirectoryName(this.m_fileName)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(this.m_fileName));
-            }
             //_stream = File.Open(generateFilename(), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             //_stream.Seek(0, SeekOrigin.End);
             //_traceWriter = new StreamWriter(_stream);
@@ -119,6 +114,13 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// </summary>
         private string GenerateFilename()
         {
+
+            // Create the directory?
+            if (!Directory.Exists(Path.GetDirectoryName(this.m_fileName)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(this.m_fileName));
+            }
+
             _currentDate = System.DateTime.Today;
             return Path.Combine(Path.GetDirectoryName(this.m_fileName), Path.GetFileNameWithoutExtension(this.m_fileName) + "_" +
                _currentDate.ToString("yyyyMMdd") + Path.GetExtension(this.m_fileName));
