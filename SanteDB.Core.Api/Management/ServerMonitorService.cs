@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Security.Principal;
+using SanteDB;
 
 namespace SanteDB.Core.Management
 {
