@@ -190,8 +190,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         public void ClearCache(IPrincipal principal)
         {
-            string cacheKey = this.ComputeCacheKey(principal);
-            this.m_adhocCacheService?.Remove(cacheKey);
+            if (principal != null)
+            {
+                string cacheKey = this.ComputeCacheKey(principal);
+                this.m_adhocCacheService?.Remove(cacheKey);
+            }
         }
 
         /// <inheritdoc/>
