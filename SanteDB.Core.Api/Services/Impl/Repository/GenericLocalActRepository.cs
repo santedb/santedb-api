@@ -73,15 +73,6 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             base.Validate(data);
 
-            if (data.LoadProperty(o => o.Participations).All(o => o.ParticipationRoleKey != ActParticipationKeys.Authororiginator))
-            {
-                var userService = ApplicationServiceContext.Current.GetService<ISecurityRepositoryService>();
-                var currentUserEntity = userService.GetUserEntity(AuthenticationContext.Current.Principal.Identity);
-                if (currentUserEntity != null)
-                {
-                    data.Participations.Add(new ActParticipation(ActParticipationKeys.Authororiginator, currentUserEntity));
-                }
-            }
             return data;
         }
 
