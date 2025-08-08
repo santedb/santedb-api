@@ -40,9 +40,9 @@ using SanteDB.Core.Notifications.RapidPro;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
 using SanteDB.Core.Model.Constants;
-using SharpCompress.Common;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Map;
+using SanteDB;
 
 namespace SanteDB.Core.Jobs
 {

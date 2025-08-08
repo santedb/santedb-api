@@ -121,7 +121,7 @@ namespace SanteDB.Core.Http
             webrequest.UserAgent = s_UserAgent;
 
             webrequest.AllowAutoRedirect = false;
-
+            webrequest.ServicePoint.Expect100Continue = false;
             // Are we forwarding this request?
             SetRequestRemoteData(webrequest);
 
@@ -279,7 +279,7 @@ namespace SanteDB.Core.Http
 
                     try
                     {
-
+                        this.m_tracer.TraceVerbose("Opening request {0} {1}", method, url);
                         webrequest.Method = method;
 
                         SetRequestHeaders(webrequest, requestHeaders);
@@ -287,6 +287,8 @@ namespace SanteDB.Core.Http
                         await WriteRequestBodyAsync(contentType, body, webrequest);
 
                         cancellationtoken.ThrowIfCancellationRequested();
+
+                        this.m_tracer.TraceVerbose("Waiting for response from {0} {1}", method, url);
 
                         var responsetask = webrequest.GetResponseAsync();
                         var connecttimeouttask = Task.Delay(GetConnectTimeout());
@@ -297,6 +299,8 @@ namespace SanteDB.Core.Http
                             //TODO: Fix this with language service
                             throw new TimeoutException(string.Format(ErrorMessageStrings.TIMEOUT, "rest operation"));
                         }
+
+                        this.m_tracer.TraceVerbose("Response from {0} {1} received", method, url);
 
                         response = await responsetask as HttpWebResponse;
 
@@ -333,7 +337,7 @@ namespace SanteDB.Core.Http
                             }
                             else
                             {
-
+                                this.m_tracer.TraceVerbose("Reading response from {0} {1}", method, url);
                                 return (result: (TResult)ReadResponseBody<TResult>(response), responseheaders);
                             }
                         }

@@ -43,65 +43,67 @@ namespace SanteDB.Core.Security
         /// </summary>
         public RsaKeyInitializationService(
             IConfigurationManager configurationManager,
-            IServiceManager serviceManager,
             IPlatformSecurityProvider platformSecurityProvider,
             ICertificateGeneratorService certificateGeneratorService = null,
             ICertificateAuthorityService certificateAuthorityService = null)
         {
-            var securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
-
-            if (securityConfiguration.Signatures.Any(o => o.Algorithm == SignatureAlgorithm.HS256))
+            using (AuthenticationContext.EnterSystemContext())
             {
-                if (certificateGeneratorService != null)
-                {
-                    this.m_tracer.TraceWarning("--- HMAC256 KEYS FOUND IN YOUR CONFIGURATION - FINDING OR GENERATING RSA KEYS ---");
-                    foreach (var k in securityConfiguration.Signatures.Where(o => o.Algorithm == SignatureAlgorithm.HS256).ToArray())
-                    {
-                        var keySubject = $"CN=SanteDB {k.KeyName}, OID.2.5.6.11={ApplicationServiceContext.Current.ApplicationName}, DC={k.KeyName}";
+                var securityConfiguration = configurationManager.GetSection<SecurityConfigurationSection>();
 
-                        if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate, false) && certificate.NotAfter > DateTimeOffset.Now)
+                if (securityConfiguration.Signatures.Any(o => o.Algorithm == SignatureAlgorithm.HS256))
+                {
+                    if (certificateGeneratorService != null)
+                    {
+                        this.m_tracer.TraceWarning("--- HMAC256 KEYS FOUND IN YOUR CONFIGURATION - FINDING OR GENERATING RSA KEYS ---");
+                        foreach (var k in securityConfiguration.Signatures.Where(o => o.Algorithm == SignatureAlgorithm.HS256).ToArray())
                         {
-                        }
-                        else if (certificateAuthorityService != null) // generate and sign
-                        {
-                            using (AuthenticationContext.EnterSystemContext())
+                            var keySubject = $"CN=SanteDB {k.KeyName}, OID.2.5.6.11={ApplicationServiceContext.Current.ApplicationName}, DC={k.KeyName}";
+
+                            if (platformSecurityProvider.TryGetCertificate(X509FindType.FindByIssuerDistinguishedName, keySubject, out var certificate, false) && certificate.NotAfter > DateTimeOffset.Now)
                             {
-                                // Doesn't exist so generate one
+                            }
+                            else if (certificateAuthorityService != null) // generate and sign
+                            {
+                                using (AuthenticationContext.EnterSystemContext())
+                                {
+                                    // Doesn't exist so generate one
+                                    this.m_tracer.TraceInfo("Will generate and sign {0}", keySubject);
+                                    var privateKey = certificateGeneratorService.CreateKeyPair(2048);
+                                    var csr = certificateGeneratorService.CreateSigningRequest(privateKey, new X500DistinguishedName(keySubject), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement | X509KeyUsageFlags.KeyEncipherment);
+                                    var certRequest = certificateAuthorityService.SubmitSigningRequest(csr);
+                                    X509Certificate2 signedCertificate = null;
+                                    if (certRequest.Status != CertificateSigningRequestStatus.Approved)
+                                    {
+                                        signedCertificate = certificateAuthorityService.Approve(certRequest);
+                                    }
+                                    else
+                                    {
+                                        signedCertificate = certificateAuthorityService.GetCertificate(certRequest);
+                                    }
+                                    certificate = certificateGeneratorService.Combine(signedCertificate, privateKey, friendlyName: $"SanteDB Signing Key {k.KeyName}");
+
+                                    _ = platformSecurityProvider.TryInstallCertificate(certificate);
+                                }
+                            }
+                            else // self-signed
+                            {
                                 this.m_tracer.TraceInfo("Will generate and sign {0}", keySubject);
                                 var privateKey = certificateGeneratorService.CreateKeyPair(2048);
-                                var csr = certificateGeneratorService.CreateSigningRequest(privateKey, new X500DistinguishedName(keySubject), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
-                                var certRequest = certificateAuthorityService.SubmitSigningRequest(csr);
-                                X509Certificate2 signedCertificate = null;
-                                if (certRequest.Status != CertificateSigningRequestStatus.Approved)
-                                {
-                                    signedCertificate = certificateAuthorityService.Approve(certRequest);
-                                }
-                                else
-                                {
-                                    signedCertificate = certificateAuthorityService.GetCertificate(certRequest);
-                                }
-                                certificate = certificateGeneratorService.Combine(signedCertificate, privateKey, friendlyName: $"SanteDB Signing Key {k.KeyName}");
-
+                                certificate = certificateGeneratorService.CreateSelfSignedCertificate(privateKey, new X500DistinguishedName(keySubject), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
                                 _ = platformSecurityProvider.TryInstallCertificate(certificate);
                             }
-                        }
-                        else // self-signed
-                        {
-                            this.m_tracer.TraceInfo("Will generate and sign {0}", keySubject);
-                            var privateKey = certificateGeneratorService.CreateKeyPair(2048);
-                            certificate = certificateGeneratorService.CreateSelfSignedCertificate(privateKey, new X500DistinguishedName(keySubject), new TimeSpan(365, 0, 0, 0), X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.DataEncipherment | X509KeyUsageFlags.KeyAgreement);
-                            _ = platformSecurityProvider.TryInstallCertificate(certificate);
-                        }
 
-                        this.m_tracer.TraceWarning("Replace key {0} with FindByThumbprint={1}", k.KeyName, certificate.Thumbprint);
+                            this.m_tracer.TraceWarning("Replace key {0} with FindByThumbprint={1}", k.KeyName, certificate.Thumbprint);
 
-                        k.Algorithm = SignatureAlgorithm.RS256;
-                        k.Certificate = certificate;
-                        k.FindTypeSpecified = k.StoreNameSpecified = k.StoreLocationSpecified = true;
-                        k.StoreName = StoreName.My;
-                        k.StoreLocation = StoreLocation.CurrentUser;
-                        k.FindType = X509FindType.FindByThumbprint;
-                        k.FindValue = certificate.Thumbprint;
+                            k.Algorithm = SignatureAlgorithm.RS256;
+                            k.Certificate = certificate;
+                            k.FindTypeSpecified = k.StoreNameSpecified = k.StoreLocationSpecified = true;
+                            k.StoreName = StoreName.My;
+                            k.StoreLocation = StoreLocation.CurrentUser;
+                            k.FindType = X509FindType.FindByThumbprint;
+                            k.FindValue = certificate.Thumbprint;
+                        }
                     }
                 }
             }

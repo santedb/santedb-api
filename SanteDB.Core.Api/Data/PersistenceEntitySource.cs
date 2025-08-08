@@ -46,12 +46,14 @@ namespace SanteDB.Core.Data
         /// </summary>
         public TObject Get<TObject>(Guid? key) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
-            if (persistenceService != null && key.HasValue)
+            using (DataPersistenceControlContext.Create(LoadMode.QuickLoad))
             {
-                return persistenceService.Get(key.Value, null, AuthenticationContext.Current.Principal);
+                var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
+                if (persistenceService != null && key.HasValue)
+                {
+                    return persistenceService.Get(key.Value, null, AuthenticationContext.Current.Principal);
+                }
             }
-
             return default(TObject);
         }
 
@@ -60,17 +62,20 @@ namespace SanteDB.Core.Data
         /// </summary>
         public TObject Get<TObject>(Guid? key, Guid? versionKey) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
-            if (persistenceService != null && key.HasValue && versionKey.HasValue)
+            using (DataPersistenceControlContext.Create(LoadMode.QuickLoad))
             {
-                return persistenceService.Get(key.Value, versionKey, AuthenticationContext.Current.Principal);
-            }
-            else if (persistenceService != null && key.HasValue)
-            {
-                return persistenceService.Get(key.Value, null, AuthenticationContext.SystemPrincipal);
-            }
+                var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
+                if (persistenceService != null && key.HasValue && versionKey.HasValue)
+                {
+                    return persistenceService.Get(key.Value, versionKey, AuthenticationContext.Current.Principal);
+                }
+                else if (persistenceService != null && key.HasValue)
+                {
+                    return persistenceService.Get(key.Value, null, AuthenticationContext.SystemPrincipal);
+                }
 
-            return default(TObject);
+                return default(TObject);
+            }
         }
 
         /// <summary>
@@ -120,25 +125,29 @@ namespace SanteDB.Core.Data
         /// </summary>
         private IQueryResultSet GetRelationsInternal(Type relatedType, string joinProperty, Guid?[] keys)
         {
-            var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(relatedType);
-            var persistenceService = ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
-            if (persistenceService == null)
+            using (DataPersistenceControlContext.Create(LoadMode.QuickLoad))
             {
-                return null;
-            }
-            var parm = Expression.Parameter(relatedType);
-            var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
 
-            var memberRel = relatedType.GetProperty(joinProperty);
-            if (memberRel == null)
-            {
-                return null;
-            }
-            else
-            {
-                Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(keys), Expression.MakeMemberAccess(parm, memberRel)), parm);
-                var retVal = persistenceService.Query(expr);
-                return retVal;
+                var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(relatedType);
+                var persistenceService = ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
+                if (persistenceService == null)
+                {
+                    return null;
+                }
+                var parm = Expression.Parameter(relatedType);
+                var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid) }) as System.Reflection.MethodInfo;
+
+                var memberRel = relatedType.GetProperty(joinProperty);
+                if (memberRel == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(keys), Expression.MakeMemberAccess(parm, memberRel)), parm);
+                    var retVal = persistenceService.Query(expr);
+                    return retVal;
+                }
             }
         }
 
@@ -147,12 +156,16 @@ namespace SanteDB.Core.Data
         /// </summary>
         public IQueryResultSet<TObject> Query<TObject>(Expression<Func<TObject, bool>> query) where TObject : IdentifiedData, new()
         {
-            var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
-            if (persistenceService != null)
+            using (DataPersistenceControlContext.Create(LoadMode.QuickLoad))
             {
-                return persistenceService.Query(query, AuthenticationContext.Current.Principal);
+
+                var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TObject>>();
+                if (persistenceService != null)
+                {
+                    return persistenceService.Query(query, AuthenticationContext.Current.Principal);
+                }
+                return new MemoryQueryResultSet<TObject>(new TObject[0]);
             }
-            return new MemoryQueryResultSet<TObject>(new TObject[0]);
         }
 
         #endregion IEntitySourceProvider implementation

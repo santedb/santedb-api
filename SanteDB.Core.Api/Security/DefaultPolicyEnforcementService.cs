@@ -99,6 +99,10 @@ namespace SanteDB.Core.Security
             {
                 ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
             }
+            //else if(Object.ReferenceEquals(principal, AuthenticationContext.SystemPrincipal)) // obtained by entering system context
+            //{
+            //    return;
+            //}
 
             if (result != PolicyGrantType.Grant)
             {

@@ -150,6 +150,7 @@ namespace SanteDB.Core.Http
                 //s_tracer.TraceVerbose("Constructed URI : {0}", uri);
             }
 
+
             //TODO: Translate this tracer message.
             // Log
             s_tracer.TraceVerbose("Constructing WebRequest to {0}", uri);

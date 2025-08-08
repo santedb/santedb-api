@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.i18n;
 using SharpCompress.Compressors.BZip2;
+using SharpCompress.Compressors.Deflate;
 using SharpCompress.Readers.Tar;
 using System;
 using System.IO;
@@ -36,7 +37,7 @@ namespace SanteDB.Core.Data.Backup
     public class BackupReader : IDisposable
     {
         // Magic bytes - how we know a file is a backup
-        internal static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x00, (byte)'B', (byte)'K' };
+        public static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x00, (byte)'B', (byte)'K' };
         private readonly Stream m_underlyingStream;
         private TarReader m_tarReader;
 
@@ -168,7 +169,7 @@ namespace SanteDB.Core.Data.Backup
                 }
             }
 
-            backupStream = new BZip2Stream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress, false);
+            backupStream = new GZipStream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress);
 
             return new BackupReader(backupStream, backupDate, creator, backupAsset);
         }

@@ -68,6 +68,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 {
                     InitializationData = "santedb.log"
                 };
+
             if (!Path.IsPathRooted(logFileTracerConfig.InitializationData))
             {
                 this.m_rootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
@@ -131,6 +132,10 @@ namespace SanteDB.Core.Diagnostics.Tracing
         public IEnumerable<FileInfo> GetLogFiles()
         {
             this.m_pepService?.Demand(PermissionPolicyIdentifiers.ReadServiceLogs);
+            if(!Directory.Exists(this.m_rootPath))
+            {
+                Directory.CreateDirectory(this.m_rootPath);
+            }
             return Directory.GetFiles(this.m_rootPath, "*.log").Select(o => new FileInfo(o));
         }
 

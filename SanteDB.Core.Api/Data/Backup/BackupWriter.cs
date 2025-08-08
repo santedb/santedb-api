@@ -21,6 +21,7 @@
 using SanteDB.Core.Security;
 using SharpCompress.Compressors;
 using SharpCompress.Compressors.BZip2;
+using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
@@ -91,10 +92,10 @@ namespace SanteDB.Core.Data.Backup
                 desCrypto.Padding = PaddingMode.PKCS7;
                 underlyingStream.Write(desCrypto.IV, 0, desCrypto.IV.Length);
                 underlyingStream = new CryptoStream(underlyingStream, desCrypto.CreateEncryptor(), CryptoStreamMode.Write);
-                underlyingStream.Write(MAGIC, 0, MAGIC.Length);
+                underlyingStream.Write(MAGIC, 0, MAGIC.Length); // MAGIC is re-emitted in the backup so that the restore function knows you didn't enter gibberish (i.e. the first bytes from the decryptor stream should be magic)
             }
 
-            underlyingStream = new BZip2Stream(underlyingStream, CompressionMode.Compress, false);
+            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
 
             return new BackupWriter(underlyingStream);
         }

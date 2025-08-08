@@ -45,7 +45,6 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public int IVSize => IV_SIZE;
 
-
         // Context key
         private byte[] m_contextKey;
 
@@ -158,7 +157,7 @@ namespace SanteDB.Core.Security
 
                 if (defaultKey.Algorithm == SignatureAlgorithm.HS256)
                 {
-                    this.m_contextKey = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? throw new NotSupportedException("Default key is of type HMAC but does not have a secret set.") /*"DEFAULTKEY"*/));
+                    this.m_contextKey = SHA256.Create().ComputeHash(defaultKey.Secret ?? Encoding.UTF8.GetBytes(defaultKey?.HmacSecret ?? throw new NotSupportedException("Default key is of type HMAC but does not have a secret set.") /*"DEFAULTKEY"*/));
                 }
                 else
                 {

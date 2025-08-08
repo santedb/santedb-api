@@ -61,6 +61,7 @@ namespace SanteDB.Core
     public static class ExtensionMethods
     {
 
+
         /// <summary>
         /// Determine if this is running under mono
         /// </summary>
@@ -120,7 +121,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Get managed reference links 
         /// </summary>
-        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(this IHasRelationships forSource)  =>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(this IHasRelationships forSource) =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.FilterManagedReferenceLinks(forSource.Relationships) ?? forSource.Relationships.Where(o => false).OfType<ITargetedAssociation>();
 
 
@@ -373,7 +374,7 @@ namespace SanteDB.Core
         /// </summary>
         public static void ValidateCodeIsSigned(this Assembly asm, bool allowUnsignedAssemblies)
         {
-
+            // Verified assembly?
             if (ApplicationServiceContext.Current?.HostType == SanteDBHostType.Test)
             {
                 allowUnsignedAssemblies = true;
@@ -382,19 +383,21 @@ namespace SanteDB.Core
             var tracer = Tracer.GetTracer(typeof(ExtensionMethods));
             bool valid = false;
             var asmFile = asm.Location;
-            if (String.IsNullOrEmpty(asmFile))
+            if (!m_verifiedAssemblies.Contains(asmFile))
             {
-                tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
-            }
-            else if(!File.Exists(asmFile))
-            {
-                tracer.TraceWarning("Cannot verify {0} - no assembly file exists at path", asmFile);
-            }
-            else if (!allowUnsignedAssemblies)
-            {
-                // Verified assembly?
-                if (!m_verifiedAssemblies.Contains(asmFile))
+                if (String.IsNullOrEmpty(asmFile))
                 {
+                    tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
+                    valid = true;
+                }
+                else if (!File.Exists(asmFile))
+                {
+                    tracer.TraceWarning("Cannot verify {0} - no assembly file exists at path", asmFile);
+                    valid = true;
+                }
+                else if (!allowUnsignedAssemblies)
+                {
+
                     try
                     {
                         var extraCerts = new X509Certificate2Collection();
@@ -612,7 +615,7 @@ namespace SanteDB.Core
         public static int IsoWeek(this DateTime me)
         {
             // See: https://learn.microsoft.com/en-us/archive/blogs/shawnste/iso-8601-week-of-year-format-in-microsoft-net
-            if(me.DayOfWeek >= DayOfWeek.Monday && me.DayOfWeek <= DayOfWeek.Wednesday)
+            if (me.DayOfWeek >= DayOfWeek.Monday && me.DayOfWeek <= DayOfWeek.Wednesday)
             {
                 me = me.AddDays(3);
             }
@@ -646,7 +649,7 @@ namespace SanteDB.Core
         /// <returns>The date/time adjusted to the closest day of week</returns>
         public static DateTimeOffset ClosestDay(this DateTimeOffset me, DayOfWeek dayOfWeek)
         {
-            if(me.DayOfWeek == dayOfWeek)
+            if (me.DayOfWeek == dayOfWeek)
             {
                 return me;
             }
