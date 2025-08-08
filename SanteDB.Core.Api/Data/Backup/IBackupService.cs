@@ -85,5 +85,19 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="locatedOnMedia">The location of the media</param>
         /// <returns>The retrieved backup or null if not found</returns>
         IBackupDescriptor GetBackup(string backupDescriptorLabel, out BackupMedia locatedOnMedia);
+        
+        /// <summary>
+        /// Get a backup descriptor from an absolute file
+        /// </summary>
+        /// <param name="backupFile">The backup file</param>
+        /// <returns>The backup descriptor</returns>
+        IBackupDescriptor GetBackupDescriptorFromFile(string backupFile);
+
+        /// <summary>
+        /// Restore a backup from afile
+        /// </summary>
+        /// <param name="backupFile">The backup file to restore</param>
+        /// <param name="password">The password for the backup file</param>
+        bool RestoreFromFile(string backupFile, String password);
     }
 }
