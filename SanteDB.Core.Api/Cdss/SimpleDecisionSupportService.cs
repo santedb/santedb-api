@@ -33,6 +33,7 @@ using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
 using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using SharpCompress;
 using System;
 using System.Collections.Concurrent;
@@ -406,14 +407,18 @@ namespace SanteDB.Core.Cdss
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw new CdssException(libraries, target, e);
+                throw new CdssException(libraries, target, e);  
             }
         }
 
         /// <inheritdoc/>
         private PatientEncounter CreateEncounter(Act act, Patient recordTarget, Guid? templateKey)
         {
-            var tplDef = this.m_dataTemplateManager.Get(templateKey.GetValueOrDefault());
+            DataTemplateDefinition tplDef = null;
+            if (templateKey.HasValue)
+            {
+                tplDef = this.m_dataTemplateManager.Get(templateKey.Value);
+            }
 
             PatientEncounter retVal = null;
             if (tplDef == null)
