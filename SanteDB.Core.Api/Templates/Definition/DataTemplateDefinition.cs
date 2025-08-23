@@ -19,6 +19,7 @@
  * Date: 2024-12-12
  */
 using Newtonsoft.Json;
+using SanteDB.Core.ViewModel.Json;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -238,9 +239,21 @@ namespace SanteDB.Core.Templates.Definition
         }
 
         /// <summary>
+        /// Fill this template as an object
+        /// </summary>
+        /// <returns></returns>
+        public IdentifiedData FillObject(IDictionary<String, String> parameters, Func<String, String> referenceResolver)
+        {
+            using(var modelSer = new JsonViewModelSerializer())
+            {
+                return modelSer.DeSerialize<IdentifiedData>(this.FillJson(parameters, referenceResolver));
+            }
+        }
+
+        /// <summary>
         /// Fill the template definition
         /// </summary>
-        public String Fill(IDictionary<String, String> parameters, Func<String, String> referenceResolver = null)
+        public String FillJson(IDictionary<String, String> parameters, Func<String, String> referenceResolver)
         {
             parameters = parameters ?? new Dictionary<String, String>();
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));

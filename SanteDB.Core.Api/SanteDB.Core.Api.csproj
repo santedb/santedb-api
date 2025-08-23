@@ -234,6 +234,7 @@
     <EmbeddedResource Include="Security\Certs\Trust\appca.santesuite.net.v2.cer" />
     <EmbeddedResource Include="Security\Certs\Inter\inter.appca.santesuite.net.cer" />
     <EmbeddedResource Include="Security\Certs\Trust\appca.santesuite.net.cer" />
+    <EmbeddedResource Include="ViewModel\Default.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SanteDB.licenseheader">
