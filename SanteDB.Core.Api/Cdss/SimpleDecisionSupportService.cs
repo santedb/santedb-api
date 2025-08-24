@@ -27,9 +27,13 @@ using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.DataTypes;
+using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Roles;
 using SanteDB.Core.Security;
 using SanteDB.Core.Services;
+using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using SharpCompress;
 using System;
 using System.Collections.Concurrent;
@@ -46,7 +50,7 @@ namespace SanteDB.Core.Cdss
     [Obsolete("Use SimpleDecisionSupportService")]
     public class SimpleCarePlanService : SimpleDecisionSupportService
     {
-        public SimpleCarePlanService(ICdssLibraryRepository protocolRepository, IRepositoryService<ActParticipation> actParticipationRepository, ICarePathwayDefinitionRepositoryService carePathwayDefinitionRepositoryService) : base(protocolRepository, actParticipationRepository, carePathwayDefinitionRepositoryService)
+        public SimpleCarePlanService(ICdssLibraryRepository protocolRepository, IReferenceResolver referenceResolver, IRepositoryService<ActParticipation> actParticipationRepository, IDataTemplateManagementService dataTemplateManagementService, ICarePathwayDefinitionRepositoryService carePathwayDefinitionRepositoryService) : base(protocolRepository, referenceResolver, actParticipationRepository, dataTemplateManagementService, carePathwayDefinitionRepositoryService)
         {
         }
     }
@@ -140,18 +144,24 @@ namespace SanteDB.Core.Cdss
         private readonly ICdssLibraryRepository m_cdssLibraryRepository;
         private readonly IRepositoryService<ActParticipation> m_actParticipationRepository;
         private readonly ICarePathwayDefinitionRepositoryService m_carePathwayRepository;
+        private readonly IDataTemplateManagementService m_dataTemplateManager;
+        private readonly IReferenceResolver m_referenceResolver;
 
         /// <summary>
         /// Constructs the aggregate care planner
         /// </summary>
         public SimpleDecisionSupportService(
-            ICdssLibraryRepository protocolRepository, 
+            ICdssLibraryRepository protocolRepository,
+            IReferenceResolver referenceResolver,
             IRepositoryService<ActParticipation> actParticipationRepository,
+            IDataTemplateManagementService dataTemplateManagementService,
             ICarePathwayDefinitionRepositoryService carePathwayDefinitionRepositoryService)
         {
             this.m_cdssLibraryRepository = protocolRepository;
             this.m_actParticipationRepository = actParticipationRepository;
             this.m_carePathwayRepository = carePathwayDefinitionRepositoryService;
+            this.m_dataTemplateManager = dataTemplateManagementService;
+            this.m_referenceResolver = referenceResolver;
         }
 
         /// <summary>
@@ -195,7 +205,7 @@ namespace SanteDB.Core.Cdss
                     }
 
                     // We only want events which DID occur to be considered in the CDSS
-                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a=>a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
 
                     patientCopy.Participations.OfType<ActParticipation>()
                             .AsParallel()
@@ -217,7 +227,7 @@ namespace SanteDB.Core.Cdss
                             });
 
                     // No libraries spec = all libraries
-                    if(libraries.Length == 0)
+                    if (libraries.Length == 0)
                     {
                         libraries = this.m_cdssLibraryRepository.Find(o => true).ToArray();
                     }
@@ -229,7 +239,7 @@ namespace SanteDB.Core.Cdss
                     var detectedIssueList = new ConcurrentBag<DetectedIssue>();
                     var appliedProtocols = new ConcurrentBag<ICdssProtocol>();
                     CarePathwayDefinition pathwayDef = null;
-                    if(parmDict.TryGetValue(CdssParameterNames.PATHWAY_SCOPE, out var pathway) && !String.IsNullOrEmpty(pathway?.ToString()))
+                    if (parmDict.TryGetValue(CdssParameterNames.PATHWAY_SCOPE, out var pathway) && !String.IsNullOrEmpty(pathway?.ToString()))
                     {
                         if (Guid.TryParse(pathway.ToString(), out var pathwayUuid))
                         {
@@ -240,19 +250,19 @@ namespace SanteDB.Core.Cdss
                             pathwayDef = this.m_carePathwayRepository.GetCarepathDefinition(pathway.ToString());
                         }
 
-                        if(pathwayDef == null)
+                        if (pathwayDef == null)
                         {
                             throw new KeyNotFoundException(String.Format(ErrorMessages.CARE_PATHWAY_NOT_FOUND, pathway.ToString()));
                         }
                     }
                     _ = parmDict.TryGetValue(CdssParameterNames.ENCOUNTER_SCOPE, out var encounterType);
 
-   
+
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()
                         .WithDegreeOfParallelism(2)
-                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o=>o.Template)?.Mnemonic, encounterType?.ToString()))
+                        .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o => o.Template)?.Mnemonic, encounterType?.ToString()))
                         .SelectMany(proto =>
                         {
                             try
@@ -270,9 +280,9 @@ namespace SanteDB.Core.Cdss
                                 return new Act[0];
                             }
                         })
-                        .Select(o=>
+                        .Select(o =>
                         {
-                            if(o is Act a && !a.LoadProperty(p => p.Participations).Any(p=>p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
+                            if (o is Act a && !a.LoadProperty(p => p.Participations).Any(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
                             {
                                 a.Participations.Add(new ActParticipation(ActParticipationKeys.RecordTarget, target.Key));
                                 a.StartTime = a.StartTime?.EnsureWeekday();
@@ -286,13 +296,13 @@ namespace SanteDB.Core.Cdss
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
 
                     // Tag back entry?
-                    if(parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
+                    if (parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
                            (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
                     {
                         protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
                     }
                     // Filter
-                    if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) && 
+                    if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) &&
                         (dateRaw is DateTime periodOutput || DateTime.TryParse(dateRaw?.ToString(), out periodOutput)))
                     {
                         protocolActs = protocolActs.Where(act =>
@@ -303,7 +313,7 @@ namespace SanteDB.Core.Cdss
                                 (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek()));
                         }).ToList();
                     }
-                    if(parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
+                    if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
                         (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
                     {
                         protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
@@ -315,8 +325,8 @@ namespace SanteDB.Core.Cdss
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
                         Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
-                       
-                        while(protocolStack.Any())
+
+                        while (protocolStack.Any())
                         {
                             var act = protocolStack.Dequeue();
 
@@ -329,8 +339,8 @@ namespace SanteDB.Core.Cdss
                                 periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
                                 periodEnd >= c.StartTime);
 
-                            if(candidate != null &&
-                                (candidate?.StopTime == null && 
+                            if (candidate != null &&
+                                (candidate?.StopTime == null &&
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(candidate.StartTime.Value).TotalDays ?? 0) > 28 ||
                                 (candidate.ActTime.GreaterOf(candidate.StartTime).Value.Month != periodStart.Value.Month))) // Don't allow multi-month suggestions
                             {
@@ -338,7 +348,7 @@ namespace SanteDB.Core.Cdss
                                 candidate = null;
                             }
 
-                            if(candidate == null)
+                            if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
                                 encounters.Add(candidate);
@@ -350,20 +360,23 @@ namespace SanteDB.Core.Cdss
                                 candidate.StopTime = (candidate.StopTime ?? candidate.StartTime?.AddDays(10)).LesserOf(periodEnd);
                                 candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
                             }
-                            candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act));
+                            candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act)
+                            {
+                                ClassificationKey = RelationshipClassKeys.ContainedObjectLink
+                            });
                             // Remove so we don't have duplicates
                             protocolActs.Remove(act);
                         }
 
                     }
 
-                    return new CarePlan(patientCopy, protocolActs.Select(o=>
+                    return new CarePlan(patientCopy, protocolActs.Select(o =>
                     {
                         o.ActTime = o.ActTime?.EnsureWeekday();
                         o.StartTime = o.StartTime?.EnsureWeekday();
                         o.StopTime = o.StopTime?.EnsureWeekday();
                         return o;
-                    }).OrderBy(o=>o.ActTime).ToList())
+                    }).OrderBy(o => o.ActTime).ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
@@ -394,26 +407,44 @@ namespace SanteDB.Core.Cdss
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw new CdssException(libraries, target, e);
+                throw new CdssException(libraries, target, e);  
             }
         }
 
         /// <inheritdoc/>
         private PatientEncounter CreateEncounter(Act act, Patient recordTarget, Guid? templateKey)
         {
-            var retVal = new PatientEncounter()
+            DataTemplateDefinition tplDef = null;
+            if (templateKey.HasValue)
             {
-                Participations = new List<ActParticipation>()
+                tplDef = this.m_dataTemplateManager.Get(templateKey.Value);
+            }
+
+            PatientEncounter retVal = null;
+            if (tplDef == null)
+            {
+                retVal = new PatientEncounter()
                 {
-                    new ActParticipation(ActParticipationKeys.RecordTarget, recordTarget.Key)
-                },
-                TemplateKey = templateKey,
-                ActTime = act.ActTime?.EnsureWeekday(),
-                StartTime = (act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime)?.EnsureWeekday(),
-                StopTime = act.StopTime?.EnsureWeekday(),
-                MoodConceptKey = ActMoodKeys.Propose,
-                Key = Guid.NewGuid()
-            };
+                    Participations = new List<ActParticipation>() {
+                       new ActParticipation(ActParticipationKeys.RecordTarget, recordTarget.Key)
+                    }
+                };
+            }
+            else
+            {
+                retVal = (PatientEncounter)tplDef.FillObject(new Dictionary<String, String>()
+                {
+                    { "recordTargetId" , recordTarget.Key.ToString() },
+                }, (o) => this.m_referenceResolver.ResolveAsString(o));
+            }
+
+            retVal.TemplateKey = templateKey;
+            retVal.ActTime = act.ActTime?.EnsureWeekday();
+            retVal.StartTime = (act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime)?.EnsureWeekday();
+            retVal.StopTime = act.StopTime?.EnsureWeekday();
+            retVal.MoodConceptKey = ActMoodKeys.Propose;
+            retVal.Key = Guid.NewGuid();
+
             recordTarget.Participations.Add(new ActParticipation()
             {
                 ParticipationRoleKey = ActParticipationKeys.RecordTarget,
@@ -426,7 +457,7 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
-            if(librariesToApply.Length == 0 )
+            if (librariesToApply.Length == 0)
             {
                 librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
             }
