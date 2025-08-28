@@ -295,6 +295,12 @@ namespace SanteDB.Core.Cdss
 
                     var protocolActs = protocolOutput.OfType<Act>().OrderBy(o => o.StartTime ?? o.ActTime).ToList();
 
+                    // Are there any anomolies? If so raise an error
+                    var cdssProblemActs = protocolActs.Where(o => o.StartTime > o.StopTime);
+                    if(cdssProblemActs.Any())
+                    {
+                        throw new DetectedIssueException(cdssProblemActs.Select(o => new DetectedIssue(DetectedIssuePriorityType.Error, "cdss.act.problem", $"Act {o} in protocol {o.Protocols?.FirstOrDefault()?.Protocol?.Name} seq {o.Protocols?.FirstOrDefault()?.Sequence} has invalid time bounds", DetectedIssueKeys.FormalConstraintIssue)), null);
+                    }
                     // Tag back entry?
                     if (parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
                            (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
@@ -359,7 +365,9 @@ namespace SanteDB.Core.Cdss
                                 // Found the candidate - Does the stop time of this candidate act shorter than the current
                                 candidate.StopTime = (candidate.StopTime ?? candidate.StartTime?.AddDays(10)).LesserOf(periodEnd);
                                 candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
+
                             }
+
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act)
                             {
                                 ClassificationKey = RelationshipClassKeys.ContainedObjectLink

@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
+using SanteDB.Core.ViewModel.Json;
 
 namespace SanteDB.Core.ViewModel
 {
@@ -213,7 +214,8 @@ namespace SanteDB.Core.ViewModel
                 var masterDescription = this.ViewModelDescription?.FindDescription(this.Instance.GetType().GetSerializationName());
                 propertyDescription = masterDescription?.FindProperty(childProperty);
             }
-            if (propertyDescription?.Action != SerializationBehaviorType.Always)
+
+            if (propertyDescription?.Action != SerializationBehaviorType.Always || this.Context.ForbidDelayLoad )
             {
                 return false;
             }

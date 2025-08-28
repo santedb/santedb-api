@@ -65,10 +65,14 @@ namespace SanteDB.Core.ViewModel.Json
         /// <summary>
         /// Creates a json view model serializer
         /// </summary>
-        public JsonViewModelSerializer()
+        public JsonViewModelSerializer(bool noDelayLoad = false)
         {
             this.ViewModel = ViewModelDescription.Load(typeof(JsonViewModelSerializer).Assembly.GetManifestResourceStream("SanteDB.Core.ViewModel.Default.xml"));
+            this.ForbidDelayLoad = noDelayLoad;
         }
+
+        /// <inheritdoc/>
+        public bool ForbidDelayLoad { get; }
 
         /// <summary>
         /// Gets or sets the view model definition for this view model serializer
@@ -77,6 +81,7 @@ namespace SanteDB.Core.ViewModel.Json
         {
             get; set;
         }
+
 
         /// <summary>
         /// De-serializes the specified object from the stream
@@ -360,6 +365,11 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         internal object LoadRelated(Type propertyType, Guid key)
         {
+            if (this.ForbidDelayLoad)
+            {
+                return null;
+            }
+
             MethodInfo methodInfo = null;
             if (!this.m_relatedLoadMethods.TryGetValue(propertyType, out methodInfo))
             {
@@ -380,6 +390,11 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         internal IEnumerable LoadCollection(Type propertyType, Guid key)
         {
+            if (this.ForbidDelayLoad)
+            {
+                return new Object[0];
+            }
+
             MethodInfo methodInfo = null;
 
             // Load
@@ -411,6 +426,10 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         public IEnumerable<TAssociation> LoadCollection<TAssociation>(Guid sourceKey) where TAssociation : IdentifiedData, ISimpleAssociation, new()
         {
+            if(this.ForbidDelayLoad)
+            {
+                return new TAssociation[0];
+            }
 #if DEBUG
             this.m_tracer.TraceVerbose("Delay loading collection for object : {0}", sourceKey);
 #endif
@@ -436,6 +455,11 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         public TRelated LoadRelated<TRelated>(Guid? objectKey) where TRelated : IdentifiedData, new()
         {
+
+            if (this.ForbidDelayLoad)
+            {
+                return default(TRelated);
+            }
 #if DEBUG
             this.m_tracer.TraceVerbose("Delay loading related object : {0}", objectKey);
 #endif
@@ -595,6 +619,10 @@ namespace SanteDB.Core.ViewModel.Json
         public IJsonViewModelTypeFormatter GetFormatter(Type type)
         {
             IJsonViewModelTypeFormatter typeFormatter = null;
+            if(type == null)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
             if (!this.m_formatters.TryGetValue(type, out typeFormatter))
             {
                 typeFormatter = new JsonReflectionTypeFormatter(type);
