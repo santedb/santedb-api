@@ -40,6 +40,11 @@ namespace SanteDB.Core.ViewModel
         ViewModelDescription ViewModel { get; set; }
 
         /// <summary>
+        /// Gets whether delay loading should be forbidden
+        /// </summary>
+        bool ForbidDelayLoad { get; }
+
+        /// <summary>
         /// Loads all instance of serializers (pre-compiled) from the specified assembly
         /// </summary>
         void LoadSerializerAssembly(Assembly asm);

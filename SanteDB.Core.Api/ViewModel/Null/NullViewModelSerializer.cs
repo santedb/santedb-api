@@ -68,6 +68,9 @@ namespace SanteDB.Core.ViewModel.Null
         /// </summary>
         public ViewModelDescription ViewModel { get; set; }
 
+        /// <inheritdoc/>
+        public bool ForbidDelayLoad => false;
+
         /// <summary>
         /// Deserialize a memory stream obbject
         /// </summary>
