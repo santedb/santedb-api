@@ -384,7 +384,10 @@ namespace SanteDB.Core.Services.Impl
                 // Load any has components in the old careplan that are not fulfilled and cancel them
                 transaction.AddRange(this.UpdateCarePlan(existingCarePlan, updatedCarePlan));
 
-                return this.m_bundleRepository.Insert(transaction).Item.OfType<CarePlan>().First();
+                using (DataPersistenceControlContext.Create(preventCascade: true)) // We don't want contained objects to be cascade deleted
+                {
+                    return this.m_bundleRepository.Insert(transaction).Item.OfType<CarePlan>().First();
+                }
             }
         }
 
