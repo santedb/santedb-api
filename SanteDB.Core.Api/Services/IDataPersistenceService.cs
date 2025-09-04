@@ -113,9 +113,6 @@ namespace SanteDB.Core.Services
         // Auto insert
         private readonly bool? m_autoInsert;
 
-        // Prevent cascaded deletes
-        private readonly bool? m_preventCascade;
-
         // Wrapped
         private readonly DataPersistenceControlContext m_wrapped;
 
@@ -150,14 +147,13 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Constructor for query context
         /// </summary>
-        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, bool? autoUpdate, bool? autoInsert, bool? preventCascade, DataPersistenceControlContext wrapped)
+        private DataPersistenceControlContext(LoadMode? loadMode, DeleteMode? deleteMode, bool? autoUpdate, bool? autoInsert, DataPersistenceControlContext wrapped)
         {
             this.m_deleteMode = deleteMode;
             this.m_loadMode = loadMode;
             this.m_autoUpdate = autoUpdate;
             this.m_wrapped = wrapped;
             this.m_autoInsert = autoInsert;
-            this.m_preventCascade = preventCascade;
         }
 
         /// <summary>
@@ -191,11 +187,6 @@ namespace SanteDB.Core.Services
         public bool? AutoInsertChildren => this.m_autoInsert;
 
         /// <summary>
-        /// Prevent cascaded deletes
-        /// </summary>
-        public bool? PreventCascadedDeletes => this.m_preventCascade;
-
-        /// <summary>
         /// Sets the current loading mode
         /// </summary>
         /// <param name="loadMode">The load strategy</param>
@@ -203,9 +194,9 @@ namespace SanteDB.Core.Services
         /// <param name="autoUpdate">True if existing resources on an INSERT should be switched to an UPDATE</param>
         /// <param name="autoInsert">True if client objects should be inserted</param>
         /// <returns></returns>
-        public static DataPersistenceControlContext Create(LoadMode? loadMode = null, DeleteMode? deleteMode = null, bool? autoUpdate = null, bool? autoInsert = null, bool? preventCascade = null)
+        public static DataPersistenceControlContext Create(LoadMode? loadMode = null, DeleteMode? deleteMode = null, bool? autoUpdate = null, bool? autoInsert = null)
         {
-            m_current = new DataPersistenceControlContext(loadMode, deleteMode, autoUpdate, autoInsert, preventCascade, m_current)
+            m_current = new DataPersistenceControlContext(loadMode, deleteMode, autoUpdate, autoInsert, m_current)
             {
                 Name = m_current?.Name
             };
@@ -219,7 +210,7 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert, m_current?.PreventCascadedDeletes, m_current)
+            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert,  m_current)
             {
                 Name = m_current?.Name
             };
@@ -233,7 +224,7 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(bool autoUpdate)
         {
-            m_current = new DataPersistenceControlContext(m_current?.LoadMode, m_current?.DeleteMode, autoUpdate, m_current?.m_autoInsert, m_current?.PreventCascadedDeletes, m_current)
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, m_current?.DeleteMode, autoUpdate, m_current?.m_autoInsert,  m_current)
             {
                 Name = m_current?.Name
             };
@@ -246,7 +237,7 @@ namespace SanteDB.Core.Services
         /// <param name="deleteMode">The mode of deletion</param>
         public static DataPersistenceControlContext Create(DeleteMode deleteMode)
         {
-            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert, m_current?.PreventCascadedDeletes, m_current)
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, deleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert, m_current)
             {
                 Name = m_current?.Name
             };
