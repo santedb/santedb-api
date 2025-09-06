@@ -304,7 +304,8 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             // Cached data
             var cacheKey = $"ismem.{set}.{concept}";
-            if(this.m_adhocCacheService?.TryGet(cacheKey, out bool retVal) != true)
+			bool retVal = false;
+            if(this.m_adhocCacheService?.TryGet(cacheKey, out retVal) != true)
             {
                 retVal = this.ExpandConceptSet(set).Where(m => m.Key == concept).Any();
                 this.m_adhocCacheService?.Add(cacheKey, retVal, new TimeSpan(0,2,0));
