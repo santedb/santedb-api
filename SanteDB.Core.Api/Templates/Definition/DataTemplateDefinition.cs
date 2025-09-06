@@ -246,7 +246,9 @@ namespace SanteDB.Core.Templates.Definition
         {
             using(var modelSer = new JsonViewModelSerializer())
             {
-                return modelSer.DeSerialize<IdentifiedData>(this.FillJson(parameters, referenceResolver));
+                var retVal = modelSer.DeSerialize<IdentifiedData>(this.FillJson(parameters, referenceResolver));
+                retVal.Key = retVal.Key ?? Guid.NewGuid();
+                return retVal;
             }
         }
 

@@ -40,6 +40,8 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using SanteDB.Core.Services;
+using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -658,5 +660,14 @@ namespace SanteDB.Core
                 return me.AddDays(-((int)me.DayOfWeek - (int)dayOfWeek));
             }
         }
+
+        /// <summary>
+        /// Get the data template definition via mnemonic
+        /// </summary>
+        /// <param name="mnemonic">The mnemonic of the model to retrieve</param>
+        /// <returns>The registered data template definition</returns>
+        public static DataTemplateDefinition GetByMnemonic(this IDataTemplateManagementService me, string mnemonic) => me.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
+
+
     }
 }
