@@ -193,7 +193,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             else
             {
                 var retVal = this.m_userRepository.Find(u => u.UserName == userName).FirstOrDefault();
-                this.m_adhocCacheService.Add(cacheKey, retVal.Key);
+                this.m_adhocCacheService.Add(cacheKey, retVal?.Key);
                 return retVal;
             }
         }

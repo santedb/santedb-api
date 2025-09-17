@@ -28,6 +28,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
@@ -63,6 +64,12 @@ namespace SanteDB.Core
     public static class ExtensionMethods
     {
 
+        /// <summary>
+        /// Marker structure for CDSS annotation
+        /// </summary>
+        private struct PreparedForCdssAnnotation
+        {
+        }
 
         /// <summary>
         /// Determine if this is running under mono
@@ -548,41 +555,88 @@ namespace SanteDB.Core
         }
 
         /// <summary>
-        /// Scans the persistence provider to find the appropriate acts in <paramref name="carePlan"/> have been fulfilled
+        /// Prepare the target for the cdss execution
         /// </summary>
-        public static CarePlan HarmonizeCarePlan(this CarePlan carePlan)
+        /// <typeparam name="TData"></typeparam>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static TData PrepareForCdssExecution<TData>(this TData target) where TData : IdentifiedData
         {
 
-            if (!carePlan.CarePathwayKey.HasValue || carePlan.VersionKey.HasValue) // Unless we're linked to a care pathway or the care plan is stored return
+            var clone = target.Clone() as TData;
+            if (clone is Entity ent)
             {
-                return carePlan;
-            }
-
-            var recordTargetId = carePlan.LoadProperty(o => o.Participations).Single(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget)?.PlayerEntityKey;
-            var storedCareplan = EntitySource.Current.Provider.Query<CarePlan>(o => o.CarePathwayKey == carePlan.CarePathwayKey && o.StatusConceptKey == StatusKeys.Active && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => r.PlayerEntityKey == recordTargetId)).FirstOrDefault();
-            if (storedCareplan == null)
-            {
-                return carePlan;
-            }
-
-            var storedProposals = EntitySource.Current.Provider.Query<Act>(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntityKey == storedCareplan.Key) && o.MoodConceptKey == ActMoodKeys.Propose) // direct proposals
-                .Union(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntity.Relationships.Where(r2 => r2.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r2 => r2.SourceEntityKey == storedCareplan.Key)) && o.MoodConceptKey == ActMoodKeys.Propose); // those in a proposed encounter
-            var myProposals = carePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent); // Direct proposals
-            myProposals = myProposals.Union(carePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.LoadProperty(p => p.TargetAct) is PatientEncounter).SelectMany(r => r.TargetAct.LoadProperty(p => p.Relationships).Where(p => p.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))).ToList(); // thos in a proposed encounter
-            // Set RefersTo relationships for the actual stored care plan
-            foreach (var itm in storedProposals)
-            {
-                var storedProtocols = itm.LoadProperty(o => o.Protocols);
-                var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
-                    p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
-                if (candidate != null)
+                // Force load participations 
+                if (ent.Key.HasValue && !target.GetAnnotations<PreparedForCdssAnnotation>().Any())
                 {
-                    candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
+                    ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
                 }
+                else
+                {
+                    ent.Participations = ent.Participations?.ToList() ?? ent.LoadProperty(o => o.Participations);
+                    ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                }
+
+                ent.Participations.OfType<ActParticipation>()
+                    .AsParallel()
+                    .ForAll(p =>
+                    {
+                        using (AuthenticationContext.EnterSystemContext())
+                        {
+                            p.LoadProperty(o => o.ParticipationRole);
+                            p.LoadProperty(o => o.Act);
+                            p.Act.LoadProperty(o => o.TypeConcept);
+                            p.Act.LoadProperty(o => o.MoodConcept);
+                            p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
+                            {
+                                t.LoadProperty(o => o.ParticipationRole);
+                                t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
+                            });
+                            p.PlayerEntity = ent;
+                        }
+                    });
             }
 
-            return carePlan;
+            clone.AddAnnotation(new PreparedForCdssAnnotation());
+            return clone;
+
         }
+        /// <summary>
+        /// Scans the persistence provider to find the appropriate acts in <paramref name="carePlan"/> have been fulfilled
+        /// </summary>
+        //public static CarePlan HarmonizeCarePlan(this CarePlan carePlan)
+        //{
+
+        //    if (!carePlan.CarePathwayKey.HasValue || carePlan.VersionKey.HasValue) // Unless we're linked to a care pathway or the care plan is stored return
+        //    {
+        //        return carePlan;
+        //    }
+
+        //    var recordTargetId = carePlan.LoadProperty(o => o.Participations).Single(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget)?.PlayerEntityKey;
+        //    var storedCareplan = EntitySource.Current.Provider.Query<CarePlan>(o => o.CarePathwayKey == carePlan.CarePathwayKey && o.StatusConceptKey == StatusKeys.Active && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => r.PlayerEntityKey == recordTargetId)).FirstOrDefault();
+        //    if (storedCareplan == null)
+        //    {
+        //        return carePlan;
+        //    }
+
+        //    var storedProposals = EntitySource.Current.Provider.Query<Act>(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntityKey == storedCareplan.Key) && o.MoodConceptKey == ActMoodKeys.Propose) // direct proposals
+        //        .Union(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntity.Relationships.Where(r2 => r2.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r2 => r2.SourceEntityKey == storedCareplan.Key)) && o.MoodConceptKey == ActMoodKeys.Propose); // those in a proposed encounter
+        //    var myProposals = carePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent); // Direct proposals
+        //    myProposals = myProposals.Union(carePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.LoadProperty(p => p.TargetAct) is PatientEncounter).SelectMany(r => r.TargetAct.LoadProperty(p => p.Relationships).Where(p => p.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))).ToList(); // thos in a proposed encounter
+        //    // Set RefersTo relationships for the actual stored care plan
+        //    foreach (var itm in storedProposals)
+        //    {
+        //        var storedProtocols = itm.LoadProperty(o => o.Protocols);
+        //        var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
+        //            p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
+        //        if (candidate != null)
+        //        {
+        //            candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, itm));
+        //        }
+        //    }
+
+        //    return carePlan;
+        //}
 
 
         /// <summary>
