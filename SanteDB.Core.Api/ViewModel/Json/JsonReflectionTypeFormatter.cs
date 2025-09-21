@@ -161,7 +161,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// <summary>
         /// Serialize the specified object to the wire
         /// </summary>
-        public void Serialize(JsonWriter w, IdentifiedData o, JsonSerializationContext context)
+        public void Serialize(JsonWriter w, Object o, JsonSerializationContext context)
         {
             if (o == null)
             {
@@ -191,16 +191,16 @@ namespace SanteDB.Core.ViewModel.Json
                 var value = propertyInfo.GetValue(o);
 
                 // Null ,do we want to force load?
-                if (value == null || (value as IList)?.Count == 0)
+                if (o is IdentifiedData idd && ( value == null || (value as IList)?.Count == 0))
                 {
-                    var tkey = o.Key.HasValue ? o.Key.Value : Guid.NewGuid();
+                    var tkey = idd.Key.HasValue ? idd.Key.Value : Guid.NewGuid();
                     if (context.ShouldForceLoad(propertyName, tkey))
                     {
                         if (value is IList && !propertyInfo.PropertyType.IsArray)
                         {
-                            if (o.Key.HasValue)
+                            if (idd.Key.HasValue)
                             {
-                                value = context.JsonContext.LoadCollection(propertyInfo.PropertyType, (Guid)o.Key);
+                                value = context.JsonContext.LoadCollection(propertyInfo.PropertyType, (Guid)idd.Key);
                             }
 
                             propertyInfo.SetValue(o, value);

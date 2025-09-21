@@ -20,7 +20,8 @@
  -->
 <ViewModel xmlns="http://santedb.org/model/view">
 
-  <type type="IdentifiedData" all="true">
-  </type>
+	<type type="Object" all="true"></type>
+	<type type="IdentifiedData" all="true">
+	</type>
 
 </ViewModel>

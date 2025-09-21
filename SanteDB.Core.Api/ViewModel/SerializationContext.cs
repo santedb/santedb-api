@@ -312,7 +312,7 @@ namespace SanteDB.Core.ViewModel
             else if (subPropertyDescription == null && (this.ElementDescription == null || !this.ElementDescription.All.HasValue)) // This scope is not defined so use the parent
             {
                 // Parent is not set to all and does not explicitly call this property out
-                retVal &= this.Parent?.ElementDescription?.All == true;
+                retVal &= this.Parent?.ElementDescription == null || this.Parent?.ElementDescription?.All == true;
             }
 
 

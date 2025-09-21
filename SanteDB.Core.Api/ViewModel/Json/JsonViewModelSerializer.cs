@@ -33,6 +33,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Buffers.Binary;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.ViewModel.Json
 {
@@ -508,7 +510,12 @@ namespace SanteDB.Core.ViewModel.Json
                 }
             }
 
-            if (instance is IdentifiedData identifiedData)
+            if (
+                instance.GetType().StripNullable() == instance.GetType() // Not null
+                && instance.GetType().IsClass 
+                && (instance.GetType().GetCustomAttribute<XmlTypeAttribute>() != null ||
+                instance.GetType().GetCustomAttribute<JsonObjectAttribute>() != null)
+            )
             {
                 // Complex type .. allow the formatter to handle this
                 IJsonViewModelTypeFormatter typeFormatter = this.GetFormatter(instance.GetType());
@@ -524,18 +531,24 @@ namespace SanteDB.Core.ViewModel.Json
                     w.WriteStartObject();
 
                     var subContext = noSubContext && w.Path.EndsWith("]") ? context as JsonSerializationContext : new JsonSerializationContext(propertyName, this, instance, context as JsonSerializationContext);
-                    this.WriteSimpleProperty(w, "$type", identifiedData.Type);
+                    int? parentObjectRef = null;
+
+                    if (instance is IdentifiedData identifiedData)
+                    {
+                        this.WriteSimpleProperty(w, "$type", identifiedData.Type);
+                        parentObjectRef = context?.GetParentObjectId(identifiedData);
+                    }
+
                     this.WriteSimpleProperty(w, "$id", String.Format("obj{0}", subContext.ObjectId));
 
                     // Write ref
-                    var parentObjectId = context?.GetParentObjectId(identifiedData);
-                    if (parentObjectId.HasValue) // Recursive
+                    if (parentObjectRef.HasValue) // Recursive
                     {
-                        this.WriteSimpleProperty(w, "$ref", String.Format("#obj{0}", parentObjectId.Value));
+                        this.WriteSimpleProperty(w, "$ref", String.Format("#obj{0}", parentObjectRef.Value));
                     }
                     else
                     {
-                        typeFormatter.Serialize(w, instance as IdentifiedData, subContext);
+                        typeFormatter.Serialize(w, instance, subContext);
                     }
 
                     w.WriteEndObject();
@@ -663,7 +676,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// <summary>
         /// Serialize object to string
         /// </summary>
-        public String Serialize(IdentifiedData data)
+        public String Serialize(object data)
         {
             using (StringWriter sw = new StringWriter())
             {
@@ -675,7 +688,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// <summary>
         /// Serialize the specified data
         /// </summary>
-        public void Serialize(Stream s, IdentifiedData data)
+        public void Serialize(Stream s, object data)
         {
             using (StreamWriter tw = new StreamWriter(s))
             {
@@ -686,7 +699,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// <summary>
         /// Serialize to the specified text writer
         /// </summary>
-        public void Serialize(TextWriter tw, IdentifiedData data)
+        public void Serialize(TextWriter tw, object data)
         {
             using (JsonWriter jw = new JsonTextWriter(tw))
             {
@@ -699,7 +712,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         /// <param name="jw"></param>
         /// <param name="data"></param>
-        public void Serialize(JsonWriter jw, IdentifiedData data)
+        public void Serialize(JsonWriter jw, object data)
         {
 #if DEBUG
             Stopwatch sw = new Stopwatch();
@@ -708,7 +721,11 @@ namespace SanteDB.Core.ViewModel.Json
 #endif
             try
             {
-                this.WritePropertyUtil(jw, null, data.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey), null);
+                if(data is IdentifiedData idd)
+                {
+                    data = idd.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey);
+                }
+                this.WritePropertyUtil(jw, null, data, null);
             }
             catch (Exception e)
             {
