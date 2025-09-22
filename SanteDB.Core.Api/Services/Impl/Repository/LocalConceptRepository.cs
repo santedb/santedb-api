@@ -302,7 +302,15 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
 
-            return this.m_conceptSetService.Query(o => o.Key == set && o.Concepts.Any(c => c.Key == concept), AuthenticationContext.Current.Principal).Any();
+            // Cached data
+            var cacheKey = $"ismem.{set}.{concept}";
+			bool retVal = false;
+            if(this.m_adhocCacheService?.TryGet(cacheKey, out retVal) != true)
+            {
+                retVal = this.ExpandConceptSet(set).Where(m => m.Key == concept).Any();
+                this.m_adhocCacheService?.Add(cacheKey, retVal, new TimeSpan(0,2,0));
+            }
+            return retVal;
         }
 
         /// <summary>

@@ -210,7 +210,7 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(LoadMode loadMode)
         {
-            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert, m_current)
+            m_current = new DataPersistenceControlContext(loadMode, m_current?.DeleteMode, m_current?.m_autoUpdate, m_current?.m_autoInsert,  m_current)
             {
                 Name = m_current?.Name
             };
@@ -224,7 +224,7 @@ namespace SanteDB.Core.Services
         /// <returns></returns>
         public static DataPersistenceControlContext Create(bool autoUpdate)
         {
-            m_current = new DataPersistenceControlContext(m_current?.LoadMode, m_current?.DeleteMode, autoUpdate, m_current?.m_autoInsert, m_current)
+            m_current = new DataPersistenceControlContext(m_current?.LoadMode, m_current?.DeleteMode, autoUpdate, m_current?.m_autoInsert,  m_current)
             {
                 Name = m_current?.Name
             };

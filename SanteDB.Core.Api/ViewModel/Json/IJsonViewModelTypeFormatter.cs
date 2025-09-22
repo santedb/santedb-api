@@ -37,7 +37,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// <param name="w">The writer to write data to</param>
         /// <param name="o">The object to be graphed</param>
         /// <param name="context">The current serialization context</param>
-        void Serialize(JsonWriter w, IdentifiedData o, JsonSerializationContext context);
+        void Serialize(JsonWriter w, Object o, JsonSerializationContext context);
 
         /// <summary>
         /// Parses the specified object from the reader

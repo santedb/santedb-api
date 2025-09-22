@@ -52,12 +52,12 @@ namespace SanteDB.Core.ViewModel
         /// <summary>
         /// Serializes the object <paramref name="data"/> onto stream <paramref name="s"/>
         /// </summary>
-        void Serialize(Stream s, IdentifiedData data);
+        void Serialize(Stream s, object data);
 
         /// <summary>
         /// Serializes the object <paramref name="data"/> onto stream <paramref name="s"/>
         /// </summary>
-        void Serialize(TextWriter s, IdentifiedData data);
+        void Serialize(TextWriter s, object data);
 
         /// <summary>
         /// De-serializes the specified object from the stream

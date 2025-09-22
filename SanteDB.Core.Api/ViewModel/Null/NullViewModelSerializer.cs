@@ -304,7 +304,7 @@ namespace SanteDB.Core.ViewModel.Null
         /// <summary>
         /// Serializer the object to the specified text writer
         /// </summary>
-        public void Serialize(TextWriter s, IdentifiedData data)
+        public void Serialize(TextWriter s, object data)
         {
 #if DEBUG
             Stopwatch sw = new Stopwatch();
@@ -334,7 +334,7 @@ namespace SanteDB.Core.ViewModel.Null
         /// </summary>
         /// <param name="s"></param>
         /// <param name="data"></param>
-        public void Serialize(Stream s, IdentifiedData data)
+        public void Serialize(Stream s, object data)
         {
             this.Serialize((TextWriter)null, data);
         }
@@ -342,9 +342,13 @@ namespace SanteDB.Core.ViewModel.Null
         /// <summary>
         /// Serialize
         /// </summary>
-        public String Serialize(IdentifiedData data)
+        public String Serialize(object data)
         {
-            this.Serialize((TextWriter)null, data.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey));
+            if(data is IdentifiedData idd)
+            {
+                data = idd.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey);
+            }
+            this.Serialize((TextWriter)null, data);
             return String.Empty;
         }
 

@@ -71,6 +71,5 @@ namespace SanteDB.Core.Templates
         /// <returns>The deleted or removed template definition</returns>
         DataTemplateDefinition Remove(Guid key);
 
-
     }
 }

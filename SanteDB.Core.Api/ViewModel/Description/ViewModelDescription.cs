@@ -113,7 +113,7 @@ namespace SanteDB.Core.ViewModel.Description
             PropertyContainerDescription value = null;
             if (!this.m_description.TryGetValue(name, out value))
             {
-                value = this.TypeModelDefinitions.Find(o => o.TypeName == name) ?? this.TypeModelDefinitions.Find(o => o.Name == name);
+                value = this.TypeModelDefinitions.Find(o => o.TypeName == name && String.IsNullOrEmpty(o.Name)) ?? this.TypeModelDefinitions.Find(o => o.Name == name);
                 lock (this.m_lockObject)
                 {
                     if (!this.m_description.ContainsKey(name))

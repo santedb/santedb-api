@@ -146,11 +146,12 @@ namespace SanteDB.Core.Security.Configuration
             var pol = this.SecurityPolicy.Find(o => o.PolicyId == policyId);
             if (pol == null)
             {
-                this.SecurityPolicy.Add(new SecurityPolicyConfiguration(policyId, policyValue));
+                this.SecurityPolicy.Add(new SecurityPolicyConfiguration(policyId, policyValue) {  Enabled = true });
             }
             else
             {
                 pol.PolicyValue = policyValue;
+                pol.Enabled = true;
             }
         }
 

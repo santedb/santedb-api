@@ -434,7 +434,7 @@ namespace SanteDB.Core.Services.Impl
             // We want to remove all encounters since encounters are difficult to reconcile accross the care plans
             foreach(var itm in existingCarePlan.Relationships.Where(o=>o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && o.TargetAct is PatientEncounter))
             {
-                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.DeletePreserveContained;
                 yield return itm.TargetAct;
             }
 

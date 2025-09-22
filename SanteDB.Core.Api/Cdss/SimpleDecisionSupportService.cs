@@ -193,38 +193,7 @@ namespace SanteDB.Core.Cdss
                 {
                     // Sometimes the patient will have participations which the protocol requires - however these are 
                     // not directly loaded from the database - so let's load them
-                    var patientCopy = target.Clone() as Patient; // don't mess up the original
-                    if (patientCopy.Key.HasValue && patientCopy.Participations.IsNullOrEmpty())
-                    {
-                        patientCopy.Participations = this.m_actParticipationRepository.Find(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget && o.PlayerEntityKey == patientCopy.Key && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence)
-                            .ToList();
-                    }
-                    else
-                    {
-                        patientCopy.Participations = patientCopy.Participations?.ToList() ?? patientCopy.GetParticipations()?.ToList();
-                    }
-
-                    // We only want events which DID occur to be considered in the CDSS
-                    patientCopy.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
-
-                    patientCopy.Participations.OfType<ActParticipation>()
-                            .AsParallel()
-                            .ForAll(p =>
-                            {
-                                using (AuthenticationContext.EnterSystemContext())
-                                {
-                                    p.LoadProperty(o => o.ParticipationRole);
-                                    p.LoadProperty(o => o.Act);
-                                    p.Act.LoadProperty(o => o.TypeConcept);
-                                    p.Act.LoadProperty(o => o.MoodConcept);
-                                    p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
-                                    {
-                                        t.LoadProperty(o => o.ParticipationRole);
-                                        t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
-                                    });
-                                    p.PlayerEntity = patientCopy;
-                                }
-                            });
+                    var patientCopy = target.PrepareForCdssExecution();
 
                     // No libraries spec = all libraries
                     if (libraries.Length == 0)
@@ -269,9 +238,9 @@ namespace SanteDB.Core.Cdss
                             {
                                 using (AuthenticationContext.EnterSystemContext())
                                 {
-                                    var retVal = proto.ComputeProposals(patientCopy, parmDict);
+                                    var retVal = proto.ComputeProposals(patientCopy, parmDict).ToList();
                                     appliedProtocols.Add(proto);
-                                    return retVal;
+                                    return retVal.AsEnumerable();
                                 }
                             }
                             catch (Exception e)
@@ -314,8 +283,8 @@ namespace SanteDB.Core.Cdss
                         protocolActs = protocolActs.Where(act =>
                         {
                             return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
-                                (act.StartTime.HasValue && act.StartTime <= periodOutput.Date || !act.StartTime.HasValue) &&
-                                ((act.StopTime.HasValue && act.StopTime >= periodOutput.Date || !act.StopTime.HasValue) ||
+                                (act.StartTime.HasValue && act.StartTime?.Date <= periodOutput.Date || !act.StartTime.HasValue) &&
+                                ((act.StopTime.HasValue && act.StopTime?.Date >= periodOutput.Date || !act.StopTime.HasValue) ||
                                 (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek()));
                         }).ToList();
                     }
@@ -365,7 +334,6 @@ namespace SanteDB.Core.Cdss
                                 // Found the candidate - Does the stop time of this candidate act shorter than the current
                                 candidate.StopTime = (candidate.StopTime ?? candidate.StartTime?.AddDays(10)).LesserOf(periodEnd);
                                 candidate.StartTime = candidate.StartTime.GreaterOf(periodStart);
-
                             }
 
                             candidate.LoadProperty(o => o.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.HasComponent, act)
