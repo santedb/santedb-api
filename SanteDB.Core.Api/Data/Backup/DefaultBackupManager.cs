@@ -179,18 +179,18 @@ namespace SanteDB.Core.Data.Backup
         public IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
-
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
             else if (media == BackupMedia.Private || this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
             {
+                this.m_tracer.TraceInfo("Getting backup descriptors for {0} ({1})", media, backupPath);
                 if (!Directory.Exists(backupPath))
                 {
                     Directory.CreateDirectory(backupPath);
                 }
-                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => new FileBackupDescriptor(new FileInfo(o)));
+                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Where(f=>!f.StartsWith(".")).Select(o => new FileBackupDescriptor(new FileInfo(o)));
             }
             else
             {
