@@ -313,6 +313,32 @@ namespace SanteDB.Core.Data.Backup
                 throw new FileNotFoundException(backupFile);
             }
 
+
+            return this.RestoreFromFile(backupFile, password);
+        }
+
+        /// <summary>
+        /// Get backup classes
+        /// </summary>
+        public IDictionary<Guid, Type> GetBackupAssetClasses() => this.GetBackupRestoreServices().ToDictionary(o => o.Key, o => o.Value.GetType());
+
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackupDescriptorFromFile(string backupFile)
+        {
+            try
+            {
+                return new FileBackupDescriptor(new FileInfo(backupFile));
+            }
+            catch (Exception e)
+            {
+                throw new BackupException(ErrorMessages.BACKUP_DESCRIPTOR_ERROR, e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool RestoreFromFile(string backupFile, string password)
+        {
+
             try
             {
                 this.m_tracer.TraceInfo("Restoring {0}...", backupFile);
@@ -350,11 +376,5 @@ namespace SanteDB.Core.Data.Backup
                 throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_RESTORE_ERR), e);
             }
         }
-
-        /// <summary>
-        /// Get backup classes
-        /// </summary>
-        public IDictionary<Guid, Type> GetBackupAssetClasses() => this.GetBackupRestoreServices().ToDictionary(o => o.Key, o => o.Value.GetType());
-
     }
 }

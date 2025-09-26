@@ -43,6 +43,7 @@ namespace SanteDB.Core.Jobs
         // Job id
         public static readonly Guid JOB_ID = Guid.Parse("D720866E-EDDC-4BAF-B8E8-8DAF01CD3F1A");
         private readonly CarePathwayConfigurationSection m_configuration;
+        private readonly IRepositoryService<CarePlan> m_careplanRepository;
         private readonly IJobStateManagerService m_jobStateManager;
         private readonly IRepositoryService<Patient> m_patientRepository;
         private readonly ICarePathwayDefinitionRepositoryService m_carePathwayService;
@@ -58,12 +59,14 @@ namespace SanteDB.Core.Jobs
             ICarePathwayEnrollmentService carePathwayEnrollmentService, 
             ICarePathwayDefinitionRepositoryService carePathwayDefinitionRepositoryService,
             IRepositoryService<Patient> patientRepository,
+            IRepositoryService<CarePlan> careplanRepository,
             IJobStateManagerService jobStateManagerService)
         {
             this.m_configuration = configurationManager.GetSection<CarePathwayConfigurationSection>() ?? new CarePathwayConfigurationSection()
             {
                 EnableAutoEnrollment = true
             };
+            this.m_careplanRepository = careplanRepository;
             this.m_jobStateManager = jobStateManagerService;
             this.m_patientRepository = patientRepository;
             this.m_carePathwayService = carePathwayDefinitionRepositoryService;
@@ -85,7 +88,8 @@ namespace SanteDB.Core.Jobs
         /// <inheritdoc/>
         public IDictionary<string, Type> Parameters => new Dictionary<String, Type>
         {
-            { "pathwayId", typeof(Guid) }
+            { "pathwayId", typeof(String) },
+            { "recomputeAll", typeof(bool) }
         };
 
         /// <inheritdoc/>
@@ -110,7 +114,7 @@ namespace SanteDB.Core.Jobs
                         this.m_jobStateManager.SetState(this, JobStateType.Cancelled, "Configuration Prohibits Execution");
                     }
                     var pathways = new List<CarePathwayDefinition>(10);
-                    if (parameters.Length == 1 && parameters[0] is Guid pathwayId)
+                    if (parameters.Length == 1 && Guid.TryParse(parameters[0].ToString(), out Guid pathwayId))
                     {
                         pathways.Add(this.m_carePathwayService.Get(pathwayId));
                     }
@@ -119,13 +123,26 @@ namespace SanteDB.Core.Jobs
                         pathways.AddRange(this.m_carePathwayService.Find(o => o.EnrollmentMode == CarePathwayEnrollmentMode.Automatic));
                     }
 
+                    var resetPathway = parameters[1] is bool b && b;
+
                     foreach (var cp in pathways)
                     {
+                        // Are we resetting?
+                        if(resetPathway)
+                        {
+                            this.m_tracer.TraceInfo("Resetting all carelans in pathway {0} ---", cp.Mnemonic);
+
+                            foreach (var c in this.m_careplanRepository.Find(o=>o.CarePathwayKey == cp.Key).Select(o=>o.Key).ToArray())
+                            {
+                                this.m_careplanRepository.Delete(c.Value);
+                            }
+
+                        }
                         this.m_tracer.TraceInfo("Performing automatic enrolment for {0} -- ", cp.Mnemonic);
                         // Fetch all patients who are not currently enrolled
                         var enrolmentCriteria = QueryExpressionParser.BuildLinqExpression<Patient>(cp.EligibilityCriteria);
                         var eligiblePatients = this.m_patientRepository.Find(enrolmentCriteria)
-                            .Except(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => (r.Act as CarePlan).CarePathwayKey == cp.Key && r.Act.StatusConceptKey == StatusKeys.Active));
+                            .Except(o => o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => (r.Act as CarePlan).CarePathwayKey == cp.Key && r.Act.StatusConceptKey == StatusKeys.Active)).ToArray();
                         var ec = eligiblePatients.Count();
                         this.m_tracer.TraceInfo("Will enroll {0} patients into {1}", ec, cp.Mnemonic);
                         var i = 0;

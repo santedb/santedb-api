@@ -69,6 +69,7 @@ namespace SanteDB.Core.Services.Impl
 
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultCarepathEnrollmentService));
         private readonly CarePathwayConfigurationSection m_configuration;
+        private readonly IDataCachingService m_dataCacheService;
         private readonly IPolicyEnforcementService m_pepService;
         private readonly INotifyRepositoryService<Patient> m_patientRepository;
         private readonly IRepositoryService<CarePlan> m_carePlanRepository;
@@ -87,6 +88,7 @@ namespace SanteDB.Core.Services.Impl
             IDecisionSupportService decisionSupportService,
             IPrivacyEnforcementService privacyService,
             INotifyRepositoryService<Patient> patientRepository,
+            IDataCachingService dataCaching,
             INotifyRepositoryService<Bundle> bundleRepository,
             IRepositoryService<CarePlan> careplanRepository)
         {
@@ -94,6 +96,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 EnableAutoEnrollment = true
             };
+            this.m_dataCacheService = dataCaching;
             this.m_pepService = policyService;
             this.m_patientRepository = patientRepository;
             this.m_carePlanRepository = careplanRepository;
@@ -383,7 +386,6 @@ namespace SanteDB.Core.Services.Impl
 
                 // Load any has components in the old careplan that are not fulfilled and cancel them
                 transaction.AddRange(this.UpdateCarePlan(existingCarePlan, updatedCarePlan));
-
                 return this.m_bundleRepository.Insert(transaction).Item.OfType<CarePlan>().First();
             }
         }
@@ -396,6 +398,8 @@ namespace SanteDB.Core.Services.Impl
         /// <returns>Actions to update <paramref name="existingCarePlan"/> to <paramref name="updatedCarePlan"/></returns>
         private IEnumerable<IdentifiedData> UpdateCarePlan(CarePlan existingCarePlan, CarePlan updatedCarePlan)
         {
+            this.m_dataCacheService.Remove(existingCarePlan);
+
             // Our care plans are generated with encounters so we want the contents of the encounters - rather than the encounters to reconcile
             var existingActions = existingCarePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).SelectMany(pe => pe.LoadProperty(o => o.TargetAct).LoadProperty(o => o.Relationships).Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent)).Select(r => r.LoadProperty(o => o.TargetAct));
             var updatedActions = updatedCarePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).SelectMany(pe => pe.TargetAct.Relationships.Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent));
@@ -407,13 +411,16 @@ namespace SanteDB.Core.Services.Impl
                 var candidate = existingActions.FirstOrDefault(p => p.ClassConceptKey == itm.TargetAct.ClassConceptKey && p.TypeConceptKey == itm.TargetAct.TypeConceptKey &&
                     p.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
 
-                if(candidate == null) // No candidate - so just return
+
+                if (candidate == null) // No candidate - so just return
                 {
                     yield return itm.TargetAct;
                     itm.TargetAct = null;
                 }
                 else
                 {
+                    this.m_dataCacheService.Remove(candidate);
+
                     // We want our new care plan encounter to point to the existing act object - update the stored data with new updated data
                     candidate.AddAnnotation(new ReconiliationAnnotation(itm.TargetAct.Key.Value));
                     itm.TargetActKey = itm.TargetAct.Key = candidate.Key;
@@ -426,7 +433,9 @@ namespace SanteDB.Core.Services.Impl
 
             // We want to remove all actions from the existing care plan (remove them) - where there is no reconciliation
             foreach(var itm in existingActions.Where(a => !a.GetAnnotations<ReconiliationAnnotation>().Any())) 
-            { 
+            {
+                this.m_dataCacheService.Remove(itm);
+
                 itm.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
                 yield return itm;
             }
@@ -434,7 +443,8 @@ namespace SanteDB.Core.Services.Impl
             // We want to remove all encounters since encounters are difficult to reconcile accross the care plans
             foreach(var itm in existingCarePlan.Relationships.Where(o=>o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && o.TargetAct is PatientEncounter))
             {
-                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                this.m_dataCacheService.Remove(itm);
+                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.DeletePreserveContained;
                 yield return itm.TargetAct;
             }
 

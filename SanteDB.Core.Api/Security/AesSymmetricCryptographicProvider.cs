@@ -288,7 +288,14 @@ namespace SanteDB.Core.Security
             // Is there even a context key persisted?
             if (File.Exists(this.m_contextKeyFile))
             {
-                yield return new ByteArrayBackupAsset(CONTEXT_KEY_ASSET_ID, "ctxkey.key", this.m_contextKey); // unencrypted context key in the backup - the backup should be encrypted with a password to protect this
+                if (null != m_contextKey)
+                {
+                    yield return new ByteArrayBackupAsset(CONTEXT_KEY_ASSET_ID, "ctxkey.key", this.m_contextKey); // unencrypted context key in the backup - the backup should be encrypted with a password to protect this
+                }
+                else
+                {
+                    yield return new FileBackupAsset(CONTEXT_KEY_ASSET_ID, "ctxkey.key", this.m_contextKeyFile);
+                }
             }
         }
 

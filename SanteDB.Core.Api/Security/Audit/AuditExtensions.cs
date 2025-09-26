@@ -850,14 +850,20 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = p.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.PatientNumber;
-                    retVal.NameData = String.Join(",", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case UserEntity ue:
                     retVal.Role = AuditableObjectRole.User;
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = ue.SecurityUserKey.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
-                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
+                    }
                     break;
                 case Provider pvd:
                     retVal.Role = AuditableObjectRole.Doctor;
@@ -865,7 +871,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = pvd.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeProvider;
-                    retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Organization org:
                     retVal.Role = AuditableObjectRole.MasterFile;
@@ -873,7 +882,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = org.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeOrganization;
-                    retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Place plc:
                     retVal.Role = AuditableObjectRole.Location;
@@ -881,7 +893,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = plc.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePlace;
-                    retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Entity e:
                     retVal.Role = AuditableObjectRole.MasterFile;
@@ -889,7 +904,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = e.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeEntity;
-                    retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Act act:
                     var termService = ApplicationServiceContext.Current.GetService<IConceptRepositoryService>();
@@ -899,7 +917,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = act.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification?.GetDisplayName("en") };
-                    retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                     {
                         lifecycle = AuditableObjectLifecycle.Deidentification;
