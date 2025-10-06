@@ -321,7 +321,7 @@ namespace SanteDB.Core.Cdss
                                 (candidate?.StopTime == null &&
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(candidate.StartTime.Value).TotalDays ?? 0) > 28 ||
                                 (candMonthSer?.Year * 12 + candMonthSer?.Month != periodStart?.Year * 12 + periodStart?.Month)) || // Don't allow multi-month suggestions
-                                (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate.Relationships?.Any(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t=>t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
+                                (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate?.Relationships?.Any(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t=>t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
                                 ) 
                             {
                                 candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);
@@ -348,7 +348,6 @@ namespace SanteDB.Core.Cdss
                             // Remove so we don't have duplicates
                             protocolActs.Remove(act);
                         }
-
                     }
 
                     return new CarePlan(patientCopy, protocolActs.Select(o =>
