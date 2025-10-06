@@ -305,6 +305,8 @@ namespace SanteDB.Core.Cdss
                         {
                             var act = protocolStack.Dequeue();
 
+                            var actOnePerVisitKey = act.Tags?.Find(t => t.TagKey == SystemTagNames.CdssOnePerVisit)?.Value;
+
                             // First we want to find a candidate which has the same period properties
                             var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
                             var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(DateTimeOffset.Now.AddDays(7));
@@ -314,10 +316,13 @@ namespace SanteDB.Core.Cdss
                                 periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
                                 periodEnd >= c.StartTime);
 
+                            var candMonthSer = candidate?.ActTime.GreaterOf(candidate.StartTime).Value;
                             if (candidate != null &&
                                 (candidate?.StopTime == null &&
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(candidate.StartTime.Value).TotalDays ?? 0) > 28 ||
-                                (candidate.ActTime.GreaterOf(candidate.StartTime).Value.Month != periodStart.Value.Month))) // Don't allow multi-month suggestions
+                                (candMonthSer?.Year * 12 + candMonthSer?.Month != periodStart?.Year * 12 + periodStart?.Month)) || // Don't allow multi-month suggestions
+                                (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate.Relationships?.Any(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t=>t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
+                                ) 
                             {
                                 candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);
                                 candidate = null;
