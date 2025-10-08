@@ -273,7 +273,7 @@ namespace SanteDB.Core.ViewModel.Json
                                 {
                                     var fmtr = context.JsonContext.GetFormatter(xsiType);
                                     var nRetVal = fmtr.Deserialize(r, xsiType, context);
-                                    nRetVal.CopyObjectData(retVal);
+                                    //nRetVal.CopyObjectData(retVal);
                                     return nRetVal;
                                 }
                                 break;
