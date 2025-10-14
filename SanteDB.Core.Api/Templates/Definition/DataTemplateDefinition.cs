@@ -264,6 +264,7 @@ namespace SanteDB.Core.Templates.Definition
             parameters = parameters ?? new Dictionary<String, String>();
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
+            parameters.Add("nowMinute", DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm"));
 
             var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
 
