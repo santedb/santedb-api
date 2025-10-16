@@ -158,7 +158,12 @@ namespace SanteDB.Core.Services.Impl
 
         private IEnumerable<Act> ExtractCarePlanObjects(ActRelationship actRelationship)
         {
-            actRelationship.TargetActKey = actRelationship.TargetAct.Key = actRelationship.TargetAct.Key ?? Guid.NewGuid();
+            if(actRelationship.TargetAct == null)
+            {
+                yield break;
+            }
+
+            actRelationship.TargetActKey = actRelationship.TargetAct.Key = actRelationship.TargetAct?.Key ?? Guid.NewGuid();
             var ta = actRelationship.TargetAct;
             actRelationship.TargetAct = null;
             if (ta.Relationships?.Any() == true)
