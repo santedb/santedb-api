@@ -196,7 +196,7 @@ namespace SanteDB.Core.Cdss
                     var patientCopy = target.PrepareForCdssExecution();
 
                     // No libraries spec = all libraries
-                    if (libraries.Length == 0)
+                    if (libraries?.Any() != true)
                     {
                         libraries = this.m_cdssLibraryRepository.Find(o => true).ToArray();
                     }
