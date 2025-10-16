@@ -103,8 +103,7 @@ namespace SanteDB.Core.Data.Management
         /// </summary>
         protected void OnSaving(object sender, DataPersistingEventArgs<Bundle> e)
         {
-            e.Cancel = e.Data.Item.Any(o => this.GetResourceInterceptor(o) != null);
-            if (e.Cancel)
+            if (e.Data.Item.Any(o => this.GetResourceInterceptor(o) != null))
             {
                 e.Data.Item.RemoveAll(itm => itm is EntityRelationship er && er.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate && !er.NegationIndicator.GetValueOrDefault() ||
                     itm is ActRelationship ar && ar.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && !ar.NegationIndicator.GetValueOrDefault());
@@ -130,12 +129,6 @@ namespace SanteDB.Core.Data.Management
                         }
                     }
                 }
-
-                
-                e.Data = this.m_businessRulesService?.BeforeInsert(persistenceBundle) ?? persistenceBundle;
-                e.Data = this.m_bundlePersistence.Insert(e.Data, e.Mode, AuthenticationContext.Current.Principal);
-                e.Data = this.m_businessRulesService?.AfterInsert(e.Data) ?? persistenceBundle;
-                e.Success = true;
             }
         }
 
