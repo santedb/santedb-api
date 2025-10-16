@@ -183,7 +183,6 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <returns>Returns the user.</returns>
         public SecurityUser GetUser(String userName)
         {
-            // As the identity service may be LDAP, best to call it to get an identity name
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
             var cacheKey = $"sec.ulook.{userName}";
             if (this.m_adhocCacheService.TryGet<Guid>(cacheKey, out var userKey))

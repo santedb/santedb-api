@@ -35,6 +35,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.Core.Cdss;
 
 namespace SanteDB.Core.Templates.Definition
 {
@@ -213,6 +217,12 @@ namespace SanteDB.Core.Templates.Definition
         [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
+        /// <summary>
+        /// Identifies the CDSS calback hook 
+        /// </summary>
+        [XmlElement("cdss"), JsonProperty("cdss")]
+        public DataTemplateCdssCallback CdssCallback { get; set; }
+
         /// <inheritdoc/>
         public bool ShouldSerializeIsActive() => !this.m_saving;
 
@@ -251,6 +261,13 @@ namespace SanteDB.Core.Templates.Definition
                 if(retVal is IHasTemplate iht)
                 {
                     iht.TemplateKey = this.Uuid;
+                }
+
+                // Is there CDSS to be applied?
+                if(this.CdssCallback != null)
+                {
+                    this.CdssCallback.AddCdssActions(this, retVal);
+                    
                 }
                 return retVal;
             }
