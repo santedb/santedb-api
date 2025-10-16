@@ -51,41 +51,91 @@ namespace SanteDB.Core.Notifications.Templating
         public NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model)
         {
             var template = m_notificationTemplateRepository.Get(templateId);
-            var templateContent = template.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
 
-            if (null == template || null == templateContent)
-            {
-                throw new KeyNotFoundException($"Could not find template id: \"{templateId}\" and language {templateLanguage}.");
-            }
+            if (null == template)
+                throw new KeyNotFoundException($"Could not find template id: \"{templateId}\".");
 
-            string replacer(Match match)
-            {
-                var nameGroup = match.Groups[1];
+            return FillTemplateInternal(template, templateLanguage, model);
 
-                if (nameGroup.Success != true || string.IsNullOrWhiteSpace(nameGroup.Value))
-                    return null;
+            //var templateContent = template.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
 
-                if (model.TryGetValue(nameGroup.Value, out var val))
-                    return val?.ToString();
-                
-                return null;
-            };
+                //if (null == template || null == templateContent)
+                //{
+                //    throw new KeyNotFoundException($"Could not find template id: \"{templateId}\" and language {templateLanguage}.");
+                //}
 
-            return new NotificationTemplateContents()
-            {
-                Body = m_parmRegex.Replace(templateContent.Body, replacer),
-                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
-                Language = templateContent.Language
-            };
+                //string replacer(Match match)
+                //{
+                //    var nameGroup = match.Groups[1];
+
+                //    if (nameGroup.Success != true || string.IsNullOrWhiteSpace(nameGroup.Value))
+                //        return null;
+
+                //    if (model.TryGetValue(nameGroup.Value, out var val))
+                //        return val?.ToString();
+
+                //    return null;
+                //};
+
+                //return new NotificationTemplateContents()
+                //{
+                //    Body = m_parmRegex.Replace(templateContent.Body, replacer),
+                //    Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+                //    Language = templateContent.Language
+                //};
         }
 
+        ///<inheritdoc />
         public NotificationTemplateContents FillTemplate(NotificationInstance template, string templateLanguage, IDictionary<string, object> model)
         {
-            var templateContent = template.NotificationTemplate.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
+            if (null == template)
+                throw new ArgumentNullException(nameof(template), "Template is required.");
 
-            if (null == template || null == templateContent)
+            return FillTemplateInternal(template.NotificationTemplate, templateLanguage, model);
+
+            //var templateContent = template.NotificationTemplate.Contents.FirstOrDefault(o => o.Language == templateLanguage || String.IsNullOrEmpty(o.Language));
+
+            //if (null == template || null == templateContent)
+            //{
+            //    throw new KeyNotFoundException($"Could not find template id: \"{template.NotificationTemplate.Key}\" and language {templateLanguage}.");
+            //}
+
+            //string replacer(Match match)
+            //{
+            //    var nameGroup = match.Groups[1];
+
+            //    if (nameGroup.Success != true || string.IsNullOrWhiteSpace(nameGroup.Value))
+            //        return null;
+
+            //    if (model.TryGetValue(nameGroup.Value, out var val))
+            //        return val?.ToString();
+                
+            //    return null;
+            //};
+
+            //return new NotificationTemplateContents()
+            //{
+            //    Body = m_parmRegex.Replace(templateContent.Body, replacer),
+            //    Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
+            //    Language = templateContent.Language
+            //};
+        }
+
+        /// <summary>
+        /// Internal implementation resposible for both <see cref="FillTemplate(string, string, IDictionary{string, object})"/> and <see cref="FillTemplate(NotificationInstance, string, IDictionary{string, object})"/>.
+        /// </summary>
+        /// <param name="template"></param>
+        /// <param name="templateLanguage"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private NotificationTemplateContents FillTemplateInternal(NotificationTemplate template, string templateLanguage, IDictionary<string, object> model)
+        {
+            var content = template.Contents.FirstOrDefault(o => o.Language == templateLanguage || string.IsNullOrEmpty(o.Language));
+
+            if (null == content)
             {
-                throw new KeyNotFoundException($"Could not find template id: \"{template.NotificationTemplate.Key}\" and language {templateLanguage}.");
+                throw new ArgumentException("Template does not contain default content and does not have matching language content.", nameof(template));
             }
 
             string replacer(Match match)
@@ -97,15 +147,16 @@ namespace SanteDB.Core.Notifications.Templating
 
                 if (model.TryGetValue(nameGroup.Value, out var val))
                     return val?.ToString();
-                
+
                 return null;
-            };
+            }
+            ;
 
             return new NotificationTemplateContents()
             {
-                Body = m_parmRegex.Replace(templateContent.Body, replacer),
-                Subject = m_parmRegex.Replace(templateContent.Subject, replacer),
-                Language = templateContent.Language
+                Body = m_parmRegex.Replace(content.Body, replacer),
+                Subject = m_parmRegex.Replace(content.Subject, replacer),
+                Language = content.Language
             };
         }
     }
