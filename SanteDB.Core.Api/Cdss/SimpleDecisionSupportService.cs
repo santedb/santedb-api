@@ -38,6 +38,7 @@ using SharpCompress;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -356,7 +357,15 @@ namespace SanteDB.Core.Cdss
                         o.StartTime = o.StartTime?.EnsureWeekday();
                         o.StopTime = o.StopTime?.EnsureWeekday();
                         return o;
-                    }).OrderBy(o => o.ActTime).ToList())
+                    }).OrderBy(o => {
+                        if (long.TryParse(o.Tags?.FirstOrDefault(t => t.TagKey == SystemTagNames.CdssOrderTag)?.Value, out var ll))
+                        {
+                            return ll;
+                        }
+                        else {
+                            return o.ActTime.GetValueOrDefault().Ticks;
+                        }
+                    }).ToList())
                     {
                         MoodConceptKey = ActMoodKeys.Propose,
                         ActTime = DateTimeOffset.Now,
