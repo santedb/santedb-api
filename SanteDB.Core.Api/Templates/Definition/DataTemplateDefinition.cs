@@ -35,6 +35,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.Core.Cdss;
 
 namespace SanteDB.Core.Templates.Definition
 {
@@ -213,6 +217,12 @@ namespace SanteDB.Core.Templates.Definition
         [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
+        /// <summary>
+        /// Identifies the CDSS calback hook 
+        /// </summary>
+        [XmlElement("cdss"), JsonProperty("cdss")]
+        public DataTemplateCdssCallback CdssCallback { get; set; }
+
         /// <inheritdoc/>
         public bool ShouldSerializeIsActive() => !this.m_saving;
 
@@ -252,6 +262,13 @@ namespace SanteDB.Core.Templates.Definition
                 {
                     iht.TemplateKey = this.Uuid;
                 }
+
+                // Is there CDSS to be applied?
+                if(this.CdssCallback != null)
+                {
+                    this.CdssCallback.AddCdssActions(this, retVal);
+                    
+                }
                 return retVal;
             }
         }
@@ -264,6 +281,7 @@ namespace SanteDB.Core.Templates.Definition
             parameters = parameters ?? new Dictionary<String, String>();
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
+            parameters.Add("nowMinute", DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm"));
 
             var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
 
