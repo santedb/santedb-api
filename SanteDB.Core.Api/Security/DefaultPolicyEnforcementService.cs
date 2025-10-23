@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
@@ -62,6 +63,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         private PolicyGrantType GetGrant(IPrincipal principal, String policyId)
         {
+            if(principal == null)
+            {
+                throw new ArgumentNullException(nameof(principal), ErrorMessages.ARGUMENT_NULL);
+            }
+
             var action = PolicyGrantType.Deny;
 
             // Non system principals must be authenticated
