@@ -332,6 +332,12 @@ namespace SanteDB.Core.Cdss
                             if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
+                                candidate.Protocols = new List<ActProtocol>();
+                                candidate.Protocols.Add(new ActProtocol()
+                                {
+                                    ProtocolKey = pathwayDef.Key,
+                                    Sequence = encounters.Count + 1
+                                });
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
@@ -433,6 +439,8 @@ namespace SanteDB.Core.Cdss
             retVal.StopTime = act.StopTime?.EnsureWeekday();
             retVal.MoodConceptKey = ActMoodKeys.Propose;
             retVal.Key = Guid.NewGuid();
+            retVal.DischargeDisposition = null;
+            retVal.DischargeDispositionKey = null;
 
             recordTarget.Participations.Add(new ActParticipation()
             {
