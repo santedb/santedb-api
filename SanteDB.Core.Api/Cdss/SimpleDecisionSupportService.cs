@@ -231,7 +231,7 @@ namespace SanteDB.Core.Cdss
                     // Compute the protocols
                     var protocolOutput = libraries
                         .AsParallel()
-                        .WithDegreeOfParallelism(2)
+                        .WithDegreeOfParallelism((Environment.ProcessorCount / 2) + 1)
                         .SelectMany(library => library.GetProtocols(patientCopy, parmDict, pathway?.ToString(), pathwayDef?.LoadProperty(o => o.Template)?.Mnemonic, encounterType?.ToString()))
                         .SelectMany(proto =>
                         {
