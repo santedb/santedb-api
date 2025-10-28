@@ -25,7 +25,6 @@ using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -190,22 +189,19 @@ namespace SanteDB.Core.Data.Backup
         {
             try
             {
-                using (AuthenticationContext.EnterSystemContext())
-                {
-                    var assets = this.m_serviceManager.GetServices()
-                            .OfType<IProvideBackupAssets>()
-                            .Distinct()
-                            .SelectMany(o => o.GetBackupAssets())
-                            .ToArray();
+                var assets = this.m_serviceManager.GetServices()
+                        .OfType<IProvideBackupAssets>()
+                        .Distinct()
+                        .SelectMany(o => o.GetBackupAssets())
+                        .ToArray();
 
-                    using (var bw = BackupWriter.Create(stream, assets, password: password, keepOpen: true))
+                using (var bw = BackupWriter.Create(stream, assets, password: password, keepOpen: true))
+                {
+                    for (var i = 0; i < assets.Length; i++)
                     {
-                        for (var i = 0; i < assets.Length; i++)
-                        {
-                            this.m_tracer.TraceInfo("Adding {0} to backup", assets[i].Name);
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
-                            bw.WriteAssetEntry(assets[i]);
-                        }
+                        this.m_tracer.TraceInfo("Adding {0} to backup", assets[i].Name);
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
+                        bw.WriteAssetEntry(assets[i]);
                     }
                 }
             }
