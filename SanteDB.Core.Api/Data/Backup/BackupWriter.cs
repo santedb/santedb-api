@@ -41,14 +41,16 @@ namespace SanteDB.Core.Data.Backup
         private static readonly byte[] MAGIC = BackupReader.MAGIC;
         private readonly Stream m_underlyingStream;
         private TarWriter m_tarWriter;
+        private readonly bool m_keepOpen;
 
         /// <summary>
         /// Create a new backup writer
         /// </summary>
-        private BackupWriter(Stream underlyingStream)
+        private BackupWriter(Stream underlyingStream, bool keepUnderlyingStreamOpen = false)
         {
             this.m_underlyingStream = underlyingStream;
             this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true));
+            this.m_keepOpen = keepUnderlyingStreamOpen;
         }
 
         /// <summary>
@@ -58,7 +60,7 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="password">The password for the backup file</param>
         /// <param name="underlyingStream">The stream to write the backup to</param>
         /// <returns>The backup writer</returns>
-        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null)
+        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null, bool keepOpen = false)
         {
 
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
@@ -97,7 +99,7 @@ namespace SanteDB.Core.Data.Backup
 
             underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
 
-            return new BackupWriter(underlyingStream);
+            return new BackupWriter(underlyingStream, keepOpen);
         }
 
         /// <summary>
@@ -128,9 +130,12 @@ namespace SanteDB.Core.Data.Backup
                 {
                     cs.FlushFinalBlock();
                 }
-                this.m_underlyingStream.Flush();
                 this.m_tarWriter.Dispose();
-                this.m_underlyingStream.Dispose();
+                this.m_underlyingStream.Flush();
+                if (!this.m_keepOpen)
+                {
+                    this.m_underlyingStream.Dispose();
+                }
                 this.m_tarWriter = null;
             }
         }
