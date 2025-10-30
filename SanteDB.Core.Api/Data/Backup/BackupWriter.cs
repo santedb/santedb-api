@@ -19,13 +19,11 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.Security;
-using SharpCompress.Compressors;
-using SharpCompress.Compressors.BZip2;
-using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,8 +55,9 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="assetsToWrite">The assets which should be written to the backup file</param>
         /// <param name="password">The password for the backup file</param>
         /// <param name="underlyingStream">The stream to write the backup to</param>
+        /// <param name="keepOpen">True if the underlying stream should be kept open or disposed when the write is disposed</param>
         /// <returns>The backup writer</returns>
-        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null)
+        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null, bool keepOpen = false)
         {
 
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
@@ -95,7 +94,7 @@ namespace SanteDB.Core.Data.Backup
                 underlyingStream.Write(MAGIC, 0, MAGIC.Length); // MAGIC is re-emitted in the backup so that the restore function knows you didn't enter gibberish (i.e. the first bytes from the decryptor stream should be magic)
             }
 
-            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
+            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress, leaveOpen: keepOpen);
 
             return new BackupWriter(underlyingStream);
         }
@@ -124,12 +123,11 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarWriter != null)
             {
-                if (this.m_underlyingStream is CryptoStream cs)
-                {
+                this.m_tarWriter.Dispose();
+                this.m_underlyingStream.Flush();
+                if(this.m_underlyingStream is GZipStream gzs && gzs.BaseStream is CryptoStream cs) { 
                     cs.FlushFinalBlock();
                 }
-                this.m_underlyingStream.Flush();
-                this.m_tarWriter.Dispose();
                 this.m_underlyingStream.Dispose();
                 this.m_tarWriter = null;
             }
