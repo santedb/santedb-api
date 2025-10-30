@@ -105,7 +105,7 @@ namespace SanteDB.Core.Configuration
                         AppDomain.CurrentDomain.GetAllTypes().FirstOrDefault(o => o.AssemblyQualifiedNameWithoutVersion().Equals(this.TypeXml));
                     if (this.m_type == null)
                     {
-                        throw new InvalidOperationException($"Type {this.TypeXml} not found");
+                        //throw new InvalidOperationException($"Type {this.TypeXml} not found");
                     }
                 }
                 return this.m_type;
