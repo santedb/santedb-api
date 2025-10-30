@@ -39,7 +39,6 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <param name="milliseconds"></param>
         public static void WritePerformanceTrace(long milliseconds)
         {
-#if DEBUG
             if (milliseconds > 1000)
             {
                 var stack = new StackTrace(false).GetFrame(1).GetMethod();
@@ -51,7 +50,6 @@ namespace SanteDB.Core.Diagnostics.Performance
                     };
                 }
             }
-#endif
         }
 
     }
