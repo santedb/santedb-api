@@ -134,7 +134,7 @@ namespace SanteDB.Core.Security.Privacy
             {
                 return new NestedQueryResultSet<TData>(results, (o) => {
                     if (o is IHasPolicies ihp && ihp.Policies?.Any() == true ||
-                        o is IHasRelationships ihr && ihr.Relationships.Any())
+                        o is IHasRelationships ihr && ihr.Relationships?.Any() == true)
                     {
                         return this.Apply(o, principal);
                     }

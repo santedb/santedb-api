@@ -96,21 +96,33 @@ namespace SanteDB.Core.Security.Privacy
                     return result;
 
                 case PolicyEnforcementExemptionPolicy.DevicePrincipalsExempt:
-                    if (principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity)
+                    if (principal.Identity is IDeviceIdentity)
                     {
                         return result;
                     }
 
                     break;
-
+                case PolicyEnforcementExemptionPolicy.ApplicationPrincipalsExempt:
+                    if(principal.Identity is IApplicationIdentity)
+                    {
+                        return result;
+                    }
+                    break;
+                case PolicyEnforcementExemptionPolicy.ApplicationsOrDevicesExempt:
+                    if (principal.Identity is IApplicationIdentity || 
+                        principal.Identity is IDeviceIdentity)
+                    {
+                        return result;
+                    }
+                    break;
                 case PolicyEnforcementExemptionPolicy.UserPrincipalsExempt:
-                    if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
-                    {
-                        return result;
-                    }
+                            if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
+                            {
+                                return result;
+                            }
 
-                    break;
-            }
+                            break;
+                        }
             return base.Apply(result, principal);
         }
     }
