@@ -61,7 +61,7 @@ namespace SanteDB.Core.Security.Configuration
         /// <summary>
         /// All non-human
         /// </summary>
-        [XmlElement("non-human")] 
+        [XmlEnum("non-human")] 
         ApplicationsOrDevicesExempt = DevicePrincipalsExempt | ApplicationPrincipalsExempt,
         /// <summary>
         /// Devices and humans are exempt
