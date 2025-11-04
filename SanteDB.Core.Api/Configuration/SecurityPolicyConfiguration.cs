@@ -63,6 +63,11 @@ namespace SanteDB.Core.Configuration
         [XmlEnum("auth.session.length")]
         SessionLength,
         /// <summary>
+        /// Maximum length of sesison
+        /// </summary>
+        [XmlEnum("auth.session.elevated.length")]
+        ElevatedSessionLength,
+        /// <summary>
         /// Maximum time to refresh session
         /// </summary>
         [XmlEnum("auth.session.refresh")]

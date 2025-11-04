@@ -304,34 +304,15 @@ namespace SanteDB.Core.Security
             }
             // We need to get the active policies for this
             var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
-            IEnumerable<IPolicyInstance> securablePolicies = pip.GetPolicies(securable), principalPolicies = null;
-
-            if (principal is IClaimsPrincipal cp)
-            {
-                principalPolicies = cp.GetGrantedPolicies(pip);
-            }
-            if (principalPolicies?.Any() != true)
-            {
-                principalPolicies = this.GetEffectivePolicySet(principal);
-            }
-
+            IEnumerable<IPolicyInstance> securablePolicies = pip.GetPolicies(securable);
             List<PolicyDecisionDetail> details = new List<PolicyDecisionDetail>();
             var retVal = new PolicyDecision(securable, details);
 
             foreach (var pol in securablePolicies)
             {
                 // Get most restrictive from principal
-                var rule = principalPolicies.FirstOrDefault(p => p.Policy.Oid == pol.Policy.Oid)?.Rule ?? PolicyGrantType.Deny;
-
-                // Rule for elevate can only be made when the policy allows for it & the principal is allowed
-                if (rule == PolicyGrantType.Elevate &&
-                    (!pol.Policy.CanOverride ||
-                    principalPolicies.Any(o => o.Policy.Oid == PermissionPolicyIdentifiers.ElevateClinicalData && o.Rule == PolicyGrantType.Grant)))
-                {
-                    rule = PolicyGrantType.Deny;
-                }
-
-                details.Add(new PolicyDecisionDetail(pol.Policy.Oid, rule));
+                var rule = this.GetPolicyOutcome(principal, pol.Policy.Oid);
+                details.Add(new PolicyDecisionDetail(pol.Policy, rule));
             }
 
             return retVal;

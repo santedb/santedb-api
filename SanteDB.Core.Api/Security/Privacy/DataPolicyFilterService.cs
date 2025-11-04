@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Attributes;
@@ -196,7 +197,7 @@ namespace SanteDB.Core.Security.Privacy
                         r += (result as Entity)?.LoadProperty(o => o.Identifiers).RemoveAll(a => domainsToFilter.Any(f => f.Key == a.IdentityDomainKey));
                         if (r > 0)
                         {
-                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).ToPolicy(), PolicyGrantType.Deny)).ToList()), true, result).Send();
                             //AuditUtil.AuditMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.Policy.Oid, PolicyGrantType.Deny)).ToList()), true);
                             if (result is ITaggable tag)
                             {
@@ -231,7 +232,7 @@ namespace SanteDB.Core.Security.Privacy
 
                         if (r > 0)
                         {
-                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).ToPolicy(), PolicyGrantType.Deny)).ToList()), true, result).Send();
                             if (result is ITaggable tag)
                             {
                                 tag.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
@@ -265,7 +266,7 @@ namespace SanteDB.Core.Security.Privacy
 
                         if (r > 0)
                         {
-                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).Oid, PolicyGrantType.Deny)).ToList()), true, result).Send();
+                            ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, new PolicyDecision(result, domainsToFilter.Select(o => new PolicyDecisionDetail(o.LoadProperty<SecurityPolicy>(nameof(IdentityDomain.Policy)).ToPolicy(), PolicyGrantType.Deny)).ToList()), true, result).Send();
 
                             if (result is ITaggable tag)
                             {
@@ -480,7 +481,6 @@ namespace SanteDB.Core.Security.Privacy
                         default:
                             return;
                     }
-                    target.PreventDelayLoad();
                     relation.TargetEntity = this.ApplyInternal(target, principal, processRelationships: false);
                 });
             }
@@ -489,6 +489,7 @@ namespace SanteDB.Core.Security.Privacy
             {
                 case PolicyGrantType.Elevate:
                 case PolicyGrantType.Deny:
+                    result.AddAnnotation(new PrivacyMaskingAnnotation(decision, policy.Action));
                     switch (policy.Action)
                     {
                         case ResourceDataPolicyActionType.Audit:
@@ -541,7 +542,7 @@ namespace SanteDB.Core.Security.Privacy
                             {
                                 ApplicationServiceContext.Current.GetAuditService().Audit().ForSensitiveDisclosure(result, decision, false).Send();
                             }
-                            throw new SecurityException($"Access denied");
+                            throw new PolicyViolationException(principal, decision);
                         case ResourceDataPolicyActionType.None:
                             return result;
 
@@ -648,6 +649,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.Names = entity.Names.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList();
                 retVal.PreventDelayLoad();
+                retVal.CopyAnnotations(result);
                 return retVal;
             }
             else if (result is Act act)
@@ -662,6 +664,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.ReasonConceptKey = NullReasonKeys.Masked;
                 retVal.Protocols = new List<ActProtocol>();
                 retVal.PreventDelayLoad();
+                retVal.CopyAnnotations(result);
                 return retVal;
             }
             return result;
