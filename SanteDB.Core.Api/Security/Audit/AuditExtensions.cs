@@ -237,7 +237,7 @@ namespace SanteDB.Core.Security.Audit
                 Role = AuditableObjectRole.SecurityGranularityDefinition,
                 Type = AuditableObjectType.SystemObject,
                 LifecycleType = AuditableObjectLifecycle.Verification,
-                ObjectId = o.PolicyId
+                ObjectId = o.Policy.Oid
             }));
             return me;
         }
@@ -968,12 +968,12 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Role = AuditableObjectRole.Report;
                     retVal.Type = AuditableObjectType.SystemObject;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicyDecision;
-                    retVal.ObjectId = $"urn:oid:{pde.Details?.First().PolicyId}";
+                    retVal.ObjectId = $"urn:oid:{pde.Details?.First().Policy.Oid}";
                     retVal.ObjectData = new List<ObjectDataExtension>()
                     {
                         new ObjectDataExtension("securable", pde.Securable.ToString()),
                         new ObjectDataExtension("outcome", pde.Outcome.ToString()),
-                        new ObjectDataExtension("details", String.Join(",",pde.Details.Select(o=>$"{o.PolicyId}={o.Outcome}")))
+                        new ObjectDataExtension("details", String.Join(",",pde.Details.Select(o=>$"{o.Policy.Oid}={o.Outcome}")))
                     };
                     break;
                 case IForeignDataSubmission fds:

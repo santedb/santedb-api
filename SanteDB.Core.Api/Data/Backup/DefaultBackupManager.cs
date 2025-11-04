@@ -226,7 +226,17 @@ namespace SanteDB.Core.Data.Backup
                 {
                     Directory.CreateDirectory(backupPath);
                 }
-                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Where(f => !f.StartsWith(".")).Select(o => new FileBackupDescriptor(new FileInfo(o)));
+                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Where(f => !f.StartsWith(".")).Select(o =>
+                {
+                    try
+                    {
+                        return new FileBackupDescriptor(new FileInfo(o));
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }).OfType<IBackupDescriptor>();
             }
             else
             {
@@ -414,7 +424,7 @@ namespace SanteDB.Core.Data.Backup
                 int i = 0;
                 using (AuthenticationContext.EnterSystemContext())
                 {
-                    using (var br = BackupReader.Open(stream, password))
+                    using (var br = BackupReader.Open(stream, password: password, leaveOpen: true))
                     {
                         while (br.GetNextEntry(out var backupAsset))
                         {

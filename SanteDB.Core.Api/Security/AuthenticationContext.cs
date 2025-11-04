@@ -321,7 +321,7 @@ namespace SanteDB.Core.Security
 
                 return s_current;
             }
-            internal set { s_current = value; }
+            private set { s_current = value; }
         }
 
         /// <summary>
@@ -364,6 +364,14 @@ namespace SanteDB.Core.Security
             {
                 ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
             }
+        }
+
+        /// <summary>
+        /// Abandon the current authentication context
+        /// </summary>
+        public void Abandon()
+        {
+            AuthenticationContext.Current = null;
         }
     }
 }

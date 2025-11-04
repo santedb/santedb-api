@@ -31,16 +31,16 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Creates a new policy decision outcome
         /// </summary>
-        public PolicyDecisionDetail(String policyId, PolicyGrantType outcome)
+        public PolicyDecisionDetail(IPolicy policy, PolicyGrantType outcome)
         {
-            this.PolicyId = policyId;
+            this.Policy = policy;
             this.Outcome = outcome;
         }
 
         /// <summary>
         /// Gets the policy identifier
         /// </summary>
-        public String PolicyId { get; private set; }
+        public IPolicy Policy { get; private set; }
 
         /// <summary>
         /// Gets the policy decision outcome

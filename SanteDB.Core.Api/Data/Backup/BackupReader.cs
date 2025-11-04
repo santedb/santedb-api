@@ -19,11 +19,10 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.i18n;
-using SharpCompress.Compressors.BZip2;
-using SharpCompress.Compressors.Deflate;
 using SharpCompress.Readers.Tar;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -132,7 +131,7 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         /// <param name="backupStream">The stream from which the backup should be loaded</param>
         /// <param name="password">The password on the backup to use to decrypt it</param>
-        public static BackupReader Open(Stream backupStream, String password = null)
+        public static BackupReader Open(Stream backupStream, String password = null, bool leaveOpen = false)
         {
 
             if (!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv))
@@ -169,7 +168,7 @@ namespace SanteDB.Core.Data.Backup
                 }
             }
 
-            backupStream = new GZipStream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress);
+            backupStream = new GZipStream(backupStream, CompressionMode.Decompress, leaveOpen);
 
             return new BackupReader(backupStream, backupDate, creator, backupAsset);
         }

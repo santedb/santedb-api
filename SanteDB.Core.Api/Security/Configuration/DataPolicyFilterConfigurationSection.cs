@@ -35,6 +35,14 @@ namespace SanteDB.Core.Security.Configuration
     {
 
         /// <summary>
+        /// Data policy filter configuration section
+        /// </summary>
+        public DataPolicyFilterConfigurationSection()
+        {
+            this.Resources = new List<ResourceDataPolicyFilter>();
+        }
+
+        /// <summary>
         /// Gets or sets the default action
         /// </summary>
         [XmlAttribute("action"), JsonProperty("action")]

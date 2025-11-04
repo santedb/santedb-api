@@ -72,6 +72,11 @@ namespace SanteDB.Core
         }
 
         /// <summary>
+        /// Convert a CDR policy registration to an operation policy definition
+        /// </summary>
+        public static IPolicy ToPolicy(this SecurityPolicy policy) => new GenericPolicy(policy.Key.GetValueOrDefault(), policy.Oid, policy.Name, policy.CanOverride);
+
+        /// <summary>
         /// Determine if this is running under mono
         /// </summary>
         public static bool IsMonoRuntime(this SanteDBConfiguration m) => Type.GetType("Mono.Runtime") != null;

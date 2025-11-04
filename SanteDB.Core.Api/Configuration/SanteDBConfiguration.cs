@@ -111,7 +111,7 @@ namespace SanteDB.Core.Configuration
         /// Load the specified dataStream.
         /// </summary>
         /// <param name="dataStream">Data stream.</param>
-        public static SanteDBConfiguration Load(Stream dataStream)
+        public static SanteDBConfiguration Load(Stream dataStream, bool validateConfiguration = true)
         {
             var configStream = dataStream;
             if (!configStream.CanSeek)
@@ -182,7 +182,7 @@ namespace SanteDB.Core.Configuration
 
             // Validate the configuration 
             var errors = retVal.Sections.OfType<IValidatableConfigurationSection>().SelectMany(o => o.Validate()).Where(d => d.Priority == DetectedIssuePriorityType.Error);
-            if (errors.Any())
+            if (errors.Any() && validateConfiguration)
             {
                 throw new ConfigurationException($"Error validating configuration: {String.Join("\r\n", errors.Select(o => o.Text))}", retVal);
             }

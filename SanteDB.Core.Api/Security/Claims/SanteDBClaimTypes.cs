@@ -257,5 +257,10 @@ namespace SanteDB.Core.Security.Claims
         /// XSPA National Provider ID
         /// </summary>
         public const string XspaUserNpi = "urn:oasis:names:tc:xspa:1.0:subject:npi";
+
+        /// <summary>
+        /// Single use session token
+        /// </summary>
+        public const string SingleUseToken = "urn:santedb:org:claim:single-use";
     }
 }
