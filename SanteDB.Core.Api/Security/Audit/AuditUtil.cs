@@ -488,7 +488,7 @@ namespace SanteDB.Core.Security.Audit
 
             if (obj is PolicyDecision pd)
             {
-                retVal.ObjectData = pd.Details.Select(o => new ObjectDataExtension(o.PolicyId, new byte[] { (byte)o.Outcome })).ToList();
+                retVal.ObjectData = pd.Details.Select(o => new ObjectDataExtension(o.Policy.Oid, new byte[] { (byte)o.Outcome })).ToList();
             }
             return retVal;
         }
