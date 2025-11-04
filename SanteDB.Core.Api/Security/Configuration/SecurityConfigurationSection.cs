@@ -54,10 +54,20 @@ namespace SanteDB.Core.Security.Configuration
         [XmlEnum("humans")]
         UserPrincipalsExempt = 0x2,
         /// <summary>
+        /// Users exempt
+        /// </summary>
+        [XmlEnum("applications")]
+        ApplicationPrincipalsExempt = 0x4,
+        /// <summary>
+        /// All non-human
+        /// </summary>
+        [XmlEnum("non-human")] 
+        ApplicationsOrDevicesExempt = DevicePrincipalsExempt | ApplicationPrincipalsExempt,
+        /// <summary>
         /// Devices and humans are exempt
         /// </summary>
         [XmlEnum("all")]
-        AllExempt = DevicePrincipalsExempt | UserPrincipalsExempt
+        AllExempt = DevicePrincipalsExempt | UserPrincipalsExempt | ApplicationPrincipalsExempt
     }
 
     /// <summary>
