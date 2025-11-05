@@ -65,6 +65,10 @@ namespace SanteDB.Core.Security.Privacy
     [ServiceProvider("Default Privacy Enforcement")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
+
+        // Masked template ID
+        private readonly Guid MASKED_TEMPLATE_ID = Guid.Parse("ab16118a-9158-4400-aff0-f2c4618e1200");
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -650,6 +654,12 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.Names = entity.Names.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList();
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
+                retVal.TemplateKey = MASKED_TEMPLATE_ID;
+                retVal.Template = new TemplateDefinition()
+                {
+                    Key = MASKED_TEMPLATE_ID,
+                    Mnemonic = "org.santedb.core.masked"
+                };
                 return retVal;
             }
             else if (result is Act act)
@@ -665,6 +675,12 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.Protocols = new List<ActProtocol>();
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
+                retVal.TemplateKey = MASKED_TEMPLATE_ID;
+                retVal.Template = new TemplateDefinition()
+                {
+                    Key = MASKED_TEMPLATE_ID,
+                    Mnemonic = "org.santedb.core.masked"
+                };
                 return retVal;
             }
             return result;
