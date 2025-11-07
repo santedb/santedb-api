@@ -62,12 +62,13 @@ namespace SanteDB.Core.Security
             /// <summary>
             /// Constructs a simple policy
             /// </summary>
-            public EffectivePolicy(Guid key, String oid, String name, bool canOverride)
+            public EffectivePolicy(Guid key, String oid, String name, bool canOverride, bool isPublic)
             {
                 this.Key = key;
                 this.Oid = oid;
                 this.Name = name;
                 this.CanOverride = canOverride;
+                this.IsPublic = isPublic;
                 this.IsActive = true;
             }
 
@@ -76,7 +77,15 @@ namespace SanteDB.Core.Security
             /// </summary>
             public Guid Key
             {
-                get; set;
+                get; private set;
+            }
+
+            /// <summary>
+            /// True if the policy is public
+            /// </summary>
+            public bool IsPublic
+            {
+                get; private set;
             }
 
             /// <summary>
@@ -84,7 +93,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public bool CanOverride
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -92,7 +101,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public bool IsActive
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -100,7 +109,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public string Name
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -108,7 +117,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public string Oid
             {
-                get; set;
+                get; private set;
             }
         }
 
@@ -132,7 +141,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public EffectivePolicyInstance(IPolicy policy, PolicyGrantType rule, IPrincipal forPrincipal)
             {
-                this.Policy = new EffectivePolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride);
+                this.Policy = new EffectivePolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride, policy.IsPublic);
                 this.Rule = rule;
                 this.m_securable = forPrincipal;
             }

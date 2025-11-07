@@ -1284,8 +1284,9 @@ namespace SanteDB.Core.Security.Audit
                         deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null,
                         new ObjectDataExtension("scope", String.Join("; ", policies ?? new String[] { "*" }))
-                    }.OfType<ObjectDataExtension>().ToList()
+                    }.OfType<ObjectDataExtension>().Union(session.Claims.Where(c=>c.Type != SanteDBClaimTypes.SanteDBScopeClaim).Select(o => new ObjectDataExtension(o.Type, o.Value) )).ToList()
                 });
+                
             }
             else
             {
