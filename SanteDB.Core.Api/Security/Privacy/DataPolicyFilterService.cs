@@ -65,6 +65,17 @@ namespace SanteDB.Core.Security.Privacy
     [ServiceProvider("Default Privacy Enforcement")]
     public class DataPolicyFilterService : IPrivacyEnforcementService
     {
+
+        // Masked template ID
+        private readonly Guid MASKED_TEMPLATE_ID = Guid.Parse("ab16118a-9158-4400-aff0-f2c4618e1200");
+
+        // Masked template ID
+        private readonly Guid[] IGNORE_MOOD_CODES = new Guid[]
+        {
+            ActMoodKeys.Propose,
+            ActMoodKeys.Definition
+        };
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -377,7 +388,13 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             // Is this SYSTEM?
-            if (!this.m_actions.TryGetValue(record.GetType(), out var policy) || accessor == AuthenticationContext.SystemPrincipal)
+            if (
+                record == null ||
+                !this.m_actions.TryGetValue(record.GetType(), out var policy) || // Not configured
+                accessor == AuthenticationContext.SystemPrincipal || // User is system
+                record is Act act && this.IGNORE_MOOD_CODES.Contains(act?.MoodConceptKey.GetValueOrDefault() ?? Guid.Empty) ||
+                record is IHasState st && st.StatusConceptKey != StatusKeys.Completed
+            )
             {
                 return true;
             }
@@ -403,20 +420,17 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             var decision = this.m_pdpService.GetPolicyDecision(accessor, record);
-            if (decision.Outcome != PolicyGrantType.Grant)
+            if (decision.Outcome == PolicyGrantType.Deny &&
+                !record.GetAnnotations<PreventPrivacyWriteValidation>().Any())
             {
                 return false;
             }
             else
             {
                 var domainsToFilter = this.GetFilterDomains(accessor);
-                if (record is Entity entity)
+                if (record is IHasIdentifiers ids)
                 {
-                    return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
-                }
-                else if (record is Act act)
-                {
-                    return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
+                    return !domainsToFilter.Any(dtf => ids.LoadProperty(o => o.Identifiers).Any(id => id.IdentityDomain.SemanticEquals(dtf)));
                 }
                 else
                 {
@@ -463,26 +477,36 @@ namespace SanteDB.Core.Security.Privacy
             this.ApplyFieldFilter(result, principal, policy);
 
             // Apply for any relationships 
-            if(result is IHasRelationships ihr && processRelationships)
-            {
-                ((IdentifiedData)ihr).LoadCollection<ITargetedAssociation>(nameof(IHasRelationships.Relationships)).ForEach(relation =>
+            if (processRelationships) {
+                if (result is IHasRelationships ihr)
                 {
-                    IdentifiedData target = null;
-                    switch(relation)
+                    ((IdentifiedData)ihr).LoadCollection<ITargetedAssociation>(nameof(IHasRelationships.Relationships)).ForEach(relation =>
                     {
-                        case ActRelationship ar:
-                            target = ar.LoadProperty(a => a.TargetAct);
-                            ar.TargetAct.LoadProperty(o => o.Identifiers);
-                            break;
-                        case EntityRelationship er:
-                            target = er.LoadProperty(o => o.TargetEntity);
-                            er.TargetEntity.LoadProperty(o => o.Identifiers);
-                            break;
-                        default:
-                            return;
-                    }
-                    relation.TargetEntity = this.ApplyInternal(target, principal, processRelationships: false);
-                });
+                        IdentifiedData target = null;
+                        switch (relation)
+                        {
+                            case ActRelationship ar:
+                                target = ar.LoadProperty(a => a.TargetAct);
+                                ar.TargetAct.LoadProperty(o => o.Identifiers);
+                                break;
+                            case EntityRelationship er:
+                                target = er.LoadProperty(o => o.TargetEntity);
+                                er.TargetEntity.LoadProperty(o => o.Identifiers);
+                                break;
+                            default:
+                                return;
+                        }
+                        relation.TargetEntity = this.ApplyInternal(target, principal, processRelationships: false);
+                    });
+                }
+                if (result is Act act)
+                {
+                    act.LoadProperty(o => o.Participations).ForEach(ptcpt =>
+                    {
+                        ptcpt.LoadProperty(o => o.PlayerEntity);
+                        ptcpt.PlayerEntity = this.ApplyInternal(ptcpt.PlayerEntity, principal, processRelationships: false);
+                    });
+                }
             }
             // Next we base on decision
             switch (decision.Outcome)
@@ -510,6 +534,10 @@ namespace SanteDB.Core.Security.Privacy
                                 {
                                     ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, false, result).Send();
                                 }
+                                // If there is no way to BTG don't even show it
+                                if (decision.Outcome != PolicyGrantType.Elevate)
+                                    goto case ResourceDataPolicyActionType.Hide;
+
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
                                 {
@@ -645,11 +673,18 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionSequence = entity.VersionSequence;
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
-                retVal.Policies = new List<SecurityPolicyInstance>(entity.Policies);
+                retVal.Policies = entity.Policies?.ToList();
                 retVal.StatusConceptKey = entity.StatusConceptKey;
-                retVal.Names = entity.Names.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList();
+                retVal.Names = entity.Names?.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList() ?? 
+                    new List<EntityName>() { new EntityName(NameUseKeys.Anonymous, "XXXXX") };
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
+                retVal.TemplateKey = MASKED_TEMPLATE_ID;
+                retVal.Template = new TemplateDefinition()
+                {
+                    Key = MASKED_TEMPLATE_ID,
+                    Mnemonic = "org.santedb.core.masked"
+                };
                 return retVal;
             }
             else if (result is Act act)
@@ -660,11 +695,17 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionSequence = act.VersionSequence;
                 retVal.StatusConceptKey = act.StatusConceptKey;
                 retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
-                retVal.Policies = new List<SecurityPolicyInstance>(act.Policies);
+                retVal.Policies = act.Policies?.ToList();
                 retVal.ReasonConceptKey = NullReasonKeys.Masked;
                 retVal.Protocols = new List<ActProtocol>();
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
+                retVal.TemplateKey = MASKED_TEMPLATE_ID;
+                retVal.Template = new TemplateDefinition()
+                {
+                    Key = MASKED_TEMPLATE_ID,
+                    Mnemonic = "org.santedb.core.masked"
+                };
                 return retVal;
             }
             return result;

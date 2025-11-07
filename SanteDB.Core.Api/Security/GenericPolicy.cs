@@ -39,19 +39,28 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Constructs a simple policy 
         /// </summary>
-        public GenericPolicy(Guid key, String oid, String name, bool canOverride)
+        public GenericPolicy(Guid key, String oid, String name, bool canOverride, bool isPublic)
         {
             this.Key = key;
             this.Oid = oid;
             this.Name = name;
             this.CanOverride = canOverride;
             this.IsActive = true;
+            this.IsPublic = isPublic;
         }
 
         /// <summary>
         /// Gets the key
         /// </summary>
         public Guid Key
+        {
+            get; private set;
+        }
+
+        /// <summary>
+        /// True if the policy is public
+        /// </summary>
+        public bool IsPublic
         {
             get; private set;
         }
