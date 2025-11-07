@@ -391,7 +391,8 @@ namespace SanteDB.Core.Security.Privacy
             if (
                 !this.m_actions.TryGetValue(record.GetType(), out var policy) || // Not configured
                 accessor == AuthenticationContext.SystemPrincipal || // User is system
-                record is Act act && this.IGNORE_MOOD_CODES.Contains(act.MoodConceptKey.Value)
+                record is Act act && this.IGNORE_MOOD_CODES.Contains(act.MoodConceptKey.Value) ||
+                record is IHasState st && st.StatusConceptKey != StatusKeys.Completed
             )
             {
                 return true;
@@ -418,7 +419,8 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             var decision = this.m_pdpService.GetPolicyDecision(accessor, record);
-            if (decision.Outcome != PolicyGrantType.Grant)
+            if (decision.Outcome == PolicyGrantType.Deny &&
+                !record.GetAnnotations<PreventPrivacyWriteValidation>().Any())
             {
                 return false;
             }
