@@ -389,9 +389,10 @@ namespace SanteDB.Core.Security.Privacy
 
             // Is this SYSTEM?
             if (
+                record == null ||
                 !this.m_actions.TryGetValue(record.GetType(), out var policy) || // Not configured
                 accessor == AuthenticationContext.SystemPrincipal || // User is system
-                record is Act act && this.IGNORE_MOOD_CODES.Contains(act.MoodConceptKey.Value) ||
+                record is Act act && this.IGNORE_MOOD_CODES.Contains(act?.MoodConceptKey.GetValueOrDefault() ?? Guid.Empty) ||
                 record is IHasState st && st.StatusConceptKey != StatusKeys.Completed
             )
             {
