@@ -427,7 +427,7 @@ namespace SanteDB.Core.Security.Privacy
                 var domainsToFilter = this.GetFilterDomains(accessor);
                 if (record is IHasIdentifiers ids)
                 {
-                    return !domainsToFilter.Any(dtf => ids.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
+                    return !domainsToFilter.Any(dtf => ids.LoadProperty(o => o.Identifiers).Any(id => id.IdentityDomain.SemanticEquals(dtf)));
                 }
                 else
                 {

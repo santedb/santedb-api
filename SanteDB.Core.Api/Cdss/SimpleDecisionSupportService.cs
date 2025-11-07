@@ -454,16 +454,19 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
-            if (librariesToApply.Length == 0)
-            {
-                librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
-            }
-
-            foreach (var lib in librariesToApply)
-            {
-                foreach (var iss in lib.Analyze(collectedData, parameters))
+            using (AuthenticationContext.EnterSystemContext()) {
+                collectedData = collectedData.PrepareForCdssExecution();
+                if (librariesToApply.Length == 0)
                 {
-                    yield return iss;
+                    librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
+                }
+
+                foreach (var lib in librariesToApply)
+                {
+                    foreach (var iss in lib.Analyze(collectedData, parameters))
+                    {
+                        yield return iss;
+                    }
                 }
             }
         }
