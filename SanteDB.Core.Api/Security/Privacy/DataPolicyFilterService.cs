@@ -663,7 +663,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionSequence = entity.VersionSequence;
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
-                retVal.Policies = new List<SecurityPolicyInstance>(entity.Policies);
+                retVal.Policies = entity.Policies?.ToList();
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.Names = entity.Names?.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList() ?? 
                     new List<EntityName>() { new EntityName(NameUseKeys.Anonymous, "XXXXX") };
@@ -685,7 +685,7 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.VersionSequence = act.VersionSequence;
                 retVal.StatusConceptKey = act.StatusConceptKey;
                 retVal.AddTag(SystemTagNames.PrivacyMaskingTag, "true");
-                retVal.Policies = new List<SecurityPolicyInstance>(act.Policies);
+                retVal.Policies = act.Policies?.ToList();
                 retVal.ReasonConceptKey = NullReasonKeys.Masked;
                 retVal.Protocols = new List<ActProtocol>();
                 retVal.PreventDelayLoad();
