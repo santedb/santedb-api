@@ -51,6 +51,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -576,6 +577,12 @@ namespace SanteDB.Core
         /// <returns></returns>
         public static TData PrepareForCdssExecution<TData>(this TData target) where TData : IdentifiedData
         {
+
+            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            {
+                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+            }
 
             var clone = target.Clone() as TData;
             if (clone is Entity ent)

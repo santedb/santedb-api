@@ -69,6 +69,13 @@ namespace SanteDB.Core.Security.Privacy
         // Masked template ID
         private readonly Guid MASKED_TEMPLATE_ID = Guid.Parse("ab16118a-9158-4400-aff0-f2c4618e1200");
 
+        // Masked template ID
+        private readonly Guid[] IGNORE_MOOD_CODES = new Guid[]
+        {
+            ActMoodKeys.Propose,
+            ActMoodKeys.Definition
+        };
+
         /// <summary>
         /// Gets the service name
         /// </summary>
@@ -381,7 +388,11 @@ namespace SanteDB.Core.Security.Privacy
             }
 
             // Is this SYSTEM?
-            if (!this.m_actions.TryGetValue(record.GetType(), out var policy) || accessor == AuthenticationContext.SystemPrincipal)
+            if (
+                !this.m_actions.TryGetValue(record.GetType(), out var policy) || // Not configured
+                accessor == AuthenticationContext.SystemPrincipal || // User is system
+                record is Act act && this.IGNORE_MOOD_CODES.Contains(act.MoodConceptKey.Value)
+            )
             {
                 return true;
             }
@@ -414,13 +425,9 @@ namespace SanteDB.Core.Security.Privacy
             else
             {
                 var domainsToFilter = this.GetFilterDomains(accessor);
-                if (record is Entity entity)
+                if (record is IHasIdentifiers ids)
                 {
-                    return !domainsToFilter.Any(dtf => entity.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
-                }
-                else if (record is Act act)
-                {
-                    return !domainsToFilter.Any(dtf => act.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
+                    return !domainsToFilter.Any(dtf => ids.Identifiers.Any(id => id.IdentityDomain.SemanticEquals(dtf)));
                 }
                 else
                 {
