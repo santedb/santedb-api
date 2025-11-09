@@ -275,7 +275,14 @@ namespace SanteDB.Core.Cdss
                     if (parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
                            (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
                     {
-                        protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                        if (backEntry)
+                        {
+                            protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                        }
+                        else
+                        {
+                            protocolActs.RemoveAll(act => act.StopTime < DateTimeOffset.Now);
+                        }
                     }
                     // Filter
                     if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) &&
@@ -455,7 +462,7 @@ namespace SanteDB.Core.Cdss
         public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
             using (AuthenticationContext.EnterSystemContext()) {
-                collectedData = collectedData.PrepareForCdssExecution();
+                collectedData = collectedData.PrepareForCdssAnalysis();
                 if (librariesToApply.Length == 0)
                 {
                     librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();

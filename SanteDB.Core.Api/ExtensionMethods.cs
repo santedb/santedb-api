@@ -56,6 +56,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using ZstdSharp.Unsafe;
 
 namespace SanteDB.Core
 {
@@ -567,6 +568,19 @@ namespace SanteDB.Core
                 throw new KeyNotFoundException(String.Format(ErrorMessages.REFERENCE_NOT_FOUND, referenceString));
             }
             return retVal;
+        }
+
+        /// <summary>
+        /// Prepare for CDSS analysis
+        /// </summary>
+        public static TData PrepareForCdssAnalysis<TData>(this TData target) where TData : IdentifiedData
+        {
+            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            {
+                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+            }
+            return target;
         }
 
         /// <summary>
