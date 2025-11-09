@@ -40,6 +40,10 @@ namespace SanteDB.Core.Security
         /// </summary>
         bool IsActive { get; }
         /// <summary>
+        /// Gets whether the policy is public (can be queried and applied by users - false indicates a system policy)
+        /// </summary>
+        bool IsPublic { get; }
+        /// <summary>
         /// Gets the name of the policy
         /// </summary>
         string Name { get; }

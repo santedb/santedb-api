@@ -51,10 +51,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using ZstdSharp.Unsafe;
 
 namespace SanteDB.Core
 {
@@ -74,7 +76,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Convert a CDR policy registration to an operation policy definition
         /// </summary>
-        public static IPolicy ToPolicy(this SecurityPolicy policy) => new GenericPolicy(policy.Key.GetValueOrDefault(), policy.Oid, policy.Name, policy.CanOverride);
+        public static IPolicy ToPolicy(this SecurityPolicy policy) => new GenericPolicy(policy.Key.GetValueOrDefault(), policy.Oid, policy.Name, policy.CanOverride, policy.IsPublic);
 
         /// <summary>
         /// Determine if this is running under mono
@@ -352,10 +354,19 @@ namespace SanteDB.Core
                 {
                     CanOverride = me.Policy.CanOverride,
                     Oid = me.Policy.Oid,
+                    IsPublic = me.Policy.IsPublic,
                     Name = me.Policy.Name
                 },
                 (PolicyGrantType)(int)me.Rule
             );
+        }
+
+        /// <summary>
+        /// True if elevated principal
+        /// </summary>
+        public static bool IsElevatedPrincipal(this IPrincipal me)
+        {
+            return (me as IClaimsPrincipal)?.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBOverrideClaim && Boolean.TryParse(o.Value, out var val) && val) ?? false;
         }
 
         /// <summary>
@@ -560,6 +571,19 @@ namespace SanteDB.Core
         }
 
         /// <summary>
+        /// Prepare for CDSS analysis
+        /// </summary>
+        public static TData PrepareForCdssAnalysis<TData>(this TData target) where TData : IdentifiedData
+        {
+            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            {
+                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+            }
+            return target;
+        }
+
+        /// <summary>
         /// Prepare the target for the cdss execution
         /// </summary>
         /// <typeparam name="TData"></typeparam>
@@ -567,6 +591,12 @@ namespace SanteDB.Core
         /// <returns></returns>
         public static TData PrepareForCdssExecution<TData>(this TData target) where TData : IdentifiedData
         {
+
+            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            {
+                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+            }
 
             var clone = target.Clone() as TData;
             if (clone is Entity ent)

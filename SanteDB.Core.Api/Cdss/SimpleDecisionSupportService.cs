@@ -275,7 +275,14 @@ namespace SanteDB.Core.Cdss
                     if (parmDict.TryGetValue(CdssParameterNames.INCLUDE_BACKENTRY, out var backEntryRaw) &&
                            (backEntryRaw is bool backEntry || bool.TryParse(backEntryRaw.ToString(), out backEntry)))
                     {
-                        protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                        if (backEntry)
+                        {
+                            protocolActs.Where(act => act.StopTime < DateTimeOffset.Now).ForEach(a => a.AddTag(SystemTagNames.BackEntry, Boolean.TrueString));
+                        }
+                        else
+                        {
+                            protocolActs.RemoveAll(act => act.StopTime < DateTimeOffset.Now);
+                        }
                     }
                     // Filter
                     if (parmDict.TryGetValue(CdssParameterNames.PERIOD_OF_EVENTS, out var dateRaw) &&
@@ -454,16 +461,19 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
-            if (librariesToApply.Length == 0)
-            {
-                librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
-            }
-
-            foreach (var lib in librariesToApply)
-            {
-                foreach (var iss in lib.Analyze(collectedData, parameters))
+            using (AuthenticationContext.EnterSystemContext()) {
+                collectedData = collectedData.PrepareForCdssAnalysis();
+                if (librariesToApply.Length == 0)
                 {
-                    yield return iss;
+                    librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
+                }
+
+                foreach (var lib in librariesToApply)
+                {
+                    foreach (var iss in lib.Analyze(collectedData, parameters))
+                    {
+                        yield return iss;
+                    }
                 }
             }
         }

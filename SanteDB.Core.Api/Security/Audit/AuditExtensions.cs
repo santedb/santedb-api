@@ -911,7 +911,7 @@ namespace SanteDB.Core.Security.Audit
                     break;
                 case Act act:
                     var termService = ApplicationServiceContext.Current.GetService<IConceptRepositoryService>();
-                    var classification = termService?.GetConceptReferenceTerm(act.ClassConceptKey.Value, "http://santedb.org/conceptset/v3-ActClassClinicalDocument", true);
+                    var classification = termService?.GetConceptReferenceTerm(act.ClassConceptKey.GetValueOrDefault(), "http://santedb.org/conceptset/v3-ActClassClinicalDocument", true);
                     retVal.Role = AuditableObjectRole.Report;
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = act.Key.ToString();
@@ -1284,8 +1284,9 @@ namespace SanteDB.Core.Security.Audit
                         deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null,
                         new ObjectDataExtension("scope", String.Join("; ", policies ?? new String[] { "*" }))
-                    }.OfType<ObjectDataExtension>().ToList()
+                    }.OfType<ObjectDataExtension>().Union(session.Claims.Where(c=>c.Type != SanteDBClaimTypes.SanteDBScopeClaim).Select(o => new ObjectDataExtension(o.Type, o.Value) )).ToList()
                 });
+                
             }
             else
             {
