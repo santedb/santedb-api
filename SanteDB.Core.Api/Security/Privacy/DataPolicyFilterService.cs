@@ -476,38 +476,43 @@ namespace SanteDB.Core.Security.Privacy
             // Apply the field filter
             this.ApplyFieldFilter(result, principal, policy);
 
-            // Apply for any relationships 
-            if (processRelationships) {
-                if (result is IHasRelationships ihr)
+            // Apply for any relationships
+            using (DataPersistenceControlContext.Create(loadMode: LoadMode.QuickLoad))
+            {
+                if (processRelationships)
                 {
-                    ((IdentifiedData)ihr).LoadCollection<ITargetedAssociation>(nameof(IHasRelationships.Relationships)).ForEach(relation =>
+                    if (result is IHasRelationships ihr)
                     {
-                        IdentifiedData target = null;
-                        switch (relation)
+                        ((IdentifiedData)ihr).LoadCollection<ITargetedAssociation>(nameof(IHasRelationships.Relationships)).ForEach(relation =>
                         {
-                            case ActRelationship ar:
-                                target = ar.LoadProperty(a => a.TargetAct);
-                                ar.TargetAct.LoadProperty(o => o.Identifiers);
-                                break;
-                            case EntityRelationship er:
-                                target = er.LoadProperty(o => o.TargetEntity);
-                                er.TargetEntity.LoadProperty(o => o.Identifiers);
-                                break;
-                            default:
-                                return;
-                        }
-                        relation.TargetEntity = this.ApplyInternal(target, principal, processRelationships: false);
-                    });
-                }
-                if (result is Act act)
-                {
-                    act.LoadProperty(o => o.Participations).ForEach(ptcpt =>
+                            IdentifiedData target = null;
+                            switch (relation)
+                            {
+                                case ActRelationship ar:
+                                    target = ar.LoadProperty(a => a.TargetAct);
+                                    ar.TargetAct.LoadProperty(o => o.Identifiers);
+                                    break;
+                                case EntityRelationship er:
+                                    target = er.LoadProperty(o => o.TargetEntity);
+                                    er.TargetEntity.LoadProperty(o => o.Identifiers);
+                                    break;
+                                default:
+                                    return;
+                            }
+                            relation.TargetEntity = this.ApplyInternal(target, principal, processRelationships: false);
+                        });
+                    }
+                    if (result is Act act)
                     {
-                        ptcpt.LoadProperty(o => o.PlayerEntity);
-                        ptcpt.PlayerEntity = this.ApplyInternal(ptcpt.PlayerEntity, principal, processRelationships: false);
-                    });
+                        act.LoadProperty(o => o.Participations).Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget || p.ParticipationRoleKey == ActParticipationKeys.Baby).ForEach(ptcpt =>
+                        {
+                            ptcpt.LoadProperty(o => o.PlayerEntity);
+                            ptcpt.PlayerEntity = this.ApplyInternal(ptcpt.PlayerEntity, principal, processRelationships: false);
+                        });
+                    }
                 }
             }
+
             // Next we base on decision
             switch (decision.Outcome)
             {
@@ -534,10 +539,7 @@ namespace SanteDB.Core.Security.Privacy
                                 {
                                     ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, false, result).Send();
                                 }
-                                // If there is no way to BTG don't even show it
-                                if (decision.Outcome != PolicyGrantType.Elevate)
-                                    goto case ResourceDataPolicyActionType.Hide;
-
+                                
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
                                 {
