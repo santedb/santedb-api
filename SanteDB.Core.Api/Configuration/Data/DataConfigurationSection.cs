@@ -193,10 +193,10 @@ namespace SanteDB.Core.Configuration.Data
             {
                 return String.Empty;
             }
-            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim().ToLowerInvariant(), o => o.Split('=')[1].Trim());
 
             String retVal = null;
-            values?.TryGetValue(component, out retVal);
+            values?.TryGetValue(component.ToLowerInvariant(), out retVal);
             return retVal ?? String.Empty;
         }
 

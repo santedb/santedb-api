@@ -39,7 +39,7 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <param name="milliseconds"></param>
         public static void WritePerformanceTrace(long milliseconds)
         {
-            if (milliseconds > 1000)
+            if (milliseconds > 1000 && ApplicationServiceContext.Current.HostType == SanteDBHostType.Server)
             {
                 var stack = new StackTrace(false).GetFrame(1).GetMethod();
                 lock (syncLock)
