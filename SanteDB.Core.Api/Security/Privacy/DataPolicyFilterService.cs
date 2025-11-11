@@ -539,10 +539,7 @@ namespace SanteDB.Core.Security.Privacy
                                 {
                                     ApplicationServiceContext.Current.GetAuditService().Audit().ForMasking(result, decision, false, result).Send();
                                 }
-                                // If there is no way to BTG don't even show it
-                                if (decision.Outcome != PolicyGrantType.Elevate)
-                                    goto case ResourceDataPolicyActionType.Hide;
-
+                                
                                 result = (TData)this.MaskObject(result);
                                 if (result is ITaggable tag)
                                 {
