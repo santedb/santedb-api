@@ -296,11 +296,11 @@ namespace SanteDB.Core.Cdss
                                 (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek());
                         }).ToList();
                     }
-                    if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
-                        (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
-                    {
-                        protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
-                    }
+                    //if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
+                    //    (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
+                    //{
+                    //    protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
+                    //}
 
                     protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));
                     // Group these as appointments 
@@ -363,7 +363,7 @@ namespace SanteDB.Core.Cdss
                             protocolActs.Remove(act);
                         }
                     }
-                    else if (parmDict.ContainsKey(CdssParameterNames.ENCOUNTER_SCOPE))
+                    else if (parmDict.TryGetValue(CdssParameterNames.IS_VISIT, out var oc) && Boolean.TryParse(oc?.ToString(), out var ocb) && ocb)
                     {
                         protocolActs = protocolActs.GroupBy(o => o.Tags?.FirstOrDefault(t => t.TagKey == SystemTagNames.CdssOnePerVisit)?.Value ?? Guid.NewGuid().ToString()).Select(o => o.OrderBy(p => p.Protocols?.First().Sequence ?? 0).First()).ToList();
                     }
