@@ -307,7 +307,7 @@ namespace SanteDB.Core.Cdss
                     if (asEncounters)
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
-                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
+                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime));
 
                         while (protocolStack.Any())
                         {
@@ -317,12 +317,14 @@ namespace SanteDB.Core.Cdss
 
                             // First we want to find a candidate which has the same period properties
                             var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
-                            var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(DateTimeOffset.Now.AddDays(7));
+                            var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(periodStart?.AddDays(7));
+                            periodStart = periodStart?.Date.EnsureWeekday();
+                            periodEnd = periodEnd?.Date.AddDays(1).AddMilliseconds(-1).EnsureWeekday();
 
                             // Find a candidate based on the start and end time
                             var candidate = encounters.Find(c =>
-                                periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
-                                periodEnd >= c.StartTime);
+                                periodStart?.Date <= (c.StopTime ?? DateTimeOffset.MaxValue).Date &&
+                                periodEnd?.Date >= c.StartTime?.Date);
 
                             var candMonthSer = candidate?.ActTime.GreaterOf(candidate.StartTime).Value;
                             if (candidate != null &&
@@ -332,7 +334,7 @@ namespace SanteDB.Core.Cdss
                                 (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate?.Relationships?.Any(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t => t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
                                 )
                             {
-                                candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);
+                                candidate.StopTime = candidate.StartTime.Value.AddDays(7).GreaterOf(candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday) ?? default(DateTimeOffset));
                                 candidate = null;
                             }
 

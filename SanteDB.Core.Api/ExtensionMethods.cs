@@ -673,6 +673,17 @@ namespace SanteDB.Core
         //    return carePlan;
         //}
 
+        /// <summary>
+        /// Returns the greater of two values (helper method)
+        /// </summary>
+        public static T GreaterOf<T>(this T me, T other)
+            where T : struct, IComparable => me.CompareTo(other) > 0 ? me : other;
+
+        /// <summary>
+        /// Returns the lesser of two values (helper method)
+        /// </summary>
+        public static T LesserOf<T>(this T me, T other)
+            where T : struct, IComparable => me.CompareTo(other) < 0 ? me : other;
 
         /// <summary>
         /// Returns the greater of two values (helper method)
