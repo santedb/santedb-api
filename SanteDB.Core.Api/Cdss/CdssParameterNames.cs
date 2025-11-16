@@ -62,7 +62,10 @@ namespace SanteDB.Core.Cdss
         /// Exclude all proposals
         /// </summary>
         public const string EXCLUDE_PROPOSALS = "_excludePropose";
-        
+        /// <summary>
+        /// Exclude the submitted data
+        /// </summary>
+        public const string EXCLUDE_SUBMITTED = "_excludeSubmitted";
         /// <summary>
         /// Exclude all issues
         /// </summary>
