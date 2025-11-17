@@ -19,21 +19,22 @@
  * Date: 2023-6-21
  */
 using Newtonsoft.Json;
-using SanteDB.Core.ViewModel.Description;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
+using SanteDB.Core.ViewModel.Description;
 using System;
+using System.Buffers.Binary;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Buffers.Binary;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.ViewModel.Json
@@ -43,23 +44,24 @@ namespace SanteDB.Core.ViewModel.Json
     /// </summary>
     public class JsonViewModelSerializer : IViewModelSerializer
     {
+
+        // Complex type cache
+        private static readonly ConcurrentDictionary<Type, bool> s_complexTypeCache = new ConcurrentDictionary<Type, bool>();
+
         // Formatters
-        private Dictionary<Type, IJsonViewModelTypeFormatter> m_formatters = new Dictionary<Type, IJsonViewModelTypeFormatter>();
+        private ConcurrentDictionary<Type, IJsonViewModelTypeFormatter> m_formatters = new ConcurrentDictionary<Type, IJsonViewModelTypeFormatter>();
 
         // Classifiers
-        private Dictionary<Type, IViewModelClassifier> m_classifiers = new Dictionary<Type, IViewModelClassifier>();
+        private ConcurrentDictionary<Type, IViewModelClassifier> m_classifiers = new ConcurrentDictionary<Type, IViewModelClassifier>();
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(JsonViewModelSerializer));
 
-        // Sync lock
-        private Object m_syncLock = new object();
-
         // Related load methods
-        private Dictionary<Type, MethodInfo> m_relatedLoadMethods = new Dictionary<Type, MethodInfo>();
+        private ConcurrentDictionary<Type, MethodInfo> m_relatedLoadMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
         // Reloated load association
-        private Dictionary<Type, MethodInfo> m_relatedLoadAssociations = new Dictionary<Type, MethodInfo>();
+        private ConcurrentDictionary<Type, MethodInfo> m_relatedLoadAssociations = new ConcurrentDictionary<Type, MethodInfo>();
 
         private Dictionary<Guid, IEnumerable> m_loadedAssociations = new Dictionary<Guid, IEnumerable>();
         private Dictionary<Guid, IdentifiedData> m_loadedObjects = new Dictionary<Guid, IdentifiedData>();
@@ -158,7 +160,7 @@ namespace SanteDB.Core.ViewModel.Json
                     if (jr.TokenType == JsonToken.StartObject)
                     {
                         var retVal = this.ReadElementUtil(jr, t, new JsonSerializationContext(null, this, null));
-                        if(retVal is IdentifiedData id)
+                        if (retVal is IdentifiedData id)
                         {
                             id.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey);
                         }
@@ -376,13 +378,7 @@ namespace SanteDB.Core.ViewModel.Json
             if (!this.m_relatedLoadMethods.TryGetValue(propertyType, out methodInfo))
             {
                 methodInfo = this.GetType().GetRuntimeMethod(nameof(LoadRelated), new Type[] { typeof(Guid) }).MakeGenericMethod(propertyType);
-                lock (this.m_syncLock)
-                {
-                    if (!this.m_relatedLoadMethods.ContainsKey(propertyType))
-                    {
-                        this.m_relatedLoadMethods.Add(propertyType, methodInfo);
-                    }
-                }
+                this.m_relatedLoadMethods.TryAdd(propertyType, methodInfo);
             }
             return methodInfo.Invoke(this, new object[] { key });
         }
@@ -403,13 +399,7 @@ namespace SanteDB.Core.ViewModel.Json
             if (!this.m_relatedLoadAssociations.TryGetValue(propertyType, out methodInfo))
             {
                 methodInfo = this.GetType().GetRuntimeMethod(nameof(LoadCollection), new Type[] { typeof(Guid) }).MakeGenericMethod(propertyType.StripGeneric());
-                lock (this.m_syncLock)
-                {
-                    if (!this.m_relatedLoadAssociations.ContainsKey(propertyType))
-                    {
-                        this.m_relatedLoadAssociations.Add(propertyType, methodInfo);
-                    }
-                }
+                this.m_relatedLoadAssociations.TryAdd(propertyType, methodInfo);
             }
             var listValue = methodInfo.Invoke(this, new object[] { key }) as IEnumerable;
             if (propertyType.IsAssignableFrom(listValue.GetType()))
@@ -428,7 +418,7 @@ namespace SanteDB.Core.ViewModel.Json
         /// </summary>
         public IEnumerable<TAssociation> LoadCollection<TAssociation>(Guid sourceKey) where TAssociation : IdentifiedData, ISimpleAssociation, new()
         {
-            if(this.ForbidDelayLoad)
+            if (this.ForbidDelayLoad)
             {
                 return new TAssociation[0];
             }
@@ -510,12 +500,7 @@ namespace SanteDB.Core.ViewModel.Json
                 }
             }
 
-            if (
-                instance.GetType().StripNullable() == instance.GetType() // Not null
-                && instance.GetType().IsClass 
-                && (instance.GetType().GetCustomAttribute<XmlTypeAttribute>() != null ||
-                instance.GetType().GetCustomAttribute<JsonObjectAttribute>() != null)
-            )
+            if (this.IsTypeComplex(instance.GetType()))
             {
                 // Complex type .. allow the formatter to handle this
                 IJsonViewModelTypeFormatter typeFormatter = this.GetFormatter(instance.GetType());
@@ -589,6 +574,22 @@ namespace SanteDB.Core.ViewModel.Json
         }
 
         /// <summary>
+        /// Determine if the type <paramref name="type"/> is complex (nested JSON object)
+        /// </summary>
+        private bool IsTypeComplex(Type type)
+        {
+            if(!s_complexTypeCache.TryGetValue(type, out var retVal))
+            {
+                retVal =type.StripNullable() == type // Not null
+                    && type.IsClass
+                    && (type.GetCustomAttribute<XmlTypeAttribute>() != null ||
+                    type.GetCustomAttribute<JsonObjectAttribute>() != null);
+                s_complexTypeCache.TryAdd(type, retVal);
+            }
+            return retVal;
+        }
+
+        /// <summary>
         /// Gets the appropriate classifier for the specified type
         /// </summary>
         public IViewModelClassifier GetClassifier(Type type)
@@ -602,13 +603,7 @@ namespace SanteDB.Core.ViewModel.Json
                     retVal = new JsonReflectionClassifier(type, this);
                 }
 
-                lock (this.m_syncLock)
-                {
-                    if (!this.m_classifiers.ContainsKey(type))
-                    {
-                        this.m_classifiers.Add(type, retVal);
-                    }
-                }
+                this.m_classifiers.TryAdd(type, retVal);
             }
             return retVal;
         }
@@ -632,20 +627,14 @@ namespace SanteDB.Core.ViewModel.Json
         public IJsonViewModelTypeFormatter GetFormatter(Type type)
         {
             IJsonViewModelTypeFormatter typeFormatter = null;
-            if(type == null)
+            if (type == null)
             {
                 System.Diagnostics.Debugger.Break();
             }
             if (!this.m_formatters.TryGetValue(type, out typeFormatter))
             {
                 typeFormatter = new JsonReflectionTypeFormatter(type);
-                lock (this.m_syncLock)
-                {
-                    if (!this.m_formatters.ContainsKey(type))
-                    {
-                        this.m_formatters.Add(type, typeFormatter);
-                    }
-                }
+                this.m_formatters.TryAdd(type, typeFormatter);
             }
             return typeFormatter;
         }
@@ -664,12 +653,12 @@ namespace SanteDB.Core.ViewModel.Json
                 .Where(o => !this.m_classifiers.ContainsKey(o.HandlesType));
             foreach (var fmtr in typeFormatters)
             {
-                this.m_formatters.Add(fmtr.HandlesType, fmtr);
+                this.m_formatters.TryAdd(fmtr.HandlesType, fmtr);
             }
 
             foreach (var cls in classifiers)
             {
-                this.m_classifiers.Add(cls.HandlesType, cls);
+                this.m_classifiers.TryAdd(cls.HandlesType, cls);
             }
         }
 
@@ -721,7 +710,7 @@ namespace SanteDB.Core.ViewModel.Json
 #endif
             try
             {
-                if(data is IdentifiedData idd)
+                if (data is IdentifiedData idd)
                 {
                     data = idd.HarmonizeKeys(KeyHarmonizationMode.PropertyOverridesKey);
                 }
