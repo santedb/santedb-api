@@ -204,10 +204,32 @@ namespace SanteDB.Core.ViewModel
         }
 
         /// <summary>
+        /// Returns true if an object or a parent of this object has declared .PreventDelayLoad()
+        /// </summary>
+        private bool ObjectHasDeclaredNoLoad()
+        {
+            var retVal = false;
+            var ctx = this;
+            while(ctx?.Instance is IdentifiedData id)
+            {
+                if (id.DelayLoadDisabled())
+                {
+                    return true;
+                }
+                ctx = ctx.Parent;
+            }
+            return false;
+        }
+        /// <summary>
         /// Returns true when child property information should be force loaded
         /// </summary>
         public bool ShouldForceLoad(string childProperty, Guid? key)
         {
+            if(this.ObjectHasDeclaredNoLoad())
+            {
+                return false;
+            }
+
             var propertyDescription = this.ElementDescription?.FindProperty(childProperty) as PropertyModelDescription;
             if (propertyDescription == null)
             {

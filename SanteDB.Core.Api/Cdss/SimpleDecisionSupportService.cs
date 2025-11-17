@@ -267,7 +267,7 @@ namespace SanteDB.Core.Cdss
 
                     // Are there any anomolies? If so raise an error
                     var cdssProblemActs = protocolActs.Where(o => o.StartTime > o.StopTime);
-                    if(cdssProblemActs.Any())
+                    if (cdssProblemActs.Any())
                     {
                         throw new DetectedIssueException(cdssProblemActs.Select(o => new DetectedIssue(DetectedIssuePriorityType.Error, "cdss.act.problem", $"Act {o} in protocol {o.Protocols?.FirstOrDefault()?.Protocol?.Name} seq {o.Protocols?.FirstOrDefault()?.Sequence} has invalid time bounds", DetectedIssueKeys.FormalConstraintIssue)), null);
                     }
@@ -292,22 +292,22 @@ namespace SanteDB.Core.Cdss
                         {
                             return act.TryGetTag(SystemTagNames.BackEntry, out var tag) && tag.Value == Boolean.TrueString ||
                                 (act.StartTime.HasValue && act.StartTime?.Date <= periodOutput.Date || !act.StartTime.HasValue) &&
-                                ((act.StopTime.HasValue && act.StopTime?.Date >= periodOutput.Date || !act.StopTime.HasValue) ||
-                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek()));
+                                (act.StopTime.HasValue && act.StopTime?.Date >= periodOutput.Date || !act.StopTime.HasValue) ||
+                                (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek());
                         }).ToList();
                     }
-                    if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
-                        (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
-                    {
-                        protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
-                    }
+                    //if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
+                    //    (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
+                    //{
+                    //    protocolActs = protocolActs.GroupBy(o => $"{o.TypeConceptKey}{o.Protocols.First().ProtocolKey}").Select(o => o.First()).ToList();
+                    //}
 
                     protocolOutput.OfType<DetectedIssue>().ForEach(o => detectedIssueList.Add(o));
                     // Group these as appointments 
                     if (asEncounters)
                     {
                         List<PatientEncounter> encounters = new List<PatientEncounter>();
-                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime).ThenBy(o => (o.StopTime ?? o.ActTime?.AddDays(7)) - (o.StartTime ?? o.ActTime)));
+                        Queue<Act> protocolStack = new Queue<Act>(protocolActs.OrderBy(o => o.StartTime ?? o.ActTime));
 
                         while (protocolStack.Any())
                         {
@@ -317,22 +317,24 @@ namespace SanteDB.Core.Cdss
 
                             // First we want to find a candidate which has the same period properties
                             var periodStart = act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime;
-                            var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(DateTimeOffset.Now.AddDays(7));
+                            var periodEnd = act.StopTime ?? act.ActTime.GreaterOf(periodStart?.AddDays(7));
+                            periodStart = periodStart?.Date.EnsureWeekday();
+                            periodEnd = periodEnd?.Date.AddDays(1).AddMilliseconds(-1).EnsureWeekday();
 
                             // Find a candidate based on the start and end time
                             var candidate = encounters.Find(c =>
-                                periodStart <= (c.StopTime ?? DateTimeOffset.MaxValue) &&
-                                periodEnd >= c.StartTime);
+                                periodStart?.Date <= (c.StopTime ?? DateTimeOffset.MaxValue).Date &&
+                                periodEnd?.Date >= c.StartTime?.Date);
 
                             var candMonthSer = candidate?.ActTime.GreaterOf(candidate.StartTime).Value;
                             if (candidate != null &&
                                 (candidate?.StopTime == null &&
                                 Math.Abs(candidate.StartTime.GreaterOf(candidate.ActTime)?.Subtract(candidate.StartTime.Value).TotalDays ?? 0) > 28 ||
                                 (candMonthSer?.Year * 12 + candMonthSer?.Month != periodStart?.Year * 12 + periodStart?.Month)) || // Don't allow multi-month suggestions
-                                (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate?.Relationships?.Any(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t=>t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
-                                ) 
+                                (!String.IsNullOrEmpty(actOnePerVisitKey) && candidate?.Relationships?.Any(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.TargetAct?.Tags?.Any(t => t.TagKey == SystemTagNames.CdssOnePerVisit && t.Value == actOnePerVisitKey) == true) == true)
+                                )
                             {
-                                candidate.StopTime = candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday);
+                                candidate.StopTime = candidate.StartTime.Value.AddDays(7).GreaterOf(candidate.Relationships.Select(o => o.TargetAct.StartTime.GreaterOf(o.TargetAct.ActTime)).Max()?.ClosestDay(DayOfWeek.Saturday) ?? default(DateTimeOffset));
                                 candidate = null;
                             }
 
@@ -363,6 +365,10 @@ namespace SanteDB.Core.Cdss
                             protocolActs.Remove(act);
                         }
                     }
+                    else if (parmDict.TryGetValue(CdssParameterNames.IS_VISIT, out var oc) && Boolean.TryParse(oc?.ToString(), out var ocb) && ocb)
+                    {
+                        protocolActs = protocolActs.GroupBy(o => o.Tags?.FirstOrDefault(t => t.TagKey == SystemTagNames.CdssOnePerVisit)?.Value ?? Guid.NewGuid().ToString()).Select(o => o.OrderBy(p => p.Protocols?.First().Sequence ?? 0).First()).ToList();
+                    }
 
                     return new CarePlan(patientCopy, protocolActs.Select(o =>
                     {
@@ -370,12 +376,14 @@ namespace SanteDB.Core.Cdss
                         o.StartTime = o.StartTime?.EnsureWeekday();
                         o.StopTime = o.StopTime?.EnsureWeekday();
                         return o;
-                    }).OrderBy(o => {
+                    }).OrderBy(o =>
+                    {
                         if (long.TryParse(o.Tags?.FirstOrDefault(t => t.TagKey == SystemTagNames.CdssOrderTag)?.Value, out var ll))
                         {
                             return ll;
                         }
-                        else {
+                        else
+                        {
                             return o.ActTime.GetValueOrDefault().Ticks;
                         }
                     }).ToList())
@@ -409,7 +417,7 @@ namespace SanteDB.Core.Cdss
             catch (Exception e)
             {
                 this.m_tracer.TraceError("Error creating care plan: {0}", e);
-                throw new CdssException(libraries, target, e);  
+                throw new CdssException(libraries, target, e);
             }
         }
 
@@ -461,7 +469,8 @@ namespace SanteDB.Core.Cdss
         /// <inheritdoc/>
         public IEnumerable<ICdssResult> Analyze(IdentifiedData collectedData, IDictionary<String, Object> parameters, params ICdssLibrary[] librariesToApply)
         {
-            using (AuthenticationContext.EnterSystemContext()) {
+            using (AuthenticationContext.EnterSystemContext())
+            {
                 collectedData = collectedData.PrepareForCdssAnalysis();
                 if (librariesToApply.Length == 0)
                 {

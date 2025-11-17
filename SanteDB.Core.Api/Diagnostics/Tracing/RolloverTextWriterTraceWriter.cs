@@ -163,15 +163,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
                                 {
                                     if (this.m_logBacklog.TryDequeue(out var dq))
                                     {
-#if DEBUG
                                         sw.WriteLine(dq); // This allows other threads to add to the write queue
-#else 
-                                        var lines = dq.Split('\n', '\r').Where(o => !String.IsNullOrEmpty(o)).Take(3).ToArray(); // Take first three lines
-                                        foreach (var itm in lines)
-                                        {
-                                            sw.WriteLine(itm); // This allows other threads to add to the write queue
-                                        }
-#endif
                                     }
                                 }
                             }

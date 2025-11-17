@@ -62,7 +62,10 @@ namespace SanteDB.Core.Cdss
         /// Exclude all proposals
         /// </summary>
         public const string EXCLUDE_PROPOSALS = "_excludePropose";
-        
+        /// <summary>
+        /// Exclude the submitted data
+        /// </summary>
+        public const string EXCLUDE_SUBMITTED = "_excludeSubmitted";
         /// <summary>
         /// Exclude all issues
         /// </summary>
@@ -88,9 +91,9 @@ namespace SanteDB.Core.Cdss
         /// </summary>
         public const string PERIOD_OF_EVENTS = "period";
         /// <summary>
-        /// Only return the first applicable action from each protocol
+        /// Only return the first applicable action from each protocol indicated
         /// </summary>
-        public const string FIRST_APPLICAPLE = "firstOnly";
+        public const string IS_VISIT = "isVisit";
 
         /// <summary>
         /// The execution mode
