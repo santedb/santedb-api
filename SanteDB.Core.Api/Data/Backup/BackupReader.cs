@@ -201,15 +201,19 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarReader != null)
             {
-                while (this.m_tarReader.MoveToNextEntry())
+                try
                 {
-                    ; // exhaust the readers if the user did not
-                }
+                    while (this.m_tarReader.MoveToNextEntry())
+                    {
+                        ; // exhaust the readers if the user did not
+                    }
 
-                while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0)
-                {
-                    ;
+                    while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0)
+                    {
+                        ;
+                    }
                 }
+                catch { }
 
                 this.m_tarReader.Dispose();
                 this.m_underlyingStream.Dispose();
