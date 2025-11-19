@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Data.Import;
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Exceptions;
@@ -68,6 +69,15 @@ namespace SanteDB.Core.Security.Audit
 
             switch (item)
             {
+                case IBackupDescriptor bd:
+                    ao.IDTypeCode = AuditableObjectIdType.Custom;
+                    ao.CustomIdTypeCode = ExtendedAuditCodes.ObjectIdTypeBackupDescriptor;
+                    ao.ObjectId = bd.Label;
+                    ao.ObjectData = new List<ObjectDataExtension>()
+                    {
+                        new ObjectDataExtension("encrupted", bd.IsEnrypted.ToString())
+                    };
+                    break;
                 case Uri ur:
                     ao.IDTypeCode = AuditableObjectIdType.Uri;
                     ao.ObjectId = ur.ToString();

@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -45,7 +46,6 @@ namespace SanteDB.Core.Data.Backup
         private ILocalizationService m_localizationService;
         private readonly IPlatformSecurityProvider m_platformSecurity;
         private IDictionary<Guid, IRestoreBackupAssets> m_backupAssetClasses;
-
         public const string BACKUP_EXTENSION = "bin";
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupManager));
 
@@ -73,7 +73,6 @@ namespace SanteDB.Core.Data.Backup
             this.m_localizationService = localizationService;
             this.m_platformSecurity = platformSecurityProvider;
             this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
-
         }
 
         /// <summary>
@@ -189,6 +188,7 @@ namespace SanteDB.Core.Data.Backup
         {
             try
             {
+
                 var assets = this.m_serviceManager.GetServices()
                         .OfType<IProvideBackupAssets>()
                         .Distinct()

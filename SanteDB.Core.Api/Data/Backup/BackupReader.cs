@@ -19,6 +19,7 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.i18n;
+using SharpCompress.Common;
 using SharpCompress.Readers.Tar;
 using System;
 using System.IO;
@@ -180,18 +181,26 @@ namespace SanteDB.Core.Data.Backup
         /// <returns>The next entry stream</returns>
         public bool GetNextEntry(out IBackupAsset assetInfo)
         {
-            if (this.m_tarReader == null)
+            try
             {
-                throw new ObjectDisposedException(nameof(BackupReader));
+                if (this.m_tarReader == null)
+                {
+                    throw new ObjectDisposedException(nameof(BackupReader));
+                }
+                else if (!this.m_tarReader.MoveToNextEntry())
+                {
+                    assetInfo = null;
+                    return false;
+                }
+                var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.Name}" == this.m_tarReader.Entry.Key);
+                assetInfo = new TarBackupAsset(assetInfoMeta.Name, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
+                return true;
             }
-            else if (!this.m_tarReader.MoveToNextEntry())
+            catch(IncompleteArchiveException e)
             {
                 assetInfo = null;
                 return false;
             }
-            var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.Name}" == this.m_tarReader.Entry.Key);
-            assetInfo = new TarBackupAsset(assetInfoMeta.Name, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
-            return true;
         }
 
         /// <summary>

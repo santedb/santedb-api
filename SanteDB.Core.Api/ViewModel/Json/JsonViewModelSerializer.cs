@@ -629,7 +629,7 @@ namespace SanteDB.Core.ViewModel.Json
             IJsonViewModelTypeFormatter typeFormatter = null;
             if (type == null)
             {
-                System.Diagnostics.Debugger.Break();
+                throw new ArgumentNullException(nameof(type));
             }
             if (!this.m_formatters.TryGetValue(type, out typeFormatter))
             {

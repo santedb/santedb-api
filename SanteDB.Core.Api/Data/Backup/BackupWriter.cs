@@ -46,7 +46,7 @@ namespace SanteDB.Core.Data.Backup
         private BackupWriter(Stream underlyingStream)
         {
             this.m_underlyingStream = underlyingStream;
-            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true));
+            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, finalizeArchiveOnClose: true));
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace SanteDB.Core.Data.Backup
 
             using (var assetStream = asset.Open())
             {
-                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now);
+                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now, assetStream.Length);
             }
         }
 
@@ -125,8 +125,15 @@ namespace SanteDB.Core.Data.Backup
             {
                 this.m_tarWriter.Dispose();
                 this.m_underlyingStream.Flush();
-                if(this.m_underlyingStream is GZipStream gzs && gzs.BaseStream is CryptoStream cs) { 
+                if (this.m_underlyingStream is GZipStream gzs && gzs.BaseStream is CryptoStream cs)
+                {
+                    gzs.Close();
                     cs.FlushFinalBlock();
+                    cs.Close();
+                }
+                else
+                {
+                    this.m_underlyingStream.Close();
                 }
                 this.m_underlyingStream.Dispose();
                 this.m_tarWriter = null;
