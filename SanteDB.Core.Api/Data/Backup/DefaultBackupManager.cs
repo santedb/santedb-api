@@ -435,6 +435,7 @@ namespace SanteDB.Core.Data.Backup
                                 {
                                     if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
                                     {
+
                                         this.m_tracer.TraceInfo("Restoring {0} ({1})...", backupAsset.Name, restoreProvider.GetType().Name);
                                         if (!restoreProvider.Restore(backupAsset))
                                         {

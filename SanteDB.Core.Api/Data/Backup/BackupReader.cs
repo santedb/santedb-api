@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.i18n;
 using SharpCompress.Common;
+using SharpCompress.IO;
 using SharpCompress.Readers.Tar;
 using System;
 using System.IO;
@@ -37,7 +38,7 @@ namespace SanteDB.Core.Data.Backup
     public class BackupReader : IDisposable
     {
         // Magic bytes - how we know a file is a backup
-        public static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x00, (byte)'B', (byte)'K' };
+        public static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x01, (byte)'B', (byte)'K' };
         private readonly Stream m_underlyingStream;
         private TarReader m_tarReader;
 
@@ -132,8 +133,14 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         /// <param name="backupStream">The stream from which the backup should be loaded</param>
         /// <param name="password">The password on the backup to use to decrypt it</param>
+        /// <param name="leaveOpen">True if the underlying stream should be open</param>
         public static BackupReader Open(Stream backupStream, String password = null, bool leaveOpen = false)
         {
+
+            if (leaveOpen)
+            {
+                backupStream = NonDisposingStream.Create(backupStream);
+            }
 
             if (!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv))
             {
@@ -169,7 +176,7 @@ namespace SanteDB.Core.Data.Backup
                 }
             }
 
-            backupStream = new GZipStream(backupStream, CompressionMode.Decompress, leaveOpen);
+            backupStream = new GZipStream(backupStream, CompressionMode.Decompress);
 
             return new BackupReader(backupStream, backupDate, creator, backupAsset);
         }
