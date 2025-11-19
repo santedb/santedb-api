@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Cryptography.X509Certificates;
+using ZstdSharp;
 
 namespace SanteDB.Core.Security.Services
 {
@@ -73,7 +74,7 @@ namespace SanteDB.Core.Security.Services
         {
             if (configuration == null)
             {
-                return null;
+                throw new ArgumentNullException(nameof(configuration));
             }
             else if(configuration.Certificate?.NotAfter < DateTimeOffset.Now || configuration.Certificate?.NotBefore > DateTimeOffset.Now)
             {

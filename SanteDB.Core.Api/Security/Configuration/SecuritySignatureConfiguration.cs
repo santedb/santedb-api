@@ -67,10 +67,7 @@ namespace SanteDB.Core.Security.Configuration
         private bool m_forDisclosure = false;
 
         // HMAC key
-        private string m_plainTextSecret = null;
-
         private byte[] m_secret = null;
-        private byte[] m_decrypedSecret = null;
 
         /// <summary>
         /// Security configuration section
@@ -148,17 +145,10 @@ namespace SanteDB.Core.Security.Configuration
         [ReadOnly(true)]
         public byte[] Secret
         {
-            get
-            {
-                return this.m_secret;
-            }
-            set => this.m_secret = value;
+            get;
+            set;
         }
 
-        /// <summary>
-        /// Should serialize the secret
-        /// </summary>
-        public bool ShouldSerializeSecret() => !this.m_forDisclosure;
 
         /// <summary>
         /// Plaintext editor for secret
@@ -169,79 +159,33 @@ namespace SanteDB.Core.Security.Configuration
         [PasswordPropertyText(true)]
         public string HmacSecret
         {
-            get => this.m_plainTextSecret;
-            set
-            {
-                this.m_secret = null;
-                this.m_plainTextSecret = value;
-
-            }
+            get;
+            set;
         }
-
-        /// <summary>
-        /// Should serialize the secret
-        /// </summary>
-        public bool ShouldSerializeHmacSecret() => this.m_secret == null && !this.m_forDisclosure;
 
         /// <summary>
         /// Get the HMAC secret
         /// </summary>
         public byte[] GetSecret()
         {
-            if (this.m_decrypedSecret != null)
+            // Determine if the secret was provided in configuration as a binary value or as a plaintext value
+            if(String.IsNullOrEmpty(this.HmacSecret) && this.Secret == null)
             {
-                return this.m_decrypedSecret;
-            }
-
-            if (this.Secret == null)
+                return null;
+            } 
+            else if(this.Secret != null)
             {
-                // Perhaps the plain text secret is set?
-                if (!String.IsNullOrEmpty(this.m_plainTextSecret))
-                {
-                    this.SetSecret(Encoding.UTF8.GetBytes(this.m_plainTextSecret));
-                }
-                else
-                {
-                    return null;
-                }
+                return this.Secret;
             }
-
-            if (this.m_decrypedSecret == null)
+            else if (this.m_secret == null)
             {
-                var cryptoService = ApplicationServiceContext.Current.GetService<ISymmetricCryptographicProvider>();
-                var ivLength = this.Secret[0];
-                var iv = this.Secret.Skip(1).Take(ivLength).ToArray();
-                var data = this.Secret.Skip(1 + ivLength).ToArray();
-                this.m_decrypedSecret = cryptoService.Decrypt(data, cryptoService.GetContextKey(), iv);
+                this.m_secret = Encoding.UTF8.GetBytes(this.HmacSecret);
+                return this.m_secret;
             }
-            return this.m_decrypedSecret;
-
-        }
-
-        /// <summary>
-        /// Set the secret
-        /// </summary>
-        public bool SetSecret(byte[] secret)
-        {
-            this.m_decrypedSecret = secret;
-
-            var cryptoService = ApplicationServiceContext.Current?.GetService<ISymmetricCryptographicProvider>();
-            if (cryptoService == null)
+            else 
             {
-                return false;
+                return this.m_secret;
             }
-
-            var iv = cryptoService.GenerateIV();
-            var key = cryptoService.GetContextKey();
-
-            var data = cryptoService.Encrypt(secret, key, iv);
-
-            this.m_secret = new byte[data.Length + iv.Length + 1];
-            this.m_secret[0] = (byte)iv.Length;
-            Array.Copy(iv, 0, this.m_secret, 1, iv.Length);
-            Array.Copy(data, 0, this.m_secret, 1 + iv.Length, data.Length);
-            //this.m_plainTextSecret = String.Empty;
-            return true;
         }
 
         /// <summary>

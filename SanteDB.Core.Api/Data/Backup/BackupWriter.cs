@@ -18,7 +18,9 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Configuration.Features;
 using SanteDB.Core.Security;
+using SharpCompress.IO;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
@@ -46,7 +48,7 @@ namespace SanteDB.Core.Data.Backup
         private BackupWriter(Stream underlyingStream)
         {
             this.m_underlyingStream = underlyingStream;
-            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true));
+            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, finalizeArchiveOnClose: true));
         }
 
         /// <summary>
@@ -59,6 +61,11 @@ namespace SanteDB.Core.Data.Backup
         /// <returns>The backup writer</returns>
         public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null, bool keepOpen = false)
         {
+
+            if (keepOpen)
+            {
+                underlyingStream = NonDisposingStream.Create(underlyingStream);
+            }
 
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
             underlyingStream.Write(BitConverter.GetBytes(DateTime.UtcNow.Ticks), 0, sizeof(long));
@@ -94,8 +101,7 @@ namespace SanteDB.Core.Data.Backup
                 underlyingStream.Write(MAGIC, 0, MAGIC.Length); // MAGIC is re-emitted in the backup so that the restore function knows you didn't enter gibberish (i.e. the first bytes from the decryptor stream should be magic)
             }
 
-            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress, leaveOpen: keepOpen);
-
+            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
             return new BackupWriter(underlyingStream);
         }
 
@@ -112,7 +118,7 @@ namespace SanteDB.Core.Data.Backup
 
             using (var assetStream = asset.Open())
             {
-                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now);
+                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now, assetStream.Length);
             }
         }
 
@@ -125,10 +131,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 this.m_tarWriter.Dispose();
                 this.m_underlyingStream.Flush();
-                if(this.m_underlyingStream is GZipStream gzs && gzs.BaseStream is CryptoStream cs) { 
-                    cs.FlushFinalBlock();
-                }
-                this.m_underlyingStream.Dispose();
+                this.m_underlyingStream.Close();
                 this.m_tarWriter = null;
             }
         }

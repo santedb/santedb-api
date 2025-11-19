@@ -477,13 +477,8 @@ namespace SanteDB.Core.Cdss
                     librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
                 }
 
-                foreach (var lib in librariesToApply)
-                {
-                    foreach (var iss in lib.Analyze(collectedData, parameters))
-                    {
-                        yield return iss;
-                    }
-                }
+                var issues = librariesToApply.AsParallel().SelectMany(lib => lib.Analyze(collectedData, parameters));
+                return issues;
             }
         }
 

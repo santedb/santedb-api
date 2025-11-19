@@ -23,6 +23,7 @@ using SanteDB.Core.Configuration.Data;
 using SanteDB.Core.Data.Backup;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Concurrent;
@@ -57,7 +58,7 @@ namespace SanteDB.Core.Services.Impl
 
         // Configuration file name
         private readonly String m_configurationFileName;
-        private readonly FileBackupAsset m_configurationFileBackupAsset;
+        private readonly IBackupAsset m_configurationFileBackupAsset;
         private readonly ConcurrentDictionary<String, ConnectionString> m_transientConnectionStrings = new ConcurrentDictionary<string, ConnectionString>();
 
         /// <inheritdoc/>
@@ -110,8 +111,23 @@ namespace SanteDB.Core.Services.Impl
 
                 this.IsReadonly = isReadonly;
                 this.m_configurationFileName = configFile;
-                this.m_configurationFileBackupAsset = new FileBackupAsset(CONFIGURATION_FILE_ASSET_ID, "config", configFile);
                 this.Reload();
+                this.m_configurationFileBackupAsset = new StreamBackupAsset(CONFIGURATION_FILE_ASSET_ID, "config", () =>
+                {
+                    var backupAssetStream = new MemoryStream();
+                    var unencryptedBackupConfig = new SanteDBConfiguration()
+                    {
+                        Includes = this.Configuration.Includes,
+                        Sections = this.Configuration.Sections,
+                        Version = this.Configuration.Version,
+                        SectionTypes = this.Configuration.SectionTypes
+                    };
+                    unencryptedBackupConfig.Save(backupAssetStream);
+                    backupAssetStream.Seek(0, SeekOrigin.Begin);
+                    return backupAssetStream;
+                });
+
+
             }
             catch (Exception e)
             {
@@ -284,11 +300,16 @@ namespace SanteDB.Core.Services.Impl
             {
                 using (var assetStream = backupAsset.Open())
                 {
-                    using (var configStream = File.Create(this.m_configurationFileName))
+                    var restoreConfiguration = SanteDBConfiguration.Load(assetStream, validateConfiguration: false);
+                    // Get the signatures from this configuration (keys and stuff)
+                    restoreConfiguration.GetSection<SecurityConfigurationSection>().Signatures = new List<SecuritySignatureConfiguration>(this.Configuration.GetSection<SecurityConfigurationSection>().Signatures);
+                    // Set the configuration here and save to file system
+                    this.Configuration = restoreConfiguration;
+                    using(var fs = File.Create(this.m_configurationFileName))
                     {
-                        assetStream.CopyTo(configStream);
-                        return true;
+                        this.Configuration.Save(fs);
                     }
+                    return true;
                 }
             }
             return false;

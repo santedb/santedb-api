@@ -22,6 +22,7 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
@@ -45,7 +46,6 @@ namespace SanteDB.Core.Data.Backup
         private ILocalizationService m_localizationService;
         private readonly IPlatformSecurityProvider m_platformSecurity;
         private IDictionary<Guid, IRestoreBackupAssets> m_backupAssetClasses;
-
         public const string BACKUP_EXTENSION = "bin";
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupManager));
 
@@ -73,7 +73,6 @@ namespace SanteDB.Core.Data.Backup
             this.m_localizationService = localizationService;
             this.m_platformSecurity = platformSecurityProvider;
             this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
-
         }
 
         /// <summary>
@@ -189,6 +188,7 @@ namespace SanteDB.Core.Data.Backup
         {
             try
             {
+
                 var assets = this.m_serviceManager.GetServices()
                         .OfType<IProvideBackupAssets>()
                         .Distinct()
@@ -431,14 +431,30 @@ namespace SanteDB.Core.Data.Backup
                             this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), ((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
                             using (backupAsset)
                             {
-                                if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
+                                try
                                 {
-                                    this.m_tracer.TraceInfo("Restoring {0}...", backupAsset.Name);
-                                    restoreProvider.Restore(backupAsset);
+                                    if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
+                                    {
+
+                                        this.m_tracer.TraceInfo("Restoring {0} ({1})...", backupAsset.Name, restoreProvider.GetType().Name);
+                                        if (!restoreProvider.Restore(backupAsset))
+                                        {
+                                            this.m_tracer.TraceWarning("Could not restore the backup asset - restore indicated failure");
+                                        }
+                                        else
+                                        {
+                                            this.m_tracer.TraceInfo("Restored successfully");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
+                                    }
                                 }
-                                else
+                                catch(Exception e)
                                 {
-                                    this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
+                                    this.m_tracer.TraceError("Error processing {0} - {1}", backupAsset.Name, e);
+                                    throw;
                                 }
                             }
                         }
@@ -449,6 +465,7 @@ namespace SanteDB.Core.Data.Backup
             }
             catch (Exception e)
             {
+                this.m_tracer.TraceError("Error restoring backup - {0}", e);
                 throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_RESTORE_ERR), e);
             }
         }

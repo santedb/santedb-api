@@ -57,7 +57,7 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Default data signing service DI constructor
         /// </summary>
-        public DefaultDataSigningService(IConfigurationManager configurationManager,  IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
+        public DefaultDataSigningService(IConfigurationManager configurationManager, IDataSigningCertificateManagerService dataSigningCertificateManagerService = null)
         {
             this.m_configuration = configurationManager.GetSection<SecurityConfigurationSection>();
             this.m_certificateManager = dataSigningCertificateManagerService;
@@ -75,15 +75,15 @@ namespace SanteDB.Core.Security
         {
             try
             {
-                foreach(var certConfig in this.m_configuration.Signatures.Where(o=>o.Algorithm != SignatureAlgorithm.HS256))
+                foreach (var certConfig in this.m_configuration.Signatures.Where(o => o.Algorithm != SignatureAlgorithm.HS256))
                 {
-                    if(!this.m_certificateManager.GetCertificateIdentities(certConfig.Certificate).Any(i=>AuthenticationContext.SystemPrincipal.Identity.Name.Equals(i.Name)))
+                    if (!this.m_certificateManager.GetCertificateIdentities(certConfig.Certificate).Any(i => AuthenticationContext.SystemPrincipal.Identity.Name.Equals(i.Name)))
                     {
                         this.m_certificateManager.AddSigningCertificate(AuthenticationContext.SystemPrincipal.Identity, certConfig.Certificate, AuthenticationContext.SystemPrincipal);
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 this.m_tracer.TraceWarning("Could not install certificates to data signing repository");
             }
@@ -110,6 +110,13 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public byte[] SignData(byte[] data, SignatureSettings configuration)
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
+            this.m_tracer.TraceInfo("Signing {0} bytes of data using algorithm {1} key {2}",
+                data.Length, configuration.Algorithm, configuration.RawKeyData?.Length.ToString() ?? configuration.Certificate?.Thumbprint);
             // Sign the data
             switch (configuration.Algorithm)
             {
@@ -128,15 +135,24 @@ namespace SanteDB.Core.Security
                 case SignatureAlgorithm.RS256:
                 case SignatureAlgorithm.RS512:
                     {
-                        if (!configuration.Certificate.HasPrivateKey)
+                        if (configuration.Certificate?.HasPrivateKey != true)
                         {
                             throw new InvalidOperationException("You must have the private key to sign data with this certificate");
                         }
 
                         using (var csp = configuration.Certificate.GetRSAPrivateKey())
                         {
+                            if (csp == null)
+                            {
+                                throw new InvalidOperationException("Cannot sign data - no private key cryptographic service provider present");
+                            }
+
                             var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
-                            var halg = HashAlgorithm.Create(halgname.Name);
+                            HashAlgorithm halg = configuration.Algorithm == SignatureAlgorithm.RS256 ? (HashAlgorithm)SHA256.Create() : (HashAlgorithm)SHA512.Create();
+                            if (halg == null)
+                            {
+                                throw new NotSupportedException($"Hash algorithm {configuration.Algorithm} is not supported on this platform");
+                            }
                             var hashtext = halg.ComputeHash(data);
                             return csp.SignHash(hashtext, halgname, RSASignaturePadding.Pkcs1);
                         }
@@ -173,6 +189,19 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public bool Verify(byte[] data, byte[] signature, SignatureSettings configuration)
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            else if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+            else if (signature == null)
+            {
+                throw new ArgumentNullException(nameof(signature));
+            }
+
             // Configuration algorithm
             switch (configuration.Algorithm)
             {
@@ -191,11 +220,22 @@ namespace SanteDB.Core.Security
                 case SignatureAlgorithm.RS256:
                 case SignatureAlgorithm.RS512:
                     {
-                        var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPublicKey(configuration.Certificate);
-                        var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
-                        var halg = HashAlgorithm.Create(halgname.Name);
-                        var hashtext = halg.ComputeHash(data);
-                        return csp.VerifyHash(hashtext, signature, halgname, RSASignaturePadding.Pkcs1);
+                        using (var csp = System.Security.Cryptography.X509Certificates.RSACertificateExtensions.GetRSAPublicKey(configuration.Certificate))
+                        {
+                            if (csp == null)
+                            {
+                                throw new InvalidOperationException("Cannot sign data - no private key cryptographic service provider present");
+                            }
+                            
+                            var halgname = configuration.Algorithm == SignatureAlgorithm.RS256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA512;
+                            HashAlgorithm halg = configuration.Algorithm == SignatureAlgorithm.RS256 ? (HashAlgorithm)SHA256.Create() : (HashAlgorithm)SHA512.Create();
+                            if (halg == null)
+                            {
+                                throw new NotSupportedException($"Hash algorithm {configuration.Algorithm} is not supported on this platform");
+                            }
+                            var hashtext = halg.ComputeHash(data);
+                            return csp.VerifyHash(hashtext, signature, halgname, RSASignaturePadding.Pkcs1);
+                        }
                     }
                 default:
                     throw new InvalidOperationException("Cannot validate digital signature");

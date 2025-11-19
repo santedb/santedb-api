@@ -19,6 +19,7 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.Data.Backup;
+using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
@@ -39,6 +40,7 @@ namespace SanteDB.Core.Security
     public class AesSymmetricCrypographicProvider : ISymmetricCryptographicProvider, IProvideBackupAssets, IRestoreBackupAssets
     {
         private readonly Guid CONTEXT_KEY_ASSET_ID = Guid.Parse("EF601F26-1B2F-4A4E-A909-1DE4C8DF17DD");
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(AesSymmetricCrypographicProvider));
 
         internal const int IV_SIZE = 16;
 
@@ -196,21 +198,30 @@ namespace SanteDB.Core.Security
         {
             lock (this.m_lock)
             {
-                if (!File.Exists(this.m_contextKeyFile))
+                try
                 {
-                    var keyData = new byte[32];
-                    System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
-                    this.SaveContextKey(keyData, key);
-                    return keyData;
-                }
-                else
-                {
-                    using (var fs = File.OpenRead(this.m_contextKeyFile))
+                    if (!File.Exists(this.m_contextKeyFile))
                     {
-                        var buffer = new byte[fs.Length];
-                        fs.Read(buffer, 0, buffer.Length);
-                        return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                        this.m_tracer.TraceWarning("Context key file does not exist - generating a new context key");
+                        var keyData = new byte[32];
+                        System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(keyData);
+                        this.SaveContextKey(keyData, key);
+                        return keyData;
                     }
+                    else
+                    {
+                        using (var fs = File.OpenRead(this.m_contextKeyFile))
+                        {
+                            var buffer = new byte[fs.Length];
+                            fs.Read(buffer, 0, buffer.Length);
+                            return key.Certificate.GetRSAPrivateKey().Decrypt(buffer, RSAEncryptionPadding.Pkcs1);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.m_tracer.TraceError("Error reading context key - {0}", ex);
+                    throw;
                 }
             }
         }
@@ -220,6 +231,7 @@ namespace SanteDB.Core.Security
         /// </summary>
         private void SaveContextKey(byte[] keyData, SecuritySignatureConfiguration key)
         {
+            this.m_tracer.TraceWarning("Replacing security context key - Future logs may indicate failure to decrypt data");
             using (var fs = File.Create(this.m_contextKeyFile))
             {
                 var buffer = key.Certificate.GetRSAPublicKey().Encrypt(keyData, RSAEncryptionPadding.Pkcs1);

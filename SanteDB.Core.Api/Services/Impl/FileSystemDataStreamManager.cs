@@ -24,6 +24,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -103,9 +104,9 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public IEnumerable<IBackupAsset> GetBackupAssets()
         {
-            foreach (var fileName in Directory.EnumerateFiles(this.m_fileLocation))
+            foreach (var fileUuid in Directory.EnumerateFiles(this.m_fileLocation).Select(o => Guid.Parse(Path.GetFileNameWithoutExtension(o))))
             {
-                yield return new FileBackupAsset(DATA_STREAM_FILE, Path.GetFileName(fileName), fileName);
+                yield return new StreamBackupAsset(DATA_STREAM_FILE, fileUuid.ToString(), () => this.Get(fileUuid));
             }
         }
 
@@ -132,13 +133,10 @@ namespace SanteDB.Core.Services.Impl
                 throw new InvalidOperationException();
             }
 
-            using (var fs = File.Create(Path.Combine(this.m_fileLocation, backupAsset.Name)))
+            using (var astr = backupAsset.Open())
             {
-                using (var astr = backupAsset.Open())
-                {
-                    astr.CopyTo(fs);
-                    return true;
-                }
+                this.Add(astr);
+                return true;
             }
         }
     }
