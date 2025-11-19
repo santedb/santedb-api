@@ -301,7 +301,7 @@ namespace SanteDB.Core.Services.Impl
                 using (var assetStream = backupAsset.Open())
                 {
                     var restoreConfiguration = SanteDBConfiguration.Load(assetStream, validateConfiguration: false);
-                    // Save configuration - 
+                    // Get the signatures from this configuration (keys and stuff)
                     restoreConfiguration.GetSection<SecurityConfigurationSection>().Signatures = new List<SecuritySignatureConfiguration>(this.Configuration.GetSection<SecurityConfigurationSection>().Signatures);
                     // Set the configuration here and save to file system
                     this.Configuration = restoreConfiguration;
