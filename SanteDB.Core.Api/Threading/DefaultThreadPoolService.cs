@@ -125,10 +125,6 @@ namespace SanteDB.Core.Services.Impl
             /// </summary>
             public object State { get; set; }
 
-            /// <summary>
-            /// The execution context
-            /// </summary>
-            public ExecutionContext ExecutionContext { get; set; }
         }
 
         /// <summary>
@@ -159,8 +155,7 @@ namespace SanteDB.Core.Services.Impl
                 var wd = new WorkItem()
                 {
                     Callback = (o) => callback((TParm)o),
-                    State = state,
-                    ExecutionContext = ExecutionContext.Capture()
+                    State = state
                 };
 
                 m_queue.Enqueue(wd);
