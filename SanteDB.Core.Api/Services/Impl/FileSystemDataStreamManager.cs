@@ -54,8 +54,12 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public Guid[] AssetClassIdentifiers => new Guid[] { DATA_STREAM_FILE };
 
-        /// <inheritdoc/>
-        public Guid Add(Stream stream)
+        /// <summary>
+        /// Add the specified stream with the specified identifier to the stream manager
+        /// </summary>
+        /// <param name="fileId">The stream identifier</param>
+        /// <param name="stream">The stream</param>
+        private void Add(Guid fileId, Stream stream)
         {
             if (stream == null)
             {
@@ -66,7 +70,6 @@ namespace SanteDB.Core.Services.Impl
                 throw new ArgumentException(nameof(stream), ErrorMessages.CANT_READ_WRITE_ONLY_STREAM);
             }
 
-            var fileId = Guid.NewGuid();
             using (var fs = File.Create(Path.Combine(this.m_fileLocation, fileId.ToString())))
             {
                 var iv = this.m_symmetricCryptographicProvider.GenerateIV();
@@ -76,7 +79,14 @@ namespace SanteDB.Core.Services.Impl
                     stream.CopyTo(cs);
                 }
             }
-            return fileId;
+        }
+
+        /// <inheritdoc/>
+        public Guid Add(Stream stream)
+        {
+            var fileId = Guid.NewGuid();
+            this.Add(fileId, stream);
+            return fileId; ;
         }
 
         /// <inheritdoc/>
@@ -135,7 +145,7 @@ namespace SanteDB.Core.Services.Impl
 
             using (var astr = backupAsset.Open())
             {
-                this.Add(astr);
+                this.Add(Guid.Parse(backupAsset.Name), astr);
                 return true;
             }
         }
