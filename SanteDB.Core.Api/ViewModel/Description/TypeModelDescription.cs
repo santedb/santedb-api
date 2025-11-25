@@ -22,6 +22,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Serialization;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using SanteDB.Core.i18n;
 
 namespace SanteDB.Core.ViewModel.Description
 {
@@ -57,8 +60,12 @@ namespace SanteDB.Core.ViewModel.Description
             if (!String.IsNullOrEmpty(type.Base))
             {
                 var baseDef = parent.TypeModelDefinitions.FirstOrDefault(t => type.Base.Equals(t.Name, StringComparison.OrdinalIgnoreCase)) ?? 
-                    parent.TypeModelDefinitions.FirstOrDefault(o => type.Base.Equals(o.TypeName, StringComparison.OrdinalIgnoreCase)) ??
-                    parent.TypeModelDefinitions.FirstOrDefault(o=>$"{o.PackageName}.{o.TypeName}".Equals(type.Base, StringComparison.OrdinalIgnoreCase));
+                    parent.TypeModelDefinitions.FirstOrDefault(o => type.Base.Equals(o.TypeName, StringComparison.OrdinalIgnoreCase) && String.IsNullOrEmpty(o.Name)) ??
+                    parent.TypeModelDefinitions.FirstOrDefault(o=>$"{o.PackageName}.{o.TypeName}".Equals(type.Base, StringComparison.OrdinalIgnoreCase) && String.IsNullOrEmpty(o.Name));
+                if(baseDef == null)
+                {
+                    throw new InvalidOperationException(String.Format(ErrorMessages.OBJECT_NOT_FOUND, type.Base));
+                }
                 this.Properties.AddRange(baseDef.Properties.Where(p => !this.Properties.Any(tp => p.Name == tp.Name)).ToArray());
                 this.All = this.All ?? baseDef.All;
                 this.ProcessBaseRefs(baseDef, parent);
