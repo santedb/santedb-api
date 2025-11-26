@@ -146,7 +146,17 @@ namespace SanteDB.Core.Security
 
                     var certtext = certificate.Export(X509ContentType.Pfx, password);
 
-                    var importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+                    X509Certificate2 importcert = null;
+                    if (storeLocation == StoreLocation.LocalMachine)
+                    {
+                        importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
+                    }
+                    else
+                    {
+                        importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+                    }
 
                     store.Add(importcert);
 

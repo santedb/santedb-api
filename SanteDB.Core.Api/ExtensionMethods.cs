@@ -575,12 +575,15 @@ namespace SanteDB.Core
         /// </summary>
         public static TData PrepareForCdssAnalysis<TData>(this TData target) where TData : IdentifiedData
         {
-            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            using (AuthenticationContext.EnterSystemContext())
             {
-                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
-                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+                if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+                {
+                    var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                    target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+                }
+                return target;
             }
-            return target;
         }
 
         /// <summary>
@@ -591,49 +594,56 @@ namespace SanteDB.Core
         /// <returns></returns>
         public static TData PrepareForCdssExecution<TData>(this TData target) where TData : IdentifiedData
         {
-
-            if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+            if(target.GetAnnotations<PreparedForCdssAnnotation>().Any())
             {
-                var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
-                target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+                return target.Clone() as TData;
             }
 
-            var clone = target.Clone() as TData;
-            if (clone is Entity ent)
+            using (AuthenticationContext.EnterSystemContext())
             {
-                // Force load participations 
-                if (ent.Key.HasValue && !target.GetAnnotations<PreparedForCdssAnnotation>().Any())
+                if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
                 {
-                    ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
+                    var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
+                    target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
                 }
-                else
+                
+                var clone = target.Clone() as TData;
+                if (clone is Entity ent)
                 {
-                    ent.Participations = ent.Participations?.ToList() ?? ent.LoadProperty(o => o.Participations);
-                    ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
-                }
-
-                ent.Participations.OfType<ActParticipation>()
-                    .AsParallel()
-                    .ForAll(p =>
+                    // Force load participations 
+                    if (ent.Key.HasValue)
                     {
-                        using (AuthenticationContext.EnterSystemContext())
-                        {
-                            p.LoadProperty(o => o.ParticipationRole);
-                            p.LoadProperty(o => o.Act);
-                            p.Act.LoadProperty(o => o.TypeConcept);
-                            p.Act.LoadProperty(o => o.MoodConcept);
-                            p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
-                            {
-                                t.LoadProperty(o => o.ParticipationRole);
-                                t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
-                            });
-                            p.PlayerEntity = ent;
-                        }
-                    });
-            }
+                        ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
+                    }
+                    else
+                    {
+                        ent.Participations = ent.Participations?.ToList() ?? ent.LoadProperty(o => o.Participations);
+                        ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                    }
 
-            clone.AddAnnotation(new PreparedForCdssAnnotation());
-            return clone;
+                    ent.Participations.OfType<ActParticipation>()
+                        .AsParallel()
+                        .ForAll(p =>
+                        {
+                            using (AuthenticationContext.EnterSystemContext())
+                            {
+                                p.LoadProperty(o => o.ParticipationRole);
+                                p.LoadProperty(o => o.Act);
+                                p.Act.LoadProperty(o => o.TypeConcept);
+                                p.Act.LoadProperty(o => o.MoodConcept);
+                                p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
+                                {
+                                    t.LoadProperty(o => o.ParticipationRole);
+                                    t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
+                                });
+                                p.PlayerEntity = ent;
+                            }
+                        });
+                }
+
+                clone.AddAnnotation(new PreparedForCdssAnnotation());
+                return clone;
+            }
 
         }
         /// <summary>
