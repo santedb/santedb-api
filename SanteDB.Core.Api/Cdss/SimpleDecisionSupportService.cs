@@ -341,12 +341,15 @@ namespace SanteDB.Core.Cdss
                             if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
-                                candidate.Protocols = new List<ActProtocol>();
-                                candidate.Protocols.Add(new ActProtocol()
+                                if (pathwayDef != null)
                                 {
-                                    ProtocolKey = pathwayDef.Key,
-                                    Sequence = encounters.Count + 1
-                                });
+                                    candidate.Protocols = new List<ActProtocol>();
+                                    candidate.Protocols.Add(new ActProtocol()
+                                    {
+                                        ProtocolKey = pathwayDef.Key,
+                                        Sequence = encounters.Count + 1
+                                    });
+                                }
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
