@@ -48,7 +48,9 @@ namespace SanteDB.Core.ViewModel
             "version",
             "determinerConcept",
             "moodConcept",
-            "operation"
+            "operation",
+            "notBefore",
+            "notAfter"
         };
 
 
