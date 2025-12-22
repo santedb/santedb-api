@@ -202,7 +202,7 @@ namespace SanteDB.Core.Data.Management
         /// </summary>
         private IEnumerable<IdentifiedData> DoDataMatchingLogicInternal(TModel inputRecord)
         {
-            if(inputRecord is ITaggable itg && itg.GetTag(SystemTagNames.SkipDuplicateCheck).Equals(Boolean.TrueString, StringComparison.CurrentCultureIgnoreCase))
+            if(inputRecord is ITaggable itg && itg.GetTag(SystemTagNames.SkipDuplicateCheck)?.Equals(Boolean.TrueString, StringComparison.CurrentCultureIgnoreCase) == true)
             {
                 yield break;
             }
