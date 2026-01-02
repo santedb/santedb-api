@@ -90,6 +90,12 @@ namespace SanteDB.Core.Cdss
         /// The time for which the events must fall within to be emitted
         /// </summary>
         public const string PERIOD_OF_EVENTS = "period";
+
+        /// <summary>
+        /// True if the CDSS engine should ignore the validity time of proposals
+        /// </summary>
+        public const string IGNORE_VALIDITY_TIME = "ignoreValidity";
+
         /// <summary>
         /// Only return the first applicable action from each protocol indicated
         /// </summary>

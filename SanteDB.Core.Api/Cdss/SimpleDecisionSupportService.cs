@@ -295,6 +295,18 @@ namespace SanteDB.Core.Cdss
                                 (act.StopTime.HasValue && act.StopTime?.Date >= periodOutput.Date || !act.StopTime.HasValue) ||
                                 (act.ActTime.Value.Year == periodOutput.Year && act.ActTime.Value.EnsureWeekday().IsoWeek() == periodOutput.IsoWeek());
                         }).ToList();
+
+                        // Remove any protocols where the time boundaries naf/nbf apply
+                        if (!parmDict.TryGetValue(CdssParameterNames.IGNORE_VALIDITY_TIME, out var blRaw) ||
+                            (blRaw is bool bl || Boolean.TryParse(blRaw.ToString(), out bl)) && !bl)
+                        {
+                            protocolActs = protocolActs.Where(act =>
+                                act.Protocols.All(p =>
+                                    (!p.NotAfter.HasValue || p.NotAfter.Value.Date >= periodOutput.Date) && 
+                                    (!p.NotBefore.HasValue || p.NotBefore.Value.Date <= periodOutput.Date)
+                                )
+                            ).ToList();
+                        }
                     }
                     //if (parmDict.TryGetValue(CdssParameterNames.FIRST_APPLICAPLE, out var firstApplicableRaw) &&
                     //    (firstApplicableRaw is bool firstApplicable || Boolean.TryParse(firstApplicableRaw.ToString(), out firstApplicable)) && firstApplicable)
@@ -341,12 +353,15 @@ namespace SanteDB.Core.Cdss
                             if (candidate == null)
                             {
                                 candidate = this.CreateEncounter(act, patientCopy, pathwayDef?.TemplateKey);
-                                candidate.Protocols = new List<ActProtocol>();
-                                candidate.Protocols.Add(new ActProtocol()
+                                if (pathwayDef != null)
                                 {
-                                    ProtocolKey = pathwayDef.Key,
-                                    Sequence = encounters.Count + 1
-                                });
+                                    candidate.Protocols = new List<ActProtocol>();
+                                    candidate.Protocols.Add(new ActProtocol()
+                                    {
+                                        ProtocolKey = pathwayDef.Key,
+                                        Sequence = encounters.Count + 1
+                                    });
+                                }
                                 encounters.Add(candidate);
                                 protocolActs.Add(candidate);
                             }
@@ -363,6 +378,18 @@ namespace SanteDB.Core.Cdss
                             });
                             // Remove so we don't have duplicates
                             protocolActs.Remove(act);
+                        }
+
+                        // Post-process encounters - remove any acts which are invalid according to the encounter date
+                        // Remove any protocols where the time boundaries naf/nbf apply
+                        if (!parmDict.TryGetValue(CdssParameterNames.IGNORE_VALIDITY_TIME, out var blRaw) ||
+                            (blRaw is bool bl || Boolean.TryParse(blRaw.ToString(), out bl)) && !bl)
+                        {
+                            encounters.ForEach(enc => enc.Relationships = enc.Relationships.Where(rel => rel.RelationshipTypeKey != ActRelationshipTypeKeys.HasComponent ||
+                                rel.TargetAct.Protocols.All(p =>
+                                    (!p.NotAfter.HasValue || p.NotAfter.Value.Date >= (enc.ActTime ?? enc.StartTime)?.Date) &&
+                                    (!p.NotBefore.HasValue || p.NotBefore.Value.Date <= (enc.ActTime ?? enc.StartTime)?.Date)
+                                )).ToList());
                         }
                     }
                     else if (parmDict.TryGetValue(CdssParameterNames.IS_VISIT, out var oc) && Boolean.TryParse(oc?.ToString(), out var ocb) && ocb)

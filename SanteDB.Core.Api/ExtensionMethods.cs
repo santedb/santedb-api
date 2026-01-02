@@ -579,8 +579,9 @@ namespace SanteDB.Core
             {
                 if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
                 {
-                    var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
-                    target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+                    var idpt = typeof(IDataPersistenceService<>).MakeGenericType(target.GetType());
+                    var idp = ApplicationServiceContext.Current.GetService(idpt) as IDataPersistenceService;
+                    target = (TData)idp?.Get(target.Key.Value) ?? target;
                 }
                 return target;
             }
@@ -596,18 +597,26 @@ namespace SanteDB.Core
         {
             if(target.GetAnnotations<PreparedForCdssAnnotation>().Any())
             {
-                return target.Clone() as TData;
+                var retVal = target.DeepCopy() as TData;
+                retVal.AddAnnotation(new PreparedForCdssAnnotation());
+                if(retVal is Entity ent &&
+                    target is Entity tent)
+                {
+                    ent.Participations = tent.Participations.ToList();
+                }
+                return retVal;
             }
 
             using (AuthenticationContext.EnterSystemContext())
             {
                 if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
                 {
-                    var idp = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TData>>();
-                    target = idp?.Get(target.Key.Value, null, AuthenticationContext.SystemPrincipal) ?? target;
+                    var idpt = typeof(IDataPersistenceService<>).MakeGenericType(target.GetType());
+                    var idp = ApplicationServiceContext.Current.GetService(idpt) as IDataPersistenceService;
+                    target = (TData)idp?.Get(target.Key.Value) ?? target;
                 }
                 
-                var clone = target.Clone() as TData;
+                var clone = target.DeepCopy() as TData;
                 if (clone is Entity ent)
                 {
                     // Force load participations 
