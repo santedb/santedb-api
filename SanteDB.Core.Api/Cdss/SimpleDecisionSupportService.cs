@@ -247,6 +247,7 @@ namespace SanteDB.Core.Cdss
                             catch (Exception e)
                             {
                                 detectedIssueList.Add(new DetectedIssue(DetectedIssuePriorityType.Error, e.HResult.ToString(), e.Message, DetectedIssueKeys.OtherIssue));
+                                this.m_tracer.TraceWarning("Could not compute {0} - {1}", proto.Name, e);
                                 return new Act[0];
                             }
                         })
