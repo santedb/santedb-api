@@ -278,7 +278,7 @@ namespace SanteDB.Core.Templates.Definition
         /// </summary>
         public String FillJson(IDictionary<String, String> parameters, Func<String, String> referenceResolver)
         {
-            parameters = parameters ?? new Dictionary<String, String>();
+            parameters = parameters?.ToDictionary(o=>o.Key, o=>o.Value) ?? new Dictionary<String, String>(); // preserve the original dictionary
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
             parameters.Add("nowMinute", DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm"));
