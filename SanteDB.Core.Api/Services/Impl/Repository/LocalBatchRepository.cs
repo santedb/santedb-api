@@ -71,17 +71,38 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public override Bundle Insert(Bundle data)
         {
+            this.ValidateDemands(data);
+            return base.Insert(data);
+        }
+
+        private void ValidateDemands(Bundle data)
+        {
             // We need permission to insert all of the objects
-            foreach (var itm in data.Item.Where(i=>i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
+            foreach (var itm in data.Item.Where(i => i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
             {
                 var irst = typeof(IRepositoryService<>).MakeGenericType(itm is IdentifiedDataReference idr ? idr.ReferencedType : itm.GetType());
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService isrs && !(itm is IdentifiedDataReference))
                 {
-                    isrs.DemandWrite(itm);
+                    switch(itm.BatchOperation)
+                    {
+                        case BatchOperationType.Auto:
+                        case BatchOperationType.Insert:
+                            isrs.DemandWrite(itm);
+                            break;
+                        case BatchOperationType.InsertOrUpdate:
+                        case BatchOperationType.Update:
+                            isrs.DemandAlter(itm);
+                            break;
+                        case BatchOperationType.Delete:
+                        case BatchOperationType.DeletePreserveContained:
+                            isrs.DemandDelete(itm.Key.Value);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
-            return base.Insert(data);
         }
 
         /// <summary>
@@ -99,17 +120,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public override Bundle Save(Bundle data)
         {
-            // We need permission to insert all of the objects
-            foreach (var itm in data.Item.Where(i => i.BatchOperation != Model.DataTypes.BatchOperationType.Ignore))
-            {
-                var irst = typeof(IRepositoryService<>).MakeGenericType(itm is IdentifiedDataReference idr ? idr.ReferencedType : itm.GetType());
-                var irsi = ApplicationServiceContext.Current.GetService(irst);
-                if (irsi is ISecuredRepositoryService isrs && !(itm is IdentifiedDataReference))
-                {
-                    isrs.DemandAlter(itm);
-                }
-            }
-
+            this.ValidateDemands(data);
             return base.Save(data);
         }
     }
