@@ -50,6 +50,10 @@ namespace SanteDB.Core.Services.Impl.Repository
         }
 
         /// <inheritdoc/>
+        public override void DemandWrite(object data) => this.DemandAlter(data);
+
+        /// <inheritdoc/>
+        /// <remarks>Skips policy checking for users that are managers </remarks>
         public override void DemandAlter(object data)
         {
 
