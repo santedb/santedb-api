@@ -620,13 +620,16 @@ namespace SanteDB.Core
                 if (clone is Entity ent)
                 {
                     // Force load participations 
-                    if (ent.Key.HasValue)
+                    if (ent.VersionKey.HasValue) // The entity has been persisted 
                     {
                         ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
                     }
                     else
                     {
-                        ent.Participations = ent.Participations?.ToList() ?? ent.LoadProperty(o => o.Participations);
+                        // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
+                        ent.Participations = ent.Participations?.ToList() ??
+                            (target as Entity).Participations?.ToList() ??
+                            ent.LoadProperty(o => o.Participations);
                         ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
                     }
 
