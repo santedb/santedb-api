@@ -133,7 +133,7 @@ namespace SanteDB.Core.Services.Impl
             foreach (var p in e.Data.Item.OfType<Patient>().ToArray())
             {
                 // HACK: Bundles often contain historical data so we need to reconstitute the bundle 
-                p.Participations = p.Participations ?? new List<ActParticipation>();
+                p.Participations = p.LoadProperty(o => o.Participations) ?? new List<ActParticipation>();
                 p.Participations.AddRange(
                     e.Data.Item.OfType<Act>().Where(a => a.Participations?.Any(pc => pc.PlayerEntityKey == p.Key && pc.ParticipationRoleKey == ActParticipationKeys.RecordTarget) == true)
                     .Select(a =>
@@ -214,7 +214,7 @@ namespace SanteDB.Core.Services.Impl
             // All enrolled carepaths where the person is no longer eligible
             foreach (var er in this.GetEnrolledCarePaths(e.Data))
             {
-                if(!eligibleCarePaths.Any(cp=>cp.Key == er.Key))
+                if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
                 {
                     this.UnEnroll(e.Data, er);
                 }
