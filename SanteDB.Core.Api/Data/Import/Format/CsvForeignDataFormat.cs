@@ -42,7 +42,7 @@ namespace SanteDB.Core.Data.Import.Format
         private class CsvForiegnDataReader : IForeignDataReader
         {
 
-            private static readonly Regex s_columnExtract = new Regex(@"((?:""(?:(?:[^""]|""""|\w)*)"")|[\d\.]+|true|false|[^,]+)?,", RegexOptions.Compiled);
+            private static readonly Regex s_columnExtract = new Regex(@"((?:""(?:(?:[^""]|""""|\w)*)"")|[\d\.]+|true|false|[^,]+)?,", RegexOptions.Compiled, matchTimeout: TimeSpan.FromMilliseconds(250));
             private int m_rowsRead = 0;
             private StreamReader m_source;
             private object m_syncLock = new object();
