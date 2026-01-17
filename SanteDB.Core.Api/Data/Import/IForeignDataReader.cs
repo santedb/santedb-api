@@ -19,6 +19,7 @@
  * Date: 2023-6-21
  */
 using System;
+using System.Collections.Generic;
 
 namespace SanteDB.Core.Data.Import
 {

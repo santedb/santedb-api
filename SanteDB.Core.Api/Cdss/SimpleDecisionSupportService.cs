@@ -256,9 +256,9 @@ namespace SanteDB.Core.Cdss
                             if (o is Act a && !a.LoadProperty(p => p.Participations).Any(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget))
                             {
                                 a.Participations.Add(new ActParticipation(ActParticipationKeys.RecordTarget, target.Key));
-                                a.StartTime = a.StartTime?.EnsureWeekday();
-                                a.StopTime = a.StopTime?.EnsureWeekday();
-                                a.ActTime = a.ActTime?.EnsureWeekday();
+                                a.StartTime = a.StartTime?.Date == DateTime.Today.Date ? a.StartTime : a.StartTime?.EnsureWeekday();
+                                a.StopTime = a.StopTime?.Date == DateTime.Today.Date ? a.StopTime : a.StopTime?.EnsureWeekday();
+                                a.ActTime = a.ActTime?.Date == DateTime.Today.Date ? a.ActTime : a.ActTime?.EnsureWeekday();
                             }
                             return o;
                         })
@@ -400,9 +400,9 @@ namespace SanteDB.Core.Cdss
 
                     return new CarePlan(patientCopy, protocolActs.Select(o =>
                     {
-                        o.ActTime = o.ActTime?.EnsureWeekday();
-                        o.StartTime = o.StartTime?.EnsureWeekday();
-                        o.StopTime = o.StopTime?.EnsureWeekday();
+                        o.ActTime = o.ActTime?.Date == DateTime.Today.Date ? o.ActTime : o.ActTime?.EnsureWeekday();
+                        o.StartTime = o.StartTime?.Date == DateTime.Today.Date ? o.StartTime : o.StartTime?.EnsureWeekday();
+                        o.StopTime = o.StopTime?.Date == DateTime.Today.Date ? o.StopTime : o.StopTime?.EnsureWeekday();
                         return o;
                     }).OrderBy(o =>
                     {
@@ -477,9 +477,9 @@ namespace SanteDB.Core.Cdss
             }
 
             retVal.TemplateKey = templateKey;
-            retVal.ActTime = act.ActTime?.EnsureWeekday();
+            retVal.ActTime = act.ActTime?.Date == DateTime.Today.Date ? act.ActTime : act.ActTime?.EnsureWeekday();
             retVal.StartTime = (act.StartTime <= DateTimeOffset.Now ? act.StartTime.GreaterOf(act.ActTime) : act.StartTime)?.EnsureWeekday();
-            retVal.StopTime = act.StopTime?.EnsureWeekday();
+            retVal.StopTime = act.StopTime?.Date == DateTime.Today.Date ? act.StopTime : act.StopTime?.EnsureWeekday();
             retVal.MoodConceptKey = ActMoodKeys.Propose;
             retVal.Key = Guid.NewGuid();
             retVal.DischargeDisposition = null;
