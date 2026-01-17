@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Import
         public GenericForeignDataRecord(IForeignDataReader copyFrom, params string[] extraColumns)
         {
             this.m_columnNames = Enumerable.Range(0, copyFrom.ColumnCount).Select(o => copyFrom.GetName(o)).Union(extraColumns).ToArray();
-            this.m_values = m_columnNames.Select(c => copyFrom[c]).Concat(new object[extraColumns.Length]).ToArray();
+            this.m_values = m_columnNames.Where(c=>!extraColumns.Contains(c)).Select(c => copyFrom[c]).Concat(new object[extraColumns.Length]).ToArray();
         }
 
         /// <inheritdoc/>
