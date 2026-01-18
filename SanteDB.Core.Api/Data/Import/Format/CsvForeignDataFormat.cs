@@ -48,6 +48,7 @@ namespace SanteDB.Core.Data.Import.Format
             private object m_syncLock = new object();
             private bool m_isDisposed = false;
             private string[] m_columnNames;
+            private string[] m_schemaColumnNames;
             private object[] m_values;
             private IDictionary<String, Func<IForeignDataReader, Object>> m_computedFields = new Dictionary<String, Func<IForeignDataReader, Object>>();
 
@@ -92,15 +93,20 @@ namespace SanteDB.Core.Data.Import.Format
             public void AddComputedColumn(string columnName, Func<IForeignDataReader, Object> computation)
             {
                 this.ReadSchema();
-                if(this.m_columnNames.Contains(columnName) || this.m_computedFields.ContainsKey(columnName))
+                if(this.m_schemaColumnNames.Contains(columnName) || this.m_computedFields.ContainsKey(columnName))
                 {
                     throw new ArgumentException(String.Format(ErrorMessages.DUPLICATE_OBJECT, columnName));
                 }
                 this.m_computedFields.Add(columnName, computation);
+                this.m_columnNames = this.m_schemaColumnNames.Union(this.m_computedFields.Keys).ToArray();
             }
 
             /// <inheritdoc/>
-            public void ClearComputedColumns() => this.m_computedFields.Clear();
+            public void ClearComputedColumns()
+            {
+                this.m_computedFields.Clear();
+                this.m_columnNames = this.m_schemaColumnNames;
+            }
 
             /// <inheritdoc/>
             public bool HasComputedColumn(string columnName) => this.m_computedFields.ContainsKey(columnName);
@@ -132,7 +138,13 @@ namespace SanteDB.Core.Data.Import.Format
                 {
                     this.ThrowIfDisposed();
                     this.ReadSchema();
-                    return m_values[index];
+
+                    var columnName = this.m_columnNames[index];
+                    if(this.m_computedFields.TryGetValue(columnName, out var computation))
+                    {
+                        return computation(this);
+                    }
+                    return this.m_values[index];
                 }
             }
 
@@ -154,7 +166,7 @@ namespace SanteDB.Core.Data.Import.Format
                 {
                     this.ThrowIfDisposed();
                     this.ReadSchema();
-                    return m_columnNames.Length;
+                    return this.m_columnNames.Length;
                 }
             }
 
@@ -162,7 +174,7 @@ namespace SanteDB.Core.Data.Import.Format
             public string GetName(int index)
             {
                 this.ThrowIfDisposed();
-                this.ReadSchema();
+                this.ReadSchema(); // TODO: Update this to get the proper column name for computed columns
                 return m_columnNames[index];
             }
 
@@ -191,7 +203,7 @@ namespace SanteDB.Core.Data.Import.Format
 
                 lock (this.m_syncLock)
                 {
-                    if (m_columnNames == null)
+                    if (m_schemaColumnNames == null)
                     {
                         this.ReadSchema();
                         return MoveNext();
@@ -212,11 +224,11 @@ namespace SanteDB.Core.Data.Import.Format
             /// </summary>
             private void ReadSchema()
             {
-                if (!this.m_source.EndOfStream && this.m_columnNames == null && this.m_rowsRead == 0)
+                if (!this.m_source.EndOfStream && this.m_schemaColumnNames == null && this.m_rowsRead == 0)
                 {
                     lock (this.m_syncLock)
                     {
-                        m_columnNames = s_columnExtract
+                        m_columnNames = m_schemaColumnNames = s_columnExtract
                                 .Matches($"{this.m_source.ReadLine().Trim()},")
                                 .OfType<Match>()
                                 .Select(o => UnescapeValue(o.Groups[1].Value))
