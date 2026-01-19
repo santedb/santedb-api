@@ -120,6 +120,7 @@ namespace SanteDB.Core.Data.Import
                     var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.First().Type);
                     return ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
                 });
+
                 var duplicateCheckParms = new Dictionary<String, Func<Object>>();
                 for (int i = 0; i < sourceReader.ColumnCount; i++)
                 {
