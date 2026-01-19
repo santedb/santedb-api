@@ -627,9 +627,10 @@ namespace SanteDB.Core
                     else
                     {
                         // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
-                        ent.Participations = ent.Participations?.ToList() ??
+                        ent.Participations = new List<ActParticipation>(ent.Participations?.ToList() ??
                             (target as Entity).Participations?.ToList() ??
-                            ent.LoadProperty(o => o.Participations);
+                            ent.LoadProperty(o => o.Participations) ?? 
+                            new List<ActParticipation>()); // take a copy of the list
                         ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
                     }
 
