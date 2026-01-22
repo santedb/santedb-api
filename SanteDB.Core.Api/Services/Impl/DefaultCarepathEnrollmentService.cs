@@ -133,7 +133,7 @@ namespace SanteDB.Core.Services.Impl
             foreach (var p in e.Data.Item.OfType<Patient>().ToArray())
             {
                 // HACK: Bundles often contain historical data so we need to reconstitute the bundle 
-                p.Participations = p.Participations ?? new List<ActParticipation>();
+                p.Participations = p.LoadProperty(o => o.Participations) ?? new List<ActParticipation>();
                 p.Participations.AddRange(
                     e.Data.Item.OfType<Act>().Where(a => a.Participations?.Any(pc => pc.PlayerEntityKey == p.Key && pc.ParticipationRoleKey == ActParticipationKeys.RecordTarget) == true)
                     .Select(a =>
@@ -144,12 +144,29 @@ namespace SanteDB.Core.Services.Impl
                     }));
                 p.SetLoaded(o => o.Participations);
                 var eligibleCarePaths = this.GetEligibleCarePaths(p).ToList();
+
                 // All enrolled carepaths where the person is no longer eligible
-                foreach (var er in this.GetEnrolledCarePaths(p))
+                if (p.BatchOperation == Model.DataTypes.BatchOperationType.Update ||
+                    p.BatchOperation == Model.DataTypes.BatchOperationType.InsertOrUpdate ||
+                    p.BatchOperation == Model.DataTypes.BatchOperationType.Auto)
                 {
-                    if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
+                    var enrolledCarePaths = this.GetEnrolledCarePaths(p).ToList();
+                    foreach (var er in enrolledCarePaths) // Remove the patient from any enrolled carepaths
                     {
-                        this.UnEnroll(p, er);
+                        if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
+                        {
+                            this.UnEnroll(p, er);
+                        }
+                    }
+
+                    // Did anything change that might impact a care plan - this is gender or date of birth
+                    var existingPatient = this.m_patientRepository.Get(p.Key.Value);
+                    if(existingPatient?.DateOfBirth?.Date == p.DateOfBirth?.Date &&
+                        existingPatient?.GenderConceptKey == p.GenderConceptKey &&
+                        eligibleCarePaths.All(cp => enrolledCarePaths.Any(ep => ep.Key == cp.Key) && cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
+                        ) // no change
+                    {
+                        continue;
                     }
                 }
 
@@ -214,7 +231,7 @@ namespace SanteDB.Core.Services.Impl
             // All enrolled carepaths where the person is no longer eligible
             foreach (var er in this.GetEnrolledCarePaths(e.Data))
             {
-                if(!eligibleCarePaths.Any(cp=>cp.Key == er.Key))
+                if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
                 {
                     this.UnEnroll(e.Data, er);
                 }

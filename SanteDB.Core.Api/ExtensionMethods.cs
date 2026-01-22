@@ -583,6 +583,23 @@ namespace SanteDB.Core
                     var idp = ApplicationServiceContext.Current.GetService(idpt) as IDataPersistenceService;
                     target = (TData)idp?.Get(target.Key.Value) ?? target;
                 }
+
+                if(target is Entity ent)
+                {
+                    if (ent.VersionKey.HasValue) // The entity has been persisted 
+                    {
+                        ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
+                    }
+                    else
+                    {
+                        // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
+                        ent.Participations = new List<ActParticipation>(ent.Participations?.ToList() ??
+                            (target as Entity).Participations?.ToList() ??
+                            ent.LoadProperty(o => o.Participations) ??
+                            new List<ActParticipation>()); // take a copy of the list
+                        ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                    }
+                }
                 return target;
             }
         }
@@ -627,9 +644,10 @@ namespace SanteDB.Core
                     else
                     {
                         // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
-                        ent.Participations = ent.Participations?.ToList() ??
+                        ent.Participations = new List<ActParticipation>(ent.Participations?.ToList() ??
                             (target as Entity).Participations?.ToList() ??
-                            ent.LoadProperty(o => o.Participations);
+                            ent.LoadProperty(o => o.Participations) ?? 
+                            new List<ActParticipation>()); // take a copy of the list
                         ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
                     }
 
