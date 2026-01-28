@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -100,7 +100,7 @@ namespace SanteDB.Core.Data.Import.Transforms
             if (args.Length == 3 && result.GetValueOrDefault() != Guid.Empty)
             {
                 // TODO: Cache these expressions
-                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), false, typeof(object));
+                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), forceLoad: true, convertReturn: typeof(object));
                 var obj = lookupRepo.Get(result.Value) as IdentifiedData;
                 return keySelector.Compile().DynamicInvoke(obj);
             }
