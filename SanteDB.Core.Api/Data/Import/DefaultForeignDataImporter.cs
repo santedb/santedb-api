@@ -285,7 +285,7 @@ namespace SanteDB.Core.Data.Import
         {
             if (s.Value.Contains("*"))
             {
-                return sourceReader[s.Source] != null;
+                return s.Negation ? sourceReader[s.Source]  == null : sourceReader[s.Source] != null;
             }
             else if(!String.IsNullOrEmpty(s.Other))
             {

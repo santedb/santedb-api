@@ -100,7 +100,7 @@ namespace SanteDB.Core.Data.Import.Transforms
             if (args.Length == 3 && result.GetValueOrDefault() != Guid.Empty)
             {
                 // TODO: Cache these expressions
-                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), false, typeof(object));
+                var keySelector = QueryExpressionParser.BuildPropertySelector(modelType, args[2].ToString(), forceLoad: true, convertReturn: typeof(object));
                 var obj = lookupRepo.Get(result.Value) as IdentifiedData;
                 return keySelector.Compile().DynamicInvoke(obj);
             }

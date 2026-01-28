@@ -93,7 +93,7 @@ namespace SanteDB.Core.Data.Import.Format
             public void AddComputedColumn(string columnName, Func<IForeignDataReader, Object> computation)
             {
                 this.ReadSchema();
-                if(this.m_schemaColumnNames.Contains(columnName) || this.m_computedFields.ContainsKey(columnName))
+                if (this.m_schemaColumnNames.Contains(columnName) || this.m_computedFields.ContainsKey(columnName))
                 {
                     throw new ArgumentException(String.Format(ErrorMessages.DUPLICATE_OBJECT, columnName));
                 }
@@ -121,11 +121,11 @@ namespace SanteDB.Core.Data.Import.Format
                     var colIndex = IndexOf(name);
                     if (colIndex == -1)
                     {
-                        if(this.m_computedFields.TryGetValue(name, out var compute))
-                        {
-                            return compute(this);
-                        }
                         throw new MissingFieldException(String.Format(ErrorMessages.FIELD_NOT_FOUND, name));
+                    }
+                    if (this.m_computedFields.TryGetValue(name, out var compute))
+                    {
+                        return compute(this);
                     }
                     return m_values[colIndex];
                 }
@@ -140,7 +140,7 @@ namespace SanteDB.Core.Data.Import.Format
                     this.ReadSchema();
 
                     var columnName = this.m_columnNames[index];
-                    if(this.m_computedFields.TryGetValue(columnName, out var computation))
+                    if (this.m_computedFields.TryGetValue(columnName, out var computation))
                     {
                         return computation(this);
                     }
