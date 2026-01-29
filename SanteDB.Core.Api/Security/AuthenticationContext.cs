@@ -205,7 +205,7 @@ namespace SanteDB.Core.Security
             public WrappedContext(IPrincipal principal, AuthenticationContext restore)
             {
                 this.RestoreContext = restore;
-                AuthenticationContext.Current = new AuthenticationContext(principal);
+                AuthenticationContext.Current = new AuthenticationContext(principal, restore);
 
             }
 
@@ -303,6 +303,19 @@ namespace SanteDB.Core.Security
             this.m_principal = principal;
         }
 
+
+        /// <summary>
+        /// Get the principal that was explicitly authenticated on this context (excluding SYSTEM or ANONYMOUS)
+        /// </summary>
+        public IPrincipal GetAuthenticatedPrincipal()
+        {
+            var ac = this;
+            while(ac != null && (!ac.Principal.Identity.IsAuthenticated || "SYSTEM".Equals(ac.Principal.Identity.AuthenticationType)))
+            {
+                ac = ac.m_previous;
+            }
+            return ac?.Principal;
+        }
 
         /// <summary>
         /// Gets or sets the current context
