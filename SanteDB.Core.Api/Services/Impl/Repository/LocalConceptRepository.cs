@@ -164,11 +164,10 @@ namespace SanteDB.Core.Services.Impl.Repository
         public Concept GetConcept(string mnemonic)
         {
             var cacheKey = $"concept.{mnemonic}";
-            var retVal = this.m_adhocCacheService?.Get<Guid>(cacheKey);
 
-            if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            if (this.m_adhocCacheService?.TryGet(cacheKey, out Guid lookupId) == true)
             {
-                return this.Get(retVal.Value);
+                return this.Get(lookupId);
             }
             else
             {
