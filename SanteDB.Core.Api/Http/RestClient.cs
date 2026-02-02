@@ -225,14 +225,13 @@ namespace SanteDB.Core.Http
             }
             else
             {
-                this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate);
+                this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate.Subject);
+                var certificateValidator = this.Description.Binding?.Security?.CertificateValidator ?? _Services.GetService<ICertificateValidator>();
+                var securityConfiguration = _Services.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
+                return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
+                    certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
             }
-
-            var certificateValidator = this.Description.Binding?.Security?.CertificateValidator ?? _Services.GetService<ICertificateValidator>();
-            var securityConfiguration = _Services.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
-            return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
-                certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
-        }
+            }
 
         /// <summary>
         /// Gets the <see cref="TimeSpan"/> that represents the timeout for an <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/> operation.
@@ -245,9 +244,6 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <returns>A valid TimeSpan for the operation, or a timespan that represents -1 for infinite.</returns>
         protected virtual TimeSpan GetReceiveTimeout() => this.Description?.Endpoint?.First()?.ReceiveTimeout ?? s_InfiniteTimeout;
-
-
-
 
         /// <inheritdoc />
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
