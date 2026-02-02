@@ -165,14 +165,17 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             var cacheKey = $"concept.{mnemonic}";
 
-            if (this.m_adhocCacheService?.TryGet(cacheKey, out Guid lookupId) == true)
+            if (this.m_adhocCacheService?.TryGet(cacheKey, out Guid lookupId) == true && lookupId != Guid.Empty)
             {
                 return this.Get(lookupId);
             }
             else
             {
                 var obj = base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
-                this.m_adhocCacheService?.Add(cacheKey, obj.Key.Value);
+                if (obj != null)
+                {
+                    this.m_adhocCacheService?.Add(cacheKey, obj.Key.Value);
+                }
                 return obj;
             }
         }
