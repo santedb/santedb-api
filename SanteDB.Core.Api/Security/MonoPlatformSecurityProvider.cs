@@ -226,14 +226,21 @@ namespace SanteDB.Core.Security
                     }
 
                     // HACK: Keep a copy of the public key in the MY store as well
-                    if(storeName == StoreName.My)
+                    try
                     {
-                        using (var store = new X509Store(storeName, storeLocation))
+                        if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
                         {
-                            store.Open(OpenFlags.ReadWrite);
-                            store.Add(certificate);
-                            store.Close();
+                            using (var store = new X509Store(storeName, storeLocation))
+                            {
+                                store.Open(OpenFlags.ReadWrite);
+                                store.Add(certificate);
+                                store.Close();
+                            }
                         }
+                    }
+                    catch
+                    {
+                        this.m_tracer.TraceWarning("Could not copy the certificate to the My store");
                     }
 
                     audit?.WithOutcome(OutcomeIndicator.Success);
