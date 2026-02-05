@@ -133,6 +133,11 @@ namespace SanteDB.Core.Configuration
         [XmlEnum("session.abandon.pwd")]
         AbandonSessionAfterPasswordReset,
         /// <summary>
+        /// Abandon session on lockout
+        /// </summary>
+        [XmlEnum("session.abandon.locout")]
+        AbandonSessionAfterLockout,
+        /// <summary>
         /// Users must have MFA to their registered e-mail address
         /// </summary>
         [XmlEnum("auth.mfa.required")]
