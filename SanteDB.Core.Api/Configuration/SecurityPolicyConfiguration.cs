@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -62,6 +62,11 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlEnum("auth.session.length")]
         SessionLength,
+        /// <summary>
+        /// Maximum length of sesison
+        /// </summary>
+        [XmlEnum("auth.session.elevated.length")]
+        ElevatedSessionLength,
         /// <summary>
         /// Maximum time to refresh session
         /// </summary>
@@ -128,6 +133,11 @@ namespace SanteDB.Core.Configuration
         [XmlEnum("session.abandon.pwd")]
         AbandonSessionAfterPasswordReset,
         /// <summary>
+        /// Abandon session on lockout
+        /// </summary>
+        [XmlEnum("session.abandon.locout")]
+        AbandonSessionAfterLockout,
+        /// <summary>
         /// Users must have MFA to their registered e-mail address
         /// </summary>
         [XmlEnum("auth.mfa.required")]
@@ -141,8 +151,12 @@ namespace SanteDB.Core.Configuration
         /// True if public backups are permitted
         /// </summary>
         [XmlEnum("backup.public")]
-        AllowPublicBackups
-
+        AllowPublicBackups,
+        /// <summary>
+        /// True if all dCDRS MUST use RSA digital signature certs
+        /// </summary>
+        [XmlEnum("sec.rsaSig.required")]
+        RequireRsaCerts
     }
 
     /// <summary>

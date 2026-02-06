@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -19,10 +19,12 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.i18n;
-using SharpCompress.Compressors.BZip2;
+using SharpCompress.Common;
+using SharpCompress.IO;
 using SharpCompress.Readers.Tar;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -36,7 +38,7 @@ namespace SanteDB.Core.Data.Backup
     public class BackupReader : IDisposable
     {
         // Magic bytes - how we know a file is a backup
-        internal static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x00, (byte)'B', (byte)'K' };
+        public static readonly byte[] MAGIC = { (byte)'S', (byte)'B', 0x01, (byte)'B', (byte)'K' };
         private readonly Stream m_underlyingStream;
         private TarReader m_tarReader;
 
@@ -131,8 +133,14 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         /// <param name="backupStream">The stream from which the backup should be loaded</param>
         /// <param name="password">The password on the backup to use to decrypt it</param>
-        public static BackupReader Open(Stream backupStream, String password = null)
+        /// <param name="leaveOpen">True if the underlying stream should be open</param>
+        public static BackupReader Open(Stream backupStream, String password = null, bool leaveOpen = false)
         {
+
+            if (leaveOpen)
+            {
+                backupStream = NonDisposingStream.Create(backupStream);
+            }
 
             if (!OpenDescriptor(backupStream, out var backupDate, out var backupAsset, out var creator, out var iv))
             {
@@ -168,7 +176,7 @@ namespace SanteDB.Core.Data.Backup
                 }
             }
 
-            backupStream = new BZip2Stream(backupStream, SharpCompress.Compressors.CompressionMode.Decompress, false);
+            backupStream = new GZipStream(backupStream, CompressionMode.Decompress);
 
             return new BackupReader(backupStream, backupDate, creator, backupAsset);
         }
@@ -180,18 +188,26 @@ namespace SanteDB.Core.Data.Backup
         /// <returns>The next entry stream</returns>
         public bool GetNextEntry(out IBackupAsset assetInfo)
         {
-            if (this.m_tarReader == null)
+            try
             {
-                throw new ObjectDisposedException(nameof(BackupReader));
+                if (this.m_tarReader == null)
+                {
+                    throw new ObjectDisposedException(nameof(BackupReader));
+                }
+                else if (!this.m_tarReader.MoveToNextEntry())
+                {
+                    assetInfo = null;
+                    return false;
+                }
+                var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.Name}" == this.m_tarReader.Entry.Key);
+                assetInfo = new TarBackupAsset(assetInfoMeta.Name, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
+                return true;
             }
-            else if (!this.m_tarReader.MoveToNextEntry())
+            catch(IncompleteArchiveException e)
             {
                 assetInfo = null;
                 return false;
             }
-            var assetInfoMeta = this.BackupAsset.First(o => $"{o.AssetClassId}/{o.Name}" == this.m_tarReader.Entry.Key);
-            assetInfo = new TarBackupAsset(assetInfoMeta.Name, assetInfoMeta.AssetClassId, this.m_tarReader.OpenEntryStream());
-            return true;
         }
 
         /// <summary>
@@ -201,15 +217,19 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarReader != null)
             {
-                while (this.m_tarReader.MoveToNextEntry())
+                try
                 {
-                    ; // exhaust the readers if the user did not
-                }
+                    while (this.m_tarReader.MoveToNextEntry())
+                    {
+                        ; // exhaust the readers if the user did not
+                    }
 
-                while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0)
-                {
-                    ;
+                    while (this.m_underlyingStream.Read(new byte[1024], 0, 1024) > 0)
+                    {
+                        ;
+                    }
                 }
+                catch { }
 
                 this.m_tarReader.Dispose();
                 this.m_underlyingStream.Dispose();

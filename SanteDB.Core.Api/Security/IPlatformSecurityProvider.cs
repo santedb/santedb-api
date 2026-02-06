@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -117,5 +117,13 @@ namespace SanteDB.Core.Security
         ///     <paramref name="storeName"/> and <paramref name="storeLocation"/> may be ignored on platforms that do not support windows-style certificate stores like Linux and Android.
         /// </remarks>
         IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true);
+
+        /// <summary>
+        /// Determines whether the current application context has the specified <paramref name="platformServicePermission"/>
+        /// </summary>
+        /// <param name="platformServicePermission">The permission to check</param>
+        /// <returns>True if the application has the specified permission</returns>
+        bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission);
+
     }
 }

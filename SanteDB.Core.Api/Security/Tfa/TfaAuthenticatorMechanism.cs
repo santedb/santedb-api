@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -20,7 +20,9 @@
  */
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Security.Principal;
 
@@ -36,16 +38,24 @@ namespace SanteDB.Core.Security.Tfa
         /// Gets the mechanism ID for this implementation
         /// </summary>
         public static readonly Guid MechanismId = Guid.Parse("7566D010-FA4A-444C-A10A-0ADC648846CE");
+        
+        /// <summary>
+        /// Authenticator issuer name
+        /// </summary>
+        public const string APP_SETTING_AUTHETNICATOR_ISSUER = "authenticator.name";
+
         private readonly ITfaCodeProvider m_tfaCodeProvider;
         private readonly ITfaSecretManager m_tfaSecretManager;
+        private readonly string m_authenticatorSystemName;
 
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public TfaAuthenticatorMechanism(ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager)
+        public TfaAuthenticatorMechanism(ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager, IConfigurationManager configurationManager)
         {
             this.m_tfaCodeProvider = tfaCodeProvider;
             this.m_tfaSecretManager = secretManager;
+            this.m_authenticatorSystemName = configurationManager.GetAppSetting(APP_SETTING_AUTHETNICATOR_ISSUER) ?? $"{ApplicationServiceContext.Current.ApplicationName ?? "SanteDB"} on {Environment.MachineName}";
         }
 
         /// <inheritdoc/>
@@ -85,7 +95,7 @@ namespace SanteDB.Core.Security.Tfa
                 var secret = this.m_tfaSecretManager.GetSharedSecret(ci);
 
                 // HACK: Get the secret for sharing
-                return $"otpauth://totp/{user.Name}?secret={secret.Base32Encode()}&issuer={ApplicationServiceContext.Current.ApplicationName ?? "SanteDB"} on {Environment.MachineName}";
+                return $"otpauth://totp/{user.Name}?secret={secret.Base32Encode()}&issuer={this.m_authenticatorSystemName}";
             }
             else
             {

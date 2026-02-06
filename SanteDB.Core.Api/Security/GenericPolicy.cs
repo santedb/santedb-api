@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -39,19 +39,28 @@ namespace SanteDB.Core.Security
         /// <summary>
         /// Constructs a simple policy 
         /// </summary>
-        public GenericPolicy(Guid key, String oid, String name, bool canOverride)
+        public GenericPolicy(Guid key, String oid, String name, bool canOverride, bool isPublic)
         {
             this.Key = key;
             this.Oid = oid;
             this.Name = name;
             this.CanOverride = canOverride;
             this.IsActive = true;
+            this.IsPublic = isPublic;
         }
 
         /// <summary>
         /// Gets the key
         /// </summary>
         public Guid Key
+        {
+            get; private set;
+        }
+
+        /// <summary>
+        /// True if the policy is public
+        /// </summary>
+        public bool IsPublic
         {
             get; private set;
         }

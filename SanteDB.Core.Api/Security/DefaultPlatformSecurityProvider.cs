@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -51,6 +51,10 @@ namespace SanteDB.Core.Security
             }
 
         }
+
+        /// <inheritdoc/>
+        /// <remarks>This is not required on Windows or Linux</remarks>
+        public bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission) => true;
 
         /// <inheritdoc/>
         public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
@@ -129,6 +133,8 @@ namespace SanteDB.Core.Security
         ///<inheritdoc />
         public bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
+            this.m_tracer.TraceInfo("Installing certificate {0} to {1}/{2}", certificate.Thumbprint, storeLocation, storeName);
+
             var audit = this.AuditCertificateInstallation(certificate);
 
 #pragma warning disable CS0168 // Variable is declared but never used
@@ -142,7 +148,16 @@ namespace SanteDB.Core.Security
 
                     var certtext = certificate.Export(X509ContentType.Pfx, password);
 
-                    var importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                    X509Certificate2 importcert = null;
+                    if (storeLocation == StoreLocation.LocalMachine)
+                    {
+                        importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
+                    }
+                    else
+                    {
+                        importcert = new X509Certificate2(certtext, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+                    }
 
                     store.Add(importcert);
 
@@ -156,6 +171,7 @@ namespace SanteDB.Core.Security
             }
             catch (CryptographicException cex)
             {
+                this.m_tracer.TraceWarning("Could not install {0} to {1}/{2} - {3}", certificate.Subject, storeLocation, storeName, cex);
                 audit?.WithOutcome(OutcomeIndicator.SeriousFail);
                 return false;
             }
@@ -166,7 +182,10 @@ namespace SanteDB.Core.Security
             }
             finally
             {
-                audit?.Send();
+                if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+                {
+                    audit?.Send();
+                }
             }
 #pragma warning restore CS0168 // Variable is declared but never used
         }

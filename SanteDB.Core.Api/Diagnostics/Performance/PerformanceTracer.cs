@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -39,8 +39,7 @@ namespace SanteDB.Core.Diagnostics.Performance
         /// <param name="milliseconds"></param>
         public static void WritePerformanceTrace(long milliseconds)
         {
-#if DEBUG
-            if (milliseconds > 1000)
+            if (milliseconds > 1000 && ApplicationServiceContext.Current.HostType == SanteDBHostType.Server)
             {
                 var stack = new StackTrace(false).GetFrame(1).GetMethod();
                 lock (syncLock)
@@ -51,7 +50,6 @@ namespace SanteDB.Core.Diagnostics.Performance
                     };
                 }
             }
-#endif
         }
 
     }

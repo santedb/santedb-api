@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -19,10 +19,12 @@
  * Date: 2023-6-21
  */
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Constants;
 using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Security;
 using SanteDB.Core.Security.Services;
 using System;
+using System.Linq;
 
 namespace SanteDB.Core.Services.Impl.Repository
 {
@@ -74,7 +76,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             if (data is EntityRelationship er)
             {
-                var source = er.LoadProperty(o => o.SourceEntity);
+                var source = EntityRelationshipTypeKeys.ReverseRelationshipTypes.Contains(er.RelationshipTypeKey.GetValueOrDefault()) ? er.LoadProperty(o=>o.TargetEntity) : er.LoadProperty(o => o.SourceEntity);
                 var irst = typeof(IRepositoryService<>).MakeGenericType(source?.GetType() ?? typeof(Entity));
                 var irsi = ApplicationServiceContext.Current.GetService(irst);
                 if (irsi is ISecuredRepositoryService isrs)

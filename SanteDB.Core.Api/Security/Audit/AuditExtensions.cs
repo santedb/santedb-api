@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Data.Import;
 using SanteDB.Core.Data.Quality.Configuration;
 using SanteDB.Core.Exceptions;
@@ -237,7 +238,7 @@ namespace SanteDB.Core.Security.Audit
                 Role = AuditableObjectRole.SecurityGranularityDefinition,
                 Type = AuditableObjectType.SystemObject,
                 LifecycleType = AuditableObjectLifecycle.Verification,
-                ObjectId = o.PolicyId
+                ObjectId = o.Policy.Oid
             }));
             return me;
         }
@@ -850,14 +851,20 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = p.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.PatientNumber;
-                    retVal.NameData = String.Join(",", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", p.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case UserEntity ue:
                     retVal.Role = AuditableObjectRole.User;
                     retVal.Type = AuditableObjectType.Person;
                     retVal.ObjectId = ue.SecurityUserKey.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.UserIdentifier;
-                    retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = ue.LoadProperty(o => o.SecurityUser)?.UserName;
+                    }
                     break;
                 case Provider pvd:
                     retVal.Role = AuditableObjectRole.Doctor;
@@ -865,7 +872,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = pvd.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeProvider;
-                    retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", pvd.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Organization org:
                     retVal.Role = AuditableObjectRole.MasterFile;
@@ -873,7 +883,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = org.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeOrganization;
-                    retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", org.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Place plc:
                     retVal.Role = AuditableObjectRole.Location;
@@ -881,7 +894,10 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = plc.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePlace;
-                    retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", plc.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Entity e:
                     retVal.Role = AuditableObjectRole.MasterFile;
@@ -889,17 +905,23 @@ namespace SanteDB.Core.Security.Audit
                     retVal.ObjectId = e.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypeEntity;
-                    retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", e.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     break;
                 case Act act:
                     var termService = ApplicationServiceContext.Current.GetService<IConceptRepositoryService>();
-                    var classification = termService?.GetConceptReferenceTerm(act.ClassConceptKey.Value, "http://santedb.org/conceptset/v3-ActClassClinicalDocument", true);
+                    var classification = termService?.GetConceptReferenceTerm(act.ClassConceptKey.GetValueOrDefault(), "http://santedb.org/conceptset/v3-ActClassClinicalDocument", true);
                     retVal.Role = AuditableObjectRole.Report;
                     retVal.Type = AuditableObjectType.Other;
                     retVal.ObjectId = act.Key.ToString();
                     retVal.IDTypeCode = AuditableObjectIdType.Custom;
                     retVal.CustomIdTypeCode = new AuditCode(classification?.Mnemonic ?? "ACT", "http://terminology.hl7.org/CodeSystem/v3-ActClass") { DisplayName = classification?.GetDisplayName("en") };
-                    retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    if (ApplicationServiceContext.Current.HostType != SanteDBHostType.Client)
+                    {
+                        retVal.NameData = String.Join(",", act.LoadProperty(o => o.Identifiers).Select(o => o.ToDisplay()));
+                    }
                     if (act.ReasonConceptKey == NullReasonKeys.Masked) // Masked
                     {
                         lifecycle = AuditableObjectLifecycle.Deidentification;
@@ -947,12 +969,12 @@ namespace SanteDB.Core.Security.Audit
                     retVal.Role = AuditableObjectRole.Report;
                     retVal.Type = AuditableObjectType.SystemObject;
                     retVal.CustomIdTypeCode = ExtendedAuditCodes.CustomIdTypePolicyDecision;
-                    retVal.ObjectId = $"urn:oid:{pde.Details?.First().PolicyId}";
+                    retVal.ObjectId = $"urn:oid:{pde.Details?.First().Policy.Oid}";
                     retVal.ObjectData = new List<ObjectDataExtension>()
                     {
                         new ObjectDataExtension("securable", pde.Securable.ToString()),
                         new ObjectDataExtension("outcome", pde.Outcome.ToString()),
-                        new ObjectDataExtension("details", String.Join(",",pde.Details.Select(o=>$"{o.PolicyId}={o.Outcome}")))
+                        new ObjectDataExtension("details", String.Join(",",pde.Details.Select(o=>$"{o.Policy.Oid}={o.Outcome}")))
                     };
                     break;
                 case IForeignDataSubmission fds:
@@ -1263,8 +1285,9 @@ namespace SanteDB.Core.Security.Audit
                         deviceIdentity != null ? new ObjectDataExtension("deviceIdentity", deviceIdentity?.Name) : null,
                         applicationIdentity != null ? new ObjectDataExtension("applicationIdentity", applicationIdentity?.Name) : null,
                         new ObjectDataExtension("scope", String.Join("; ", policies ?? new String[] { "*" }))
-                    }.OfType<ObjectDataExtension>().ToList()
+                    }.OfType<ObjectDataExtension>().Union(session.Claims.Where(c=>c.Type != SanteDBClaimTypes.SanteDBScopeClaim).Select(o => new ObjectDataExtension(o.Type, o.Value) )).ToList()
                 });
+                
             }
             else
             {

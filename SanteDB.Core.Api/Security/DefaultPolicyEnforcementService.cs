@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -20,6 +20,7 @@
  */
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Exceptions;
+using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Audit;
@@ -62,6 +63,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         private PolicyGrantType GetGrant(IPrincipal principal, String policyId)
         {
+            if(principal == null)
+            {
+                throw new ArgumentNullException(nameof(principal), ErrorMessages.ARGUMENT_NULL);
+            }
+
             var action = PolicyGrantType.Deny;
 
             // Non system principals must be authenticated
@@ -99,6 +105,10 @@ namespace SanteDB.Core.Security
             {
                 ApplicationServiceContext.Current.GetAuditService().Audit().ForAccessControlDecision(principal, policyId, result).Send();
             }
+            //else if(Object.ReferenceEquals(principal, AuthenticationContext.SystemPrincipal)) // obtained by entering system context
+            //{
+            //    return;
+            //}
 
             if (result != PolicyGrantType.Grant)
             {

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -48,6 +48,7 @@ namespace SanteDB.Core.Services.Impl.Repository
 
         // Localization Service
         private readonly ILocalizationService m_localizationService;
+        private readonly IAdhocCacheService m_adhocCacheService;
         private readonly IPolicyEnforcementService m_pepService;
 
         // User repo
@@ -103,7 +104,8 @@ namespace SanteDB.Core.Services.Impl.Repository
             IApplicationIdentityProviderService applicationIdentityProvider,
             IDeviceIdentityProviderService deviceIdentityProvider,
             IPolicyEnforcementService pepService,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            IAdhocCacheService adhocCacheService)
         {
             this.m_pepService = pepService;
             this.m_userRepository = userRepository;
@@ -120,6 +122,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_userEntityRepository = userEntityRepository;
             this.m_roleProvider = roleProviderService;
             this.m_localizationService = localizationService;
+            this.m_adhocCacheService = adhocCacheService;
         }
 
         /// <summary>
@@ -180,9 +183,18 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// <returns>Returns the user.</returns>
         public SecurityUser GetUser(String userName)
         {
-            // As the identity service may be LDAP, best to call it to get an identity name
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
-            return this.m_userRepository.Find(u => u.UserName == userName).FirstOrDefault();
+            var cacheKey = $"sec.ulook.{userName}";
+            if (this.m_adhocCacheService.TryGet<Guid>(cacheKey, out var userKey))
+            {
+                return this.m_userRepository.Get(userKey); // Can use cache
+            }
+            else
+            {
+                var retVal = this.m_userRepository.Find(u => u.UserName == userName).FirstOrDefault();
+                this.m_adhocCacheService.Add(cacheKey, retVal?.Key);
+                return retVal;
+            }
         }
 
         /// <summary>
@@ -199,7 +211,17 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// </summary>
         public UserEntity GetUserEntity(IIdentity identity)
         {
-            return this.m_userEntityRepository?.Find(o => o.SecurityUser.UserName == identity.Name).FirstOrDefault();
+            var cacheKey = $"sec.ulook.ue.{identity.Name}";
+            if (this.m_adhocCacheService.TryGet<Guid>(cacheKey, out var uuid))
+            {
+                return this.m_userEntityRepository.Get(uuid);
+            }
+            else
+            {
+                var retVal = this.m_userEntityRepository?.Find(o => o.SecurityUser.UserName == identity.Name).FirstOrDefault();
+                this.m_adhocCacheService.Add(cacheKey, retVal?.Key);
+                return retVal;
+            }
         }
 
         /// <summary>

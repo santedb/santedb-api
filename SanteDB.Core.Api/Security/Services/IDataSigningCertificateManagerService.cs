@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -81,6 +81,21 @@ namespace SanteDB.Core.Security.Services
         /// <param name="certificate">The certificate for which there is an identity assigned</param>
         /// <returns>The known identities for the certificate</returns>
         IEnumerable<IIdentity> GetCertificateIdentities(X509Certificate2 certificate);
+
+    }
+
+    /// <summary>
+    /// Data signing certificate manager service that provides extended functions
+    /// </summary>
+    public interface IDataSigningCertificateManagerServiceEx : IDataSigningCertificateManagerService
+    {
+        /// <summary>
+        /// Adds multiple signing certificates to the identity
+        /// </summary>
+        /// <param name="identity">The identity to add signing credentials for</param>
+        /// <param name="x509Certificates">The certificates to add to the identity</param>
+        /// <param name="principal">The principal performing the operation</param>
+        void AddSigningCertificates(IIdentity identity, IEnumerable<X509Certificate2> x509Certificates, IPrincipal principal);
 
     }
 }

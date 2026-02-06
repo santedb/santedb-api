@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
 using System;
@@ -61,12 +62,13 @@ namespace SanteDB.Core.Security
             /// <summary>
             /// Constructs a simple policy
             /// </summary>
-            public EffectivePolicy(Guid key, String oid, String name, bool canOverride)
+            public EffectivePolicy(Guid key, String oid, String name, bool canOverride, bool isPublic)
             {
                 this.Key = key;
                 this.Oid = oid;
                 this.Name = name;
                 this.CanOverride = canOverride;
+                this.IsPublic = isPublic;
                 this.IsActive = true;
             }
 
@@ -75,7 +77,15 @@ namespace SanteDB.Core.Security
             /// </summary>
             public Guid Key
             {
-                get; set;
+                get; private set;
+            }
+
+            /// <summary>
+            /// True if the policy is public
+            /// </summary>
+            public bool IsPublic
+            {
+                get; private set;
             }
 
             /// <summary>
@@ -83,7 +93,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public bool CanOverride
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -91,7 +101,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public bool IsActive
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -99,7 +109,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public string Name
             {
-                get; set;
+                get; private set;
             }
 
             /// <summary>
@@ -107,7 +117,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public string Oid
             {
-                get; set;
+                get; private set;
             }
         }
 
@@ -131,7 +141,7 @@ namespace SanteDB.Core.Security
             /// </summary>
             public EffectivePolicyInstance(IPolicy policy, PolicyGrantType rule, IPrincipal forPrincipal)
             {
-                this.Policy = new EffectivePolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride);
+                this.Policy = new EffectivePolicy(policy.Key, policy.Oid, policy.Name, policy.CanOverride, policy.IsPublic);
                 this.Rule = rule;
                 this.m_securable = forPrincipal;
             }
@@ -189,8 +199,34 @@ namespace SanteDB.Core.Security
         /// </summary>
         public void ClearCache(IPrincipal principal)
         {
-            string cacheKey = this.ComputeCacheKey(principal);
-            this.m_adhocCacheService?.Remove(cacheKey);
+            if (principal != null)
+            {
+                string cacheKey = this.ComputeCacheKey(principal);
+                this.m_adhocCacheService?.Remove(cacheKey);
+            }
+        }
+
+        /// <inheritdoc/>
+        [Obsolete]
+        public void ClearCache(String principalName) => this.ClearCacheByName<IIdentity>(principalName);
+
+        /// <inheritdoc/>
+        public void ClearCacheByName<TIdentityType>(String principalName)
+        {
+            switch (typeof(TIdentityType).Name)
+            {
+                case nameof(IDeviceIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.dev.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                case nameof(IApplicationIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.app.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                case nameof(IIdentity):
+                    this.m_adhocCacheService?.Remove($"pdp.usr.{this.m_hasher.ComputeHash(principalName)}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(TIdentityType));
+            }
         }
 
         /// <summary>
@@ -213,7 +249,7 @@ namespace SanteDB.Core.Security
 
                 var allPolicies = pip.GetPolicies();
                 var activePoliciesForObject = pip.GetPolicies(principal);
-                if (principal is IClaimsPrincipal icp && icp.HasClaim(o=>o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // PIP has no information so fallback to the granted policies on the pip
+                if (principal is IClaimsPrincipal icp && icp.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBScopeClaim)) // PIP has no information so fallback to the granted policies on the pip
                 {
                     activePoliciesForObject = activePoliciesForObject.Union(icp.GetGrantedPolicies(pip));
                 }
@@ -246,18 +282,20 @@ namespace SanteDB.Core.Security
         /// </summary>
         protected string ComputeCacheKey(IPrincipal principal)
         {
-            if (principal is IClaimsPrincipal cp)
+            if (principal is IClaimsPrincipal cp && cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
             {
-                if (cp.TryGetClaimValue(SanteDBClaimTypes.SanteDBSessionIdClaim, out string sessionId))
-                {
-                    return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
-                }
-                else if (cp.TryGetClaimValue(SanteDBClaimTypes.NameIdentifier, out string nameId))
-                {
-                    return $"pdp.{this.m_hasher.ComputeHash(nameId)}";
-                }
+                return $"pdp.{this.m_hasher.ComputeHash(sessionId)}";
             }
-            return $"pdp.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+
+            switch (principal.Identity)
+            {
+                case IDeviceIdentity id:
+                    return $"pdp.dev.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+                case IApplicationIdentity ia:
+                    return $"pdp.app.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+                default:
+                    return $"pdp.usr.{this.m_hasher.ComputeHash(principal.Identity.Name)}";
+            }
         }
 
         /// <summary>
@@ -275,34 +313,15 @@ namespace SanteDB.Core.Security
             }
             // We need to get the active policies for this
             var pip = ApplicationServiceContext.Current.GetService<IPolicyInformationService>();
-            IEnumerable<IPolicyInstance> securablePolicies = pip.GetPolicies(securable), principalPolicies = null;
-
-            if (principal is IClaimsPrincipal cp)
-            {
-                principalPolicies = cp.GetGrantedPolicies(pip);
-            }
-            if (principalPolicies?.Any() != true)
-            {
-                principalPolicies = this.GetEffectivePolicySet(principal);
-            }
-
+            IEnumerable<IPolicyInstance> securablePolicies = pip.GetPolicies(securable);
             List<PolicyDecisionDetail> details = new List<PolicyDecisionDetail>();
             var retVal = new PolicyDecision(securable, details);
 
             foreach (var pol in securablePolicies)
             {
                 // Get most restrictive from principal
-                var rule = principalPolicies.FirstOrDefault(p => p.Policy.Oid == pol.Policy.Oid)?.Rule ?? PolicyGrantType.Deny;
-
-                // Rule for elevate can only be made when the policy allows for it & the principal is allowed
-                if (rule == PolicyGrantType.Elevate &&
-                    (!pol.Policy.CanOverride ||
-                    principalPolicies.Any(o => o.Policy.Oid == PermissionPolicyIdentifiers.ElevateClinicalData && o.Rule == PolicyGrantType.Grant)))
-                {
-                    rule = PolicyGrantType.Deny;
-                }
-
-                details.Add(new PolicyDecisionDetail(pol.Policy.Oid, rule));
+                var rule = this.GetPolicyOutcome(principal, pol.Policy.Oid);
+                details.Add(new PolicyDecisionDetail(pol.Policy, rule));
             }
 
             return retVal;
@@ -381,12 +400,5 @@ namespace SanteDB.Core.Security
             }
         }
 
-        /// <summary>
-        /// Clear cache by principal name
-        /// </summary>
-        public void ClearCache(string principalName)
-        {
-            this.m_adhocCacheService?.Remove($"pdp.{this.m_hasher.ComputeHash(principalName)}");
-        }
     }
 }

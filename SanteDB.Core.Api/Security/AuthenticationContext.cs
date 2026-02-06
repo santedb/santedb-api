@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -205,7 +205,7 @@ namespace SanteDB.Core.Security
             public WrappedContext(IPrincipal principal, AuthenticationContext restore)
             {
                 this.RestoreContext = restore;
-                AuthenticationContext.Current = new AuthenticationContext(principal);
+                AuthenticationContext.Current = new AuthenticationContext(principal, restore);
 
             }
 
@@ -305,6 +305,19 @@ namespace SanteDB.Core.Security
 
 
         /// <summary>
+        /// Get the principal that was explicitly authenticated on this context (excluding SYSTEM or ANONYMOUS)
+        /// </summary>
+        public IPrincipal GetAuthenticatedPrincipal()
+        {
+            var ac = this;
+            while(ac != null && (!ac.Principal.Identity.IsAuthenticated || "SYSTEM".Equals(ac.Principal.Identity.AuthenticationType)))
+            {
+                ac = ac.m_previous;
+            }
+            return ac?.Principal;
+        }
+
+        /// <summary>
         /// Gets or sets the current context
         /// </summary>
         public static AuthenticationContext Current
@@ -321,7 +334,7 @@ namespace SanteDB.Core.Security
 
                 return s_current;
             }
-            internal set { s_current = value; }
+            private set { s_current = value; }
         }
 
         /// <summary>
@@ -364,6 +377,14 @@ namespace SanteDB.Core.Security
             {
                 ApplicationServiceContext.Current?.GetService<IPolicyDecisionService>()?.ClearCache(principal);
             }
+        }
+
+        /// <summary>
+        /// Abandon the current authentication context
+        /// </summary>
+        public void Abandon()
+        {
+            AuthenticationContext.Current = null;
         }
     }
 }

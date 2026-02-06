@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -49,7 +49,7 @@ namespace SanteDB.Core.Data.Import
         public GenericForeignDataRecord(IForeignDataReader copyFrom, params string[] extraColumns)
         {
             this.m_columnNames = Enumerable.Range(0, copyFrom.ColumnCount).Select(o => copyFrom.GetName(o)).Union(extraColumns).ToArray();
-            this.m_values = Enumerable.Range(0, copyFrom.ColumnCount).Select(o => copyFrom[o]).Concat(new object[extraColumns.Length]).ToArray();
+            this.m_values = m_columnNames.Where(c=>!extraColumns.Contains(c)).Select(c => copyFrom[c]).Concat(new object[extraColumns.Length]).ToArray();
         }
 
         /// <inheritdoc/>

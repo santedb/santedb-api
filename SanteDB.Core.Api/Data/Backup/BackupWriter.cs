@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,13 +18,14 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Configuration.Features;
 using SanteDB.Core.Security;
-using SharpCompress.Compressors;
-using SharpCompress.Compressors.BZip2;
+using SharpCompress.IO;
 using SharpCompress.Writers.Tar;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -47,7 +48,7 @@ namespace SanteDB.Core.Data.Backup
         private BackupWriter(Stream underlyingStream)
         {
             this.m_underlyingStream = underlyingStream;
-            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, true));
+            this.m_tarWriter = new TarWriter(underlyingStream, new TarWriterOptions(SharpCompress.Common.CompressionType.None, finalizeArchiveOnClose: true));
         }
 
         /// <summary>
@@ -56,9 +57,15 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="assetsToWrite">The assets which should be written to the backup file</param>
         /// <param name="password">The password for the backup file</param>
         /// <param name="underlyingStream">The stream to write the backup to</param>
+        /// <param name="keepOpen">True if the underlying stream should be kept open or disposed when the write is disposed</param>
         /// <returns>The backup writer</returns>
-        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null)
+        public static BackupWriter Create(Stream underlyingStream, ICollection<IBackupAsset> assetsToWrite, String password = null, bool keepOpen = false)
         {
+
+            if (keepOpen)
+            {
+                underlyingStream = NonDisposingStream.Create(underlyingStream);
+            }
 
             underlyingStream.Write(MAGIC, 0, MAGIC.Length); // emit the magical bytes
             underlyingStream.Write(BitConverter.GetBytes(DateTime.UtcNow.Ticks), 0, sizeof(long));
@@ -91,10 +98,10 @@ namespace SanteDB.Core.Data.Backup
                 desCrypto.Padding = PaddingMode.PKCS7;
                 underlyingStream.Write(desCrypto.IV, 0, desCrypto.IV.Length);
                 underlyingStream = new CryptoStream(underlyingStream, desCrypto.CreateEncryptor(), CryptoStreamMode.Write);
-                underlyingStream.Write(MAGIC, 0, MAGIC.Length);
+                underlyingStream.Write(MAGIC, 0, MAGIC.Length); // MAGIC is re-emitted in the backup so that the restore function knows you didn't enter gibberish (i.e. the first bytes from the decryptor stream should be magic)
             }
 
-            underlyingStream = new BZip2Stream(underlyingStream, CompressionMode.Compress, false);
+            underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
 
             return new BackupWriter(underlyingStream);
         }
@@ -112,7 +119,7 @@ namespace SanteDB.Core.Data.Backup
 
             using (var assetStream = asset.Open())
             {
-                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now);
+                this.m_tarWriter.Write($"{asset.AssetClassId}/{asset.Name}", assetStream, DateTime.Now, assetStream.Length);
             }
         }
 
@@ -123,13 +130,9 @@ namespace SanteDB.Core.Data.Backup
         {
             if (this.m_tarWriter != null)
             {
-                if (this.m_underlyingStream is CryptoStream cs)
-                {
-                    cs.FlushFinalBlock();
-                }
-                this.m_underlyingStream.Flush();
                 this.m_tarWriter.Dispose();
-                this.m_underlyingStream.Dispose();
+                this.m_underlyingStream.Flush();
+                this.m_underlyingStream.Close();
                 this.m_tarWriter = null;
             }
         }

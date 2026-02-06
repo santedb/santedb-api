@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -164,16 +164,18 @@ namespace SanteDB.Core.Services.Impl.Repository
         public Concept GetConcept(string mnemonic)
         {
             var cacheKey = $"concept.{mnemonic}";
-            var retVal = this.m_adhocCacheService?.Get<Guid>(cacheKey);
 
-            if (retVal != null || this.m_adhocCacheService?.Exists(cacheKey) == true)
+            if (this.m_adhocCacheService?.TryGet(cacheKey, out Guid lookupId) == true && lookupId != Guid.Empty)
             {
-                return this.Get(retVal.Value);
+                return this.Get(lookupId);
             }
             else
             {
                 var obj = base.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
-                this.m_adhocCacheService?.Add(cacheKey, obj.Key.Value);
+                if (obj != null)
+                {
+                    this.m_adhocCacheService?.Add(cacheKey, obj.Key.Value);
+                }
                 return obj;
             }
         }
@@ -302,7 +304,15 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             this.m_policyService.Demand(PermissionPolicyIdentifiers.ReadMetadata);
 
-            return this.m_conceptSetService.Query(o => o.Key == set && o.Concepts.Any(c => c.Key == concept), AuthenticationContext.Current.Principal).Any();
+            // Cached data
+            var cacheKey = $"ismem.{set}.{concept}";
+			bool retVal = false;
+            if(this.m_adhocCacheService?.TryGet(cacheKey, out retVal) != true)
+            {
+                retVal = this.ExpandConceptSet(set).Where(m => m.Key == concept).Any();
+                this.m_adhocCacheService?.Add(cacheKey, retVal, new TimeSpan(0,2,0));
+            }
+            return retVal;
         }
 
         /// <summary>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -24,6 +24,7 @@ using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -53,8 +54,12 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public Guid[] AssetClassIdentifiers => new Guid[] { DATA_STREAM_FILE };
 
-        /// <inheritdoc/>
-        public Guid Add(Stream stream)
+        /// <summary>
+        /// Add the specified stream with the specified identifier to the stream manager
+        /// </summary>
+        /// <param name="fileId">The stream identifier</param>
+        /// <param name="stream">The stream</param>
+        private void Add(Guid fileId, Stream stream)
         {
             if (stream == null)
             {
@@ -65,7 +70,6 @@ namespace SanteDB.Core.Services.Impl
                 throw new ArgumentException(nameof(stream), ErrorMessages.CANT_READ_WRITE_ONLY_STREAM);
             }
 
-            var fileId = Guid.NewGuid();
             using (var fs = File.Create(Path.Combine(this.m_fileLocation, fileId.ToString())))
             {
                 var iv = this.m_symmetricCryptographicProvider.GenerateIV();
@@ -75,7 +79,14 @@ namespace SanteDB.Core.Services.Impl
                     stream.CopyTo(cs);
                 }
             }
-            return fileId;
+        }
+
+        /// <inheritdoc/>
+        public Guid Add(Stream stream)
+        {
+            var fileId = Guid.NewGuid();
+            this.Add(fileId, stream);
+            return fileId; ;
         }
 
         /// <inheritdoc/>
@@ -89,7 +100,7 @@ namespace SanteDB.Core.Services.Impl
             var ms = new MemoryStream();
             using (var fs = File.OpenRead(fileName))
             {
-                var iv = new byte[16];
+                var iv = new byte[this.m_symmetricCryptographicProvider.IVSize];
                 fs.Read(iv, 0, iv.Length);
                 using (var cs = this.m_symmetricCryptographicProvider.CreateDecryptingStream(fs, this.m_symmetricCryptographicProvider.GetContextKey(), iv))
                 {
@@ -103,9 +114,9 @@ namespace SanteDB.Core.Services.Impl
         /// <inheritdoc/>
         public IEnumerable<IBackupAsset> GetBackupAssets()
         {
-            foreach (var fileName in Directory.EnumerateFiles(this.m_fileLocation))
+            foreach (var fileUuid in Directory.EnumerateFiles(this.m_fileLocation).Select(o => Guid.Parse(Path.GetFileNameWithoutExtension(o))))
             {
-                yield return new FileBackupAsset(DATA_STREAM_FILE, Path.GetFileName(fileName), fileName);
+                yield return new StreamBackupAsset(DATA_STREAM_FILE, fileUuid.ToString(), () => this.Get(fileUuid));
             }
         }
 
@@ -132,13 +143,10 @@ namespace SanteDB.Core.Services.Impl
                 throw new InvalidOperationException();
             }
 
-            using (var fs = File.Create(Path.Combine(this.m_fileLocation, backupAsset.Name)))
+            using (var astr = backupAsset.Open())
             {
-                using (var astr = backupAsset.Open())
-                {
-                    astr.CopyTo(fs);
-                    return true;
-                }
+                this.Add(Guid.Parse(backupAsset.Name), astr);
+                return true;
             }
         }
     }

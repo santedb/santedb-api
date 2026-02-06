@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -193,10 +193,10 @@ namespace SanteDB.Core.Configuration.Data
             {
                 return String.Empty;
             }
-            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim(), o => o.Split('=')[1].Trim());
+            var values = this.Value?.Split(';').Where(t => t.Contains("=")).ToDictionary(o => o.Split('=')[0].Trim().ToLowerInvariant(), o => o.Split('=')[1].Trim());
 
             String retVal = null;
-            values?.TryGetValue(component, out retVal);
+            values?.TryGetValue(component.ToLowerInvariant(), out retVal);
             return retVal ?? String.Empty;
         }
 

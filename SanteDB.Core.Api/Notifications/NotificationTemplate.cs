@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -20,6 +20,8 @@
  */
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,7 +30,7 @@ using System.Xml.Serialization;
 namespace SanteDB.Core.Notifications
 {
     /// <summary>
-    /// Represents a notification template source
+    /// Represents a notification template resource
     /// </summary>
     [XmlType(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
     [XmlRoot(nameof(NotificationTemplate), Namespace = "http://santedb.org/notification")]
@@ -36,23 +38,53 @@ namespace SanteDB.Core.Notifications
     public class NotificationTemplate : NonVersionedEntityData
     {
 
-        // Serializer for notification
+        // Serializer for notification template
         private static XmlSerializer s_xsz = new XmlSerializer(typeof(NotificationTemplate));
 
         /// <summary>
-        /// Gets or sets the identifier
+        /// Gets or sets the status key
         /// </summary>
-        [XmlAttribute("id"), JsonProperty("id")]
-        public String Id { get; set; }
+        [XmlElement("status"), JsonProperty("status")]
+        public Guid StatusKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the status
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(StatusKey))]
+        public Concept Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template mnemonic
+        /// </summary>
+        [XmlElement("mnemonic"), JsonProperty("mnemonic")]
+        public String Mnemonic { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template name
+        /// </summary>
+        [XmlElement("name"), JsonProperty("name")]
+        public String Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tags
+        /// </summary>
+        [XmlElement("tags"), JsonProperty("tags")]
+        public String Tags { get; set; }
 
         /// <summary>
         /// Notification template content
         /// </summary>
-        [XmlElement("content"), JsonProperty("content")]
+        [XmlElement("contents"), JsonProperty("contents")]
         public List<NotificationTemplateContents> Contents { get; set; }
 
         /// <summary>
-        /// Load the specified object
+        /// Notification template parameters
+        /// </summary>
+        [XmlElement("parameters"), JsonProperty("parameters")]
+        public List<NotificationTemplateParameter> Parameters { get; set; }
+
+        /// <summary>
+        /// Load the notification template
         /// </summary>
         public static NotificationTemplate Load(Stream s)
         {
@@ -60,7 +92,7 @@ namespace SanteDB.Core.Notifications
         }
 
         /// <summary>
-        /// Notification template
+        /// Save the notification template
         /// </summary>
         public NotificationTemplate Save(Stream s)
         {

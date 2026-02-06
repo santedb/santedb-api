@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -96,21 +96,33 @@ namespace SanteDB.Core.Security.Privacy
                     return result;
 
                 case PolicyEnforcementExemptionPolicy.DevicePrincipalsExempt:
-                    if (principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity)
+                    if (principal.Identity is IDeviceIdentity)
                     {
                         return result;
                     }
 
                     break;
-
+                case PolicyEnforcementExemptionPolicy.ApplicationPrincipalsExempt:
+                    if(principal.Identity is IApplicationIdentity)
+                    {
+                        return result;
+                    }
+                    break;
+                case PolicyEnforcementExemptionPolicy.ApplicationsOrDevicesExempt:
+                    if (principal.Identity is IApplicationIdentity || 
+                        principal.Identity is IDeviceIdentity)
+                    {
+                        return result;
+                    }
+                    break;
                 case PolicyEnforcementExemptionPolicy.UserPrincipalsExempt:
-                    if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
-                    {
-                        return result;
-                    }
+                            if (!(principal.Identity is IDeviceIdentity || principal.Identity is IApplicationIdentity))
+                            {
+                                return result;
+                            }
 
-                    break;
-            }
+                            break;
+                        }
             return base.Apply(result, principal);
         }
     }

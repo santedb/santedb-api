@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,12 +18,15 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Data.Backup;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Security.Audit;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -38,8 +41,11 @@ namespace SanteDB.Core.Security
     /// An implementation of the <see cref="IPlatformSecurityProvider"/> for mono which 
     /// handles the storage of certificates with private keys in a separate place
     /// </summary>
-    public class MonoPlatformSecurityProvider : IPlatformSecurityProvider
+    public class MonoPlatformSecurityProvider : IPlatformSecurityProvider, IProvideBackupAssets, IRestoreBackupAssets
     {
+
+        // Backup asset
+        public readonly Guid BACKUP_ASSET_ID = Guid.Parse("CB0E7356-1ED3-4EB8-8F46-89057A75A9AE");
 
         // Tracer
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(MonoPlatformSecurityProvider));
@@ -47,6 +53,9 @@ namespace SanteDB.Core.Security
         private readonly String m_monoPrivateKeyStoreLocation;
         // Mono private key store
         private readonly ConcurrentDictionary<String, X509Certificate2> m_monoPrivateKeyStore = new ConcurrentDictionary<String, X509Certificate2>();
+
+        /// <inheritdoc/>
+        public Guid[] AssetClassIdentifiers => new Guid[] { BACKUP_ASSET_ID };
 
         /// <summary>
         /// Mono platform security provider
@@ -64,6 +73,11 @@ namespace SanteDB.Core.Security
         /// </summary>
         private String ComputePass(String targetFileName) =>
             SHA1.Create().ComputeHash(Encoding.UTF8.GetBytes(targetFileName)).HexEncode();
+
+
+        /// <inheritdoc/>
+        /// <remarks>This is not required on Windows or Linux</remarks>
+        public virtual bool DemandPlatformServicePermission(PlatformServicePermission platformServicePermission) => true;
 
         /// <summary>
         /// Initialize the mono keystore
@@ -100,14 +114,14 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
-        public bool IsAssemblyTrusted(Assembly assembly)
+        public virtual bool IsAssemblyTrusted(Assembly assembly)
         {
             assembly.ValidateCodeIsSigned(false); // will throw
             return true;
         }
 
         /// <inheritdoc/>
-        public bool IsCertificateTrusted(X509Certificate2 certificate, DateTimeOffset? asOfDate = null)
+        public virtual bool IsCertificateTrusted(X509Certificate2 certificate, DateTimeOffset? asOfDate = null)
         {
             if (!(certificate?.IsTrustedIntern(new X509Certificate2Collection(), asOfDate?.DateTime, out _) == true))
             {
@@ -124,13 +138,13 @@ namespace SanteDB.Core.Security
 
 
         /// <inheritdoc/>
-        public bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate, bool validOnly = false) => this.TryGetCertificate(findType, findValue, StoreName.My, out certificate, validOnly);
+        public virtual bool TryGetCertificate(X509FindType findType, object findValue, out X509Certificate2 certificate, bool validOnly = false) => this.TryGetCertificate(findType, findValue, StoreName.My, out certificate, validOnly);
 
         /// <inheritdoc/>
-        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate, bool validOnly = false) => this.TryGetCertificate(findType, findValue, storeName, StoreLocation.CurrentUser, out certificate, validOnly);
+        public virtual bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, out X509Certificate2 certificate, bool validOnly = false) => this.TryGetCertificate(findType, findValue, storeName, StoreLocation.CurrentUser, out certificate, validOnly);
 
         /// <inheritdoc/>
-        public bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate, bool validOnly = false)
+        public virtual bool TryGetCertificate(X509FindType findType, object findValue, StoreName storeName, StoreLocation storeLocation, out X509Certificate2 certificate, bool validOnly = false)
         {
             if (findValue == null)
             {
@@ -147,19 +161,16 @@ namespace SanteDB.Core.Security
                     if (matches.Count == 0)
                     {
                         // Look from PFX on the hard disk
-                        if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
+                        switch (findType)
                         {
-                            switch (findType)
-                            {
-                                case X509FindType.FindByThumbprint:
-                                    return this.m_monoPrivateKeyStore.TryGetValue(findValue.ToString(), out certificate);
-                                case X509FindType.FindBySubjectDistinguishedName:
-                                    certificate = this.m_monoPrivateKeyStore.FirstOrDefault(o => o.Value.Subject.Equals(findValue.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
-                                    return certificate != null;
-                                case X509FindType.FindBySubjectName:
-                                    certificate = this.m_monoPrivateKeyStore.FirstOrDefault(o => o.Value.Subject.ToLowerInvariant().Contains(findValue.ToString().ToLowerInvariant())).Value;
-                                    return certificate != null;
-                            }
+                            case X509FindType.FindByThumbprint:
+                                return this.m_monoPrivateKeyStore.TryGetValue(findValue.ToString(), out certificate);
+                            case X509FindType.FindBySubjectDistinguishedName:
+                                certificate = this.m_monoPrivateKeyStore.FirstOrDefault(o => o.Value.Subject.Equals(findValue.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
+                                return certificate != null;
+                            case X509FindType.FindBySubjectName:
+                                certificate = this.m_monoPrivateKeyStore.FirstOrDefault(o => o.Value.Subject.ToLowerInvariant().Contains(findValue.ToString().ToLowerInvariant())).Value;
+                                return certificate != null;
                         }
                         certificate = null;
                         return false;
@@ -171,8 +182,14 @@ namespace SanteDB.Core.Security
                     }
                     else
                     {
-                        throw new SecurityException(ErrorMessages.CERTIFICATE_NOT_FOUND);
+                        certificate = null;
+                        return false;
                     }
+                }
+                catch (CryptographicException)
+                {
+                    certificate = null;
+                    return false;
                 }
                 catch (Exception ex)
                 {
@@ -186,13 +203,16 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
-        public bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        public virtual bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
+            this.m_tracer.TraceInfo("Installing certificate {0} to {1}/{2}", certificate.Thumbprint, storeLocation, storeName);
+
             var audit = this.AuditCertificateInstallation(certificate);
             try
             {
                 // Does the certificate being installed have a private key?
-                if (certificate.HasPrivateKey && storeLocation == StoreLocation.CurrentUser && storeName == StoreName.My)
+                if (certificate.HasPrivateKey ||
+                    storeName != StoreName.My) // Linux and other androids do not support write access to anything other My
                 {
                     this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
                     this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate);
@@ -204,7 +224,26 @@ namespace SanteDB.Core.Security
                                                                                                       // TODO: Ensure the certificate is exportable
                         fs.Write(buffer, 0, buffer.Length);
                     }
-                    audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
+
+                    // HACK: Keep a copy of the public key in the MY store as well
+                    try
+                    {
+                        if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
+                        {
+                            using (var store = new X509Store(storeName, storeLocation))
+                            {
+                                store.Open(OpenFlags.ReadWrite);
+                                store.Add(certificate);
+                                store.Close();
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        this.m_tracer.TraceWarning("Could not copy the certificate to the My store");
+                    }
+
+                    audit?.WithOutcome(OutcomeIndicator.Success);
                     return true;
                 }
                 else if (!certificate.HasPrivateKey)
@@ -216,7 +255,7 @@ namespace SanteDB.Core.Security
                         this.m_tracer.TraceWarning("Certificate {0} has been added to system store {1}/{2}", certificate.Subject, storeLocation, storeName);
                         store.Close();
                     }
-                    audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
+                    audit?.WithOutcome(OutcomeIndicator.Success);
                     return true;
                 }
                 else
@@ -237,34 +276,27 @@ namespace SanteDB.Core.Security
         }
 
         /// <inheritdoc/>
-        public bool TryUninstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        public virtual bool TryUninstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
 
             var audit = this.AuditCertificateRemoval(certificate);
             try
             {
                 // Does the certificate being installed have a private key?
-                if (certificate.HasPrivateKey &&
-                    storeName == StoreName.My &&
-                    storeLocation == StoreLocation.CurrentUser &&
-                    this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out var oldCert))
+                var pkPath = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
+
+                if (File.Exists(pkPath))
                 {
-                    var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
-                    if (File.Exists(path))
-                    {
-                        this.m_tracer.TraceWarning("!!!! Certificate {0} with private key has been removed in alternate location {1}", certificate.Subject, path);
-                        File.Delete(path);
-                    }
+                    File.Delete(pkPath);
                 }
-                else
+                this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
+                using (var store = new X509Store(storeName, storeLocation))
                 {
-                    using (var store = new X509Store(storeName, storeLocation))
-                    {
-                        store.Open(OpenFlags.ReadWrite);
-                        store.Remove(certificate);
-                        store.Close();
-                    }
+                    store.Open(OpenFlags.ReadWrite);
+                    store.Remove(certificate);
+                    store.Close();
                 }
+
                 audit?.WithOutcome(Model.Audit.OutcomeIndicator.Success);
                 return true;
             }
@@ -311,7 +343,7 @@ namespace SanteDB.Core.Security
                 .WithSystemObjects(Model.Audit.AuditableObjectRole.SecurityResource, Model.Audit.AuditableObjectLifecycle.PermanentErasure, certificate);
 
         /// <inheritdoc/>
-        public IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
+        public virtual IEnumerable<X509Certificate2> FindAllCertificates(X509FindType findType, object findValue, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser, bool validOnly = true)
         {
             // First return the internal certificate which match if they are applicable
             if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
@@ -355,6 +387,36 @@ namespace SanteDB.Core.Security
                     yield return cert;
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IBackupAsset> GetBackupAssets()
+        {
+            foreach(var itm in this.m_monoPrivateKeyStore)
+            {
+                yield return new FileBackupAsset(BACKUP_ASSET_ID, itm.Key, Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, itm.Key), ".pfx"));
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool Restore(IBackupAsset backupAsset)
+        {
+            if(backupAsset == null)
+            {
+                throw new ArgumentNullException(nameof(backupAsset));
+            }
+            else if(backupAsset.AssetClassId != BACKUP_ASSET_ID)
+            {
+                throw new ArgumentOutOfRangeException(nameof(backupAsset));
+            }
+
+            var fileName = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, backupAsset.Name), ".pfx");
+            using (var fs = File.Create(fileName))
+            using(var ins = backupAsset.Open())
+            {
+                ins.CopyTo(fs);
+            }
+            return true;
         }
     }
 }

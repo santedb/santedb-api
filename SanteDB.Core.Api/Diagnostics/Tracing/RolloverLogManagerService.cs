@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -68,6 +68,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 {
                     InitializationData = "santedb.log"
                 };
+
             if (!Path.IsPathRooted(logFileTracerConfig.InitializationData))
             {
                 this.m_rootPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
@@ -131,6 +132,10 @@ namespace SanteDB.Core.Diagnostics.Tracing
         public IEnumerable<FileInfo> GetLogFiles()
         {
             this.m_pepService?.Demand(PermissionPolicyIdentifiers.ReadServiceLogs);
+            if(!Directory.Exists(this.m_rootPath))
+            {
+                Directory.CreateDirectory(this.m_rootPath);
+            }
             return Directory.GetFiles(this.m_rootPath, "*.log").Select(o => new FileInfo(o));
         }
 

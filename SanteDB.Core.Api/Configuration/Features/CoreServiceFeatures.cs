@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -126,7 +126,7 @@ namespace SanteDB.Core.Configuration.Features
                 if (config != null)
                 {
                     config.ServiceProviders = config.ServiceProviders.OrderBy(r => this.m_backup.ServiceProviders.Any(b=>b.TypeXml == r.TypeXml) ? this.m_backup.ServiceProviders.FindIndex(b => r.TypeXml == b.TypeXml) : Int32.MaxValue).ToList();
-                    //config.ServiceProviders.AddRange(this.m_backup.ServiceProviders.Where(d => !typeof(IServiceImplementation).IsAssignableFrom(d.Type)));
+                    //config.AddServices(this.m_backup.ServiceProviders.Where(d => !typeof(IServiceImplementation).IsAssignableFrom(d.Type)));
                     this.m_backup.ServiceProviders = config.ServiceProviders;
                     this.m_backup.InstanceName = config.InstanceName;
                     this.m_backup.AppSettings = config.AppSettings;
@@ -188,7 +188,7 @@ namespace SanteDB.Core.Configuration.Features
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimpleDecisionSupportService)))
                 {
                     this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallCarePlannerServiceTask), 0.0f, "Registering SimpleCarePlanService..."));
-                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
                     return true;
                 }
                 return false;
@@ -239,7 +239,7 @@ namespace SanteDB.Core.Configuration.Features
                 if (!configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Any(o => o.Type == typeof(SimplePatchService)))
                 {
                     this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallPatchServiceTask), 0.0f, "Registering SimplePatchService..."));
-                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimplePatchService)));
+                    configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(typeof(SimplePatchService)));
                     this.ProgressChanged?.Invoke(this, new Services.ProgressChangedEventArgs(nameof(InstallPatchServiceTask), 1.0f, null));
                     return true;
                 }
@@ -306,7 +306,7 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(typeof(SimpleDecisionSupportService)));
                 return true;
             }
 
@@ -354,7 +354,7 @@ namespace SanteDB.Core.Configuration.Features
             /// <inheritdoc/>
             public bool Rollback(SanteDBConfiguration configuration)
             {
-                configuration.GetSection<ApplicationServiceContextConfigurationSection>().ServiceProviders.Add(new TypeReferenceConfiguration(typeof(SimplePatchService)));
+                configuration.GetSection<ApplicationServiceContextConfigurationSection>().AddService(new TypeReferenceConfiguration(typeof(SimplePatchService)));
                 return true;
             }
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -25,6 +25,7 @@ using SanteDB.Core.Services;
 using SharpCompress;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
@@ -48,6 +49,36 @@ namespace SanteDB.Core.Configuration
         }
 
         /// <summary>
+        /// Add service
+        /// </summary>
+        /// <param name="typeReference">The service type to be added</param>
+        public void AddService(TypeReferenceConfiguration typeReference)
+        {
+            if (!this.ServiceProviders.Any(t => t.Type == typeReference.Type))
+            {
+                this.ServiceProviders.Add(typeReference);
+            }
+        }
+
+        /// <summary>
+        /// Add services
+        /// </summary>
+        /// <param name="typeReferences">The type references to be added</param>
+        public void AddServices(IEnumerable<TypeReferenceConfiguration> typeReferences)
+        {
+            this.ServiceProviders.AddRange(typeReferences.Where(t=>!this.ServiceProviders.Any(s=>s.Type == t.Type)));
+        }
+
+        /// <summary>
+        /// Remove service 
+        /// </summary>
+        /// <param name="typeReference"></param>
+        public void RemoveService(TypeReferenceConfiguration typeReference)
+        {
+            this.ServiceProviders.RemoveAll(o => o.Type == typeReference.Type);
+        }
+
+        /// <summary>
         /// Allow unsigned assemblies
         /// </summary>
         [XmlAttribute("allowUnsignedAssemblies"), DisplayName("Allow Unsigned Assemblies"), Description("When true, the application host context will allow unsigned service plugins to operate")]
@@ -64,7 +95,10 @@ namespace SanteDB.Core.Configuration
         /// </summary>
         [XmlArray("serviceProviders"), XmlArrayItem("add"), JsonProperty("service"), DisplayName("Service Providers"), Description("The service providers which are enabled on this host instance of SanteDB")]
         [Editor("SanteDB.Configuration.Editors.TypeSelectorEditor, SanteDB.Configuration", "System.Drawing.Design.UITypeEditor, System.Drawing"), Binding(typeof(IServiceImplementation))]
-        public List<TypeReferenceConfiguration> ServiceProviders { get; set; }
+        public List<TypeReferenceConfiguration> ServiceProviders {
+            get;
+            set;
+        }
 
         /// <summary>
         /// General extended application settings
@@ -151,6 +185,15 @@ namespace SanteDB.Core.Configuration
         public string GetAppSetting(string name)
         {
             return this.AppSettings.FirstOrDefault(o => o.Key == name)?.Value;
+        }
+
+        /// <summary>
+        /// Remove all service implementations of <paramref name="serviceType"/>
+        /// </summary>
+        /// <param name="serviceType">The type of service to remove all implementers</param>
+        public void RemoveAllServiceImplementations(Type serviceType)
+        {
+            this.ServiceProviders.RemoveAll(o => serviceType.IsAssignableFrom(o.Type));
         }
     }
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -22,10 +22,10 @@ using SanteDB.Core.Configuration;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Audit;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Services;
-using SharpCompress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -44,9 +44,9 @@ namespace SanteDB.Core.Data.Backup
         private readonly IServiceManager m_serviceManager;
         private readonly IPolicyEnforcementService m_pepService;
         private ILocalizationService m_localizationService;
+        private readonly IPlatformSecurityProvider m_platformSecurity;
         private IDictionary<Guid, IRestoreBackupAssets> m_backupAssetClasses;
-
-        internal const string BACKUP_EXTENSION = "sdbk";
+        public const string BACKUP_EXTENSION = "bin";
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultBackupManager));
 
         /// <summary>
@@ -63,18 +63,27 @@ namespace SanteDB.Core.Data.Backup
         public DefaultBackupManager(IConfigurationManager configurationManager,
             IServiceManager serviceManager,
             IPolicyEnforcementService pepService,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            IPlatformSecurityProvider platformSecurityProvider)
         {
             this.m_configuration = configurationManager.GetSection<BackupConfigurationSection>();
             this.m_allowPublicBackups = configurationManager.GetSection<SecurityConfigurationSection>().GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false);
             this.m_serviceManager = serviceManager;
             this.m_pepService = pepService;
             this.m_localizationService = localizationService;
-
+            this.m_platformSecurity = platformSecurityProvider;
             this.m_backupAssetClasses = new Dictionary<Guid, IRestoreBackupAssets>();
-
         }
 
+        /// <summary>
+        /// Allow public backups
+        /// </summary>
+        protected bool AllowPublicBackups => this.m_allowPublicBackups;
+
+        /// <summary>
+        /// Configuration
+        /// </summary>
+        protected BackupConfigurationSection Configuration => this.m_configuration;
 
         /// <summary>
         /// Get backup classes
@@ -93,7 +102,7 @@ namespace SanteDB.Core.Data.Backup
                     // Now fetch the backup services that in the context for restoration which may not be in our configured
                     this.m_serviceManager.CreateInjectedOfAll<IRestoreBackupAssets>()
                         .ForEach(irba =>
-                            irba.AssetClassIdentifiers.Where(c=>!this.m_backupAssetClasses.ContainsKey(c)).ForEach(a=>this.m_backupAssetClasses.Add(a, irba))
+                            irba.AssetClassIdentifiers.Where(c => !this.m_backupAssetClasses.ContainsKey(c)).ForEach(a => this.m_backupAssetClasses.Add(a, irba))
                         );
 
 
@@ -106,13 +115,13 @@ namespace SanteDB.Core.Data.Backup
         public string ServiceName => "Default Backup Manager";
 
         /// <inheritdoc/>
-        public IBackupDescriptor Backup(BackupMedia media, string password = null)
+        public virtual IBackupDescriptor Backup(BackupMedia media, string password = null)
         {
             if (this.m_configuration.RequireEncryptedBackups && String.IsNullOrEmpty(password))
             {
                 throw new InvalidOperationException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_POLICY_REQUIRES_ENCRYPTION));
             }
-            else if ((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && !this.m_allowPublicBackups)
+            else if ((media == BackupMedia.ExternalPublic || media == BackupMedia.Public) && (!this.m_allowPublicBackups || !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia)))
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.POLICY_PREVENTS_ACTION, SecurityPolicyIdentification.AllowPublicBackups));
             }
@@ -127,6 +136,7 @@ namespace SanteDB.Core.Data.Backup
             {
                 Directory.CreateDirectory(backupPath);
             }
+
             backupPath = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
 
             if (media == BackupMedia.Private)
@@ -138,32 +148,30 @@ namespace SanteDB.Core.Data.Backup
                 this.m_pepService.Demand(PermissionPolicyIdentifiers.CreateAnyBackup);
             }
 
+            return this.BackupToFile(backupPath, password);
+        }
+
+
+        /// <summary>
+        /// Backup the system to a specified file
+        /// </summary>
+        public IBackupDescriptor BackupToFile(string backupPath, string password)
+        {
             try
             {
 
                 this.m_tracer.TraceInfo("Will perform backup to {0}...", backupPath);
-                var assets = this.m_serviceManager.GetServices()
-                    .OfType<IProvideBackupAssets>()
-                    .Distinct()
-                    .SelectMany(o => o.GetBackupAssets())
-                    .ToArray();
 
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), 0f, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
 
+
                 using (var fs = File.Create(backupPath))
                 {
-                    using (var bw = BackupWriter.Create(fs, assets, password))
-                    {
-                        for (var i = 0; i < assets.Length; i++)
-                        {
-                            this.m_tracer.TraceInfo("Adding {0} to {1}", assets[i].Name, backupDescriptorLabel);
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
-                            bw.WriteAssetEntry(assets[i]);
-                        }
-                    }
+                    this.BackupToStream(fs, password);
                 }
 
                 this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), 1f, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
+
 
                 return new FileBackupDescriptor(new FileInfo(backupPath));
             }
@@ -173,24 +181,72 @@ namespace SanteDB.Core.Data.Backup
             }
         }
 
+        /// <summary>
+        /// Backup to the stream
+        /// </summary>
+        public void BackupToStream(Stream stream, string password)
+        {
+            try
+            {
+
+                var assets = this.m_serviceManager.GetServices()
+                        .OfType<IProvideBackupAssets>()
+                        .Distinct()
+                        .SelectMany(o => o.GetBackupAssets())
+                        .ToArray();
+
+                using (var bw = BackupWriter.Create(stream, assets, password: password, keepOpen: true))
+                {
+                    for (var i = 0; i < assets.Length; i++)
+                    {
+                        this.m_tracer.TraceInfo("Adding {0} to backup", assets[i].Name);
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), (float)i / assets.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_CREATE_PROGRESS)));
+                        bw.WriteAssetEntry(assets[i]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_GEN_ERR), ex);
+            }
+        }
+
         /// <inheritdoc/>
-        public IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media)
+        public virtual IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
-
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
-            else if (!Directory.Exists(backupPath))
+            else if (media == BackupMedia.Private || this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
             {
-                Directory.CreateDirectory(backupPath);
+                this.m_tracer.TraceInfo("Getting backup descriptors for {0} ({1})", media, backupPath);
+                if (!Directory.Exists(backupPath))
+                {
+                    Directory.CreateDirectory(backupPath);
+                }
+                return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Where(f => !f.StartsWith(".")).Select(o =>
+                {
+                    try
+                    {
+                        return new FileBackupDescriptor(new FileInfo(o));
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }).OfType<IBackupDescriptor>();
             }
-            return Directory.EnumerateFiles(backupPath, $"*.{BACKUP_EXTENSION}").Select(o => new FileBackupDescriptor(new FileInfo(o)));
+            else
+            {
+                this.m_tracer.TraceWarning("Application does not have permission");
+                return new IBackupDescriptor[0];
+            }
         }
 
         /// <inheritdoc/>
-        public IBackupDescriptor GetBackup(BackupMedia media, String backupDescriptorLabel)
+        public virtual IBackupDescriptor GetBackup(BackupMedia media, String backupDescriptorLabel)
         {
             var retVal = this.GetBackupInternal(media, backupDescriptorLabel);
             if (retVal == null)
@@ -204,7 +260,7 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <inheritdoc/>
-        public IBackupDescriptor GetBackup(String backupDescriptorLabel, out BackupMedia locatedOnMedia)
+        public virtual IBackupDescriptor GetBackup(String backupDescriptorLabel, out BackupMedia locatedOnMedia)
         {
             foreach (var bm in new[] { BackupMedia.Private, BackupMedia.Public, BackupMedia.ExternalPublic })
             {
@@ -219,13 +275,20 @@ namespace SanteDB.Core.Data.Backup
             return null;
         }
 
-        private IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel)
+        /// <summary>
+        /// Get backup file descriptor
+        /// </summary>
+        public virtual IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
 
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
+            }
+            else if (media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
+            {
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
             }
 
             var backupFile = Path.Combine(backupPath, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
@@ -241,10 +304,10 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <inheritdoc/>
-        public bool HasBackup(BackupMedia media) => this.GetBackupDescriptors(media).Any();
+        public virtual bool HasBackup(BackupMedia media) => this.GetBackupDescriptors(media).Any();
 
         /// <inheritdoc/>
-        public void RemoveBackup(BackupMedia media, string backupDescriptorLabel)
+        public virtual void RemoveBackup(BackupMedia media, string backupDescriptorLabel)
         {
             if (String.IsNullOrEmpty(backupDescriptorLabel))
             {
@@ -256,6 +319,10 @@ namespace SanteDB.Core.Data.Backup
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
+            }
+            else if (media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
+            {
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
             }
 
             try
@@ -271,7 +338,7 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <inheritdoc/>
-        public bool Restore(BackupMedia media, string backupDescriptorLabel, string password = null)
+        public virtual bool Restore(BackupMedia media, string backupDescriptorLabel, string password = null)
         {
             if (String.IsNullOrEmpty(backupDescriptorLabel))
             {
@@ -284,6 +351,10 @@ namespace SanteDB.Core.Data.Backup
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
             }
+            else if (media != BackupMedia.Private && !this.m_platformSecurity.DemandPlatformServicePermission(PlatformServicePermission.ExternalMedia))
+            {
+                throw new BackupException(ErrorMessages.PLATFORM_SECURITY_ERROR);
+            }
 
             backupFile = Path.Combine(backupFile, Path.ChangeExtension(backupDescriptorLabel, BACKUP_EXTENSION));
             if (!File.Exists(backupFile))
@@ -291,37 +362,51 @@ namespace SanteDB.Core.Data.Backup
                 throw new FileNotFoundException(backupFile);
             }
 
+
+            return this.RestoreFromFile(backupFile, password);
+        }
+
+        /// <summary>
+        /// Get backup classes
+        /// </summary>
+        public IDictionary<Guid, Type> GetBackupAssetClasses() => this.GetBackupRestoreServices().ToDictionary(o => o.Key, o => o.Value.GetType());
+
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackupDescriptorFromFile(string backupFile)
+        {
+            try
+            {
+                return new FileBackupDescriptor(new FileInfo(backupFile));
+            }
+            catch (Exception e)
+            {
+                throw new BackupException(ErrorMessages.BACKUP_DESCRIPTOR_ERROR, e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IBackupDescriptor GetBackupDescriptorFromStream(Stream backupStream)
+        {
+            try
+            {
+                return new StreamBackupDescriptor(backupStream);
+            }
+            catch (Exception e)
+            {
+                throw new BackupException(ErrorMessages.BACKUP_DESCRIPTOR_ERROR, e);
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool RestoreFromFile(string backupFile, string password)
+        {
             try
             {
                 this.m_tracer.TraceInfo("Restoring {0}...", backupFile);
-
-                int i = 0;
                 using (var fs = File.OpenRead(backupFile))
                 {
-                    using (var br = BackupReader.Open(fs, password))
-                    {
-                        while (br.GetNextEntry(out var backupAsset))
-                        {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), ((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
-                            using (backupAsset)
-                            {
-                                if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
-                                {
-                                    this.m_tracer.TraceInfo("Restoring {0}...", backupAsset.Name);
-                                    restoreProvider.Restore(backupAsset);
-                                }
-                                else
-                                {
-                                    this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
-                                }
-                            }
-                        }
-                    }
+                    return this.RestoreFromStream(fs, password);
                 }
-
-                this.RestartRequested?.Invoke(this, EventArgs.Empty);
-
-                return true;
             }
             catch (Exception e)
             {
@@ -330,9 +415,59 @@ namespace SanteDB.Core.Data.Backup
         }
 
         /// <summary>
-        /// Get backup classes
+        /// Restore from a stream source
         /// </summary>
-        public IDictionary<Guid, Type> GetBackupAssetClasses() => this.GetBackupRestoreServices().ToDictionary(o => o.Key, o => o.Value.GetType());
+        public bool RestoreFromStream(Stream stream, string password)
+        {
+            try
+            {
+                int i = 0;
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    using (var br = BackupReader.Open(stream, password: password, leaveOpen: true))
+                    {
+                        while (br.GetNextEntry(out var backupAsset))
+                        {
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DefaultBackupManager), ((float)i++) / br.BackupAsset.Length, this.m_localizationService.GetString(UserMessageStrings.BACKUP_RESTORE_PROGRESS)));
+                            using (backupAsset)
+                            {
+                                try
+                                {
+                                    if (this.GetBackupRestoreServices().TryGetValue(backupAsset.AssetClassId, out var restoreProvider))
+                                    {
 
+                                        this.m_tracer.TraceInfo("Restoring {0} ({1})...", backupAsset.Name, restoreProvider.GetType().Name);
+                                        if (!restoreProvider.Restore(backupAsset))
+                                        {
+                                            this.m_tracer.TraceWarning("Could not restore the backup asset - restore indicated failure");
+                                        }
+                                        else
+                                        {
+                                            this.m_tracer.TraceInfo("Restored successfully");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
+                                    }
+                                }
+                                catch(Exception e)
+                                {
+                                    this.m_tracer.TraceError("Error processing {0} - {1}", backupAsset.Name, e);
+                                    throw;
+                                }
+                            }
+                        }
+                    }
+                }
+                this.RestartRequested?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+            catch (Exception e)
+            {
+                this.m_tracer.TraceError("Error restoring backup - {0}", e);
+                throw new BackupException(this.m_localizationService.GetString(ErrorMessageStrings.BACKUP_RESTORE_ERR), e);
+            }
+        }
     }
 }

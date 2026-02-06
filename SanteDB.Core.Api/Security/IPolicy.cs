@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -39,6 +39,10 @@ namespace SanteDB.Core.Security
         /// Gets whether the policy is active
         /// </summary>
         bool IsActive { get; }
+        /// <summary>
+        /// Gets whether the policy is public (can be queried and applied by users - false indicates a system policy)
+        /// </summary>
+        bool IsPublic { get; }
         /// <summary>
         /// Gets the name of the policy
         /// </summary>

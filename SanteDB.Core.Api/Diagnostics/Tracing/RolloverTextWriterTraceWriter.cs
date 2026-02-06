@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -76,11 +76,6 @@ namespace SanteDB.Core.Diagnostics.Tracing
                 this.m_fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.GetFileName(fileName));
             }
 
-            // Create the directory?
-            if (!Directory.Exists(Path.GetDirectoryName(this.m_fileName)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(this.m_fileName));
-            }
             //_stream = File.Open(generateFilename(), FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             //_stream.Seek(0, SeekOrigin.End);
             //_traceWriter = new StreamWriter(_stream);
@@ -119,6 +114,13 @@ namespace SanteDB.Core.Diagnostics.Tracing
         /// </summary>
         private string GenerateFilename()
         {
+
+            // Create the directory?
+            if (!Directory.Exists(Path.GetDirectoryName(this.m_fileName)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(this.m_fileName));
+            }
+
             _currentDate = System.DateTime.Today;
             return Path.Combine(Path.GetDirectoryName(this.m_fileName), Path.GetFileNameWithoutExtension(this.m_fileName) + "_" +
                _currentDate.ToString("yyyyMMdd") + Path.GetExtension(this.m_fileName));
@@ -161,15 +163,7 @@ namespace SanteDB.Core.Diagnostics.Tracing
                                 {
                                     if (this.m_logBacklog.TryDequeue(out var dq))
                                     {
-#if DEBUG
                                         sw.WriteLine(dq); // This allows other threads to add to the write queue
-#else 
-                                        var lines = dq.Split('\n', '\r').Where(o => !String.IsNullOrEmpty(o)).Take(3).ToArray(); // Take first three lines
-                                        foreach (var itm in lines)
-                                        {
-                                            sw.WriteLine(itm); // This allows other threads to add to the write queue
-                                        }
-#endif
                                     }
                                 }
                             }

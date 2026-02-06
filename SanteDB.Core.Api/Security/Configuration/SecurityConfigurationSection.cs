@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -54,10 +54,20 @@ namespace SanteDB.Core.Security.Configuration
         [XmlEnum("humans")]
         UserPrincipalsExempt = 0x2,
         /// <summary>
+        /// Users exempt
+        /// </summary>
+        [XmlEnum("applications")]
+        ApplicationPrincipalsExempt = 0x4,
+        /// <summary>
+        /// All non-human
+        /// </summary>
+        [XmlEnum("non-human")] 
+        ApplicationsOrDevicesExempt = DevicePrincipalsExempt | ApplicationPrincipalsExempt,
+        /// <summary>
         /// Devices and humans are exempt
         /// </summary>
         [XmlEnum("all")]
-        AllExempt = DevicePrincipalsExempt | UserPrincipalsExempt
+        AllExempt = DevicePrincipalsExempt | UserPrincipalsExempt | ApplicationPrincipalsExempt
     }
 
     /// <summary>
@@ -66,6 +76,10 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection
     {
+        /// <summary>
+        /// Require RSA digital siganture certs
+        /// </summary>
+        public const string RequireRsaSignaturesName = "sec.rsaSig.required";
         /// <summary>
         /// If MFA is required
         /// </summary>
@@ -142,11 +156,12 @@ namespace SanteDB.Core.Security.Configuration
             var pol = this.SecurityPolicy.Find(o => o.PolicyId == policyId);
             if (pol == null)
             {
-                this.SecurityPolicy.Add(new SecurityPolicyConfiguration(policyId, policyValue));
+                this.SecurityPolicy.Add(new SecurityPolicyConfiguration(policyId, policyValue) {  Enabled = true });
             }
             else
             {
                 pol.PolicyValue = policyValue;
+                pol.Enabled = true;
             }
         }
 

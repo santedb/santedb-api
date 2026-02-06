@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -21,6 +21,7 @@
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SanteDB.Core.Data.Backup
 {
@@ -38,6 +39,14 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="password">The password to protect the backup</param>
         /// <returns>The backup descriptor</returns>
         IBackupDescriptor Backup(BackupMedia media, string password = null);
+
+        /// <summary>
+        /// Backup the data to a file
+        /// </summary>
+        /// <param name="filePath">The path to backup to</param>
+        /// <param name="password">The password to use for the backup</param>
+        /// <returns>The created backup descriptor</returns>
+        IBackupDescriptor BackupToFile(string filePath, string password = null);
 
         /// <summary>
         /// Restore from media
@@ -85,5 +94,35 @@ namespace SanteDB.Core.Data.Backup
         /// <param name="locatedOnMedia">The location of the media</param>
         /// <returns>The retrieved backup or null if not found</returns>
         IBackupDescriptor GetBackup(string backupDescriptorLabel, out BackupMedia locatedOnMedia);
+        
+        /// <summary>
+        /// Get a backup descriptor from an absolute file
+        /// </summary>
+        /// <param name="backupFile">The backup file</param>
+        /// <returns>The backup descriptor</returns>
+        IBackupDescriptor GetBackupDescriptorFromFile(string backupFile);
+
+        /// <summary>
+        /// Restore a backup from afile
+        /// </summary>
+        /// <param name="backupFile">The backup file to restore</param>
+        /// <param name="password">The password for the backup file</param>
+        bool RestoreFromFile(string backupFile, String password);
+
+        /// <summary>
+        /// Restore from a stream
+        /// </summary>
+        bool RestoreFromStream(Stream stream, String password);
+
+        /// <summary>
+        /// Backup to a stream
+        /// </summary>
+        void BackupToStream(Stream stream, String password);
+
+        /// <summary>
+        /// Get a descriptor from a stream
+        /// </summary>
+        IBackupDescriptor GetBackupDescriptorFromStream(Stream stream);
+
     }
 }

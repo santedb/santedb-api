@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -19,6 +19,7 @@
  * Date: 2024-12-12
  */
 using Newtonsoft.Json;
+using SanteDB.Core.ViewModel.Json;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
@@ -34,6 +35,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Roles;
+using SanteDB.Core.Services;
+using SanteDB.Core.Cdss;
 
 namespace SanteDB.Core.Templates.Definition
 {
@@ -212,6 +217,12 @@ namespace SanteDB.Core.Templates.Definition
         [XmlElement("active"), JsonProperty("active")]
         public bool IsActive { get; set; }
 
+        /// <summary>
+        /// Identifies the CDSS calback hook 
+        /// </summary>
+        [XmlElement("cdss"), JsonProperty("cdss")]
+        public DataTemplateCdssCallback CdssCallback { get; set; }
+
         /// <inheritdoc/>
         public bool ShouldSerializeIsActive() => !this.m_saving;
 
@@ -238,13 +249,39 @@ namespace SanteDB.Core.Templates.Definition
         }
 
         /// <summary>
+        /// Fill this template as an object
+        /// </summary>
+        /// <returns></returns>
+        public IdentifiedData FillObject(IDictionary<String, String> parameters, Func<String, String> referenceResolver)
+        {
+            using(var modelSer = new JsonViewModelSerializer())
+            {
+                var retVal = modelSer.DeSerialize<IdentifiedData>(this.FillJson(parameters, referenceResolver));
+                retVal.Key = retVal.Key ?? Guid.NewGuid();
+                if(retVal is IHasTemplate iht)
+                {
+                    iht.TemplateKey = this.Uuid;
+                }
+
+                // Is there CDSS to be applied?
+                if(this.CdssCallback != null)
+                {
+                    this.CdssCallback.AddCdssActions(this, retVal);
+                    
+                }
+                return retVal;
+            }
+        }
+
+        /// <summary>
         /// Fill the template definition
         /// </summary>
-        public String Fill(IDictionary<String, String> parameters, Func<String, String> referenceResolver = null)
+        public String FillJson(IDictionary<String, String> parameters, Func<String, String> referenceResolver)
         {
-            parameters = parameters ?? new Dictionary<String, String>();
+            parameters = parameters?.ToDictionary(o=>o.Key, o=>o.Value) ?? new Dictionary<String, String>(); // preserve the original dictionary
             parameters.Add("today", DateTimeOffset.Now.Date.ToString("yyyy-MM-dd"));
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
+            parameters.Add("nowMinute", DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm"));
 
             var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
 

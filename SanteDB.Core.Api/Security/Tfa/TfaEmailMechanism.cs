@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,9 +18,11 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Services;
+using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -41,15 +43,20 @@ namespace SanteDB.Core.Security.Tfa
         readonly INotificationService _NotificationService;
         readonly ITfaCodeProvider _TfaCodeProvider;
         private readonly ITfaSecretManager _TfaSecretManager;
+        readonly ISecurityRepositoryService _SecurityRepository;
+        readonly IRepositoryService<SecurityUser> _SecurityUserRepository;
 
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager)
+        public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager, ISecurityRepositoryService securityRepository, IRepositoryService<SecurityUser> securityUserRepository)
         {
             _NotificationService = notificationService;
             _TfaCodeProvider = tfaCodeProvider;
             _TfaSecretManager = secretManager;
+            _SecurityRepository = securityRepository;
+            _SecurityUserRepository = securityUserRepository;
+
         }
 
         /// <inheritdoc/>
@@ -91,7 +98,16 @@ namespace SanteDB.Core.Security.Tfa
             if (user is IClaimsIdentity ci)
             {
                 var email = this.GetEmailAddressOrThrow(ci);
-                return _TfaSecretManager.FinishTfaRegistration(ci, verificationCode, AuthenticationContext.SystemPrincipal);
+                var result = _TfaSecretManager.FinishTfaRegistration(ci, verificationCode, AuthenticationContext.SystemPrincipal);
+
+                if (result)
+                {
+                    var userentity = _SecurityRepository.GetUser(user);
+                    userentity.EmailConfirmed = true;
+                    _SecurityUserRepository.Save(userentity);
+                }
+
+                return result;
             }
             else
             {
@@ -127,6 +143,15 @@ namespace SanteDB.Core.Security.Tfa
             var email = claimsIdentity.GetFirstClaimValue(SanteDBClaimTypes.Email);
 
             if (string.IsNullOrWhiteSpace(email))
+            {
+                var identity = AuthenticationContext.Current.GetUserIdentity();
+
+                var securityuser = _SecurityRepository.GetUser(identity);
+
+                email = securityuser?.Email;
+            }
+
+            if (string.IsNullOrEmpty(email))
             {
                 throw new InvalidOperationException("E-Mail TFA requires e-mail address registered");
             }

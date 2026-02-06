@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -120,6 +120,7 @@ namespace SanteDB.Core.Data.Import
                     var persistenceServiceType = typeof(IDataPersistenceService<>).MakeGenericType(o.First().Type);
                     return ApplicationServiceContext.Current.GetService(persistenceServiceType) as IDataPersistenceService;
                 });
+
                 var duplicateCheckParms = new Dictionary<String, Func<Object>>();
                 for (int i = 0; i < sourceReader.ColumnCount; i++)
                 {
@@ -284,7 +285,7 @@ namespace SanteDB.Core.Data.Import
         {
             if (s.Value.Contains("*"))
             {
-                return sourceReader[s.Source] != null;
+                return s.Negation ? sourceReader[s.Source]  == null : sourceReader[s.Source] != null;
             }
             else if(!String.IsNullOrEmpty(s.Other))
             {

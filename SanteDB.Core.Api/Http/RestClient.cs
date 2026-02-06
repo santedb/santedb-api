@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -121,7 +121,7 @@ namespace SanteDB.Core.Http
             webrequest.UserAgent = s_UserAgent;
 
             webrequest.AllowAutoRedirect = false;
-
+            webrequest.ServicePoint.Expect100Continue = false;
             // Are we forwarding this request?
             SetRequestRemoteData(webrequest);
 
@@ -225,14 +225,13 @@ namespace SanteDB.Core.Http
             }
             else
             {
-                this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate);
+                this.m_tracer.TraceWarning("SSL validation {0} - {1}", sslPolicyErrors, certificate.Subject);
+                var certificateValidator = this.Description.Binding?.Security?.CertificateValidator ?? _Services.GetService<ICertificateValidator>();
+                var securityConfiguration = _Services.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
+                return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
+                    certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
             }
-
-            var certificateValidator = _Services.GetService<ICertificateValidator>();
-            var securityConfiguration = _Services.GetService<IConfigurationManager>()?.GetSection<SecurityConfigurationSection>();
-            return securityConfiguration?.TrustedCertificates.Contains(certificate.Subject) == true ||
-                certificateValidator?.ValidateCertificate((X509Certificate2)certificate, chain) == true;
-        }
+            }
 
         /// <summary>
         /// Gets the <see cref="TimeSpan"/> that represents the timeout for an <see cref="InvokeInternal{TBody, TResult}(string, string, string, WebHeaderCollection, out WebHeaderCollection, TBody, NameValueCollection)"/> operation.
@@ -245,9 +244,6 @@ namespace SanteDB.Core.Http
         /// </summary>
         /// <returns>A valid TimeSpan for the operation, or a timespan that represents -1 for infinite.</returns>
         protected virtual TimeSpan GetReceiveTimeout() => this.Description?.Endpoint?.First()?.ReceiveTimeout ?? s_InfiniteTimeout;
-
-
-
 
         /// <inheritdoc />
         protected override TResult InvokeInternal<TBody, TResult>(string method, string url, string contentType, WebHeaderCollection requestHeaders, out WebHeaderCollection responseHeaders, TBody body, NameValueCollection query)
@@ -279,7 +275,7 @@ namespace SanteDB.Core.Http
 
                     try
                     {
-
+                        this.m_tracer.TraceVerbose("Opening request {0} {1}", method, url);
                         webrequest.Method = method;
 
                         SetRequestHeaders(webrequest, requestHeaders);
@@ -287,6 +283,8 @@ namespace SanteDB.Core.Http
                         await WriteRequestBodyAsync(contentType, body, webrequest);
 
                         cancellationtoken.ThrowIfCancellationRequested();
+
+                        this.m_tracer.TraceVerbose("Waiting for response from {0} {1}", method, url);
 
                         var responsetask = webrequest.GetResponseAsync();
                         var connecttimeouttask = Task.Delay(GetConnectTimeout());
@@ -297,6 +295,8 @@ namespace SanteDB.Core.Http
                             //TODO: Fix this with language service
                             throw new TimeoutException(string.Format(ErrorMessageStrings.TIMEOUT, "rest operation"));
                         }
+
+                        this.m_tracer.TraceVerbose("Response from {0} {1} received", method, url);
 
                         response = await responsetask as HttpWebResponse;
 
@@ -333,7 +333,7 @@ namespace SanteDB.Core.Http
                             }
                             else
                             {
-
+                                this.m_tracer.TraceVerbose("Reading response from {0} {1}", method, url);
                                 return (result: (TResult)ReadResponseBody<TResult>(response), responseheaders);
                             }
                         }

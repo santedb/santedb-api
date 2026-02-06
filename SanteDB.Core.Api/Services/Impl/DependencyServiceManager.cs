@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -549,7 +549,7 @@ namespace SanteDB.Core.Services.Impl
                         .Select(s => s.serviceType))
                     {
 
-                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, UserMessages.STARTING_CONTEXT));
+                        this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / this.m_configuration.ServiceProviders.Count) * 0.3f, $"{UserMessages.STARTING_CONTEXT}"));
 
                         if (svc.Type == null)
                         {
@@ -575,7 +575,7 @@ namespace SanteDB.Core.Services.Impl
                         var singletonServices = this.m_serviceRegistrations.ToArray().Where(o => o.InstantiationType == ServiceInstantiationType.Singleton).ToArray();
                         foreach (var svc in singletonServices)
                         {
-                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / singletonServices.Length) * 0.3f + 0.3f, UserMessages.INITIALIZE_SINGLETONS));
+                            this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), ((float)i++ / singletonServices.Length) * 0.3f + 0.3f, $"{UserMessages.INITIALIZE_SINGLETONS}"));
                             this.m_tracer.TraceVerbose("Instantiating {0}...", svc.ServiceImplementer.FullName);
                             svc.GetInstance();
                         }
@@ -606,7 +606,7 @@ namespace SanteDB.Core.Services.Impl
                 {
                     startWatch.Stop();
                 }
-                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), 1.0f, UserMessages.STARTING_CONTEXT));
+                this.ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(nameof(DependencyServiceManager), 1.0f, UserMessages.WELCOME_SANTEDB));
 
                 this.m_tracer.TraceInfo("Startup completed successfully in {0} ms...", startWatch.ElapsedMilliseconds);
                 this.IsRunning = true;

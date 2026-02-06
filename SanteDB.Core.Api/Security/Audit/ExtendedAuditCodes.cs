@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -36,6 +36,7 @@ namespace SanteDB.Core.Security.Audit
         public static readonly AuditCode ActorRoleHuman = new AuditCode("humanuser", "http://terminology.hl7.org/CodeSystem/extra-security-role-type") { DisplayName = "Human User" };
 
         public static readonly AuditCode EventTypeMasking = new AuditCode("SecurityAuditCode-Masking", "SecurityAuditCode") { DisplayName = "Mask Sensitive Data" };
+        public static readonly AuditCode EventTypePrivacy = new AuditCode("SecurityAuditCode-AlterPrivacy", "SecurityAuditCode") { DisplayName = "Alter Privacy Data" };
         public static readonly AuditCode EventTypeCreate = new AuditCode("SecurityAuditCode-CreateInstances", "SecurityAuditCode") { DisplayName = "Create Data" };
         public static readonly AuditCode EventTypeUpdate = new AuditCode("SecurityAuditCode-UpdateInstances", "SecurityAuditCode") { DisplayName = "Update Data" };
         public static readonly AuditCode EventTypeDelete = new AuditCode("SecurityAuditCode-DeleteInstances", "SecurityAuditCode") { DisplayName = "Delete Data" };
@@ -56,7 +57,7 @@ namespace SanteDB.Core.Security.Audit
         public static readonly AuditCode CustomIdTypeForeignFile = new AuditCode("ForeignDataFile", "http://santedb.org/model") { DisplayName = "External Data File" };
         public static readonly AuditCode CustomIdTypeSession = new AuditCode("SecuritySession", "http://santedb.org/model") { DisplayName = "Security Session" };
         public static readonly AuditCode DataQualityConfiguration = new AuditCode("DataQualityConfiguration", "http://santedb.org/configuration") { DisplayName = "Data Quality Configuration" };
-        public static readonly AuditCode CustomIdTypeMaskedFields = new AuditCode("SecurityUsitCode-MaskedFields", "SecurityAuditCode") { DisplayName = "Masked Fields" };
+        public static readonly AuditCode CustomIdTypeMaskedFields = new AuditCode("SecurityUseCode-MaskedFields", "SecurityAuditCode") { DisplayName = "Masked Fields" };
 #pragma warning restore CS1591
 
     }

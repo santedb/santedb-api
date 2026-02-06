@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -191,7 +191,7 @@ namespace SanteDB.Core.Configuration.Features
             var appSection = configuration.GetSection<ApplicationServiceContextConfigurationSection>();
 
             appSection.ServiceProviders.RemoveAll(o => typeof(IDataManagementPattern).IsAssignableFrom(o.Type));
-            appSection.ServiceProviders.Add(new TypeReferenceConfiguration(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME] as Type));
+            appSection.AddService(new TypeReferenceConfiguration(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MANAGER_NAME] as Type));
             configuration.RemoveSection<ResourceManagementConfigurationSection>();
             configuration.AddSection(this.m_resourceMergeConfiguration.Values[PersistenceStrategyFeature.RESOURCE_MERGE_CONFIG]);
             return true;

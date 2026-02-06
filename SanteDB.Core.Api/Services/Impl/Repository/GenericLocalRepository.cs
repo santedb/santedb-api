@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -187,6 +187,9 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             // Fire pre-persistence triggers
             var prePersistence = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            // Did the pre-persistence service change the type to a batch
+            var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
+            data = businessRulesService?.BeforeInsert(data) ?? prePersistence.Data;
             this.Inserting?.Invoke(this, prePersistence);
             if (prePersistence.Cancel)
             {
@@ -200,11 +203,8 @@ namespace SanteDB.Core.Services.Impl.Repository
                 return this.m_privacyService?.Apply(prePersistence.Data, AuthenticationContext.Current.Principal) ?? prePersistence.Data;
             }
 
-            // Did the pre-persistence service change the type to a batch
-            var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
 
             var persistenceService = ApplicationServiceContext.Current.GetService<IDataPersistenceService<TEntity>>();
-            data = businessRulesService?.BeforeInsert(data) ?? prePersistence.Data;
             data = persistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             businessRulesService?.AfterInsert(data);
             this.Inserted?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
@@ -237,6 +237,9 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
 
             // Fire pre-persistence triggers
+            var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
+            entity = businessRulesService?.BeforeDelete(entity) ?? entity;
+
             var prePersistence = new DataPersistingEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             this.Deleting?.Invoke(this, prePersistence);
             if (prePersistence.Cancel)
@@ -250,9 +253,7 @@ namespace SanteDB.Core.Services.Impl.Repository
                 return this.m_privacyService?.Apply(prePersistence.Data, AuthenticationContext.Current.Principal) ?? prePersistence.Data;
             }
 
-            var businessRulesService = ApplicationServiceContext.Current.GetBusinessRulesService<TEntity>();
-
-            entity = businessRulesService?.BeforeDelete(entity) ?? entity;
+           
             entity = this.m_dataPersistenceService.Delete(entity.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
             entity = businessRulesService?.AfterDelete(entity) ?? entity;
 
@@ -321,6 +322,16 @@ namespace SanteDB.Core.Services.Impl.Repository
                 {
                     this.ThrowPrivacyValidationException(data);
                 }
+                
+                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Get(data.Key.GetValueOrDefault(), null, AuthenticationContext.Current.Principal);
+                if (data.Key.HasValue && currentObject != null)
+                {
+                    data = businessRulesService?.BeforeUpdate(data) ?? data;
+                }
+                else
+                {
+                    data = businessRulesService?.BeforeInsert(data) ?? data;
+                }
 
                 var preSave = new DataPersistingEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                 this.Saving?.Invoke(this, preSave);
@@ -339,17 +350,14 @@ namespace SanteDB.Core.Services.Impl.Repository
                     data = preSave.Data; // Data may have been updated
                 }
 
-                var currentObject = data is IResourceCollection ? null : this.m_dataPersistenceService.Get(data.Key.GetValueOrDefault(), null, AuthenticationContext.Current.Principal);
                 if (data.Key.HasValue && currentObject != null)
                 {
-                    data = businessRulesService?.BeforeUpdate(data) ?? data;
                     data = this.m_dataPersistenceService.Update(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterUpdate(data);
                     this.Saved?.Invoke(this, new DataPersistedOriginalEventArgs<TEntity>(data, currentObject, TransactionMode.Commit, AuthenticationContext.Current.Principal));
                 }
                 else
                 {
-                    data = businessRulesService?.BeforeInsert(data) ?? data;
                     data = this.m_dataPersistenceService.Insert(data, TransactionMode.Commit, AuthenticationContext.Current.Principal);
                     businessRulesService?.AfterInsert(data);
                     this.Saved?.Invoke(this, new DataPersistedEventArgs<TEntity>(data, TransactionMode.Commit, AuthenticationContext.Current.Principal));

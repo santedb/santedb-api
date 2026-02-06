@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using Newtonsoft.Json.Linq;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Model.Interfaces;
 using System;
@@ -26,10 +27,26 @@ using System.Net;
 namespace SanteDB.Core.Http
 {
     /// <summary>
+    /// Marker interface
+    /// </summary>
+    public interface IRestException
+    {
+
+        /// <summary>
+        /// Get the result as a generic object
+        /// </summary>
+        object Result { get; }
+    }
+
+    /// <summary>
     /// Rest client exception.
     /// </summary>
-    public class RestClientException<TResult> : System.Net.WebException, IHasToDisplay
+    public class RestClientException<TResult> : System.Net.WebException, IHasToDisplay, IRestException
     {
+
+        /// <inheritdoc />
+        object IRestException.Result => this.Result;
+
         /// <summary>
         /// The result
         /// </summary>
@@ -83,7 +100,6 @@ namespace SanteDB.Core.Http
         {
             return string.Format("[RestClientException: {0}, Status={2}, HttpResult={3}]\r\n--SERVER FAULT--\r\n{1}\r\n--END SERVER FAULT--\r\n-- STACK TRACE--\r\n{4}", this.Message, Result, this.Status, (this.Response as HttpWebResponse)?.StatusCode, this.StackTrace);
         }
-
 
     }
 }

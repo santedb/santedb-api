@@ -21,7 +21,7 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 	    <Product>SanteDB</Product>
-    <Copyright>Copyright (C) 2015-2025 SanteSuite Contributors (See: NOTICES)</Copyright>
+    <Copyright>Copyright (C) 2015-2026 SanteSuite Contributors (See: NOTICES)</Copyright>
     <Company>SanteSuite Contributors</Company>
     <PackageIconUrl>http://santesuite.org/assets/img/logo.png</PackageIconUrl>
     <PackageProjectUrl>http://santesuite.org</PackageProjectUrl>
@@ -214,7 +214,7 @@
   </ItemGroup>-->
   <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="SharpCompress" Version="0.38.0" />
+        <PackageReference Include="SharpCompress" Version="0.40.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
   </ItemGroup>
   <Choose>
@@ -234,6 +234,7 @@
     <EmbeddedResource Include="Security\Certs\Trust\appca.santesuite.net.v2.cer" />
     <EmbeddedResource Include="Security\Certs\Inter\inter.appca.santesuite.net.cer" />
     <EmbeddedResource Include="Security\Certs\Trust\appca.santesuite.net.cer" />
+    <EmbeddedResource Include="ViewModel\Default.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\SanteDB.licenseheader">

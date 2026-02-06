@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -62,7 +62,10 @@ namespace SanteDB.Core.Cdss
         /// Exclude all proposals
         /// </summary>
         public const string EXCLUDE_PROPOSALS = "_excludePropose";
-        
+        /// <summary>
+        /// Exclude the submitted data
+        /// </summary>
+        public const string EXCLUDE_SUBMITTED = "_excludeSubmitted";
         /// <summary>
         /// Exclude all issues
         /// </summary>
@@ -87,10 +90,16 @@ namespace SanteDB.Core.Cdss
         /// The time for which the events must fall within to be emitted
         /// </summary>
         public const string PERIOD_OF_EVENTS = "period";
+
         /// <summary>
-        /// Only return the first applicable action from each protocol
+        /// True if the CDSS engine should ignore the validity time of proposals
         /// </summary>
-        public const string FIRST_APPLICAPLE = "firstOnly";
+        public const string IGNORE_VALIDITY_TIME = "ignoreValidity";
+
+        /// <summary>
+        /// Only return the first applicable action from each protocol indicated
+        /// </summary>
+        public const string IS_VISIT = "isVisit";
 
         /// <summary>
         /// The execution mode

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -28,6 +28,7 @@ using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Constants;
+using SanteDB.Core.Model.Entities;
 using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Security;
@@ -40,6 +41,8 @@ using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using SanteDB.Core.Security.Signing;
 using SanteDB.Core.Services;
+using SanteDB.Core.Templates;
+using SanteDB.Core.Templates.Definition;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -48,10 +51,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
+using ZstdSharp.Unsafe;
 
 namespace SanteDB.Core
 {
@@ -60,6 +65,18 @@ namespace SanteDB.Core
     /// </summary>
     public static class ExtensionMethods
     {
+
+        /// <summary>
+        /// Marker structure for CDSS annotation
+        /// </summary>
+        private struct PreparedForCdssAnnotation
+        {
+        }
+
+        /// <summary>
+        /// Convert a CDR policy registration to an operation policy definition
+        /// </summary>
+        public static IPolicy ToPolicy(this SecurityPolicy policy) => new GenericPolicy(policy.Key.GetValueOrDefault(), policy.Oid, policy.Name, policy.CanOverride, policy.IsPublic);
 
         /// <summary>
         /// Determine if this is running under mono
@@ -120,7 +137,7 @@ namespace SanteDB.Core
         /// <summary>
         /// Get managed reference links 
         /// </summary>
-        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(this IHasRelationships forSource)  =>
+        public static IEnumerable<ITargetedAssociation> FilterManagedReferenceLinks(this IHasRelationships forSource) =>
             ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.FilterManagedReferenceLinks(forSource.Relationships) ?? forSource.Relationships.Where(o => false).OfType<ITargetedAssociation>();
 
 
@@ -337,10 +354,19 @@ namespace SanteDB.Core
                 {
                     CanOverride = me.Policy.CanOverride,
                     Oid = me.Policy.Oid,
+                    IsPublic = me.Policy.IsPublic,
                     Name = me.Policy.Name
                 },
                 (PolicyGrantType)(int)me.Rule
             );
+        }
+
+        /// <summary>
+        /// True if elevated principal
+        /// </summary>
+        public static bool IsElevatedPrincipal(this IPrincipal me)
+        {
+            return (me as IClaimsPrincipal)?.HasClaim(o => o.Type == SanteDBClaimTypes.SanteDBOverrideClaim && Boolean.TryParse(o.Value, out var val) && val) ?? false;
         }
 
         /// <summary>
@@ -373,7 +399,7 @@ namespace SanteDB.Core
         /// </summary>
         public static void ValidateCodeIsSigned(this Assembly asm, bool allowUnsignedAssemblies)
         {
-
+            // Verified assembly?
             if (ApplicationServiceContext.Current?.HostType == SanteDBHostType.Test)
             {
                 allowUnsignedAssemblies = true;
@@ -382,20 +408,25 @@ namespace SanteDB.Core
             var tracer = Tracer.GetTracer(typeof(ExtensionMethods));
             bool valid = false;
             var asmFile = asm.Location;
-            if (String.IsNullOrEmpty(asmFile))
+            if (!m_verifiedAssemblies.Contains(asmFile))
             {
-                tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
-            }
-            else if (!allowUnsignedAssemblies)
-            {
-                // Verified assembly?
-                if (!m_verifiedAssemblies.Contains(asmFile))
+                if (String.IsNullOrEmpty(asmFile))
                 {
+                    tracer.TraceWarning("Cannot verify {0} - no assembly location found", asmFile);
+                    valid = true;
+                }
+                else if (!File.Exists(asmFile))
+                {
+                    tracer.TraceWarning("Cannot verify {0} - no assembly file exists at path", asmFile);
+                    valid = true;
+                }
+                else if (!allowUnsignedAssemblies)
+                {
+
                     try
                     {
                         var extraCerts = new X509Certificate2Collection();
                         extraCerts.Import(asmFile);
-
                         var certificate = new X509Certificate2(X509Certificate2.CreateFromSignedFile(asmFile));
                         var asmTimestamp = new FileInfo(asmFile).CreationTime;
                         tracer.TraceVerbose("Validating {0} published by {1}", asmFile, certificate.Subject);
@@ -540,42 +571,159 @@ namespace SanteDB.Core
         }
 
         /// <summary>
-        /// Scans the persistence provider to find the appropriate acts in <paramref name="carePlan"/> have been fulfilled
+        /// Prepare for CDSS analysis
         /// </summary>
-        public static CarePlan HarmonizeCarePlan(this CarePlan carePlan)
+        public static TData PrepareForCdssAnalysis<TData>(this TData target) where TData : IdentifiedData
         {
-
-            if (!carePlan.CarePathwayKey.HasValue || carePlan.VersionKey.HasValue) // Unless we're linked to a care pathway or the care plan is stored return
+            using (AuthenticationContext.EnterSystemContext())
             {
-                return carePlan;
-            }
-
-            var recordTargetId = carePlan.LoadProperty(o => o.Participations).Single(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget)?.PlayerEntityKey;
-            var storedCareplan = EntitySource.Current.Provider.Query<CarePlan>(o => o.CarePathwayKey == carePlan.CarePathwayKey && o.StatusConceptKey == StatusKeys.Active && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => r.PlayerEntityKey == recordTargetId)).FirstOrDefault();
-            if (storedCareplan == null)
-            {
-                return carePlan;
-            }
-
-            var storedProposals = EntitySource.Current.Provider.Query<Act>(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntityKey == storedCareplan.Key) && o.MoodConceptKey == ActMoodKeys.Propose) // direct proposals
-                .Union(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntity.Relationships.Where(r2 => r2.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r2 => r2.SourceEntityKey == storedCareplan.Key)) && o.MoodConceptKey == ActMoodKeys.Propose); // those in a proposed encounter
-            var myProposals = carePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent); // Direct proposals
-            myProposals = myProposals.Union(carePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.LoadProperty(p => p.TargetAct) is PatientEncounter).SelectMany(r => r.TargetAct.LoadProperty(p => p.Relationships).Where(p => p.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))).ToList(); // thos in a proposed encounter
-            // Set RefersTo relationships for the actual stored care plan
-            foreach (var itm in storedProposals)
-            {
-                var storedProtocols = itm.LoadProperty(o => o.Protocols);
-                var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
-                    p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
-                if (candidate != null)
+                if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
                 {
-                    candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.RefersTo, itm));
+                    var idpt = typeof(IDataPersistenceService<>).MakeGenericType(target.GetType());
+                    var idp = ApplicationServiceContext.Current.GetService(idpt) as IDataPersistenceService;
+                    target = (TData)idp?.Get(target.Key.Value) ?? target;
                 }
-            }
 
-            return carePlan;
+                if(target is Entity ent)
+                {
+                    if (ent.VersionKey.HasValue) // The entity has been persisted 
+                    {
+                        ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
+                    }
+                    else
+                    {
+                        // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
+                        ent.Participations = new List<ActParticipation>(ent.Participations?.ToList() ??
+                            (target as Entity).Participations?.ToList() ??
+                            ent.LoadProperty(o => o.Participations) ??
+                            new List<ActParticipation>()); // take a copy of the list
+                        ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                    }
+                }
+                return target;
+            }
         }
 
+        /// <summary>
+        /// Prepare the target for the cdss execution
+        /// </summary>
+        /// <typeparam name="TData"></typeparam>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static TData PrepareForCdssExecution<TData>(this TData target) where TData : IdentifiedData
+        {
+            if(target.GetAnnotations<PreparedForCdssAnnotation>().Any())
+            {
+                var retVal = target.DeepCopy() as TData;
+                retVal.AddAnnotation(new PreparedForCdssAnnotation());
+                if(retVal is Entity ent &&
+                    target is Entity tent)
+                {
+                    ent.Participations = tent.Participations.ToList();
+                }
+                return retVal;
+            }
+
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                if (target is ITaggable itg && itg.Tags?.Any(t => t.TagKey == SystemTagNames.PrivacyMaskingTag && Boolean.TryParse(t.Value, out var masked) && masked) == true)
+                {
+                    var idpt = typeof(IDataPersistenceService<>).MakeGenericType(target.GetType());
+                    var idp = ApplicationServiceContext.Current.GetService(idpt) as IDataPersistenceService;
+                    target = (TData)idp?.Get(target.Key.Value) ?? target;
+                }
+                
+                var clone = target.DeepCopy() as TData;
+                if (clone is Entity ent)
+                {
+                    // Force load participations 
+                    if (ent.VersionKey.HasValue) // The entity has been persisted 
+                    {
+                        ent.Participations = EntitySource.Current.Provider.Query<ActParticipation>(o => o.Act.ObsoletionTime == null && o.Act.MoodConceptKey == ActMoodKeys.Eventoccurrence && o.PlayerEntityKey == ent.Key && StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value)).ToList();
+                    }
+                    else
+                    {
+                        // HACK: Since an ActParticipation is a Act=>Entity relationship - the original list won't be on our clone - so we want to create a reference set of any acts for LoadProperty in the next line
+                        ent.Participations = new List<ActParticipation>(ent.Participations?.ToList() ??
+                            (target as Entity).Participations?.ToList() ??
+                            ent.LoadProperty(o => o.Participations) ?? 
+                            new List<ActParticipation>()); // take a copy of the list
+                        ent.Participations?.RemoveAll(o => o.LoadProperty(a => a.Act).MoodConceptKey != ActMoodKeys.Eventoccurrence || !StatusKeys.ActiveStates.Contains(o.Act.StatusConceptKey.Value));
+                    }
+
+                    ent.Participations.OfType<ActParticipation>()
+                        .AsParallel()
+                        .ForAll(p =>
+                        {
+                            using (AuthenticationContext.EnterSystemContext())
+                            {
+                                p.LoadProperty(o => o.ParticipationRole);
+                                p.LoadProperty(o => o.Act);
+                                p.Act.LoadProperty(o => o.TypeConcept);
+                                p.Act.LoadProperty(o => o.MoodConcept);
+                                p.Act.LoadProperty(o => o.Participations).Where(r => r.ParticipationRoleKey != ActParticipationKeys.RecordTarget).ForEach(t =>
+                                {
+                                    t.LoadProperty(o => o.ParticipationRole);
+                                    t.LoadProperty(o => o.PlayerEntity).LoadProperty(o => o.TypeConcept);
+                                });
+                                p.PlayerEntity = ent;
+                            }
+                        });
+                }
+
+                clone.AddAnnotation(new PreparedForCdssAnnotation());
+                return clone;
+            }
+
+        }
+        /// <summary>
+        /// Scans the persistence provider to find the appropriate acts in <paramref name="carePlan"/> have been fulfilled
+        /// </summary>
+        //public static CarePlan HarmonizeCarePlan(this CarePlan carePlan)
+        //{
+
+        //    if (!carePlan.CarePathwayKey.HasValue || carePlan.VersionKey.HasValue) // Unless we're linked to a care pathway or the care plan is stored return
+        //    {
+        //        return carePlan;
+        //    }
+
+        //    var recordTargetId = carePlan.LoadProperty(o => o.Participations).Single(o => o.ParticipationRoleKey == ActParticipationKeys.RecordTarget)?.PlayerEntityKey;
+        //    var storedCareplan = EntitySource.Current.Provider.Query<CarePlan>(o => o.CarePathwayKey == carePlan.CarePathwayKey && o.StatusConceptKey == StatusKeys.Active && o.Participations.Where(p => p.ParticipationRoleKey == ActParticipationKeys.RecordTarget).Any(r => r.PlayerEntityKey == recordTargetId)).FirstOrDefault();
+        //    if (storedCareplan == null)
+        //    {
+        //        return carePlan;
+        //    }
+
+        //    var storedProposals = EntitySource.Current.Provider.Query<Act>(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntityKey == storedCareplan.Key) && o.MoodConceptKey == ActMoodKeys.Propose) // direct proposals
+        //        .Union(o => o.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r => r.SourceEntity.Relationships.Where(r2 => r2.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).Any(r2 => r2.SourceEntityKey == storedCareplan.Key)) && o.MoodConceptKey == ActMoodKeys.Propose); // those in a proposed encounter
+        //    var myProposals = carePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent); // Direct proposals
+        //    myProposals = myProposals.Union(carePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && r.LoadProperty(p => p.TargetAct) is PatientEncounter).SelectMany(r => r.TargetAct.LoadProperty(p => p.Relationships).Where(p => p.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))).ToList(); // thos in a proposed encounter
+        //    // Set RefersTo relationships for the actual stored care plan
+        //    foreach (var itm in storedProposals)
+        //    {
+        //        var storedProtocols = itm.LoadProperty(o => o.Protocols);
+        //        var candidate = myProposals.FirstOrDefault(p => p.TargetAct.ClassConceptKey == itm.ClassConceptKey && p.TargetAct.TypeConceptKey == itm.TypeConceptKey &&
+        //            p.TargetAct.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
+        //        if (candidate != null)
+        //        {
+        //            candidate.TargetAct.LoadProperty(c => c.Relationships).Add(new ActRelationship(ActRelationshipTypeKeys.Replaces, itm));
+        //        }
+        //    }
+
+        //    return carePlan;
+        //}
+
+        /// <summary>
+        /// Returns the greater of two values (helper method)
+        /// </summary>
+        public static T GreaterOf<T>(this T me, T other)
+            where T : struct, IComparable => me.CompareTo(other) > 0 ? me : other;
+
+        /// <summary>
+        /// Returns the lesser of two values (helper method)
+        /// </summary>
+        public static T LesserOf<T>(this T me, T other)
+            where T : struct, IComparable => me.CompareTo(other) < 0 ? me : other;
 
         /// <summary>
         /// Returns the greater of two values (helper method)
@@ -609,7 +757,7 @@ namespace SanteDB.Core
         public static int IsoWeek(this DateTime me)
         {
             // See: https://learn.microsoft.com/en-us/archive/blogs/shawnste/iso-8601-week-of-year-format-in-microsoft-net
-            if(me.DayOfWeek >= DayOfWeek.Monday && me.DayOfWeek <= DayOfWeek.Wednesday)
+            if (me.DayOfWeek >= DayOfWeek.Monday && me.DayOfWeek <= DayOfWeek.Wednesday)
             {
                 me = me.AddDays(3);
             }
@@ -643,7 +791,7 @@ namespace SanteDB.Core
         /// <returns>The date/time adjusted to the closest day of week</returns>
         public static DateTimeOffset ClosestDay(this DateTimeOffset me, DayOfWeek dayOfWeek)
         {
-            if(me.DayOfWeek == dayOfWeek)
+            if (me.DayOfWeek == dayOfWeek)
             {
                 return me;
             }
@@ -652,5 +800,14 @@ namespace SanteDB.Core
                 return me.AddDays(-((int)me.DayOfWeek - (int)dayOfWeek));
             }
         }
+
+        /// <summary>
+        /// Get the data template definition via mnemonic
+        /// </summary>
+        /// <param name="mnemonic">The mnemonic of the model to retrieve</param>
+        /// <returns>The registered data template definition</returns>
+        public static DataTemplateDefinition GetByMnemonic(this IDataTemplateManagementService me, string mnemonic) => me.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
+
+
     }
 }

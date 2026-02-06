@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -202,6 +202,11 @@ namespace SanteDB.Core.Data.Management
         /// </summary>
         private IEnumerable<IdentifiedData> DoDataMatchingLogicInternal(TModel inputRecord)
         {
+            if(inputRecord is ITaggable itg && itg.GetTag(SystemTagNames.SkipDuplicateCheck)?.Equals(Boolean.TrueString, StringComparison.CurrentCultureIgnoreCase) == true)
+            {
+                yield break;
+            }
+
             // Detect any duplicates
             var matches = m_matchingConfigurationService.Configurations.Where(o => o.AppliesTo.Contains(typeof(TModel)) && o.Metadata.Status == MatchConfigurationStatus.Active).SelectMany(o => m_matchingService.Match(inputRecord, o.Id, this.GetIgnoredKeysInternal(inputRecord.Key.GetValueOrDefault(), inputRecord)));
             var groupedMatches = matches

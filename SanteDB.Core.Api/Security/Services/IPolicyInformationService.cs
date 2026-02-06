@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Model.Acts;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
 using System;
@@ -81,8 +82,20 @@ namespace SanteDB.Core.Security.Services
         /// <param name="policy">The policy to be created</param>
         /// <param name="principal">The principal creating the policy</param>
         void CreatePolicy(IPolicy policy, IPrincipal principal);
+
     }
 
+    /// <summary>
+    /// An <see cref="IPolicyInformationService"/> which adds extra functionality
+    /// </summary>
+    public interface IPolicyInformationServiceEx : IPolicyInformationService
+    {
+
+        /// <summary>
+        /// Create all policies in a batch
+        /// </summary>
+        void CreatePolicies(IEnumerable<IPolicy> policies, IPrincipal principal);
+    }
 
 }
 

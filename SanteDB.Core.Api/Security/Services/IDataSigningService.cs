@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -23,6 +23,7 @@ using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Services;
 using System;
 using System.Security.Cryptography.X509Certificates;
+using ZstdSharp;
 
 namespace SanteDB.Core.Security.Services
 {
@@ -73,7 +74,7 @@ namespace SanteDB.Core.Security.Services
         {
             if (configuration == null)
             {
-                return null;
+                throw new ArgumentNullException(nameof(configuration));
             }
             else if(configuration.Certificate?.NotAfter < DateTimeOffset.Now || configuration.Certificate?.NotBefore > DateTimeOffset.Now)
             {

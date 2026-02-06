@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -69,6 +69,7 @@ namespace SanteDB.Core.Services.Impl
 
         private readonly Tracer m_tracer = Tracer.GetTracer(typeof(DefaultCarepathEnrollmentService));
         private readonly CarePathwayConfigurationSection m_configuration;
+        private readonly IDataCachingService m_dataCacheService;
         private readonly IPolicyEnforcementService m_pepService;
         private readonly INotifyRepositoryService<Patient> m_patientRepository;
         private readonly IRepositoryService<CarePlan> m_carePlanRepository;
@@ -87,6 +88,7 @@ namespace SanteDB.Core.Services.Impl
             IDecisionSupportService decisionSupportService,
             IPrivacyEnforcementService privacyService,
             INotifyRepositoryService<Patient> patientRepository,
+            IDataCachingService dataCaching,
             INotifyRepositoryService<Bundle> bundleRepository,
             IRepositoryService<CarePlan> careplanRepository)
         {
@@ -94,6 +96,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 EnableAutoEnrollment = true
             };
+            this.m_dataCacheService = dataCaching;
             this.m_pepService = policyService;
             this.m_patientRepository = patientRepository;
             this.m_carePlanRepository = careplanRepository;
@@ -129,21 +132,51 @@ namespace SanteDB.Core.Services.Impl
         {
             foreach (var p in e.Data.Item.OfType<Patient>().ToArray())
             {
-                foreach (var cp in this.GetEligibleCarePaths(p))
+                // HACK: Bundles often contain historical data so we need to reconstitute the bundle 
+                p.Participations = p.LoadProperty(o => o.Participations) ?? new List<ActParticipation>();
+                p.Participations.AddRange(
+                    e.Data.Item.OfType<Act>().Where(a => a.Participations?.Any(pc => pc.PlayerEntityKey == p.Key && pc.ParticipationRoleKey == ActParticipationKeys.RecordTarget) == true)
+                    .Select(a =>
+                    {
+                        var ap = new ActParticipation(ActParticipationKeys.RecordTarget, p.Key) { Act = a, ActKey = a.Key };
+                        ap.SetLoaded(o => o.Act);
+                        return ap;
+                    }));
+                p.SetLoaded(o => o.Participations);
+                var eligibleCarePaths = this.GetEligibleCarePaths(p).ToList();
+
+                // All enrolled carepaths where the person is no longer eligible
+                if (p.BatchOperation == Model.DataTypes.BatchOperationType.Update ||
+                    p.BatchOperation == Model.DataTypes.BatchOperationType.InsertOrUpdate ||
+                    p.BatchOperation == Model.DataTypes.BatchOperationType.Auto)
+                {
+                    var enrolledCarePaths = this.GetEnrolledCarePaths(p).ToList();
+                    foreach (var er in enrolledCarePaths) // Remove the patient from any enrolled carepaths
+                    {
+                        if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
+                        {
+                            this.UnEnroll(p, er);
+                        }
+                    }
+
+                    // Did anything change that might impact a care plan - this is gender or date of birth
+                    var existingPatient = this.m_patientRepository.Get(p.Key.Value);
+                    if(existingPatient?.DateOfBirth?.Date == p.DateOfBirth?.Date &&
+                        existingPatient?.GenderConceptKey == p.GenderConceptKey &&
+                        eligibleCarePaths.All(cp => enrolledCarePaths.Any(ep => ep.Key == cp.Key) && cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
+                        ) // no change
+                    {
+                        continue;
+                    }
+                }
+
+                foreach (var cp in eligibleCarePaths)
                 {
                     if (cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
                     {
                         this.m_tracer.TraceInfo("Patient {0} meets eligibility criteria for {1} - automatically enrolling", p, cp);
                         if (!e.Data.Item.OfType<CarePlan>().Any(c => c.CarePathwayKey == cp.Key))
                         {
-                            // HACK: Bundles often contain historical data so we need to reconstitute the bundle 
-                            p.Participations?.ForEach(part =>
-                            {
-                                if (part.Act == null && part.ActKey.HasValue)
-                                {
-                                    part.Act = e.Data.Item.Find(o => o.Key == part.ActKey) as Act;
-                                }
-                            });
                             var carePlan = this.CreateCarePlan(p, cp);
                             e.Data.Item.Add(carePlan);
                             e.Data.Item.AddRange(carePlan.Relationships.SelectMany(o => this.ExtractCarePlanObjects(o)));
@@ -155,7 +188,12 @@ namespace SanteDB.Core.Services.Impl
 
         private IEnumerable<Act> ExtractCarePlanObjects(ActRelationship actRelationship)
         {
-            actRelationship.TargetActKey = actRelationship.TargetAct.Key = actRelationship.TargetAct.Key ?? Guid.NewGuid();
+            if (actRelationship.TargetAct == null)
+            {
+                yield break;
+            }
+
+            actRelationship.TargetActKey = actRelationship.TargetAct.Key = actRelationship.TargetAct?.Key ?? Guid.NewGuid();
             var ta = actRelationship.TargetAct;
             actRelationship.TargetAct = null;
             if (ta.Relationships?.Any() == true)
@@ -189,7 +227,17 @@ namespace SanteDB.Core.Services.Impl
         /// </summary>
         private void patientRepositoryChange(object sender, Event.DataPersistedEventArgs<Patient> e)
         {
-            foreach (var cp in this.GetEligibleCarePaths(e.Data))
+            var eligibleCarePaths = this.GetEligibleCarePaths(e.Data).ToArray();
+            // All enrolled carepaths where the person is no longer eligible
+            foreach (var er in this.GetEnrolledCarePaths(e.Data))
+            {
+                if (!eligibleCarePaths.Any(cp => cp.Key == er.Key))
+                {
+                    this.UnEnroll(e.Data, er);
+                }
+            }
+
+            foreach (var cp in eligibleCarePaths)
             {
                 if (cp.EnrollmentMode == CarePathwayEnrollmentMode.Automatic)
                 {
@@ -383,7 +431,6 @@ namespace SanteDB.Core.Services.Impl
 
                 // Load any has components in the old careplan that are not fulfilled and cancel them
                 transaction.AddRange(this.UpdateCarePlan(existingCarePlan, updatedCarePlan));
-
                 return this.m_bundleRepository.Insert(transaction).Item.OfType<CarePlan>().First();
             }
         }
@@ -396,6 +443,8 @@ namespace SanteDB.Core.Services.Impl
         /// <returns>Actions to update <paramref name="existingCarePlan"/> to <paramref name="updatedCarePlan"/></returns>
         private IEnumerable<IdentifiedData> UpdateCarePlan(CarePlan existingCarePlan, CarePlan updatedCarePlan)
         {
+            this.m_dataCacheService.Remove(existingCarePlan);
+
             // Our care plans are generated with encounters so we want the contents of the encounters - rather than the encounters to reconcile
             var existingActions = existingCarePlan.LoadProperty(o => o.Relationships).Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).SelectMany(pe => pe.LoadProperty(o => o.TargetAct).LoadProperty(o => o.Relationships).Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent)).Select(r => r.LoadProperty(o => o.TargetAct));
             var updatedActions = updatedCarePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent).SelectMany(pe => pe.TargetAct.Relationships.Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent));
@@ -407,13 +456,16 @@ namespace SanteDB.Core.Services.Impl
                 var candidate = existingActions.FirstOrDefault(p => p.ClassConceptKey == itm.TargetAct.ClassConceptKey && p.TypeConceptKey == itm.TargetAct.TypeConceptKey &&
                     p.LoadProperty(o => o.Protocols).Any(o => storedProtocols.All(q => q.ProtocolKey == o.ProtocolKey && q.Sequence == o.Sequence)));
 
-                if(candidate == null) // No candidate - so just return
+
+                if (candidate == null) // No candidate - so just return
                 {
                     yield return itm.TargetAct;
                     itm.TargetAct = null;
                 }
                 else
                 {
+                    this.m_dataCacheService.Remove(candidate);
+
                     // We want our new care plan encounter to point to the existing act object - update the stored data with new updated data
                     candidate.AddAnnotation(new ReconiliationAnnotation(itm.TargetAct.Key.Value));
                     itm.TargetActKey = itm.TargetAct.Key = candidate.Key;
@@ -425,26 +477,29 @@ namespace SanteDB.Core.Services.Impl
             }
 
             // We want to remove all actions from the existing care plan (remove them) - where there is no reconciliation
-            foreach(var itm in existingActions.Where(a => !a.GetAnnotations<ReconiliationAnnotation>().Any())) 
-            { 
+            foreach (var itm in existingActions.Where(a => !a.GetAnnotations<ReconiliationAnnotation>().Any()))
+            {
+                this.m_dataCacheService.Remove(itm);
+
                 itm.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
                 yield return itm;
             }
 
             // We want to remove all encounters since encounters are difficult to reconcile accross the care plans
-            foreach(var itm in existingCarePlan.Relationships.Where(o=>o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && o.TargetAct is PatientEncounter))
+            foreach (var itm in existingCarePlan.Relationships.Where(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent && o.TargetAct is PatientEncounter))
             {
-                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                this.m_dataCacheService.Remove(itm);
+                itm.TargetAct.BatchOperation = Model.DataTypes.BatchOperationType.DeletePreserveContained;
                 yield return itm.TargetAct;
             }
 
             // We will move the new encounters up
-            foreach(var itm in updatedCarePlan.Relationships.Where(r=>r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))
+            foreach (var itm in updatedCarePlan.Relationships.Where(r => r.RelationshipTypeKey == ActRelationshipTypeKeys.HasComponent))
             {
                 itm.TargetAct.Key = itm.TargetActKey = itm.TargetAct.Key ?? itm.TargetActKey ?? Guid.NewGuid();
                 yield return itm.TargetAct;
                 itm.TargetAct = null;
-            } 
+            }
             // Finally - match the care plan key
             updatedCarePlan.Key = existingCarePlan.Key;
             yield return updatedCarePlan;

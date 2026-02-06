@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -257,5 +257,10 @@ namespace SanteDB.Core.Security.Claims
         /// XSPA National Provider ID
         /// </summary>
         public const string XspaUserNpi = "urn:oasis:names:tc:xspa:1.0:subject:npi";
+
+        /// <summary>
+        /// Single use session token
+        /// </summary>
+        public const string SingleUseToken = "urn:santedb:org:claim:single-use";
     }
 }

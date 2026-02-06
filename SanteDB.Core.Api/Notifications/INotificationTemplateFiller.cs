@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -37,8 +37,16 @@ namespace SanteDB.Core.Notifications
         /// <param name="templateId">The id of the template in the repository.</param>
         /// <param name="templateLanguage">The language of the template from the repository. The language should match the language preference of the entity which will receive the notification.</param>
         /// <param name="model">A key/value pair dictionary of values to use for insertion into the notification.</param>
-        /// <returns>An instance of <see cref="NotificationTemplate"/> which has been filled in using the <paramref name="model"/> provided.</returns>
+        /// <returns>An instance of <see cref="NotificationTemplateContents"/> which has been filled in using the <paramref name="model"/> provided.</returns>
         NotificationTemplateContents FillTemplate(string templateId, string templateLanguage, IDictionary<string, object> model);
 
+        /// <summary>
+        /// Fills a template supplied in <paramref name="template"/> and the content of the language provided in <paramref name="templateLanguage"/> with the key/value pairs provided in <paramref name="model"/>.
+        /// </summary>
+        /// <param name="template">The template to fill.</param>
+        /// <param name="templateLanguage">The language of the template to use to retrieve the content for. The most specific language content will be used.</param>
+        /// <param name="model">The key/value pairs of parameters to insert into the template.</param>
+        /// <returns>A instance of <see cref="NotificationTemplateContents"/> containing the filled template.</returns>
+        NotificationTemplateContents FillTemplate(NotificationInstance template, string templateLanguage, IDictionary<string, object> model);
     }
 }

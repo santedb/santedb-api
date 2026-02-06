@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 - 2025, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
+ * Copyright (C) 2021 - 2026, SanteSuite Inc. and the SanteSuite Contributors (See NOTICE.md for full copyright notices)
  * Copyright (C) 2019 - 2021, Fyfe Software Inc. and the SanteSuite Contributors
  * Portions Copyright (C) 2015-2018 Mohawk College of Applied Arts and Technology
  * 
@@ -21,6 +21,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -33,15 +34,26 @@ namespace SanteDB.Core.Configuration
     {
 
         /// <summary>
+        /// E-Mail configuration
+        /// </summary>
+        public EmailNotificationConfigurationSection()
+        {
+            this.Smtp = new SmtpConfiguration();
+        }
+
+        /// <summary>
         /// SMTP Configuration settings
         /// </summary>
         [XmlElement("smtp"), JsonProperty("smtp")]
+        [DisplayName("SMTP Settings")]
+        [TypeConverter(typeof(ExpandableObjectConverter))]
         public SmtpConfiguration Smtp { get; set; }
 
         /// <summary>
         /// Gets or sets the administrative contacts for this server
         /// </summary>
         [XmlArray("adminContacts"), XmlArrayItem("add"), JsonProperty("adminContacts")]
+        [DisplayName("Administrative Contact Addresses")]
         public List<String> AdministrativeContacts { get; set; }
     }
 
