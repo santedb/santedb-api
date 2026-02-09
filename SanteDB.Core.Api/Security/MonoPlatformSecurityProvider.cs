@@ -178,6 +178,10 @@ namespace SanteDB.Core.Security
                     else if (matches.Count == 1)
                     {
                         certificate = matches[0];
+                        if(this.m_monoPrivateKeyStore.TryGetValue(certificate.Thumbprint, out var pkCert))
+                        {
+                            certificate = pkCert;
+                        }
                         return true;
                     }
                     else
