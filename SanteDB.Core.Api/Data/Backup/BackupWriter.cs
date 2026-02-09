@@ -102,6 +102,7 @@ namespace SanteDB.Core.Data.Backup
             }
 
             underlyingStream = new GZipStream(underlyingStream, CompressionMode.Compress);
+
             return new BackupWriter(underlyingStream);
         }
 

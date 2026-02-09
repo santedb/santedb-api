@@ -133,6 +133,8 @@ namespace SanteDB.Core.Security
         ///<inheritdoc />
         public bool TryInstallCertificate(X509Certificate2 certificate, StoreName storeName = StoreName.My, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
+            this.m_tracer.TraceInfo("Installing certificate {0} to {1}/{2}", certificate.Thumbprint, storeLocation, storeName);
+
             var audit = this.AuditCertificateInstallation(certificate);
 
 #pragma warning disable CS0168 // Variable is declared but never used
@@ -145,7 +147,6 @@ namespace SanteDB.Core.Security
                     var password = Guid.NewGuid().ToString();
 
                     var certtext = certificate.Export(X509ContentType.Pfx, password);
-
 
                     X509Certificate2 importcert = null;
                     if (storeLocation == StoreLocation.LocalMachine)
@@ -170,6 +171,7 @@ namespace SanteDB.Core.Security
             }
             catch (CryptographicException cex)
             {
+                this.m_tracer.TraceWarning("Could not install {0} to {1}/{2} - {3}", certificate.Subject, storeLocation, storeName, cex);
                 audit?.WithOutcome(OutcomeIndicator.SeriousFail);
                 return false;
             }

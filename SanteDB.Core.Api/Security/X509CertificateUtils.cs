@@ -47,7 +47,7 @@ namespace SanteDB.Core.Security
             {
                 s_defaultProvider = new MonoPlatformSecurityProvider();
             }
-            else
+            else 
             {
                 s_defaultProvider = new DefaultPlatformSecurityProvider();
             }
