@@ -249,6 +249,7 @@ namespace SanteDB.Core.Security
                             store.Add(certificate);
                             store.Close();
                         }
+                        this.m_tracer.TraceInfo("Certificate {0} has been placed into {1}/{2}", certificate.Subject, storeLocation, storeName);
                     }
                     catch
                     {
