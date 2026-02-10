@@ -133,11 +133,6 @@ namespace SanteDB.Core.Configuration
         [XmlEnum("session.abandon.pwd")]
         AbandonSessionAfterPasswordReset,
         /// <summary>
-        /// Abandon session on lockout
-        /// </summary>
-        [XmlEnum("session.abandon.locout")]
-        AbandonSessionAfterLockout,
-        /// <summary>
         /// Users must have MFA to their registered e-mail address
         /// </summary>
         [XmlEnum("auth.mfa.required")]
@@ -156,7 +151,12 @@ namespace SanteDB.Core.Configuration
         /// True if all dCDRS MUST use RSA digital signature certs
         /// </summary>
         [XmlEnum("sec.rsaSig.required")]
-        RequireRsaCerts
+        RequireRsaCerts,
+        /// <summary>
+        /// Abandon session on lockout
+        /// </summary>
+        [XmlEnum("session.abandon.lockout")]
+        AbandonSessionAfterLockout,
     }
 
     /// <summary>
