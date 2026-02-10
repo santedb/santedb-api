@@ -251,9 +251,9 @@ namespace SanteDB.Core.Security
                         }
                         this.m_tracer.TraceInfo("Certificate {0} has been placed into {1}/{2}", certificate.Subject, storeLocation, storeName);
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        this.m_tracer.TraceWarning("Could not copy the certificate to the CSP store");
+                        this.m_tracer.TraceWarning("Could not copy the certificate to the CSP store - {0}", e);
                     }
 
                     audit?.WithOutcome(OutcomeIndicator.Success);
