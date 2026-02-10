@@ -27,6 +27,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -160,6 +161,10 @@ namespace SanteDB.Core.Security
                     var matches = store.Certificates.Find(findType, findValue, validOnly);
                     if (matches.Count == 0)
                     {
+#if DEBUG
+                        Debug.WriteLine("Could not find certificate in the CSP store - searching PFX library");
+#endif 
+
                         // Look from PFX on the hard disk
                         switch (findType)
                         {
@@ -178,6 +183,14 @@ namespace SanteDB.Core.Security
                     else if (matches.Count == 1)
                     {
                         certificate = matches[0];
+                        if (this.m_monoPrivateKeyStore.TryGetValue(certificate.Thumbprint, out var pkCert))
+                        {
+#if DEBUG
+                            Debug.WriteLine("Certificate thumbprint exists in the internal Mono cert dictionary - returning");
+#endif 
+
+                            certificate = pkCert;
+                        }
                         return true;
                     }
                     else
@@ -214,6 +227,9 @@ namespace SanteDB.Core.Security
                 if (certificate.HasPrivateKey ||
                     storeName != StoreName.My) // Linux and other androids do not support write access to anything other My
                 {
+#if DEBUG
+                    Debug.WriteLine("Certificate has private key - will generate PFX file");
+#endif 
                     this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
                     this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate);
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
@@ -221,26 +237,23 @@ namespace SanteDB.Core.Security
                     using (var fs = File.Create(path))
                     {
                         var buffer = certificate.Export(X509ContentType.Pfx, this.ComputePass(path)); // TODO: Add password to configuration
-                                                                                                      // TODO: Ensure the certificate is exportable
                         fs.Write(buffer, 0, buffer.Length);
                     }
 
                     // HACK: Keep a copy of the public key in the MY store as well
                     try
                     {
-                        if (storeName == StoreName.My && storeLocation == StoreLocation.CurrentUser)
+                        using (var store = new X509Store(storeName, storeLocation))
                         {
-                            using (var store = new X509Store(storeName, storeLocation))
-                            {
-                                store.Open(OpenFlags.ReadWrite);
-                                store.Add(certificate);
-                                store.Close();
-                            }
+                            store.Open(OpenFlags.ReadWrite);
+                            store.Add(certificate);
+                            store.Close();
                         }
+                        this.m_tracer.TraceInfo("Certificate {0} has been placed into {1}/{2}", certificate.Subject, storeLocation, storeName);
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        this.m_tracer.TraceWarning("Could not copy the certificate to the My store");
+                        this.m_tracer.TraceWarning("Could not copy the certificate to the CSP store - {0}", e);
                     }
 
                     audit?.WithOutcome(OutcomeIndicator.Success);
@@ -248,6 +261,9 @@ namespace SanteDB.Core.Security
                 }
                 else if (!certificate.HasPrivateKey)
                 {
+#if DEBUG
+                    Debug.WriteLine("Certificate has no private key - storing in key store");
+#endif 
                     using (var store = new X509Store(storeName, storeLocation))
                     {
                         store.Open(OpenFlags.ReadWrite);
@@ -287,6 +303,10 @@ namespace SanteDB.Core.Security
 
                 if (File.Exists(pkPath))
                 {
+#if DEBUG
+                    Debug.WriteLine("PFX file exists at {0} - will remove for uninstall", pkPath);
+#endif 
+
                     File.Delete(pkPath);
                 }
                 this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
@@ -392,7 +412,7 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public IEnumerable<IBackupAsset> GetBackupAssets()
         {
-            foreach(var itm in this.m_monoPrivateKeyStore)
+            foreach (var itm in this.m_monoPrivateKeyStore)
             {
                 yield return new FileBackupAsset(BACKUP_ASSET_ID, itm.Key, Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, itm.Key), ".pfx"));
             }
@@ -401,18 +421,18 @@ namespace SanteDB.Core.Security
         /// <inheritdoc/>
         public bool Restore(IBackupAsset backupAsset)
         {
-            if(backupAsset == null)
+            if (backupAsset == null)
             {
                 throw new ArgumentNullException(nameof(backupAsset));
             }
-            else if(backupAsset.AssetClassId != BACKUP_ASSET_ID)
+            else if (backupAsset.AssetClassId != BACKUP_ASSET_ID)
             {
                 throw new ArgumentOutOfRangeException(nameof(backupAsset));
             }
 
             var fileName = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, backupAsset.Name), ".pfx");
             using (var fs = File.Create(fileName))
-            using(var ins = backupAsset.Open())
+            using (var ins = backupAsset.Open())
             {
                 ins.CopyTo(fs);
             }
