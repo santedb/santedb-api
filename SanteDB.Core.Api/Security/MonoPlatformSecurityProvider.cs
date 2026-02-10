@@ -237,7 +237,6 @@ namespace SanteDB.Core.Security
                     using (var fs = File.Create(path))
                     {
                         var buffer = certificate.Export(X509ContentType.Pfx, this.ComputePass(path)); // TODO: Add password to configuration
-                                                                                                      // TODO: Ensure the certificate is exportable
                         fs.Write(buffer, 0, buffer.Length);
                     }
 

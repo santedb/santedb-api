@@ -19,9 +19,14 @@
  * Date: 2023-6-21
  */
 using NUnit.Framework;
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Diagnostics.Tracing;
 using SanteDB.Core.Security;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Security.Cryptography.X509Certificates;
+using ZstdSharp;
 
 namespace SanteDB.Core.Api.Test
 {
@@ -78,6 +83,7 @@ namespace SanteDB.Core.Api.Test
         [Test]
         public void TestDoesInstallCertificate()
         {
+            Tracer.AddWriter(new ConsoleTraceWriter(System.Diagnostics.Tracing.EventLevel.LogAlways, String.Empty, new Dictionary<String, EventLevel>()), System.Diagnostics.Tracing.EventLevel.LogAlways);
             AppDomain.CurrentDomain.SetData("DataDirectory", TestContext.CurrentContext.TestDirectory);
             var provider = new MonoPlatformSecurityProvider();
 
