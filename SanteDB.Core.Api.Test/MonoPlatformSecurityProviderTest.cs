@@ -85,6 +85,7 @@ namespace SanteDB.Core.Api.Test
             var random = this.GetRandomPfx();
             this.RemoveTestCert(lumon);
             this.RemoveTestCert(random);
+            provider.TryUninstallCertificate(random);
             Assert.IsTrue(random.HasPrivateKey);
 
             // Test the installation of regular certificates with no private key
@@ -100,7 +101,10 @@ namespace SanteDB.Core.Api.Test
             Assert.IsFalse(this.HasCertificate(random));
             Assert.IsFalse(provider.TryGetCertificate(X509FindType.FindByThumbprint, random.Thumbprint, out _));
             Assert.IsTrue(provider.TryInstallCertificate(random));
-            Assert.IsFalse(this.HasCertificate(random)); // The OS store does not have the certificate
+            provider.TryGetCertificate(X509FindType.FindByThumbprint, random.Thumbprint, out var randomTryGet);
+            // TEST that random does have PK
+            Assert.IsTrue(randomTryGet.HasPrivateKey);
+            Assert.IsTrue(this.HasCertificate(random)); // The OS store does not have the certificate
             Assert.IsTrue(provider.TryGetCertificate(X509FindType.FindByThumbprint, random.Thumbprint, out _));
             Assert.IsTrue(provider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, random.Subject, out _));
             Assert.IsTrue(provider.TryUninstallCertificate(random));
