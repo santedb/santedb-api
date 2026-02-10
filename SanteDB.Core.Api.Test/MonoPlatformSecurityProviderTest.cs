@@ -103,7 +103,7 @@ namespace SanteDB.Core.Api.Test
             Assert.IsTrue(provider.TryInstallCertificate(random));
             provider.TryGetCertificate(X509FindType.FindByThumbprint, random.Thumbprint, out var randomTryGet);
             // TEST that random does have PK
-            Assert.IsTrue(randomTryGet.HasPrivateKey);
+            Assert.IsTrue(randomTryGet.HasPrivateKey, "Certificate is missing private key");
             Assert.IsTrue(this.HasCertificate(random)); // The OS store does not have the certificate
             Assert.IsTrue(provider.TryGetCertificate(X509FindType.FindByThumbprint, random.Thumbprint, out _));
             Assert.IsTrue(provider.TryGetCertificate(X509FindType.FindBySubjectDistinguishedName, random.Subject, out _));
