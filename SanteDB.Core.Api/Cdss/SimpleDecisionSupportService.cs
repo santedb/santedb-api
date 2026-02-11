@@ -505,7 +505,18 @@ namespace SanteDB.Core.Cdss
                     librariesToApply = this.m_cdssLibraryRepository.Find(o => true).ToArray();
                 }
 
-                var issues = librariesToApply.AsParallel().SelectMany(lib => lib.Analyze(collectedData, parameters));
+                var issues = librariesToApply.AsParallel().SelectMany(lib =>
+                {
+                    try
+                    {
+                        return lib.Analyze(collectedData, parameters);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.m_tracer.TraceWarning("Error evaluating {0} using {1} - {2}", collectedData, lib.Id, ex);
+                        return new ICdssResult[0];
+                    }
+                });
                 return issues;
             }
         }

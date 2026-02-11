@@ -161,10 +161,6 @@ namespace SanteDB.Core.Security
                     var matches = store.Certificates.Find(findType, findValue, validOnly);
                     if (matches.Count == 0)
                     {
-#if DEBUG
-                        Debug.WriteLine("Could not find certificate in the CSP store - searching PFX library");
-#endif 
-
                         // Look from PFX on the hard disk
                         switch (findType)
                         {
@@ -185,9 +181,6 @@ namespace SanteDB.Core.Security
                         certificate = matches[0];
                         if (this.m_monoPrivateKeyStore.TryGetValue(certificate.Thumbprint, out var pkCert))
                         {
-#if DEBUG
-                            Debug.WriteLine("Certificate thumbprint exists in the internal Mono cert dictionary - returning");
-#endif 
 
                             certificate = pkCert;
                         }
@@ -227,9 +220,6 @@ namespace SanteDB.Core.Security
                 if (certificate.HasPrivateKey ||
                     storeName != StoreName.My) // Linux and other androids do not support write access to anything other My
                 {
-#if DEBUG
-                    Debug.WriteLine("Certificate has private key - will generate PFX file");
-#endif 
                     this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
                     this.m_monoPrivateKeyStore.TryAdd(certificate.Thumbprint, certificate);
                     var path = Path.ChangeExtension(Path.Combine(this.m_monoPrivateKeyStoreLocation, certificate.Thumbprint), "pfx");
@@ -261,9 +251,6 @@ namespace SanteDB.Core.Security
                 }
                 else if (!certificate.HasPrivateKey)
                 {
-#if DEBUG
-                    Debug.WriteLine("Certificate has no private key - storing in key store");
-#endif 
                     using (var store = new X509Store(storeName, storeLocation))
                     {
                         store.Open(OpenFlags.ReadWrite);
@@ -303,10 +290,6 @@ namespace SanteDB.Core.Security
 
                 if (File.Exists(pkPath))
                 {
-#if DEBUG
-                    Debug.WriteLine("PFX file exists at {0} - will remove for uninstall", pkPath);
-#endif 
-
                     File.Delete(pkPath);
                 }
                 this.m_monoPrivateKeyStore.TryRemove(certificate.Thumbprint, out _);
