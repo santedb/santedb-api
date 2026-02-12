@@ -161,6 +161,11 @@ namespace SanteDB.Core.PubSub.Broker
             this.m_repository.Saved += OnSaved;
             this.m_repository.Deleted += OnDeleted;
 
+            if(this.m_repository is INotifyRepositoryServiceEx<TModel> inex)
+            {
+                inex.Touched += OnSaved;
+            }
+
             this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
             if (this.m_mergeService != null)
             {
@@ -272,6 +277,12 @@ namespace SanteDB.Core.PubSub.Broker
                 this.m_repository.Inserted -= this.OnInserted;
                 this.m_repository.Deleted -= this.OnDeleted;
                 this.m_repository.Saved -= this.OnSaved;
+
+                if(this.m_repository is INotifyRepositoryServiceEx<TModel> inex)
+                {
+                    inex.Touched -= this.OnSaved;
+                }
+
                 this.m_repository = null;
             }
             if (this.m_mergeService != null)

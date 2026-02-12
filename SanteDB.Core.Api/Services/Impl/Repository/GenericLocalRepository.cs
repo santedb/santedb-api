@@ -47,6 +47,7 @@ namespace SanteDB.Core.Services.Impl.Repository
         IRepositoryService<TEntity>,
         INotifyRepositoryService<TEntity>,
         IRepositoryServiceEx<TEntity>,
+        INotifyRepositoryServiceEx<TEntity>,
         ISecuredRepositoryService,
         ILocalServiceProvider<IRepositoryService<TEntity>>
         where TEntity : IdentifiedData
@@ -80,6 +81,16 @@ namespace SanteDB.Core.Services.Impl.Repository
         /// Fired after the record has been persisted
         /// </summary>
         public event EventHandler<DataPersistedEventArgs<TEntity>> Saved;
+
+        /// <summary>
+        /// Touching
+        /// </summary>
+        public event EventHandler<DataPersistingEventArgs<TEntity>> Touching;
+
+        /// <summary>
+        /// Touched
+        /// </summary>
+        public event EventHandler<DataPersistedEventArgs<TEntity>> Touched;
 
         /// <summary>
         /// Fired prior to the record being retrieved
@@ -572,7 +583,31 @@ namespace SanteDB.Core.Services.Impl.Repository
         {
             if (this.m_dataPersistenceService is IDataPersistenceServiceEx<TEntity> ide)
             {
+
+                var entity = this.m_dataPersistenceService.Get(key, null, AuthenticationContext.Current.Principal);
+                this.DemandAlter(entity);
+
+                // Fire an updating handler
+                var preTouch = new DataPersistingEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                this.Touching?.Invoke(this, preTouch);
+                if (preTouch.Cancel)
+                {
+                    this.m_traceSource.TraceInfo("Persistence layer indicates pre-touch cancel: {0}", entity);
+                    // Fired inserted trigger
+                    if (preTouch.Success)
+                    {
+                        this.Touched?.Invoke(this, new DataPersistedEventArgs<TEntity>(preTouch.Data, TransactionMode.Commit, AuthenticationContext.Current.Principal));
+                    }
+                }
+                else
+                {
+                    entity = preTouch.Data; // Data may have been updated
+                }
+                
                 ide.Touch(key, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                
+                this.Touched?.Invoke(this, new DataPersistedEventArgs<TEntity>(entity, TransactionMode.Commit, AuthenticationContext.Current.Principal));
+
             }
             else
             {
