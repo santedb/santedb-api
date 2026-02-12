@@ -226,11 +226,31 @@ namespace SanteDB.Core.Services
     }
 
     /// <summary>
+    /// An implementation of a IRepositoryServiceEx which notifies when data is touched
+    /// </summary>
+    /// <typeparam name="TModel"></typeparam>
+    public interface INotifyRepositoryServiceEx<TModel> : IRepositoryServiceEx<TModel>
+        where TModel : IdentifiedData
+    {
+
+        /// <summary>
+        /// Fired before saving
+        /// </summary>
+        event EventHandler<DataPersistingEventArgs<TModel>> Touching;
+
+        /// <summary>
+        /// Fired after data was saved
+        /// </summary>
+        event EventHandler<DataPersistedEventArgs<TModel>> Touched;
+
+    }
+
+    /// <summary>
     /// Represents a repository that can cancel an <see cref="Act"/> that is in progress
     /// </summary>
     [Description("Repository Service with Cancellation Support")]
     public interface ICancelRepositoryService<TModel> : IRepositoryService<TModel>
-        where TModel : IdentifiedData
+    where TModel : IdentifiedData
     {
         /// <summary>
         /// Cancels the specified <see cref="Act"/>
