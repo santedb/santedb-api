@@ -64,5 +64,16 @@ namespace SanteDB.Core.Security.Services
         [Obsolete()]
         void ClearCache(String principalName);
     }
+
+    /// <summary>
+    /// Extended policy decision service
+    /// </summary>
+    public interface IPolicyDecisionServiceEx : IPolicyDecisionService
+    {
+        /// <summary>
+        /// Get all expanded/mapped policies (the inferred policies)
+        /// </summary>
+        IEnumerable<String> ExpandInferredPolicies(IEnumerable<String> policyOids);
+    }
 }
 

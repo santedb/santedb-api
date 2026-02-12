@@ -92,5 +92,6 @@ namespace SanteDB.Core.PubSub
         /// <param name="holder">The holder of the relationship</param>
         /// <param name="target">The link that was removed</param>
         void NotifyUnlinked<TModel>(TModel holder, TModel target) where TModel : IdentifiedData;
+
     }
 }

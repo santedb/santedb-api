@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2024-6-21
  */
+using SanteDB.Core.Security;
 using System;
 using System.Diagnostics;
 
@@ -32,7 +33,6 @@ namespace SanteDB.Core.Http
         private const string HTTP_ROOT_PATH = "/";
         private static readonly TimeSpan MinusOne = TimeSpan.FromMilliseconds(-1);
         private const int PING_TIMEOUT = 3000; // MS for a PING timeout
-
         /// <summary>
         /// Attempts to send an HTTP PING to the rest client service. If successful, the reported time drift and latency are returned.
         /// </summary>
@@ -69,6 +69,7 @@ namespace SanteDB.Core.Http
 
                 restClient.Responded += handler;
                 restClient.SetTimeout(PING_TIMEOUT);
+                restClient.Credentials = new NullHttpCredentials(AuthenticationContext.AnonymousPrincipal); // No credential provider
                 var sw = Stopwatch.StartNew();
                 restClient.Invoke<object, object>(HTTP_PING, HTTP_ROOT_PATH, null);
                 sw.Stop();
