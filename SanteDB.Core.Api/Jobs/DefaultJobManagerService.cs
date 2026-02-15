@@ -203,7 +203,7 @@ namespace SanteDB.Core.Jobs
                 }
 
                 // Setup timers based on the jobs
-                this.m_systemTimer = new System.Timers.Timer(900_000); // timer runs every 15 minutes
+                this.m_systemTimer = new System.Timers.Timer(300_000); // timer runs every 5 minutes
                 this.m_systemTimer.Elapsed += SystemJobTimer;
                 this.m_systemTimer.Enabled = true;
                 this.m_systemTimer.Start();
