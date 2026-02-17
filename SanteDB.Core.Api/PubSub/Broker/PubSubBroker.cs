@@ -20,7 +20,9 @@
  */
 using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Jobs;
 using SanteDB.Core.Model;
+using SanteDB.Core.Model.Audit;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Parameters;
 using SanteDB.Core.Model.Query;
@@ -66,6 +68,7 @@ namespace SanteDB.Core.PubSub.Broker
 
         // Pub sub manager
         private IPubSubManagerService m_pubSubManager;
+        private readonly IPubSubLogService m_pubSubLogManager;
 
         /// <summary>
         /// Repository listeners
@@ -111,11 +114,16 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Create a new pub-sub broker
         /// </summary>
-        public PubSubBroker(IServiceManager serviceManager, IDispatcherQueueManagerService queueService, IPubSubManagerService pubSubManager)
+        public PubSubBroker(IServiceManager serviceManager, 
+            IDispatcherQueueManagerService queueService, 
+            IPubSubManagerService pubSubManager, 
+            IPubSubLogService pubSubLogService,
+            IJobManagerService jobManager)
         {
             this.m_serviceManager = serviceManager;
             this.m_queueService = queueService;
             this.m_pubSubManager = pubSubManager;
+            this.m_pubSubLogManager = pubSubLogService;
             // Create necessary service listener
             this.m_pubSubManager.Subscribed += this.PubSubSubscribe;
             this.m_pubSubManager.UnSubscribed += this.PubSubUnSubscribed;
@@ -123,6 +131,11 @@ namespace SanteDB.Core.PubSub.Broker
             {
                 this.PubSubSubscribe(o, e);
             };
+
+            if(!jobManager.IsJobRegistered(typeof(PubSubReprocessJob)))
+            {
+                jobManager.RegisterJob(typeof(PubSubReprocessJob));
+            }
 
         }
 
@@ -138,6 +151,7 @@ namespace SanteDB.Core.PubSub.Broker
                     Object queueObject = null;
                     while ((queueObject = this.m_queueService.Dequeue(e.QueueName)) is DispatcherQueueEntry dq && dq.Body is PubSubNotifyQueueEntry evtData)
                     {
+                        var outcomeIndicator = OutcomeIndicator.Success;
                         try
                         {
                             var dsptchr = this.GetDispatcher(e.QueueName);
@@ -156,7 +170,6 @@ namespace SanteDB.Core.PubSub.Broker
                                     case PubSubEventType.Update:
                                         dsptchr.NotifyUpdated(evtData.Data as IdentifiedData);
                                         break;
-
                                     case PubSubEventType.Merge:
                                         {
                                             if (evtData.Data is ParameterCollection pc && pc.TryGet("survivor", out IdentifiedData survivor) && pc.TryGet("linkedDuplicates", out Bundle duplicates))
@@ -203,6 +216,19 @@ namespace SanteDB.Core.PubSub.Broker
                         {
                             this.m_tracer.TraceError("Error dispatching notification from PubSub broker: {0}", ex);
                             this.m_queueService.Enqueue($"{e.QueueName}.dead", evtData);
+                            outcomeIndicator = OutcomeIndicator.SeriousFail;
+                        }
+
+                        if (evtData.Data is IdentifiedData idd)
+                        {
+                            this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), idd, evtData.EventType, outcomeIndicator);
+                        }
+                        else if (evtData.Data is ParameterCollection pc && (
+                            pc.TryGet("holder", out IdentifiedData holder) ||
+                            pc.TryGet("survivor", out holder)
+                        ))
+                        {
+                            this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), holder, evtData.EventType, outcomeIndicator);
                         }
                     }
                 }

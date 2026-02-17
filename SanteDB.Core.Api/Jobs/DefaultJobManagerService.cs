@@ -351,6 +351,8 @@ namespace SanteDB.Core.Jobs
                 {
                     ApplicationServiceContext.Current.GetService<IConfigurationManager>().SaveConfiguration();
                 }
+
+                this.m_jobStateManager.SetState(jobObject, JobStateType.NotRun);
                 return jobObject;
             }
             catch (Exception e)

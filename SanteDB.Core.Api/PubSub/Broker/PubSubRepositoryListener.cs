@@ -30,6 +30,7 @@ using SanteDB.Core.Services;
 using System;
 using System.Linq;
 using System.Xml.Serialization;
+using static SanteDB.Core.Services.Impl.FileSystemDispatcherQueueService;
 
 namespace SanteDB.Core.PubSub.Broker
 {
@@ -185,7 +186,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnmerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
+            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnMerge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.PushToDispatcherQueues(queueEntry);
         }
 
         /// <summary>
@@ -193,7 +195,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnMerged(object sender, Event.DataMergeEventArgs<TModel> evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList())))));
+            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Merge, new ParameterCollection(new Parameter("survivor", this.m_repository.Get(evt.SurvivorKey)), new Parameter("linkedDuplicates", new Bundle(evt.LinkedKeys.Select(o => this.m_repository.Get(o)).ToList()))));
+            this.PushToDispatcherQueues(queueEntry);
         }
 
         /// <summary>
@@ -225,7 +228,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnLinked(object sender, Data.DataManagementLinkEventArgs evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity)))));
+            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity))));
+            this.PushToDispatcherQueues(queueEntry);
 
         }
 
@@ -234,7 +238,8 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnLinked(object sender, Data.DataManagementLinkEventArgs evt)
         {
-            this.m_queueService.Enqueue(PubSubBroker.QueueName, new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity)))));
+            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity))));
+            this.PushToDispatcherQueues(queueEntry);
 
         }
 
@@ -263,10 +268,20 @@ namespace SanteDB.Core.PubSub.Broker
                         break;
                 }
                 var typeName = typeof(TModel).GetSerializationName();
-                this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == typeName).
-                    FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
+                this.PushToDispatcherQueues(queueMessage);
             }
         }
+
+        /// <summary>
+        /// Push to dispatcher queues
+        /// </summary>
+        private void PushToDispatcherQueues(PubSubNotifyQueueEntry queueMessage)
+        {
+            var resourceName = queueMessage.TargetType.GetSerializationName();
+            this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == resourceName).
+                    FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
+        }
+
         /// <summary>
         /// Dispose of this
         /// </summary>
