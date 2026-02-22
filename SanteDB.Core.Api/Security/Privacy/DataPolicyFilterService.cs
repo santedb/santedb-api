@@ -679,6 +679,8 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.StatusConceptKey = entity.StatusConceptKey;
                 retVal.Names = entity.Names?.Select(en => new EntityName(NameUseKeys.Anonymous, "XXXXX")).ToList() ?? 
                     new List<EntityName>() { new EntityName(NameUseKeys.Anonymous, "XXXXX") };
+                retVal.Relationships = new List<EntityRelationship>();
+                retVal.Participations = new List<ActParticipation>();
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
                 retVal.TemplateKey = MASKED_TEMPLATE_ID;
@@ -700,6 +702,8 @@ namespace SanteDB.Core.Security.Privacy
                 retVal.Policies = this.m_pipService.GetPolicies(act).Select(p => p.ToPolicyInstance()).ToList();
                 retVal.ReasonConceptKey = NullReasonKeys.Masked;
                 retVal.Protocols = new List<ActProtocol>();
+                retVal.Relationships = new List<ActRelationship>();
+                retVal.Participations = new List<ActParticipation>();
                 retVal.PreventDelayLoad();
                 retVal.CopyAnnotations(result);
                 retVal.TemplateKey = MASKED_TEMPLATE_ID;
