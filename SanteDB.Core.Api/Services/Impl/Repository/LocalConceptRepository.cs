@@ -140,7 +140,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             }
 
             retVal = retVal.ToArray();
-            this.m_adhocCacheService?.Add(cacheKey, retVal);
+            this.m_adhocCacheService?.Add(cacheKey, retVal, retVal != null ? (TimeSpan?)null : new TimeSpan(0, 0, 10)); // JF - Only cache null values for a shorter amount of time to allow for correction in the database
             return retVal;
         }
 
