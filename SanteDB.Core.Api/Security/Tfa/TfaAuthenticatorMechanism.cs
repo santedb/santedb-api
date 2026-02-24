@@ -19,6 +19,7 @@
  * Date: 2024-6-21
  */
 using SanteDB.Core.i18n;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security.Claims;
 using SanteDB.Core.Security.Configuration;
 using SanteDB.Core.Security.Services;
@@ -47,15 +48,23 @@ namespace SanteDB.Core.Security.Tfa
         private readonly ITfaCodeProvider m_tfaCodeProvider;
         private readonly ITfaSecretManager m_tfaSecretManager;
         private readonly string m_authenticatorSystemName;
+        private readonly ISecurityRepositoryService m_securityRepository;
+        private readonly IRepositoryService<SecurityUser> m_securityUserRepository;
 
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public TfaAuthenticatorMechanism(ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager, IConfigurationManager configurationManager)
+        public TfaAuthenticatorMechanism(ITfaCodeProvider tfaCodeProvider, 
+            ITfaSecretManager secretManager, 
+            IConfigurationManager configurationManager, 
+            ISecurityRepositoryService securityRepository,
+            IRepositoryService<SecurityUser> securityUserRepository)
         {
             this.m_tfaCodeProvider = tfaCodeProvider;
             this.m_tfaSecretManager = secretManager;
             this.m_authenticatorSystemName = configurationManager.GetAppSetting(APP_SETTING_AUTHETNICATOR_ISSUER) ?? $"{ApplicationServiceContext.Current.ApplicationName ?? "SanteDB"} on {Environment.MachineName}";
+            this.m_securityRepository = securityRepository;
+            this.m_securityUserRepository = securityUserRepository;
         }
 
         /// <inheritdoc/>
@@ -94,6 +103,9 @@ namespace SanteDB.Core.Security.Tfa
                 var code = this.m_tfaSecretManager.StartTfaRegistration(ci, 6, Rfc4226Mode.TotpThirtySecondInterval, AuthenticationContext.Current.Principal);
                 var secret = this.m_tfaSecretManager.GetSharedSecret(ci);
 
+                this.SetTfaMecahnism(user, false);
+
+
                 // HACK: Get the secret for sharing
                 return $"otpauth://totp/{user.Name}?secret={secret.Base32Encode()}&issuer={this.m_authenticatorSystemName}";
             }
@@ -108,7 +120,9 @@ namespace SanteDB.Core.Security.Tfa
         {
             if (user is IClaimsIdentity claimsIdentity)
             {
-                return this.m_tfaSecretManager.FinishTfaRegistration(claimsIdentity, verificationCode, AuthenticationContext.Current.Principal);
+                var result = this.m_tfaSecretManager.FinishTfaRegistration(claimsIdentity, verificationCode, AuthenticationContext.Current.Principal);
+                this.SetTfaMecahnism(user, result);
+                return result;
             }
             else
             {
@@ -127,6 +141,24 @@ namespace SanteDB.Core.Security.Tfa
             {
                 throw new InvalidOperationException("Cannot validate TOTP authenticator to non-claims identity.");
             }
+        }
+
+        /// <summary>
+        /// Sets the mechanism
+        /// </summary>
+        private void SetTfaMecahnism(IIdentity user, bool enableMechanism)
+        {
+            var userentity = this.m_securityRepository.GetUser(user);
+            userentity.TwoFactorEnabled = enableMechanism;
+            if (enableMechanism)
+            {
+                userentity.TwoFactorMechnaismKey = this.Id;
+            }
+            else
+            {
+                userentity.TwoFactorMechnaismKey = Guid.Empty;
+            }
+            this.m_securityUserRepository.Save(userentity);
         }
     }
 }
