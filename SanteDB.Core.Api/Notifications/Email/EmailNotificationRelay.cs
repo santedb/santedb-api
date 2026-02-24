@@ -77,7 +77,7 @@ namespace SanteDB.Core.Notifications.Email
                     Subject = subject,
                     Body = body,
                     Attachments = attachments.Select(att => (att.Name, att.ContentType, (object)att.Content)),
-                    FromAddress = null != fromAddress
+                    FromAddress = fromAddress
                 });
 
                 return Guid.Empty;
