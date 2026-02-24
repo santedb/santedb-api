@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Model.DataTypes.CheckDigitAlgorithms;
 using SanteDB.Core.Model.Security;
 using SanteDB.Core.Notifications;
 using SanteDB.Core.Security.Claims;
@@ -49,7 +50,11 @@ namespace SanteDB.Core.Security.Tfa
         /// <summary>
         /// DI Constructor
         /// </summary>
-        public TfaEmailMechanism(INotificationService notificationService, ITfaCodeProvider tfaCodeProvider, ITfaSecretManager secretManager, ISecurityRepositoryService securityRepository, IRepositoryService<SecurityUser> securityUserRepository)
+        public TfaEmailMechanism(INotificationService notificationService,
+            ITfaCodeProvider tfaCodeProvider,
+            ITfaSecretManager secretManager,
+            ISecurityRepositoryService securityRepository,
+            IRepositoryService<SecurityUser> securityUserRepository)
         {
             _NotificationService = notificationService;
             _TfaCodeProvider = tfaCodeProvider;
@@ -84,6 +89,7 @@ namespace SanteDB.Core.Security.Tfa
                 this._TfaSecretManager.RemoveTfaRegistration(ci, AuthenticationContext.Current.Principal);
                 var email = this.GetEmailAddressOrThrow(ci);
                 var secret = _TfaSecretManager.StartTfaRegistration(ci, 6, Rfc4226Mode.TotpTenMinuteInterval, AuthenticationContext.SystemPrincipal);
+                this.SetEmailValidated(user, false, false);
                 return this.SendCodeNotification(email, secret, ci.Name);
             }
             else
@@ -99,20 +105,32 @@ namespace SanteDB.Core.Security.Tfa
             {
                 var email = this.GetEmailAddressOrThrow(ci);
                 var result = _TfaSecretManager.FinishTfaRegistration(ci, verificationCode, AuthenticationContext.SystemPrincipal);
-
-                if (result)
-                {
-                    var userentity = _SecurityRepository.GetUser(user);
-                    userentity.EmailConfirmed = true;
-                    _SecurityUserRepository.Save(userentity);
-                }
-
+                this.SetEmailValidated(user, result, result);
                 return result;
             }
             else
             {
                 throw new InvalidOperationException("Cannot send notification to non-claims identity.");
             }
+        }
+
+        /// <summary>
+        /// Sets the e-mail is validated flag
+        /// </summary>
+        private void SetEmailValidated(IIdentity user, bool isEmailValidated, bool enableMechanism)
+        {
+            var userentity = _SecurityRepository.GetUser(user);
+            userentity.EmailConfirmed = isEmailValidated;
+            userentity.TwoFactorEnabled = enableMechanism;
+            if (enableMechanism)
+            {
+                userentity.TwoFactorMechnaismKey = this.Id;
+            }
+            else
+            {
+                userentity.TwoFactorMechnaismKey = Guid.Empty;
+            }
+            _SecurityUserRepository.Save(userentity);
         }
 
         /// <inheritdoc/>
@@ -140,15 +158,18 @@ namespace SanteDB.Core.Security.Tfa
         /// </summary>
         private string GetEmailAddressOrThrow(IClaimsIdentity claimsIdentity)
         {
-            var email = claimsIdentity.GetFirstClaimValue(SanteDBClaimTypes.Email);
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                var identity = AuthenticationContext.Current.GetUserIdentity();
-
+            // Sometimes the user may have updated their e-mail address and not logged out
+            var identity = AuthenticationContext.Current.GetUserIdentity();
+            String email = String.Empty;
+            if (identity != null)
+            {  // get most up-to-date
                 var securityuser = _SecurityRepository.GetUser(identity);
-
                 email = securityuser?.Email;
+            }
+
+            if (String.IsNullOrEmpty(email))
+            {
+                email = claimsIdentity.GetFirstClaimValue(SanteDBClaimTypes.Email);
             }
 
             if (string.IsNullOrEmpty(email))

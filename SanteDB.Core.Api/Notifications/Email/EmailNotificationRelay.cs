@@ -68,8 +68,7 @@ namespace SanteDB.Core.Notifications.Email
                     principal = null;
                 }
 
-                var fromAddress = principal?.GetClaimValue(SanteDBClaimTypes.Email);
-                var fromName = principal?.Identity?.Name;
+                var fromAddress = this.m_configuration.Smtp.From; // principal?.GetClaimValue(SanteDBClaimTypes.Email);
 
                 m_emailService.SendEmail(new EmailMessage
                 {
@@ -78,7 +77,7 @@ namespace SanteDB.Core.Notifications.Email
                     Subject = subject,
                     Body = body,
                     Attachments = attachments.Select(att => (att.Name, att.ContentType, (object)att.Content)),
-                    FromAddress = null != fromAddress ? $"{fromName} <{fromAddress}>" : null
+                    FromAddress = fromAddress
                 });
 
                 return Guid.Empty;
