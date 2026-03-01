@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Data;
 using SanteDB.Core.Data.Quality;
 using SanteDB.Core.Diagnostics;
 using SanteDB.Core.Jobs;
@@ -118,7 +119,8 @@ namespace SanteDB.Core.PubSub.Broker
             IDispatcherQueueManagerService queueService, 
             IPubSubManagerService pubSubManager, 
             IPubSubLogService pubSubLogService,
-            IJobManagerService jobManager)
+            IJobManagerService jobManager,
+            IDataManagementPattern dataManagementPattern = null) // JF - Force the DI injection of this service
         {
             this.m_serviceManager = serviceManager;
             this.m_queueService = queueService;

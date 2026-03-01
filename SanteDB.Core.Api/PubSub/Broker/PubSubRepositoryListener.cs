@@ -145,7 +145,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IRecordMergingService<TModel> recordMergingService, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
         {
             this.m_pubSubManager = pubSubManager;
             this.m_repository = repositoryService;
@@ -167,7 +167,7 @@ namespace SanteDB.Core.PubSub.Broker
                 inex.Touched += OnSaved;
             }
 
-            this.m_mergeService = ApplicationServiceContext.Current.GetService<IRecordMergingService<TModel>>();
+            this.m_mergeService = recordMergingService;
             if (this.m_mergeService != null)
             {
                 this.m_mergeService.Merged += OnMerged;
