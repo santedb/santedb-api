@@ -68,6 +68,12 @@ namespace SanteDB.Core.Data.Initialization
         public String Id { get; set; }
 
         /// <summary>
+        /// Overwrite existing relationships
+        /// </summary>
+        [XmlAttribute("processingFlags")]
+        public DatasetProcessingFlags DatasetProcessingFlags { get; set; }
+
+        /// <summary>
         /// Actions to be performed
         /// </summary>
         [XmlElement("insert", Type = typeof(DataInsert))]

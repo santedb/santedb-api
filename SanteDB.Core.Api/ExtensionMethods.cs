@@ -107,7 +107,9 @@ namespace SanteDB.Core
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
         /// </summary>
         public static T ResolveManagedRecord<T>(this T forSource) where T : IdentifiedData =>
-            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveManagedRecord(forSource) ?? forSource;
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveManagedRecord(forSource) ??
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveManagedRecord(forSource) as T ??
+            forSource;
 
         /// <summary>
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveManagedRecord(T)"/>
@@ -120,7 +122,9 @@ namespace SanteDB.Core
         /// Resolve the managed target wrapper for <see cref="IDataManagedLinkProvider{T}.ResolveOwnedRecord(T, IPrincipal)"/>
         /// </summary>
         public static T ResolveOwnedRecord<T>(this T forSource, IPrincipal ownerPrincipal) where T : IdentifiedData =>
-            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveOwnedRecord(forSource, ownerPrincipal) ?? forSource;
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider<T>()?.ResolveOwnedRecord(forSource, ownerPrincipal) ??
+            ApplicationServiceContext.Current.GetService<IDataManagementPattern>()?.GetLinkProvider(forSource.GetType())?.ResolveOwnedRecord(forSource, ownerPrincipal) as T ??
+            forSource;
 
         /// <summary>
         /// Non generic method of <see cref="ResolveOwnedRecord{T}(T, IPrincipal)"/>
