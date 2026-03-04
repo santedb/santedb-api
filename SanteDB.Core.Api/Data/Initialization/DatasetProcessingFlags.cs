@@ -33,16 +33,16 @@ namespace SanteDB.Core.Data.Initialization
         /// Overwrite existing relationshipos
         /// </summary>
         [XmlEnum("overwrite.relationships")]
-        OverwriteRelationships,
+        OverwriteRelationships = 0x1,
         /// <summary>
         /// Don't run in a transaction
         /// </summary>
         [XmlEnum("no.transaction")]
-        NoTransaction,
+        NoTransaction = 0x2,
         /// <summary>
         /// Validate objects before persisting them (may slow down inserts)
         /// </summary>
         [XmlEnum("validate.objects")]
-        ValidateDataBeforeInsert
+        ValidateDataBeforeInsert = 0x4
     }
 }
