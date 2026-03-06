@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SanteDB.Core.Data.Query
 {
@@ -40,7 +41,12 @@ namespace SanteDB.Core.Data.Query
         /// Compute the MD5 hash data for <paramref name="data"/>
         /// </summary>
         public static string ComputeMd5Hash(this byte[] data) => MD5.Create().ComputeHash(data).HexEncode();
-        
+
+        /// <summary>
+        /// Compute MD5 hash of a string
+        /// </summary>
+        public static string ComputeMd5Hash(this string data) => MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(data)).HexEncode();
+
         /// <summary>
         /// Determines if <paramref name="securityEntity"/> has a claim <paramref name="claimType"/> 
         /// </summary>

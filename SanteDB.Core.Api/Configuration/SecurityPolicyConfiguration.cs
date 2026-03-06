@@ -108,6 +108,11 @@ namespace SanteDB.Core.Configuration
         [XmlEnum("uuid.facility")]
         AssignedFacilityUuid,
         /// <summary>
+        /// Indicates the owner facility 
+        /// </summary>
+        [XmlEnum("uuid.permittedFacilities")]
+        PermittedFacilities,
+        /// <summary>
         /// Indicates the owner user
         /// </summary>
         [XmlEnum("uuid.owner")]
