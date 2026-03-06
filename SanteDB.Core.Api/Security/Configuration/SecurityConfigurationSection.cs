@@ -21,12 +21,16 @@
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.Map;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Security.Configuration
@@ -76,30 +80,33 @@ namespace SanteDB.Core.Security.Configuration
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
     public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection
     {
-        /// <summary>
-        /// Require RSA digital siganture certs
-        /// </summary>
-        public const string RequireRsaSignaturesName = "sec.rsaSig.required";
-        /// <summary>
-        /// If MFA is required
-        /// </summary>
-        public const string RequireMfaName = "auth.mfa.required";
+        public static readonly SecurityPolicyIdentification[] PUBLIC_POLICIES = new SecurityPolicyIdentification[]
+        {
+            SecurityPolicyIdentification.AbandonSessionAfterLockout,
+            SecurityPolicyIdentification.AbandonSessionAfterPasswordReset,
+            SecurityPolicyIdentification.AllowCachingOfUserCredentials,
+            SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts,
+            SecurityPolicyIdentification.AllowNonAssignedUsersToLogin,
+            SecurityPolicyIdentification.AllowPublicBackups,
+            SecurityPolicyIdentification.AuditRetentionTime,
+            SecurityPolicyIdentification.AuthenticationCookieValidityLength,
+            SecurityPolicyIdentification.ChallengeHistory,
+            SecurityPolicyIdentification.DownstreamLocalSessionLength,
+            SecurityPolicyIdentification.ElevatedSessionLength,
+            SecurityPolicyIdentification.MaxInvalidLogins,
+            SecurityPolicyIdentification.MaxPasswordAge,
+            SecurityPolicyIdentification.PasswordHistory,
+            SecurityPolicyIdentification.RefreshLength,
+            SecurityPolicyIdentification.RequireMfa,
+            SecurityPolicyIdentification.RequireRsaCerts,
+            SecurityPolicyIdentification.SessionLength
+        };
+
+
         /// <summary>
         /// Password complexity requirements disclosure
         /// </summary>
         public const string PasswordValidationDisclosureName = "sec.pwd";
-        /// <summary>
-        /// Local accounts allowed on device policy
-        /// </summary>
-        public const string LocalAccountAllowedDisclosureName = "sec.local";
-        /// <summary>
-        /// Session length policy
-        /// </summary>
-        public const string LocalSessionLengthDisclosureName = "sec.ses";
-        /// <summary>
-        /// Allow public backups
-        /// </summary>
-        public const string PublicBackupsAllowedDisclosureName = "backup.public";
 
         /// <summary>
         /// Security configuration section
@@ -208,10 +215,12 @@ namespace SanteDB.Core.Security.Configuration
         public IEnumerable<AppSettingKeyValuePair> ForDisclosure()
         {
             yield return new AppSettingKeyValuePair(PasswordValidationDisclosureName, this.PasswordRegex);
-            yield return new AppSettingKeyValuePair(RequireMfaName, this.GetSecurityPolicy(SecurityPolicyIdentification.RequireMfa, false).ToString());
-            yield return new AppSettingKeyValuePair(LocalAccountAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, false).ToString());
-            yield return new AppSettingKeyValuePair(LocalSessionLengthDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.DownstreamLocalSessionLength, new TimeSpan(0, 30, 0).ToString()));
-            yield return new AppSettingKeyValuePair(PublicBackupsAllowedDisclosureName, this.GetSecurityPolicy(SecurityPolicyIdentification.AllowPublicBackups, false).ToString());
+
+            foreach(var pol in this.SecurityPolicy.Where(p => PUBLIC_POLICIES.Contains(p.PolicyId) && p.Enabled))
+            {
+                var serializationName = typeof(SecurityPolicyIdentification).GetField(pol.PolicyId.ToString()).GetCustomAttribute<XmlEnumAttribute>()?.Name;
+                yield return new AppSettingKeyValuePair(serializationName, pol.PolicyValue.ToString());
+            }
 
         }
 
@@ -220,11 +229,45 @@ namespace SanteDB.Core.Security.Configuration
         {
             this.PasswordRegex = settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.PasswordValidationDisclosureName)?.Value ??
                     this.PasswordRegex;
-            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.RequireMfa, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.RequireMfaName)?.Value ?? "false"));
-            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.SessionLength, TimeSpan.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.LocalSessionLengthDisclosureName)?.Value ?? "00:30:00"));
-            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowLocalDownstreamUserAccounts, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.LocalAccountAllowedDisclosureName)?.Value ?? "false"));
-            this.SetPolicy(Core.Configuration.SecurityPolicyIdentification.AllowPublicBackups, Boolean.Parse(settings.FirstOrDefault(o => o.Key == SecurityConfigurationSection.PublicBackupsAllowedDisclosureName)?.Value ?? "false"));
 
+            foreach(var pol in PUBLIC_POLICIES)
+            {
+                var serializationName = typeof(SecurityPolicyIdentification).GetField(pol.ToString()).GetCustomAttribute<XmlEnumAttribute>()?.Name;
+                var setting = settings.FirstOrDefault(o => o.Key == serializationName)?.Value;
+                if(String.IsNullOrEmpty(setting))
+                {
+                    continue;
+                }
+
+                if(Int32.TryParse(setting, out var i32))
+                {
+                    this.SetPolicy(pol, i32);
+                }
+                else if(DateTime.TryParse(setting, out var dt))
+                {
+                    this.SetPolicy(pol, dt);
+                }
+                else if(TimeSpan.TryParse(setting, out var ts))
+                {
+                    this.SetPolicy(pol, ts);
+                }
+                else if(Guid.TryParse(setting, out var uuid))
+                {
+                    this.SetPolicy(pol, uuid);
+                }
+                else if(double.TryParse(setting, out var db))
+                {
+                    this.SetPolicy(pol, db);
+                }
+                else if(Boolean.TryParse(setting, out var bl))
+                {
+                    this.SetPolicy(pol, bl);
+                }
+                else
+                {
+                    this.SetPolicy(pol, setting);
+                }
+            }
         }
 
     }
