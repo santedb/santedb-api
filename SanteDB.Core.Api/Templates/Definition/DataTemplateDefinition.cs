@@ -146,7 +146,7 @@ namespace SanteDB.Core.Templates.Definition
         /// Get the last modified time
         /// </summary>
         [XmlElement("lastModified"), JsonProperty("lastModified")]
-        public DateTime LastUpdated { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
 
         /// <inheritdoc/>
         public bool ShouldSerializeReadonly() => !this.m_saving;
