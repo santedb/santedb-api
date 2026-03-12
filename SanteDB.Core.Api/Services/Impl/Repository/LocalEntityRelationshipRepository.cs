@@ -91,6 +91,14 @@ namespace SanteDB.Core.Services.Impl.Repository
         }
 
         /// <summary>
+        /// Demand deleting
+        /// </summary>
+        public override void DemandDelete(Guid key)
+        {
+            this.DemandAlter(this.Get(key));
+        }
+
+        /// <summary>
         /// Insert the entity relationship
         /// </summary>
         public override EntityRelationship Insert(EntityRelationship data)

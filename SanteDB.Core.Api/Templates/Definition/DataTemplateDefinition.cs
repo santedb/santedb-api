@@ -146,7 +146,7 @@ namespace SanteDB.Core.Templates.Definition
         /// Get the last modified time
         /// </summary>
         [XmlElement("lastModified"), JsonProperty("lastModified")]
-        public DateTime LastUpdated { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
 
         /// <inheritdoc/>
         public bool ShouldSerializeReadonly() => !this.m_saving;
@@ -283,7 +283,9 @@ namespace SanteDB.Core.Templates.Definition
             parameters.Add("now", DateTimeOffset.Now.ToString("o"));
             parameters.Add("nowMinute", DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm"));
 
-            var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? this.JsonTemplate.Content : referenceResolver(this.JsonTemplate.Content);
+            var jsonContentRaw = this.JsonTemplate.ContentType == DataTemplateContentType.content ? 
+                this.JsonTemplate.Content : 
+                (referenceResolver(this.JsonTemplate.Content) ?? throw new KeyNotFoundException(this.JsonTemplate.Content)); // JF- If resolving the template fails we want to throw a KNF exception
 
             // Perform repeat instructions
             jsonContentRaw = m_repeatRegex.Replace(jsonContentRaw, (m) =>
