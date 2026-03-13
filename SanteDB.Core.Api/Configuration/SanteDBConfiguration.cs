@@ -21,6 +21,7 @@
 using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.Model.Serialization;
+using SanteDB.Core.Security;
 using SanteDB.Core.Security.Configuration;
 using System;
 using System.Collections.Generic;
@@ -327,11 +328,11 @@ namespace SanteDB.Core.Configuration
             using(var xw = XmlWriter.Create(dataStream,  new XmlWriterSettings() { Indent = true }))
             {
                 xw.WriteComment($"SanteDB CDR Configuration File");
-                xw.WriteComment($"Created By: {Environment.UserName}");
+                xw.WriteComment($"Host User: {Environment.UserName}");
                 xw.WriteComment($"Host Application: {Assembly.GetEntryAssembly()?.FullName}");
                 xw.WriteComment($"Machine: {Environment.MachineName}");
                 xw.WriteComment($"Timestamp: {DateTimeOffset.Now:o}");
-
+                xw.WriteComment($"Application User: {AuthenticationContext.Current?.Principal.Identity.Name}");
                 var xsz = XmlModelSerializerFactory.Current.CreateSerializer(typeof(SanteDBConfiguration), this.SectionTypes.OfType<TypeReferenceConfiguration>().Select(o => o.Type).Where(o => o != null).ToArray());
                 xsz.Serialize(xw, santeDBConfiguration, xmlns);
             }
