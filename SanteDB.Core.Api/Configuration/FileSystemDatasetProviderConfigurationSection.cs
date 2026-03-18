@@ -19,8 +19,11 @@
  * Date: 2024-12-12
  */
 using Newtonsoft.Json;
+using SanteDB.Core.BusinessRules;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -30,7 +33,7 @@ namespace SanteDB.Core.Configuration
     /// File system dataset provider configuration section
     /// </summary>
     [XmlType(nameof(FileSystemDatasetProviderConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class FileSystemDatasetProviderConfigurationSection : IConfigurationSection
+    public class FileSystemDatasetProviderConfigurationSection : IConfigurationSection, IValidatableConfigurationSection
     {
 
 
@@ -40,5 +43,24 @@ namespace SanteDB.Core.Configuration
         [XmlArray("sources"), XmlArrayItem("add"), JsonProperty("sources")]
         public List<String> Sources { get; set; }
 
+        /// <inheritdoc/>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            foreach (var path in this.Sources.Select(o => o.ToLower()))
+            {
+                if (!Directory.Exists(path)) // HACK: Might be on linux or have a lower case data file
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "err.config.folder", $"Folder {path} doesn't exist", Guid.Empty);
+                }
+                else if (!Path.IsPathRooted(path))
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "err.config.abs", $"Folder path {path} should be absolute", Guid.Empty);
+                }
+                if (!Directory.EnumerateFiles(path, "*.dataset").Any())
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "err.config.nods", $"Folder path {path} does not contain any datasets", Guid.Empty);
+                }
+            }
+        }
     }
 }

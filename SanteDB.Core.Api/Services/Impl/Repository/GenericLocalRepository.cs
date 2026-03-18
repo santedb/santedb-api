@@ -244,7 +244,13 @@ namespace SanteDB.Core.Services.Impl.Repository
 
             if (entity == null)
             {
-                throw new KeyNotFoundException(key.ToString());
+                switch(DataPersistenceControlContext.Current?.DeleteMode)
+                {
+                    case DeleteMode.IgnoreMissing:
+                        return null;
+                    default:
+                       throw new KeyNotFoundException(key.ToString());
+                }
             }
 
             // Fire pre-persistence triggers

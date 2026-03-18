@@ -110,9 +110,9 @@ namespace SanteDB.Core.Data
                 return this.GetRelationsInternal(relatedType, nameof(ActParticipation.PlayerEntityKey), targetKey);
 
             }
-            else if(typeof(ITargetedAssociation).IsAssignableFrom(relatedType))
+            else if(typeof(ISimpleTargetedAssociation).IsAssignableFrom(relatedType))
             {
-                return this.GetRelationsInternal(relatedType, nameof(ITargetedAssociation.TargetEntityKey), targetKey);
+                return this.GetRelationsInternal(relatedType, nameof(ISimpleTargetedAssociation.TargetEntityKey), targetKey);
             }
             else
             {

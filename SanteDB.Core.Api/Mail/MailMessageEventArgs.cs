@@ -32,9 +32,9 @@ namespace SanteDB.Core.Mail
         /// with a specified alert message.
         /// </summary>
         /// <param name="message">The alert message.</param>
-        public MailMessageEventArgs(MailMessage message)
+        public MailMessageEventArgs(params MailboxMailMessage[] messages)
         {
-            this.Message = message;
+            this.Messages = messages;
         }
 
         /// <summary>
@@ -46,6 +46,6 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// Gets the alert message.
         /// </summary>
-        public MailMessage Message { get; internal set; }
+        public MailboxMailMessage[] Messages { get; private set; }
     }
 }

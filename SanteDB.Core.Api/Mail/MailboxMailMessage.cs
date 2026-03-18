@@ -21,6 +21,8 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.EntityLoader;
+using SanteDB.Core.Model.Interfaces;
 using System;
 using System.Xml.Serialization;
 
@@ -30,16 +32,17 @@ namespace SanteDB.Core.Mail
     /// <summary>
     /// Associates a <see cref="MailMessage"/> with a <see cref="Mailbox"/>
     /// </summary>
+    [XmlRoot(nameof(MailboxMailMessage), Namespace = "http://santedb.org/model")]
     [XmlType(nameof(MailboxMailMessage), Namespace = "http://santedb.org/model")]
     [JsonObject(nameof(MailboxMailMessage))]
-    public class MailboxMailMessage : Association<Mailbox>
+    public class MailboxMailMessage : Association<Mailbox>, ISimpleTargetedAssociation
     {
 
         /// <summary>
         /// Gets the target of the association
         /// </summary>
-        [XmlElement("target"), JsonProperty("target")]
-        public Guid TargetKey { get; set; }
+        [XmlElement("message"), JsonProperty("message")]
+        public Guid? TargetEntityKey { get; set; }
 
         /// <summary>
         /// Gets or sets the flags
@@ -48,10 +51,35 @@ namespace SanteDB.Core.Mail
         public MailStatusFlags MailStatusFlag { get; set; }
 
         /// <summary>
-        /// Gets the target of the relationship
+        /// Date/time of the alert
         /// </summary>
-        [XmlIgnore, JsonIgnore, SerializationReference(nameof(TargetKey))]
-        public MailMessage Target { get; set; }
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(DeliveredTimeXml))]
+        public DateTimeOffset DeliveredTime { get; set; }
 
+        /// <summary>
+        /// Gets or sets the time of the alert.
+        /// </summary>
+        [JsonProperty("time"), XmlElement("time")]
+        public String DeliveredTimeXml
+        {
+            get { return this.DeliveredTime.ToString("o"); }
+            set
+            {
+                this.DeliveredTime = DateTime.Parse(value);
+            }
+        }
+
+        /// <summary>
+        /// Target key
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(TargetEntityKey))]
+        public MailMessage TargetEntity { get; set; }
+
+        /// <inheritdoc/>
+        [XmlIgnore, JsonIgnore]
+        object ISimpleTargetedAssociation.TargetEntity { 
+            get => this.TargetEntity; 
+            set => this.TargetEntity = value as MailMessage; 
+        }
     }
 }

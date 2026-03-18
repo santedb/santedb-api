@@ -99,7 +99,6 @@ namespace SanteDB.Core.Security
             token = tokenparts[0];
             return true;
 
-
         }
 
         /// <inheritdoc/>
