@@ -114,8 +114,20 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// To information
         /// </summary>
-        [XmlElement("to"), JsonProperty("toInfo")]
+        [XmlElement("toInfo"), JsonProperty("toInfo")]
         public string ToInfo { get; set; }
+
+        /// <summary>
+        /// Legacy property for the "to" field (so sync can occur on older tablets)
+        /// </summary>
+        /// <remarks>Not marked as [Obsolete] because the XmlSerializer won't serialize the data </remarks>
+        [XmlElement("to"), JsonProperty("to")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public string ToFieldLegacyDontUse
+        {
+            get => this.ToInfo;
+            set => this.ToInfo = value;
+        }
 
         /// <summary>
         /// Gets or sets the time this was modified on
