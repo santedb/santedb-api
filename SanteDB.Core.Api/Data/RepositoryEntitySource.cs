@@ -110,7 +110,7 @@ namespace SanteDB.Core.Data
         /// <inheritdoc/>
         public IQueryResultSet GetInverseRelations(Type relatedType, params Guid?[] targetKey)
         {
-            if(!typeof(ITargetedAssociation).IsAssignableFrom(relatedType))
+            if(!typeof(ISimpleTargetedAssociation).IsAssignableFrom(relatedType))
             {
                 throw new InvalidOperationException(String.Format(ErrorMessages.ARGUMENT_INCOMPATIBLE_TYPE, typeof(ITargetedAssociation), relatedType.GetType()));
             }
@@ -119,7 +119,7 @@ namespace SanteDB.Core.Data
             var parm = Expression.Parameter(relatedType);
             var containsMethod = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Contains), new Type[] { typeof(Guid?) }, new Type[] { typeof(IEnumerable<Guid?>), typeof(Guid?) }) as System.Reflection.MethodInfo;
 
-            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(targetKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ITargetedAssociation.TargetEntityKey)) ?? relatedType.GetProperty(nameof(ActParticipation.PlayerEntityKey)))), parm);
+            Expression expr = Expression.Lambda(Expression.Call(null, containsMethod, Expression.Constant(targetKey), Expression.MakeMemberAccess(parm, relatedType.GetProperty(nameof(ISimpleTargetedAssociation.TargetEntityKey)) ?? relatedType.GetProperty(nameof(ActParticipation.PlayerEntityKey)))), parm);
             return persistenceService?.Find(expr) ?? new MemoryQueryResultSet(new Object[0]);
         }
         /// <summary>

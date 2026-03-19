@@ -21,6 +21,7 @@
 using Newtonsoft.Json;
 using SanteDB.Core.Model;
 using SanteDB.Core.Model.Attributes;
+using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ namespace SanteDB.Core.Mail
     /// <summary>
     /// Represents a mailbox - a particular folder or place which holds <see cref="MailMessage"/> instances
     /// </summary>
+    [XmlRoot(nameof(Mailbox), Namespace = "http://santedb.org/model")]
     [XmlType(nameof(Mailbox), Namespace = "http://santedb.org/model")]
     [JsonObject(nameof(Mailbox))]
     public class Mailbox : BaseEntityData
@@ -47,7 +49,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// The name of the deleted mailbox
         /// </summary>
-        public const string DELTEED_NAME = "Deleted";
+        public const string DELETED_NAME = "Deleted";
 
         /// <summary>
         /// Gets or sets the user which owns this mailbox
@@ -59,7 +61,17 @@ namespace SanteDB.Core.Mail
         /// Gets or sets the user which owns the mailbox
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(OwnerKey))]
-        public SecurityUser Owner { get; set; }
+        public SecurityEntity Owner {
+            get
+            {
+                return (SecurityEntity)EntitySource.Current.Get<SecurityUser>(this.OwnerKey) ??
+                    (SecurityEntity)EntitySource.Current.Get<SecurityDevice>(this.OwnerKey);
+            }
+            set
+            {
+                this.OwnerKey = value?.Key ?? Guid.Empty;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the name of the mailbox
@@ -70,7 +82,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// Gets the messages for this mailbox
         /// </summary>
-        [XmlElement("messages"), JsonProperty("messages")]
+        [XmlIgnore, JsonIgnore]
         public List<MailboxMailMessage> Messages { get; set; }
 
 

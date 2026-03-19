@@ -812,6 +812,14 @@ namespace SanteDB.Core
         /// <returns>The registered data template definition</returns>
         public static DataTemplateDefinition GetByMnemonic(this IDataTemplateManagementService me, string mnemonic) => me.Find(o => o.Mnemonic == mnemonic).FirstOrDefault();
 
+        /// <summary>
+        /// True if the principal is not an interactive (user) principal
+        /// </summary>
+        public static bool IsNonInteractivePrincipal(this IPrincipal me)
+        {
+            return me.Identity is IDeviceIdentity ||
+                                me.Identity is IApplicationIdentity;
+        }
 
     }
 }

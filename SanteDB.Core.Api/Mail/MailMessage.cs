@@ -25,7 +25,9 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Mail
@@ -34,7 +36,7 @@ namespace SanteDB.Core.Mail
     /// Represents an alert message.
     /// </summary>
     [JsonObject(nameof(MailMessage)), XmlType(nameof(MailMessage), Namespace = "http://santedb.org/messaging"), XmlRoot(nameof(MailMessage), Namespace = "http://santedb.org/messaging")]
-    public class MailMessage : NonVersionedEntityData
+    public class MailMessage : BaseEntityData
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MailMessage"/> class.
@@ -44,21 +46,37 @@ namespace SanteDB.Core.Mail
         }
 
         /// <summary>
+        /// Mail message ctor
+        /// </summary>
+        [Obsolete()]
+        public MailMessage(String from, String to, String subject, String body, MailMessageFlags flags = MailMessageFlags.None)
+        {
+            this.FromInfo = from;
+            this.ToInfo = to;
+            this.FromKey = EntitySource.Current.Provider.Query<SecurityUser>(o=>o.UserName.ToLowerInvariant() == from.ToLowerInvariant()).Select(o=>o.Key.Value).FirstOrDefault();
+            this.Subject = subject;
+            this.Body = body;
+
+            var toNames = to.Split(';').Select(o=>o.ToLowerInvariant()).ToArray();
+            this.RcptToXml = EntitySource.Current.Provider.Query<SecurityUser>(o => toNames.Contains(o.UserName.ToLowerInvariant())).Select(o => o.Key.Value).ToList();
+            this.Flags = flags;
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MailMessage"/> class
         /// with a specified from, to, subject, body, and alert message flags.
         /// </summary>
-        /// <param name="from">The sender of the alert.</param>
+        /// <param name="fromKey">The sender of the alert.</param>
         /// <param name="to">The recipient of the alert.</param>
         /// <param name="subject">The subject of the alert.</param>
         /// <param name="body">The body of the alert.</param>
         /// <param name="flags">The flags of the alert.</param>
-        public MailMessage(String from, String to, String subject, String body, MailMessageFlags flags = MailMessageFlags.None)
+        public MailMessage(Guid fromKey, Guid[] to, String subject, String body, MailMessageFlags flags = MailMessageFlags.None)
         {
-            this.TimeStamp = DateTimeOffset.Now;
-            this.From = from;
+            this.FromKey = fromKey;
             this.Subject = subject;
             this.Body = body;
-            this.To = to;
+            this.RcptToXml = new List<Guid>(to);
             this.Flags = flags;
         }
 
@@ -67,19 +85,6 @@ namespace SanteDB.Core.Mail
         /// </summary>
         [JsonProperty("body"), XmlElement("body")]
         public string Body { get; set; }
-
-        /// <summary>
-        /// Gets or sets the time of the alert.
-        /// </summary>
-        [JsonProperty("time"), XmlElement("time")]
-        public String DateTimeXml
-        {
-            get { return this.TimeStamp.DateTime.ToString("o"); }
-            set
-            {
-                this.TimeStamp = DateTime.Parse(value);
-            }
-        }
 
         /// <summary>
         /// Gets or sets the status of the alert.
@@ -91,7 +96,25 @@ namespace SanteDB.Core.Mail
         /// Gets or sets the "from" subject if it is a human based message of the alert.
         /// </summary>
         [JsonProperty("from"), XmlElement("from")]
-        public string From { get; set; }
+        public Guid FromKey { get; set; }
+
+        /// <summary>
+        /// From key
+        /// </summary>
+        [XmlIgnore, JsonIgnore, SerializationReference(nameof(FromKey))]
+        public SecurityUser From { get; set; }
+
+        /// <summary>
+        /// From Information (string representation)
+        /// </summary>
+        [XmlElement("fromInfo"), JsonProperty("fromInfo")]
+        public string FromInfo { get; set; }
+
+        /// <summary>
+        /// To information
+        /// </summary>
+        [XmlElement("toInfo"), JsonProperty("toInfo")]
+        public string ToInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the time this was modified on
@@ -115,15 +138,11 @@ namespace SanteDB.Core.Mail
         /// Receipt to
         /// </summary>
         [XmlIgnore, JsonIgnore, SerializationReference(nameof(RcptToXml))]
-        public List<SecurityUser> RcptTo
+        public List<SecurityEntity> RcptTo
         {
             get
             {
-                return this.RcptToXml?.Select(o => EntitySource.Current.Get<SecurityUser>(o) ?? new SecurityUser() { Key = o }).ToList();
-            }
-            set
-            {
-                this.RcptToXml = value?.Where(o => o.Key.HasValue).Select(o => o.Key.Value).ToList();
+                return this.RcptToXml.Select(o => (SecurityEntity)EntitySource.Current.Get<SecurityUser>(o) ?? (SecurityEntity)EntitySource.Current.Get<SecurityDevice>(o) ?? EntitySource.Current.Get<SecurityRole>(o)).ToList();
             }
         }
 
@@ -134,21 +153,10 @@ namespace SanteDB.Core.Mail
         public string Subject { get; set; }
 
         /// <summary>
-        /// Date/time of the alert
+        /// Gets the messages for this mailbox
         /// </summary>
-        [XmlIgnore, JsonIgnore]
-        public DateTimeOffset TimeStamp { get; set; }
-
-        /// <summary>
-        /// Gets or sets the recipient of the alert in a human readable form
-        /// </summary>
-        [JsonProperty("to"), XmlElement("to")]
-        public String To { get; set; }
-
-        /// <summary>
-        /// Mailboxes which this mail message appears in
-        /// </summary>
-        [XmlIgnore, JsonIgnore, QueryParameter("mailbox")]
+        [XmlIgnore, JsonIgnore, QueryParameter("mailbox"), DelayLoadInverse]
         public List<MailboxMailMessage> Mailboxes { get; set; }
     }
+
 }

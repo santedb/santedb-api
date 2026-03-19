@@ -70,6 +70,7 @@ namespace SanteDB.Core.Services.Impl.Repository
             this.m_traceSource.TraceEvent(EventLevel.Verbose, "Creating user {0}", data);
 
             var iids = ApplicationServiceContext.Current.GetService<IIdentityProviderService>();
+            var mailMessageService = ApplicationServiceContext.Current.GetService<IMailMessageService>();
 
             // Create the identity
             var id = iids.CreateIdentity(data.UserName, data.Password, AuthenticationContext.Current.Principal, data.Key);
@@ -96,6 +97,9 @@ namespace SanteDB.Core.Services.Impl.Repository
             {
                 throw new InvalidOperationException("INVALID_STATE");
             }
+
+            ApplicationServiceContext.Current.GetService<IMailMessageService>().InitializeMailboxes(id);
+
             return retVal;
         }
 

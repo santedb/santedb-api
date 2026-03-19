@@ -43,21 +43,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// Indicates the alert is high priority but doesn't require immediate action
         /// </summary>
-        HighPriority = 0x4,
+        HighPriority = 0x4
 
-        /// <summary>
-        /// Indicates the alert is a system alert
-        /// </summary>
-        System = 0x8,
-
-        /// <summary>
-        /// Indicates the alert is transient and shouldn't be persisted
-        /// </summary>
-        Transient = 0x10,
-
-        /// <summary>
-        /// Indicates a high priority alert.
-        /// </summary>
-        HighPriorityAlert = HighPriority | Alert
     }
 }

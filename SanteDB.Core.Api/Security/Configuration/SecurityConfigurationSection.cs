@@ -18,6 +18,7 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.BusinessRules;
 using SanteDB.Core.Configuration;
 using SanteDB.Core.Interop;
 using SanteDB.Core.Model.Map;
@@ -78,7 +79,7 @@ namespace SanteDB.Core.Security.Configuration
     /// SanteDB Security configuration
     /// </summary>
     [XmlType(nameof(SecurityConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection
+    public class SecurityConfigurationSection : IEncryptedConfigurationSection, IDisclosedConfigurationSection, IValidatableConfigurationSection
     {
         public static readonly SecurityPolicyIdentification[] PUBLIC_POLICIES = new SecurityPolicyIdentification[]
         {
@@ -270,5 +271,29 @@ namespace SanteDB.Core.Security.Configuration
             }
         }
 
+        /// <inheritdoc/>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            foreach(var sp in this.Signatures)
+            {
+                if(sp.Algorithm == SignatureAlgorithm.HS256)
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "config.security", $"Key {sp.KeyName} is using HMAC256 - this is not recommended in production environments - you may enable {typeof(RsaKeyInitializationService)} to automatically upgrade these", Guid.Empty);
+                }
+                else if(sp.Certificate == null)
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "config.security", $"Key {sp.KeyName} with RS256 cannot be found - the certificate does not exist", Guid.Empty);
+                }
+                else if(!sp.Certificate.HasPrivateKey)
+                {
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "config.security.pk", $"Key {sp.KeyName} does not have a private key associated with it", Guid.Empty);
+                }
+            }
+
+            if(this.PepExemptionPolicy == PolicyEnforcementExemptionPolicy.AllExempt)
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "config.pep", $"The PEP exemption policy of ALL is not recommended in production environments", Guid.Empty);
+            }
+        }
     }
 }

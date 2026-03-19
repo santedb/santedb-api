@@ -18,8 +18,11 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.BusinessRules;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Xml.Serialization;
 
 namespace SanteDB.Core.Configuration
@@ -28,7 +31,7 @@ namespace SanteDB.Core.Configuration
     /// Represents a configuration section for file system queueing
     /// </summary>
     [XmlType(nameof(FileSystemDispatcherQueueConfigurationSection), Namespace = "http://santedb.org/configuration")]
-    public class FileSystemDispatcherQueueConfigurationSection : IConfigurationSection
+    public class FileSystemDispatcherQueueConfigurationSection : IConfigurationSection, IValidatableConfigurationSection
     {
         /// <summary>
         /// Gets or sets the path to the queue location
@@ -37,5 +40,21 @@ namespace SanteDB.Core.Configuration
         [Description("Identifies where file system queues should be created")]
         [Editor("System.Windows.Forms.Design.FolderNameEditor, System.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
         public String QueuePath { get; set; }
+
+        /// <inheritdoc/>
+        public IEnumerable<DetectedIssue> Validate()
+        {
+            if (!Directory.Exists(this.QueuePath))
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "config.err.path", $"Queue path {this.QueuePath} does not exist", Guid.Empty);
+            }
+            else if(!Path.IsPathRooted(this.QueuePath))
+            {
+                yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "config.warn.root", $"Queue path {this.QueuePath} should be rooted", Guid.Empty);
+            }
+
+            // Warn about using this in prod
+            yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "config.patterns.prod", $"The file system dispatcher is intended for debug and evaluation deployments only - Use a more robust solution in production", Guid.Empty);
+        }
     }
 }

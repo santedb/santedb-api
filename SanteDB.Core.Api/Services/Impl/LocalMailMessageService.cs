@@ -18,18 +18,25 @@
  * User: fyfej
  * Date: 2023-6-21
  */
+using SanteDB.Core.Diagnostics;
+using SanteDB.Core.Event;
 using SanteDB.Core.Exceptions;
 using SanteDB.Core.i18n;
 using SanteDB.Core.Mail;
+using SanteDB.Core.Model;
 using SanteDB.Core.Model.Collection;
 using SanteDB.Core.Model.Query;
+using SanteDB.Core.Model.Security;
 using SanteDB.Core.Security;
+using SanteDB.Core.Security.Claims;
+using SanteDB.Core.Security.Principal;
 using SanteDB.Core.Security.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Security.Principal;
 
 namespace SanteDB.Core.Services.Impl
 {
@@ -37,8 +44,29 @@ namespace SanteDB.Core.Services.Impl
     /// Represents a <see cref="IMailMessageService"/> which uses database persistence layer 
     /// to store / retrieve mail messages within the system
     /// </summary>
-    public class LocalMailMessageService : IMailMessageService, IRepositoryService<MailMessage>
+    public class LocalMailMessageService : IMailMessageService
     {
+        private readonly String[] SYSTEM_MAILBOXES =
+        {
+            Mailbox.INBOX_NAME,
+            Mailbox.DELETED_NAME,
+            Mailbox.SENT_NAME
+        };
+
+        private readonly SanteDBHostType[] AUTO_CREATE_MAILBOX_HOST_TYPE =
+        {
+            SanteDBHostType.Server,
+            SanteDBHostType.Other,
+            SanteDBHostType.Test
+        };
+
+        /// <summary>
+        /// Interactive mail marker
+        /// </summary>
+        private struct NeedsDistributionMarker { }
+
+        private readonly Tracer m_tracer = Tracer.GetTracer(typeof(LocalMailMessageService));
+
         private readonly ILocalizationService m_localizationService;
         private readonly IDataPersistenceService<MailMessage> m_mailMessagePersistence;
         private readonly IDataPersistenceService<Mailbox> m_mailboxPersistence;
@@ -47,12 +75,24 @@ namespace SanteDB.Core.Services.Impl
 
         private readonly IPolicyEnforcementService m_policyEnforcementService;
         private readonly ISecurityRepositoryService m_securityPersistence;
+        private readonly IDataPersistenceService<SecurityUser> m_userPersistence;
+        private readonly IDataPersistenceService<SecurityDevice> m_devicePersistence;
 
         /// <inheritdoc/>
         public string ServiceName => "Local Mail Message Manager";
 
         /// <inheritdoc/>
+        public event EventHandler<MailMessageEventArgs> Delivered;
+        /// <inheritdoc/>
+        public event EventHandler<MailMessageEventArgs> Updated;
+        /// <inheritdoc/>
+        public event EventHandler<MailMessageEventArgs> Deleted;
+        /// <inheritdoc/>
         public event EventHandler<MailMessageEventArgs> Sent;
+        /// <inheritdoc/>
+        public event EventHandler<DataPersistedEventArgs<Mailbox>> MailboxCreated;
+        /// <inheritdoc/>
+        public event EventHandler<DataPersistedEventArgs<Mailbox>> MailboxDeleted;
 
         /// <summary>
         /// DI Constructor
@@ -62,7 +102,10 @@ namespace SanteDB.Core.Services.Impl
             IDataPersistenceService<Mailbox> mailboxPersistence,
             IDataPersistenceService<MailboxMailMessage> mailboxMessagePersistence,
             IDataPersistenceService<Bundle> bundlePersistence,
+            IDataPersistenceService<SecurityUser> userPersistence,
+            IDataPersistenceService<SecurityDevice> devicePersistence,
             ISecurityRepositoryService securityRepositoryService,
+            IApplicationServiceContext serviceContext,
             IPolicyEnforcementService pepService)
         {
             this.m_localizationService = localizationService;
@@ -70,9 +113,158 @@ namespace SanteDB.Core.Services.Impl
             this.m_mailboxPersistence = mailboxPersistence;
             this.m_mailboxMessagePersistence = mailboxMessagePersistence;
             this.m_bundlePersistence = bundlePersistence;
-
             this.m_policyEnforcementService = pepService;
             this.m_securityPersistence = securityRepositoryService;
+            this.m_userPersistence = userPersistence;
+            this.m_devicePersistence = devicePersistence;
+
+
+            bundlePersistence.Inserting += (o, e) =>
+            {
+                // Add any delivery instructions if this is not part of a synchronization
+                e.Data.Item.AddRange(e.Data.Item.OfType<MailMessage>().ToArray().SelectMany(m => this.DistributeMail(m, e.Data.Item.OfType<MailboxMailMessage>())));
+            };
+            mailMessagePersistence.Inserted += (o, e) =>
+            {
+                try
+                {
+                    var txBundle = new Bundle(this.DistributeMail(e.Data, e.Data.LoadProperty(x => x.Mailboxes)));
+                    this.m_tracer.TraceInfo("Inserting routing instructions for mail {0}...", txBundle);
+                    this.m_bundlePersistence.Insert(txBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error distributing mail", ex);
+                }
+            };
+        }
+
+        /// <summary>
+        /// Distribute a persisted mail message to the appropriate mailboxes
+        /// </summary>
+        private IEnumerable<IdentifiedData> DistributeMail(MailMessage mailMessage, IEnumerable<MailboxMailMessage> deliveredMailboxRef)
+        {
+
+            // Determine what the object in the RCPT TO is to get a list of individual objects where the mail should be routed 
+            var recipients = mailMessage.RcptTo.SelectMany(o =>
+            {
+                switch (o)
+                {
+                    case SecurityDevice sd:
+                        return new Guid[] { o.Key.Value };
+                    case SecurityUser su:
+                        return new Guid[] { o.Key.Value };
+                    case SecurityRole sr:
+                        // HACK: DEVICE is a special role that doesn't have "users" but should encompass all devices
+                        if (sr.Name.Equals("DEVICE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return this.m_devicePersistence.Query(u => u.ObsoletionTime == null, AuthenticationContext.SystemPrincipal).Select(d => d.Key.Value).ToArray();
+                        }
+                        else
+                        {
+                            return this.m_userPersistence.Query(u => u.Roles.Any(r => r.Key == sr.Key), AuthenticationContext.SystemPrincipal).Select(u => u.Key.Value).ToArray();
+                        }
+                    default:
+                        return new Guid[0];
+                }
+            });
+
+            var deliveredBoxes = mailMessage.LoadProperty(o => o.Mailboxes).Union(deliveredMailboxRef).Select(o => o.SourceEntityKey).ToArray();
+            var deliveredUsers = this.m_mailboxPersistence.Query(o => deliveredBoxes.Contains(o.Key.Value), AuthenticationContext.SystemPrincipal).Select(o => o.OwnerKey).ToArray();
+
+            // Strip off the mailbox records and persist them in the bundle
+            foreach (var itm in mailMessage.Mailboxes)
+            {
+                itm.BatchOperation = Model.DataTypes.BatchOperationType.InsertOrUpdate;
+                yield return itm;
+            }
+
+
+            // Route the mail to inboxes of the recipients
+            foreach (var itm in recipients.Distinct())
+            {
+                var existingMailRecord = this.m_mailboxMessagePersistence.Query(o => o.TargetEntityKey == mailMessage.Key && o.SourceEntity.OwnerKey == itm, AuthenticationContext.SystemPrincipal).Any();
+                if (existingMailRecord)
+                {
+                    this.m_tracer.TraceInfo("Mail message {0} has already been delivered to {1}", mailMessage.Key, itm);
+                }
+                else
+                {
+                    this.m_tracer.TraceInfo("Will route mail message {0} to {1}", mailMessage.Key, itm);
+                    var inboxMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.INBOX_NAME && o.OwnerKey == itm && o.ObsoletionTime == null, AuthenticationContext.SystemPrincipal).FirstOrDefault();
+                    if (inboxMailbox == null && 
+                        AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType)
+                    )
+                    {
+                        this.m_tracer.TraceInfo("Setting up Inbox for {0}", itm);
+                        inboxMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
+                        {
+                            Key = Guid.NewGuid(),
+                            Name = Mailbox.INBOX_NAME,
+                            OwnerKey = itm
+                        }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
+                    }
+
+                    if (!deliveredBoxes.Contains(inboxMailbox.Key.Value))
+                    {
+                        yield return new MailboxMailMessage()
+                        {
+                            BatchOperation = Model.DataTypes.BatchOperationType.Insert,
+                            SourceEntityKey = inboxMailbox.Key,
+                            TargetEntityKey = mailMessage.Key.Value,
+                            MailStatusFlag = MailStatusFlags.Unread,
+                            DeliveredTime = DateTimeOffset.Now
+                        };
+                    }
+                }
+            }
+
+            mailMessage.Mailboxes?.Clear();
+        }
+
+        /// <summary>
+        /// Get principal SID
+        /// </summary>
+        private Guid GetPrincipalSidInitialized()
+        {
+            var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.GetUserIdentity() ?? AuthenticationContext.Current.GetDeviceIdentity());
+            this.InitializeMailboxes(AuthenticationContext.Current.GetUserIdentity() ?? AuthenticationContext.Current.GetDeviceIdentity());
+            return mySid;
+        }
+
+        /// <summary>
+        /// Initialize the system mailboxes
+        /// </summary>
+        public void InitializeMailboxes(IIdentity forIdentity)
+        {
+            if (forIdentity == null)
+            {
+                throw new ArgumentNullException(nameof(forIdentity));
+            }
+            else if (forIdentity is IApplicationIdentity)
+            {
+                throw new ArgumentOutOfRangeException(nameof(forIdentity));
+            }
+
+
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                var mySid = this.m_securityPersistence.GetSid(forIdentity);
+                if (!this.m_mailboxPersistence.Query(o => o.OwnerKey == mySid, AuthenticationContext.SystemPrincipal).Any() &&
+                    AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType))
+                {
+                    this.m_tracer.TraceInfo("Initializing system mailboxes for SID {0}", forIdentity);
+                    if (forIdentity is IDeviceIdentity)
+                    {
+                        this.CreateMailbox(Mailbox.INBOX_NAME, mySid);
+                    }
+                    else
+                    {
+                        SYSTEM_MAILBOXES.ForEach(m => this.CreateMailbox(m, mySid));
+                        this.Send(UserMessages.WELCOME_SANTEDB, UserMessages.WELCOME_MESSAGE, MailMessageFlags.LowPriority, forIdentity.Name, mySid);
+                    }
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -84,56 +276,136 @@ namespace SanteDB.Core.Services.Impl
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
 
-            return this.m_mailboxPersistence.Insert(new Mailbox()
+            var mbx = this.m_mailboxPersistence.Insert(new Mailbox()
             {
                 Name = name,
                 OwnerKey = ownerKey ?? this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity)
             }, TransactionMode.Commit, AuthenticationContext.Current.Principal);
 
+            if (!SYSTEM_MAILBOXES.Contains(name))
+            {
+                this.MailboxCreated?.Invoke(this, new DataPersistedEventArgs<Mailbox>(mbx, TransactionMode.Commit, AuthenticationContext.Current.Principal));
+            }
+            return mbx;
         }
 
         /// <inheritdoc/>
-        public Mailbox DeleteMailbox(String mailboxName, Guid? ownerKey = null)
+        public Mailbox DeleteMailbox(Guid mailboxKey)
         {
-            var currentUserKey = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            if (ownerKey.HasValue && ownerKey != currentUserKey)
+            var currentUserKey = this.GetPrincipalSidInitialized();
+            var mailbox = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
+            if (mailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{mailboxKey}");
+            }
+            else if (SYSTEM_MAILBOXES.Contains(mailbox.Name))
+            {
+                throw new InvalidOperationException(String.Format(ErrorMessages.OBJECT_READONLY, mailbox.Name));
+            }
+            else if (mailbox.OwnerKey != currentUserKey)
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
-            else
-            {
-                ownerKey = currentUserKey;
-            }
-
-            var mailbox = this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == ownerKey, AuthenticationContext.Current.Principal).First();
-            if (mailbox == null)
-            {
-                throw new KeyNotFoundException(mailboxName);
-            }
             // Delete the mailbox
-            return this.m_mailboxPersistence.Delete(mailbox.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-        }
-
-        /// <summary>
-        /// Get a mailbox by identifier
-        /// </summary>
-        public Mailbox GetMailbox(String mailboxName)
-        {
-            var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            return this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
+            var retVal = this.m_mailboxPersistence.Delete(mailboxKey, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            this.MailboxDeleted?.Invoke(this, new DataPersistedEventArgs<Mailbox>(mailbox, TransactionMode.Commit, AuthenticationContext.Current.Principal));
+            return retVal;
         }
 
         /// <inheritdoc/>
-        public MailboxMailMessage DeleteMessage(String fromMailboxName, Guid messageKey)
+        public MailboxMailMessage GetMailMessage(Guid mailboxKey, Guid messageKey)
+        {
+            var mySid = this.GetPrincipalSidInitialized();
+            var mailbox = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
+            if (mailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{mailboxKey}");
+            }
+            else if (mailbox.OwnerKey != mySid)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+
+            using (DataPersistenceControlContext.Create(LoadMode.FullLoad))
+            {
+                var mailMessage = this.m_mailboxMessagePersistence.Query(o => o.SourceEntityKey == mailboxKey && o.TargetEntityKey == messageKey, AuthenticationContext.Current.Principal).FirstOrDefault();
+                if (mailMessage == null)
+                {
+                    throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{mailboxKey}/{typeof(MailMessage).GetSerializationName()}/{messageKey}");
+                }
+                return mailMessage;
+            }
+        }
+
+        /// <inheritdoc/>
+        public Mailbox GetMailbox(Guid mailboxKey)
+        {
+            var mySid = this.GetPrincipalSidInitialized();
+            var retVal = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
+            if (retVal == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{mailboxKey}");
+            }
+            else if (retVal.OwnerKey != mySid)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+            return retVal;
+        }
+
+        /// <inheritdoc/>
+        public Mailbox GetMailboxByName(String name)
+        {
+            var mySid = this.GetPrincipalSidInitialized();
+            return this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == name.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
+        }
+
+        /// <inheritdoc/>
+        public MailboxMailMessage DeleteMessage(Guid fromMailbox, Guid messageKey)
         {
             // Delete the specified mail message key
-            var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            var mailMessageBoxAssoc = this.m_mailboxMessagePersistence.Query(o => o.Key == messageKey && o.SourceEntity.Name.ToLowerInvariant() == fromMailboxName.ToLowerInvariant() && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).FirstOrDefault();
+            var mySid = this.GetPrincipalSidInitialized();
+            var mailbox = this.m_mailboxPersistence.Get(fromMailbox, null, AuthenticationContext.Current.Principal);
+            if (mailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{fromMailbox}");
+            }
+            else if (mailbox.OwnerKey != mySid)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+
+
+            var mailMessageBoxAssoc = this.m_mailboxMessagePersistence.Query(o => o.TargetEntityKey == messageKey && o.SourceEntityKey == fromMailbox, AuthenticationContext.Current.Principal).FirstOrDefault();
             if (mailMessageBoxAssoc == null)
             {
-                throw new KeyNotFoundException(messageKey.ToString());
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{fromMailbox}/{typeof(MailMessage).GetSerializationName()}/{messageKey}");
             }
-            return this.m_mailboxMessagePersistence.Delete(mailMessageBoxAssoc.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+            // Is the mailbox the deleted mailbox?
+            if (!Mailbox.DELETED_NAME.Equals(mailbox.Name, StringComparison.OrdinalIgnoreCase)) // MOVE TO DELETED
+            {
+                var deletedMailbox = this.m_mailboxPersistence.Query(o => o.OwnerKey == mailbox.OwnerKey && o.Name.ToLowerInvariant() == Mailbox.DELETED_NAME.ToLowerInvariant() && o.ObsoletionTime == null, AuthenticationContext.Current.Principal).FirstOrDefault();
+                if (deletedMailbox == null && AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType)) // Create mailbox
+                {
+                    deletedMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
+                    {
+                        OwnerKey = mailbox.OwnerKey,
+                        Name = Mailbox.DELETED_NAME
+                    }, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                }
+                else if (deletedMailbox == null)
+                {
+                    throw new InvalidOperationException(String.Format(ErrorMessages.WOULD_RESULT_INVALID_STATE, "Server Must Create DELETED mailbox"));
+                }
+                return this.MoveMessage(fromMailbox, messageKey, deletedMailbox.Key.Value, false);
+            }
+            else
+            {
+                var retVal = this.m_mailboxMessagePersistence.Delete(mailMessageBoxAssoc.Key.Value, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+                this.Deleted?.Invoke(this, new MailMessageEventArgs(retVal));
+                return retVal;
+            }
         }
 
         /// <inheritdoc/>
@@ -143,128 +415,160 @@ namespace SanteDB.Core.Services.Impl
             {
                 this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
-            var thisSid = forUserKey ?? this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
+            var thisSid = forUserKey ?? this.GetPrincipalSidInitialized();
             return this.m_mailboxPersistence.Query(o => o.OwnerKey == thisSid && o.ObsoletionTime == null, AuthenticationContext.Current.Principal);
         }
 
         /// <inheritdoc/>
-        public IQueryResultSet<MailboxMailMessage> GetMessages(String mailboxName)
+        public IQueryResultSet<MailboxMailMessage> GetMessages(Guid mailboxKey)
         {
             // Only administrators are permitted to read other people's mail
-            var thisSid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            return this.m_mailboxMessagePersistence.Query(o => o.SourceEntity.Name.ToLowerInvariant() == mailboxName.ToLowerInvariant() && o.SourceEntity.OwnerKey == thisSid, AuthenticationContext.Current.Principal);
+            var thisSid = this.GetPrincipalSidInitialized();
+            var mailbox = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
+            if (mailbox == null)
+            {
+                throw new KeyNotFoundException($"${typeof(MailboxMailMessage).GetSerializationName()}/{mailboxKey}");
+            }
+            else if (mailbox.OwnerKey != thisSid)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+
+            return this.m_mailboxMessagePersistence.Query(o => o.SourceEntityKey == mailboxKey && o.SourceEntity.OwnerKey == thisSid, AuthenticationContext.Current.Principal);
         }
 
         /// <inheritdoc/>
-        public MailboxMailMessage MoveMessage(Guid messageKey, String targetMailboxName, bool copy = false)
+        public MailboxMailMessage MoveMessage(Guid sourceMailboxKey, Guid messageKey, Guid targetMailboxKey, bool copy = false)
         {
             // Move a mail message to another mailbox
-            var mySid = this.m_securityPersistence.GetSid(AuthenticationContext.Current.Principal.Identity);
-            var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.Key == messageKey && o.SourceEntity.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
+            var mySid = this.GetPrincipalSidInitialized();
+            var targetMailbox = this.m_mailboxPersistence.Get(targetMailboxKey, null, AuthenticationContext.Current.Principal);
+            var sourceMailbox = this.m_mailboxPersistence.Get(sourceMailboxKey, null, AuthenticationContext.Current.Principal);
+            if (sourceMailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox)}/{sourceMailboxKey}");
+            }
+            else if (targetMailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox)}/{targetMailboxKey}");
+            }
+            else if (sourceMailbox.OwnerKey != mySid || targetMailbox.OwnerKey != mySid || sourceMailbox.OwnerKey != targetMailbox.OwnerKey)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+
+            var sourceMessage = this.m_mailboxMessagePersistence.Query(o => o.TargetEntityKey == messageKey && o.SourceEntityKey == sourceMailboxKey, AuthenticationContext.Current.Principal).SingleOrDefault();
             if (sourceMessage == null)
             {
-
                 throw new KeyNotFoundException(messageKey.ToString());
             }
-            var targetMailbox = this.m_mailboxPersistence.Query(o => o.Name.ToLowerInvariant() == targetMailboxName.ToLowerInvariant() && o.OwnerKey == mySid, AuthenticationContext.Current.Principal).SingleOrDefault();
-            if (targetMailbox == null)
+
+            var transaction = new Bundle();
+
+            // Are we copying?
+            if (!copy)
             {
-                switch (targetMailboxName)
-                {
-                    case Mailbox.INBOX_NAME:
-                    case Mailbox.DELTEED_NAME:
-                    case Mailbox.SENT_NAME:
-                        targetMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
-                        {
-                            Key = Guid.NewGuid(),
-                            Name = targetMailboxName,
-                            OwnerKey = mySid
-                        }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                        break;
-                    default:
-                        throw new KeyNotFoundException(targetMailboxName);
-                }
+                sourceMessage.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                transaction.Add(sourceMessage);
             }
 
-            // Move or copy 
-            if (copy)
+            transaction.Add(new MailboxMailMessage()
             {
-                return this.m_mailboxMessagePersistence.Insert(new MailboxMailMessage()
-                {
-                    TargetKey = sourceMessage.TargetKey,
-                    SourceEntityKey = targetMailbox.Key
-                }, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-            }
-            else
-            {
-                sourceMessage.SourceEntityKey = targetMailbox.Key;
-                return this.m_mailboxMessagePersistence.Update(sourceMessage, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-            }
+                BatchOperation = Model.DataTypes.BatchOperationType.Insert,
+                MailStatusFlag = sourceMessage.MailStatusFlag,
+                SourceEntityKey = targetMailboxKey,
+                TargetEntityKey = sourceMessage.TargetEntityKey,
+                DeliveredTime = sourceMessage.DeliveredTime
+            });
 
+            var retVal = this.m_bundlePersistence.Insert(transaction, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+            this.Updated?.Invoke(this, new MailMessageEventArgs(retVal.Item.OfType<MailboxMailMessage>().ToArray()));
+            return retVal.Item.OfType<MailboxMailMessage>().First(o => o.BatchOperation != Model.DataTypes.BatchOperationType.Delete);
         }
 
         /// <inheritdoc/>
-        public MailMessage Send(MailMessage mail)
+        public MailMessage Send(MailMessage mailMessage, Guid? fromKey = null)
         {
-            if (String.IsNullOrEmpty(mail.To) && mail.RcptTo?.Any() != true)
+            if (mailMessage == null)
+            {
+                throw new ArgumentNullException(nameof(mailMessage), ErrorMessages.ARGUMENT_NULL);
+            }
+            else if (!mailMessage.RcptToXml.Any())
             {
                 throw new InvalidOperationException(ErrorMessages.MAIL_MISISNG_TO);
+            }
+            else if (fromKey.HasValue)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
 
             try
             {
-                // We want to route via the RCPT to if available 
-                if (mail.RcptTo?.Any() != true)
+
+                var mySid = fromKey ?? this.GetPrincipalSidInitialized();
+                mailMessage.FromKey = mySid;
+                mailMessage.Key = mailMessage.Key ?? Guid.NewGuid();
+                mailMessage.FromInfo = mailMessage.FromInfo ?? AuthenticationContext.Current.Principal.Identity.Name;
+                mailMessage.ToInfo = mailMessage.ToInfo ?? String.Join(";", mailMessage.RcptTo.Select(o =>
                 {
-                    mail.RcptToXml = mail.To.Split(';').Distinct().Where(o => !String.IsNullOrEmpty(o)).Select(o => this.m_securityPersistence.GetUser(o).Key.Value).ToList();
-                }
-
-                var fromUser = AuthenticationContext.Current.Principal.Identity;
-                mail.From = fromUser.Name;
-
+                    switch (o)
+                    {
+                        case SecurityDevice sd:
+                            return sd.Name;
+                        case SecurityUser su:
+                            var displayName = su.LoadProperty(x => x.UserEntity)?.Names.FirstOrDefault()?.ToDisplay();
+                            if (String.IsNullOrEmpty(displayName))
+                            {
+                                return su.UserName;
+                            }
+                            else
+                            {
+                                return $"{displayName} <{su.UserName}>";
+                            }
+                        case SecurityRole sr:
+                            return sr.Name;
+                        default:
+                            return o.ToDisplay();
+                    }
+                }));
                 // Now we construct the mail message meta-data and place into the relevant inboxes
                 var txBundle = new Bundle();
-                mail.Key = mail.Key ?? Guid.NewGuid();
-                txBundle.Add(mail);
+                mailMessage.Key = mailMessage.Key ?? Guid.NewGuid();
+                txBundle.Add(mailMessage);
 
                 // Get the SENT folder for the user
-                var sentMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.SENT_NAME && o.Owner.UserName.ToLowerInvariant() == fromUser.Name.ToLowerInvariant(), AuthenticationContext.SystemPrincipal).FirstOrDefault();
+                var sentMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.SENT_NAME && o.OwnerKey == mySid, AuthenticationContext.SystemPrincipal).FirstOrDefault();
                 if (sentMailbox == null)
                 {
                     sentMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
                     {
                         Key = Guid.NewGuid(),
                         Name = Mailbox.SENT_NAME,
-                        OwnerKey = this.m_securityPersistence.GetSid(fromUser)
+                        OwnerKey = mySid
                     }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                 }
-                txBundle.Add(new MailboxMailMessage() { TargetKey = mail.Key.Value, SourceEntityKey = sentMailbox.Key });
+                txBundle.Add(new MailboxMailMessage() { TargetEntityKey = mailMessage.Key.Value, SourceEntityKey = sentMailbox.Key, DeliveredTime = DateTimeOffset.Now, MailStatusFlag = MailStatusFlags.Read });
 
-                // Route the mail to inboxes of the recipients
-                foreach (var itm in mail.RcptToXml)
+                // Indicate that this needs to be distributed
+                txBundle = this.m_bundlePersistence.Insert(txBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+
+                if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
                 {
-                    var inboxMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.INBOX_NAME && o.OwnerKey == itm && o.ObsoletionTime == null, AuthenticationContext.SystemPrincipal).FirstOrDefault();
-                    if (inboxMailbox == null)
+                    txBundle.Item.OfType<MailboxMailMessage>().ForEach(i =>
                     {
-                        inboxMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
+                        if (i.SourceEntityKey == sentMailbox.Key)
                         {
-                            Key = Guid.NewGuid(),
-                            Name = Mailbox.INBOX_NAME,
-                            OwnerKey = itm
-                        }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
-                    }
-                    txBundle.Add(new MailboxMailMessage()
-                    {
-                        SourceEntityKey = inboxMailbox.Key,
-                        TargetKey = mail.Key.Value,
-                        MailStatusFlag = MailStatusFlags.Unread
+                            this.Sent?.Invoke(this, new MailMessageEventArgs(i));
+                        }
+                        else
+                        {
+                            this.Delivered?.Invoke(this, new MailMessageEventArgs(i));
+                        }
                     });
                 }
 
-                this.m_bundlePersistence.Insert(txBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-
-                this.Sent?.Invoke(this, new MailMessageEventArgs(mail));
-                return mail;
+                return mailMessage;
             }
             catch (Exception e)
             {
@@ -273,71 +577,66 @@ namespace SanteDB.Core.Services.Impl
         }
 
         /// <inheritdoc/>
-        public MailboxMailMessage UpdateStatusFlag(Guid mailMessageKey, MailStatusFlags statusFlag)
+        public MailboxMailMessage UpdateStatusFlag(Guid mailboxKey, Guid messageKey, MailStatusFlags statusFlag)
         {
-            var mailMessageItem = this.m_mailboxMessagePersistence.Query(o => o.TargetKey == mailMessageKey && o.SourceEntity.Owner.UserName.ToLowerInvariant() == AuthenticationContext.Current.Principal.Identity.Name.ToLowerInvariant(), AuthenticationContext.Current.Principal).FirstOrDefault();
+            var mySid = this.GetPrincipalSidInitialized();
+            var mailbox = this.m_mailboxPersistence.Get(mailboxKey, null, AuthenticationContext.Current.Principal);
+            if (mailbox == null)
+            {
+                throw new KeyNotFoundException($"{typeof(Mailbox)}/{mailboxKey}");
+            }
+            else if (mailbox.OwnerKey != mySid)
+            {
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
+            }
+
+            var mailMessageItem = this.m_mailboxMessagePersistence.Query(o => o.TargetEntityKey == messageKey && o.SourceEntityKey == mailboxKey, AuthenticationContext.Current.Principal).FirstOrDefault();
             if (mailMessageItem == null)
             {
-                throw new KeyNotFoundException(mailMessageKey.ToString());
+                throw new KeyNotFoundException($"{typeof(Mailbox).GetSerializationName()}/{mailboxKey}/{typeof(MailMessage).GetSerializationName()}/{messageKey}");
             }
 
             mailMessageItem.MailStatusFlag = statusFlag;
-            return this.m_mailboxMessagePersistence.Update(mailMessageItem, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-
+            var retVal = this.m_mailboxMessagePersistence.Update(mailMessageItem, TransactionMode.Commit, AuthenticationContext.Current.Principal);
+            this.Updated?.Invoke(this, new MailMessageEventArgs(retVal));
+            return retVal;
         }
 
         /// <inheritdoc/>
-        public MailMessage Get(Guid key)
+        public MailMessage Send(string subject, string body, MailMessageFlags flags, String toLine, params Guid[] recipients)
         {
-            // Does the user have permission to read any mail?
-            if (this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
+            if (String.IsNullOrEmpty(subject))
             {
-                return this.m_mailMessagePersistence.Get(key, null, AuthenticationContext.Current.Principal);
+                throw new ArgumentNullException(nameof(subject));
             }
-            else
+            else if (String.IsNullOrEmpty(body))
             {
-                return this.m_mailMessagePersistence.Query(o => o.Key == key && o.Mailboxes.Any(m => m.SourceEntity.Owner.UserName.ToLowerInvariant() == AuthenticationContext.Current.Principal.Identity.Name.ToLowerInvariant()) && o.ObsoletionTime == null, AuthenticationContext.Current.Principal).FirstOrDefault();
+                throw new ArgumentNullException(nameof(body));
             }
+            else if (!recipients.Any())
+            {
+                throw new ArgumentOutOfRangeException(nameof(recipients));
+            }
+
+            var mySid = this.GetPrincipalSidInitialized();
+            return this.Send(new MailMessage(mySid, recipients, subject, body, flags)
+            {
+                ToInfo = toLine
+            });
         }
 
         /// <inheritdoc/>
-        public MailMessage Get(Guid key, Guid versionKey) => this.Get(key);
-
-        /// <inheritdoc/>
-        public IQueryResultSet<MailMessage> Find(Expression<Func<MailMessage, bool>> query)
+        public Mailbox RenameMailbox(Guid mailboxKey, string name)
         {
-            if (this.m_policyEnforcementService.SoftDemand(PermissionPolicyIdentifiers.ManageMail, AuthenticationContext.Current.Principal))
+            var mySid = this.GetPrincipalSidInitialized();
+            var mailbox = this.GetMailbox(mailboxKey);
+            if (mailbox.OwnerKey != mySid)
             {
-                return this.m_mailMessagePersistence.Query(query, AuthenticationContext.Current.Principal);
+                this.m_policyEnforcementService.Demand(PermissionPolicyIdentifiers.ManageMail);
             }
-            else
-            {
-                Expression<Func<MailboxMailMessage, bool>> mailMessageBoxFilter = o => o.SourceEntity.Owner.UserName.ToLowerInvariant() == AuthenticationContext.Current.Principal.Identity.Name.ToLowerInvariant();
-                var newQuery = Expression.Lambda<Func<MailMessage, bool>>(
-                    Expression.And(query.Body, Expression.Call(
-                        null,
-                        (MethodInfo)typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Any), new Type[] { typeof(MailboxMailMessage) }, new Type[] { typeof(IEnumerable<MailboxMailMessage>), typeof(Func<MailboxMailMessage, bool>) }),
-                        Expression.MakeMemberAccess(query.Parameters[0], typeof(MailMessage).GetProperty(nameof(MailMessage.Mailboxes))),
-                        Expression.Constant(mailMessageBoxFilter)
-                    )), query.Parameters[0]);
-                return this.m_mailMessagePersistence.Query(newQuery, AuthenticationContext.Current.Principal);
-            }
-        }
 
-
-        /// <inheritdoc/>
-        public MailMessage Insert(MailMessage data) => this.Send(data);
-
-        /// <inheritdoc/>
-        public MailMessage Save(MailMessage data)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <inheritdoc/>
-        public MailMessage Delete(Guid key)
-        {
-            return this.MoveMessage(key, Mailbox.DELTEED_NAME).LoadProperty(o => o.Target);
+            mailbox.Name = name;
+            return this.m_mailboxPersistence.Update(mailbox, TransactionMode.Commit, AuthenticationContext.Current.Principal);
         }
     }
 }

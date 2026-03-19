@@ -67,7 +67,11 @@ namespace SanteDB.Core.Services
         /// <summary>
         /// Permanently delete - it should be purged from the database
         /// </summary>
-        PermanentDelete = 1
+        PermanentDelete = 1,
+        /// <summary>
+        /// If the target of deletion is not available then ignore the error (just return a 204)
+        /// </summary>
+        IgnoreMissing = 2
 
     }
 

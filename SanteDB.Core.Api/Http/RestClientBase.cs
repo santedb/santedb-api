@@ -33,6 +33,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mime;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -503,7 +504,7 @@ namespace SanteDB.Core.Http
 
                 // Invoke
                 var retVal = this.InvokeInternal<TBody, TResult>(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.ContentType, requestEventArgs.AdditionalHeaders, out responseHeaders, body, requestEventArgs.Query);
-                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, responseHeaders[HttpRequestHeader.ContentType], retVal, 200, Int32.Parse(responseHeaders[HttpRequestHeader.ContentLength]), this.ConvertHeaders(responseHeaders)));
+                this.Responded?.Invoke(this, new RestResponseEventArgs(requestEventArgs.Method, requestEventArgs.Url, requestEventArgs.Query, responseHeaders[HttpRequestHeader.ContentType], retVal, 200, Int32.TryParse(responseHeaders[HttpRequestHeader.ContentLength], out var contentLength) ? contentLength : 0, this.ConvertHeaders(responseHeaders)));
                 return retVal;
             }
             catch (Exception e)
