@@ -25,6 +25,7 @@ using SanteDB.Core.Model.EntityLoader;
 using SanteDB.Core.Model.Security;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Schema;
@@ -113,7 +114,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// To information
         /// </summary>
-        [XmlElement("toInfo"), JsonProperty("toInfo")]
+        [XmlElement("to"), JsonProperty("to")]
         public string ToInfo { get; set; }
 
         /// <summary>
