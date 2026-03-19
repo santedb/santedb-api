@@ -114,7 +114,7 @@ namespace SanteDB.Core.Mail
         /// <summary>
         /// To information
         /// </summary>
-        [XmlElement("to"), JsonProperty("to")]
+        [XmlElement("to"), JsonProperty("toInfo")]
         public string ToInfo { get; set; }
 
         /// <summary>
