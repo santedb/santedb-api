@@ -53,6 +53,13 @@ namespace SanteDB.Core.Services.Impl
             Mailbox.SENT_NAME
         };
 
+        private readonly SanteDBHostType[] AUTO_CREATE_MAILBOX_HOST_TYPE =
+        {
+            SanteDBHostType.Server,
+            SanteDBHostType.Other,
+            SanteDBHostType.Test
+        };
+
         /// <summary>
         /// Interactive mail marker
         /// </summary>
@@ -185,7 +192,9 @@ namespace SanteDB.Core.Services.Impl
                 {
                     this.m_tracer.TraceInfo("Will route mail message {0} to {1}", mailMessage.Key, itm);
                     var inboxMailbox = this.m_mailboxPersistence.Query(o => o.Name == Mailbox.INBOX_NAME && o.OwnerKey == itm && o.ObsoletionTime == null, AuthenticationContext.SystemPrincipal).FirstOrDefault();
-                    if (inboxMailbox == null && ApplicationServiceContext.Current.HostType == SanteDBHostType.Server)
+                    if (inboxMailbox == null && 
+                        AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType)
+                    )
                     {
                         this.m_tracer.TraceInfo("Setting up Inbox for {0}", itm);
                         inboxMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
@@ -242,7 +251,7 @@ namespace SanteDB.Core.Services.Impl
             {
                 var mySid = this.m_securityPersistence.GetSid(forIdentity);
                 if (!this.m_mailboxPersistence.Query(o => o.OwnerKey == mySid, AuthenticationContext.SystemPrincipal).Any() &&
-                    ApplicationServiceContext.Current.HostType == SanteDBHostType.Server)
+                    AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType))
                 {
                     this.m_tracer.TraceInfo("Initializing system mailboxes for SID {0}", forIdentity);
                     if (forIdentity is IDeviceIdentity)
@@ -252,7 +261,7 @@ namespace SanteDB.Core.Services.Impl
                     else
                     {
                         SYSTEM_MAILBOXES.ForEach(m => this.CreateMailbox(m, mySid));
-                        this.Send(UserMessages.WELCOME_SANTEDB, UserMessages.WELCOME_MESSAGE, MailMessageFlags.LowPriority, AuthenticationContext.Current.GetAuthenticatedPrincipal().Identity.Name, mySid);
+                        this.Send(UserMessages.WELCOME_SANTEDB, UserMessages.WELCOME_MESSAGE, MailMessageFlags.LowPriority, forIdentity.Name, mySid);
                     }
                 }
             }
@@ -377,7 +386,7 @@ namespace SanteDB.Core.Services.Impl
             if (!Mailbox.DELETED_NAME.Equals(mailbox.Name, StringComparison.OrdinalIgnoreCase)) // MOVE TO DELETED
             {
                 var deletedMailbox = this.m_mailboxPersistence.Query(o => o.OwnerKey == mailbox.OwnerKey && o.Name.ToLowerInvariant() == Mailbox.DELETED_NAME.ToLowerInvariant() && o.ObsoletionTime == null, AuthenticationContext.Current.Principal).FirstOrDefault();
-                if (deletedMailbox == null && ApplicationServiceContext.Current.HostType == SanteDBHostType.Server) // Create mailbox
+                if (deletedMailbox == null && AUTO_CREATE_MAILBOX_HOST_TYPE.Contains(ApplicationServiceContext.Current.HostType)) // Create mailbox
                 {
                     deletedMailbox = this.m_mailboxPersistence.Insert(new Mailbox()
                     {
