@@ -169,7 +169,7 @@ namespace SanteDB.Core.Services.Impl
                 }
             });
 
-            var deliveredBoxes = mailMessage.LoadProperty(o => o.Mailboxes).Union(deliveredMailboxRef).Select(o => o.SourceEntityKey).ToArray();
+            var deliveredBoxes = mailMessage.LoadProperty(o => o.Mailboxes)?.Union(deliveredMailboxRef).Select(o => o.SourceEntityKey).ToArray();
             var deliveredUsers = this.m_mailboxPersistence.Query(o => deliveredBoxes.Contains(o.Key.Value), AuthenticationContext.SystemPrincipal).Select(o => o.OwnerKey).ToArray();
 
             // Strip off the mailbox records and persist them in the bundle
