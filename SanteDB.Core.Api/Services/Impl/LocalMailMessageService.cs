@@ -205,7 +205,7 @@ namespace SanteDB.Core.Services.Impl
                         }, TransactionMode.Commit, AuthenticationContext.SystemPrincipal);
                     }
 
-                    if (!deliveredBoxes.Contains(inboxMailbox.Key.Value))
+                    if (inboxMailbox != null && !deliveredBoxes.Contains(inboxMailbox.Key.Value))
                     {
                         yield return new MailboxMailMessage()
                         {
