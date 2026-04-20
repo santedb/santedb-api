@@ -50,7 +50,7 @@ namespace SanteDB.Core.Configuration
             {
                 if (!Directory.Exists(path)) // HACK: Might be on linux or have a lower case data file
                 {
-                    yield return new DetectedIssue(DetectedIssuePriorityType.Error, "err.config.folder", $"Folder {path} doesn't exist", Guid.Empty);
+                    yield return new DetectedIssue(DetectedIssuePriorityType.Warning, "err.config.folder", $"Folder {path} doesn't exist", Guid.Empty);
                 }
                 else if (!Path.IsPathRooted(path))
                 {
