@@ -213,6 +213,18 @@ namespace SanteDB.Core.PubSub.Broker
                                     disp.Dispose();
                                 }
                             }
+
+                            if (evtData.Data is IdentifiedData idd)
+                            {
+                                this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), idd, evtData.EventType, outcomeIndicator);
+                            }
+                            else if (evtData.Data is ParameterCollection pc && (
+                                pc.TryGet("holder", out IdentifiedData holder) ||
+                                pc.TryGet("survivor", out holder)
+                            ))
+                            {
+                                this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), holder, evtData.EventType, outcomeIndicator);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -221,17 +233,6 @@ namespace SanteDB.Core.PubSub.Broker
                             outcomeIndicator = OutcomeIndicator.SeriousFail;
                         }
 
-                        if (evtData.Data is IdentifiedData idd)
-                        {
-                            this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), idd, evtData.EventType, outcomeIndicator);
-                        }
-                        else if (evtData.Data is ParameterCollection pc && (
-                            pc.TryGet("holder", out IdentifiedData holder) ||
-                            pc.TryGet("survivor", out holder)
-                        ))
-                        {
-                            this.m_pubSubLogManager.LogDispatch(dq.SourceQueue.Substring(QueueName.Length + 1), holder, evtData.EventType, outcomeIndicator);
-                        }
                     }
                 }
             }
