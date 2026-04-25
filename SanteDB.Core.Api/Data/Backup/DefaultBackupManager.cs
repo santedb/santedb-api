@@ -214,7 +214,10 @@ namespace SanteDB.Core.Data.Backup
         /// <inheritdoc/>
         public virtual IEnumerable<IBackupDescriptor> GetBackupDescriptors(BackupMedia media)
         {
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            {
+                this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            }
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
                 throw new BackupException(String.Format(ErrorMessages.DEPENDENT_CONFIGURATION_MISSING, media));
@@ -280,7 +283,10 @@ namespace SanteDB.Core.Data.Backup
         /// </summary>
         public virtual IBackupDescriptor GetBackupInternal(BackupMedia media, String backupDescriptorLabel)
         {
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            {
+                this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            }
 
             if (!this.m_configuration.TryGetBackupPath(media, out var backupPath))
             {
@@ -345,7 +351,10 @@ namespace SanteDB.Core.Data.Backup
                 throw new ArgumentNullException(nameof(backupDescriptorLabel));
             }
 
-            this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            if (AuthenticationContext.Current.Principal != AuthenticationContext.SystemPrincipal)
+            {
+                this.m_pepService.Demand(PermissionPolicyIdentifiers.ManageBackups);
+            }
 
             if (!this.m_configuration.TryGetBackupPath(media, out var backupFile))
             {
@@ -451,7 +460,7 @@ namespace SanteDB.Core.Data.Backup
                                         this.m_tracer.TraceWarning("{0} cannot be restored as the asset class {1} is unknown", backupAsset.Name, backupAsset.AssetClassId);
                                     }
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
                                     this.m_tracer.TraceError("Error processing {0} - {1}", backupAsset.Name, e);
                                     throw;
