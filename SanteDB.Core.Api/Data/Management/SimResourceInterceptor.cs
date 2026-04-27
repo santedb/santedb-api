@@ -324,7 +324,14 @@ namespace SanteDB.Core.Data.Management
                 yield return subsumedRecord;
             }
 
-            if(survivorRecord is IHasIdentifiers survivorId && subsumedRecord is IHasIdentifiers subsumedId)
+
+            switch (subsumedRecord)
+            {
+                case Entity e: e.Relationships = null; break;
+                case Act a: a.Relationships = null; break;
+            }
+
+            if (survivorRecord is IHasIdentifiers survivorId && subsumedRecord is IHasIdentifiers subsumedId)
             {
                 foreach(var itm in subsumedId.LoadCollection(o=>o.Identifiers))
                 {
@@ -342,6 +349,7 @@ namespace SanteDB.Core.Data.Management
             switch (survivorRecord)
             {
                 case Act survivorAct:
+                    survivorAct.Relationships = null;
                     yield return new ActRelationship(ActRelationshipTypeKeys.Replaces, subsumedRecord.Key) { SourceEntityKey = survivorRecord.Key };
                     // Delete the relationships between 
                     foreach (var ar in this.m_actRelationshipService.Query(o => (o.SourceEntityKey == subsumedRecord.Key || o.TargetActKey == subsumedRecord.Key) && o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal))
@@ -351,6 +359,7 @@ namespace SanteDB.Core.Data.Management
                     }
                     break;
                 case Entity survivorEntity:
+                    survivorEntity.Relationships = null;
                     yield return new EntityRelationship(EntityRelationshipTypeKeys.Replaces, subsumedRecord.Key) { SourceEntityKey = survivorRecord.Key };
                     // Delte the old relationships
                     foreach (var er in this.m_entityRelationshipService.Query(o => (o.SourceEntityKey == subsumedRecord.Key || o.TargetEntityKey == subsumedRecord.Key) && o.RelationshipTypeKey == EntityRelationshipTypeKeys.Duplicate, AuthenticationContext.SystemPrincipal))
@@ -390,6 +399,7 @@ namespace SanteDB.Core.Data.Management
                 Key = Guid.NewGuid(),
                 CorrelationKey = survivorKey
             };
+
             foreach (var l in linkedDuplicates)
             {
                 var local = this.m_persistenceService.Get(l, null, AuthenticationContext.Current.Principal);
@@ -398,9 +408,7 @@ namespace SanteDB.Core.Data.Management
                     throw new KeyNotFoundException($"{typeof(TModel).GetSerializationName()}/{l}");
                 }
                 persistenceBundle.AddRange(this.DoMergeLogicInternal(local, survivor));
-                (local as IHasState).StatusConceptKey = StatusKeys.Nullified;
-                local.BatchOperation = Model.DataTypes.BatchOperationType.Update;
-                persistenceBundle.Add(local);
+
             }
             survivor.Key = survivorKey;
             persistenceBundle.Insert(0, survivor);
@@ -423,15 +431,9 @@ namespace SanteDB.Core.Data.Management
         public IdentifiedData Ignore(Guid masterKey, IEnumerable<Guid> falsePositives)
         {
             this.m_pepService.Demand(PermissionPolicyIdentifiers.UnrestrictedClinicalData);
-            var master = this.m_persistenceService.Get(masterKey, null, AuthenticationContext.Current.Principal);
-            if (master == null)
-            {
-                throw new KeyNotFoundException($"{typeof(TModel).GetSerializationName()}/{masterKey}");
-            }
-
-            master.BatchOperation = Model.DataTypes.BatchOperationType.InsertOrUpdate;
+            
             // Remove all the existing links
-            var persistenceBundle = new Bundle() { Item = new List<IdentifiedData>() { master }, CorrelationKey = masterKey };
+            var persistenceBundle = new Bundle() { CorrelationKey = masterKey };
             // Remove all duplicate indicators
             if (typeof(Act).IsAssignableFrom(typeof(TModel)))
             {
@@ -472,7 +474,7 @@ namespace SanteDB.Core.Data.Management
             }
 
             var retVal = this.m_bundlePersistenceService.Insert(persistenceBundle, TransactionMode.Commit, AuthenticationContext.Current.Principal);
-            return retVal.Item.Find(o => o.Key == masterKey);
+            return retVal.Item.Find(o => o.Key == masterKey) ?? this.m_persistenceService.Get(masterKey, null, AuthenticationContext.Current.Principal);
 
         }
 
