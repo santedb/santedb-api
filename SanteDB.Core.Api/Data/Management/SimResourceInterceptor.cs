@@ -194,7 +194,6 @@ namespace SanteDB.Core.Data.Management
                     yield return er;
                 }
             }
-
         }
 
         /// <summary>
@@ -202,9 +201,28 @@ namespace SanteDB.Core.Data.Management
         /// </summary>
         private IEnumerable<IdentifiedData> DoDataMatchingLogicInternal(TModel inputRecord)
         {
-            if(inputRecord is ITaggable itg && itg.GetTag(SystemTagNames.SkipDuplicateCheck)?.Equals(Boolean.TrueString, StringComparison.CurrentCultureIgnoreCase) == true)
+            if (inputRecord is ITaggable itg && itg.GetTag(SystemTagNames.SkipDuplicateCheck)?.Equals(Boolean.TrueString, StringComparison.CurrentCultureIgnoreCase) == true 
+                || inputRecord is IHasState ihs && StatusKeys.InactiveStates.Contains(ihs.StatusConceptKey.GetValueOrDefault()))
             {
                 yield break;
+            }
+
+            // Invalidate any existing DUPLICATE relationships 
+            switch (inputRecord) {
+                case Act act:
+                    foreach(var ar in m_actRelationshipService.Query(o=> o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && o.NegationIndicator != true && (o.SourceEntityKey == inputRecord.Key || o.TargetActKey == inputRecord.Key), AuthenticationContext.SystemPrincipal))
+                    {
+                        ar.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                        yield return ar;
+                    }
+                    break;
+                case Entity ent:
+                    foreach (var er in m_entityRelationshipService.Query(o => o.RelationshipTypeKey == ActRelationshipTypeKeys.Duplicate && o.NegationIndicator != true && (o.SourceEntityKey == inputRecord.Key || o.TargetEntityKey == inputRecord.Key), AuthenticationContext.SystemPrincipal))
+                    {
+                        er.BatchOperation = Model.DataTypes.BatchOperationType.Delete;
+                        yield return er;
+                    }
+                    break;
             }
 
             // Detect any duplicates

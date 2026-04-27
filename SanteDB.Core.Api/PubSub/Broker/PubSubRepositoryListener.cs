@@ -238,7 +238,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         protected virtual void OnUnLinked(object sender, Data.DataManagementLinkEventArgs evt)
         {
-            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.Link, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity))));
+            var queueEntry = new PubSubNotifyQueueEntry(typeof(TModel), PubSubEventType.UnLink, new ParameterCollection(new Parameter("holder", evt.TargetedAssociation.LoadProperty(o => o.SourceEntity)), new Parameter("target", evt.TargetedAssociation.LoadProperty(o => o.TargetEntity))));
             this.PushToDispatcherQueues(queueEntry);
 
         }
