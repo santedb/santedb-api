@@ -281,24 +281,29 @@ namespace SanteDB.Core.PubSub.Broker
             this.Starting?.Invoke(this, EventArgs.Empty);
             this.m_repositoryListeners = new List<IDisposable>();
 
-            using (AuthenticationContext.EnterSystemContext())
+            ApplicationServiceContext.Current.Started += (o, e) =>
             {
-                try
-                {
-                    var bundleListener = this.m_serviceManager.CreateInjected<BundleRepositoryListener>();
-                    this.m_repositoryListeners.Add(bundleListener);
 
-                    // Hook up the listeners for existing
-                    foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true && x.ObsoletionTime == null))
+                using (AuthenticationContext.EnterSystemContext())
+                {
+                    try
                     {
-                        this.PubSubSubscribe(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
+                        var bundleListener = this.m_serviceManager.CreateInjected<BundleRepositoryListener>();
+                        this.m_repositoryListeners.Add(bundleListener);
+
+                        // Hook up the listeners for existing
+                        foreach (var psd in this.m_pubSubManager.FindSubscription(x => x.IsActive == true && x.ObsoletionTime == null))
+                        {
+                            this.PubSubSubscribe(this, new Event.DataPersistedEventArgs<PubSubSubscriptionDefinition>(psd, TransactionMode.Commit, AuthenticationContext.SystemPrincipal));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.m_tracer.TraceWarning("Cannot wire up subscription broker - {0}", ex);
                     }
                 }
-                catch (Exception ex)
-                {
-                    this.m_tracer.TraceWarning("Cannot wire up subscription broker - {0}", ex);
-                }
-            }
+
+            };
 
             this.Started?.Invoke(this, EventArgs.Empty);
             return true;

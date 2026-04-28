@@ -145,7 +145,7 @@ namespace SanteDB.Core.PubSub.Broker
         /// <summary>
         /// Constructs a new repository listener
         /// </summary>
-        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IRecordMergingService<TModel> recordMergingService, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
+        public PubSubRepositoryListener(IPubSubManagerService pubSubManager, IDispatcherQueueManagerService queueService, IServiceManager serviceManager, INotifyRepositoryService<TModel> repositoryService, IRecordMergingService<TModel> recordMergingService = null, IDataManagedLinkProvider<TModel> managedLinkProvider = null)
         {
             this.m_pubSubManager = pubSubManager;
             this.m_repository = repositoryService;
@@ -277,9 +277,12 @@ namespace SanteDB.Core.PubSub.Broker
         /// </summary>
         private void PushToDispatcherQueues(PubSubNotifyQueueEntry queueMessage)
         {
-            var resourceName = queueMessage.TargetType.GetSerializationName();
-            this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == resourceName).
-                    FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
+            using (AuthenticationContext.EnterSystemContext())
+            {
+                var resourceName = queueMessage.TargetType.GetSerializationName();
+                this.m_pubSubManager.FindSubscription(o => o.ResourceTypeName == resourceName).
+                        FilterSubscriptionMatch(queueMessage.EventType, queueMessage.Data).ToList().ForEach(q => this.m_queueService.Enqueue($"{PubSubBroker.QueueName}.{q.Name}", queueMessage));
+            }
         }
 
         /// <summary>
