@@ -24,6 +24,7 @@ using SanteDB.Core.Model.Interfaces;
 using SanteDB.Core.Model.Query;
 using System;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace SanteDB.Core.Services
 {
@@ -61,22 +62,33 @@ namespace SanteDB.Core.Services
     /// <summary>
     /// Represents a record merging result
     /// </summary>
+    [XmlType(nameof(RecordMergeResult), Namespace = "http://santedb.org/model")]
     public class RecordMergeResult
     {
         /// <summary>
         /// Indicates if the operation was a success
         /// </summary>
+        [XmlElement("status")]
         public RecordMergeStatus Status { get; }
 
         /// <summary>
         /// Gets the records which survived the merge operation
         /// </summary>
+        [XmlElement("survivors")]
         public IEnumerable<Guid> Survivors { get; }
 
         /// <summary>
         /// Gets the records which did not survive the merge operation
         /// </summary>
+        [XmlElement("subsumed")]
         public IEnumerable<Guid> Replaced { get; }
+
+        /// <summary>
+        /// Serialization ctor
+        /// </summary>
+        public RecordMergeResult()
+        {
+        }
 
         /// <summary>
         /// Creates a new record merge result
