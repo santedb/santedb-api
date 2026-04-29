@@ -351,7 +351,13 @@ namespace SanteDB.Core.Http
                         {
 
                         }
-                        this.m_tracer.TraceError("Request timed out: {0}", e.Message);
+
+                        //Handle ping differently because we expect it to fail when offline, and that is not an error.
+                        if (method == "PING")
+                            this.m_tracer.TraceVerbose("Request timed out: {0}", e.Message);
+                        else
+                            this.m_tracer.TraceError("Request timed out: {0}", e.Message);
+
                         throw;
                     }
                     catch (WebException e) when (e.Response is HttpWebResponse errorresponse)

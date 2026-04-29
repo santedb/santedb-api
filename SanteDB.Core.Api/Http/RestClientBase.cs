@@ -32,6 +32,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Mime;
 using System.Runtime.Serialization;
 using System.Text;
@@ -509,7 +510,15 @@ namespace SanteDB.Core.Http
             }
             catch (Exception e)
             {
-                s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
+                //Don't print an error for a timeout to a ping. This is expected.
+                if (e is TimeoutException && method == "PING")
+                {
+                    s_tracer.TraceVerbose("Error invoking HTTP: {0}", e.Message);
+                }
+                else
+                {
+                    s_tracer.TraceError("Error invoking HTTP: {0}", e.Message);
+                }
                 this.Responded?.Invoke(this, new RestResponseEventArgs(method, url, query, contentType ?? this.Accept, null, 500, 0, null));
                 throw;
             }
